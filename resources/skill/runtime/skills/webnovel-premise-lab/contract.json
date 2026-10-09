@@ -1,0 +1,34 @@
+{
+  "contract_version": "1.0",
+  "stage": "S1",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "原始设定；已确认的禁区/读者/题材；可选市场证据；命名通用约束。",
+  "outputs": [
+    "01_设定拆解/设定拆解.md",
+    "02_项目配置/读者承诺.md（新增候选）"
+  ],
+  "acceptance_criteria": [
+    "主角不是唯一被动承受者",
+    "核心机制可示范且可持续",
+    "不强塞系统/打脸/感情线",
+    "爆款可能性不伪装成概率"
+  ]
+}

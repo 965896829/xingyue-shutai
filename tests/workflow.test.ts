@@ -24,155 +24,33 @@ import {
 import { importLegacy, previewLegacy } from '../src/core/migration';
 import { FileStore } from '../src/core/storage';
 const root = path.resolve('resources/skill');
-const filled = (text: string) =>
-  text
-    .replace(/：\s*$/gm, '：具体事件与原因')
-    .replaceAll('：/5', '：3/5')
-    .replaceAll('：/100', '：80/100')
-    .replaceAll('：/10', '：8/10')
-    .replace(/(- 章节类型：).*/g, '$1推进')
-    .replace(/(- 情节强度：).*/g, '$13/5')
-    .replace(/：是\/否(?:\/无变化|\/未到批次边界)?/g, '：是')
-    .replaceAll('：硬悬念/软牵引', '：软牵引');
-function fixture(p: ProjectState, file: string, service: Service) {
-  const t = templates(root),
-    b = activeBatch(p);
-  if (file === paths.seed) return filled(t['设定拆解']);
-  if (file === paths.config) return renderConfig(p) + '\n' + filled(t['项目配置']);
-  if (file === paths.style) return '# 文风样本与规则\n\n- 状态：未启用\n- 文风来源：项目默认\n';
-  if (file === paths.world)
-    return (
-      '# 世界规则\n\n' +
-      [
-        '世界底层规则',
-        '主角金手指',
-        '金手指限制',
-        '使用代价',
-        '信息差',
-        '敌人反制方式',
-        '体系升级空间',
-        '中后期防重复机制'
-      ]
-        .map((f) => `- ${f}：具体的限制与代价`)
-        .join('\n')
-    );
-  if (file === paths.roles) {
-    const text = fs
-      .readFileSync(path.join(root, 'references/memory-system.md'), 'utf8')
-      .split('```markdown')[1]
-      .split('```')[0];
-    return '# 角色卡\n' + filled(text.replace('角色名', '阿宁'));
-  }
-  if (file === paths.relations)
-    return '# 人物关系\n\n| 角色A | 角色B | 关系标签 | 极性 | 信任度0-100 | 冲突点 | 当前状态 | 未来变化方向 |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n';
-  if (file === paths.volumes)
-    return (
-      filled(t['分卷大纲']) +
-      `\n| 1 | 第一卷 | 1—${Math.ceil(p.config.targetWords / p.config.chapterWords)} | ${Math.ceil(p.config.targetWords / p.config.chapterWords)} | ${p.config.targetWords} | 第1批 | 建立卖点 |\n`
-    );
-  if (file === paths.outline)
-    return (
-      t['章节总纲'] +
-      '\n' +
-      Array.from(
-        { length: b.end - b.start + 1 },
-        (_, i) =>
-          `| 第${b.start + i}章 | 推进 | 3 | 承接前章 | 发现伤势 | 检查伤势 | 求医 | 路程期限 | 决定求医 | 代价 | 信息 | 警惕 | 去药铺 |`
-      ).join('\n')
-    );
-  if (file === rhythmPath(b))
-    return (
-      t['第001-030章节奏'] +
-      `\n| 第${b.start}—${b.end}章 | 推进3→结算2 | 求医 | 赶路 | 伤势 | 药方 | 休养 | 代价 | 约定 |\n`
-    );
-  if (file === batchPath(b))
-    return (
-      '# 批量细纲\n\n' +
-      [
-        '批次范围',
-        '依据文件',
-        '当前卷',
-        '批次主目标',
-        '批次结束钩子',
-        '本批设定揭示总量',
-        '本批禁止提前揭示',
-        '本批强度曲线',
-        '本批重复结构检查',
-        '对应章节总纲范围已扩展',
-        '对应三十章节奏文件'
-      ]
-        .map(
-          (f) => `- ${f}：${f === '对应章节总纲范围已扩展' ? '是' : '两章求医与代价，依据已接受总纲和节奏'}`
-        )
-        .join('\n') +
-      '\n\n' +
-      Array.from(
-        { length: b.end - b.start + 1 },
-        (_, i) =>
-          `## 第${b.start + i}章：求医\n\n` +
-          [
-            '承接',
-            '章节类型',
-            '情节强度',
-            '前300字叙事入口',
-            '核心场面',
-            '主角动作',
-            '外部推动',
-            '状态变化',
-            '设定揭示预算',
-            '主要阅读回报',
-            '人物记忆变化',
-            '章末牵引'
-          ]
-            .map(
-              (f) => `- ${f}：${f === '章节类型' ? '推进' : f === '情节强度' ? '3/5' : '求医事件与明确后果'}`
-            )
-            .join('\n')
-      ).join('\n\n')
-    );
-  if (file === taskPath(p.chapter)) return filled(t['第XXX章任务清单']);
-  if (file === detailPath(p.chapter)) return filled(t['第XXX章细纲']);
-  if (file === prosePath(p.chapter)) return '# 本章正文\n\n' + '宁'.repeat(p.config.chapterWords);
-  if (file === qualityPath(p.chapter))
-    return filled(t['章节质量评分'])
-      .replace(/信息落地：.*/, '信息落地：是')
-      .replace(/AI句式扫描：.*/, 'AI句式扫描：通过')
-      .replace(/字数合规：.*/, '字数合规：是')
-      .replace(/是否需要重写：.*/, '是否需要重写：否');
-  if (file === updatePath(p.chapter))
-    return filled(t['第XXX章记忆更新']).replace(
-      /正文实际字数：.*/,
-      `正文实际字数：${countWords(service.store!.read(prosePath(p.chapter)).content)}`
-    );
-  if (file === paths.behavior)
-    return (
-      '# 情绪与行为记忆\n\n## 第' +
-      p.chapter +
-      '章\n\n### 阿宁\n\n' +
-      [
-        '本章情绪',
-        '情绪变化原因',
-        '本章行动',
-        '行动方式是否符合做事风格',
-        '对主角态度变化',
-        '新增压力',
-        '新增秘密或误会',
-        '下次出场必须承接'
-      ]
-        .map((f) => `- ${f}：正文对应内容`)
-        .join('\n')
-    );
-  if (file === paths.summary) return filled(t['批次人物摘要']);
-  const existing = service.store!.read(file).content;
-  return existing.includes('待填写') ? '# 连续性台账\n\n暂无已确认事件，不伪造记录。' : existing;
-}
-test('S01—S11 全流程、逐章批准、批次归档与正文待同步状态', async () => {
+import { fixture } from './fixtures/workflow';
+test('S01—S11 全流程、正文记忆一次批准与批次归档', async () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-full-'));
   let service: Service;
   service = new Service(
     root,
     () => {},
-    async (_p, _s, messages) => {
+    async (_p, _s, messages, tools, _signal, onDelta) => {
+      const current = service.store!.db.project();
+      if (!tools.length) {
+        const prose = fixture(current, prosePath(current.chapter), service);
+        const text = _s.includes('rubric narrative-1')
+          ? JSON.stringify({
+              values: { pressure: 3, payoff: 3, emotion: 3, revelation: null, relationship: null },
+              quotes: [prose.slice(-12)],
+              note: '夹具判断'
+            })
+          : prose;
+        onDelta?.(text);
+        return {
+          text,
+          calls: [],
+          native: {},
+          usage: { input: 1, output: 1, cost: 0, currency: 'USD' },
+          stop: 'complete'
+        };
+      }
       if (messages.at(-1)?.role === 'tool')
         return {
           text: '候选完成',
@@ -182,7 +60,12 @@ test('S01—S11 全流程、逐章批准、批次归档与正文待同步状态'
           stop: 'complete'
         };
       const p = service.store!.db.project(),
-        changes = stageOutputs(p.stage, p).map((file) => ({
+        phase = service.store!.db.runs().find((r) => r.status === 'running')?.pipeline?.phase,
+        outputs =
+          phase === 'review'
+            ? [qualityPath(p.chapter)]
+            : stageOutputs(phase === 'memory' ? 'S11' : p.stage, p),
+        changes = outputs.map((file) => ({
           path: file,
           baseHash: service.store!.db.document(file)?.hash ?? null,
           content: fixture(p, file, service)
@@ -190,7 +73,11 @@ test('S01—S11 全流程、逐章批准、批次归档与正文待同步状态'
       return {
         text: '生成候选',
         calls: [
-          { id: `${p.stage}-${p.chapter}`, name: 'propose_changes', arguments: JSON.stringify({ changes }) }
+          {
+            id: `${p.stage}-${p.chapter}-${phase ?? ''}`,
+            name: 'propose_changes',
+            arguments: JSON.stringify({ changes })
+          }
         ],
         native: { role: 'assistant', content: '生成候选' },
         usage: { input: 1, output: 1, cost: 0, currency: 'USD' },
@@ -212,12 +99,20 @@ test('S01—S11 全流程、逐章批准、批次归档与正文待同步状态'
       apiKey: 'fixture'
     }
   ];
+  service.profiles.push(...['extractor', 'reviewer'].map((id) => ({ ...service.profiles[0], id, name: id })));
   try {
     await service.invoke('project.create', {
       parent,
       title: '全流程',
       premise: '一位伤员求医',
-      config: { targetWords: 400, chapterWords: 200, minWords: 200, maxWords: 200, batchSize: 2 }
+      config: {
+        targetWords: 400,
+        chapterWords: 200,
+        minWords: 200,
+        maxWords: 200,
+        batchSize: 2,
+        modelRouting: { writing: 'mock', extraction: 'extractor', review: 'reviewer' }
+      }
     });
     assert.equal(service.store!.scan().length, 25);
     let stages = 0;
@@ -227,19 +122,25 @@ test('S01—S11 全流程、逐章批准、批次归档与正文待同步状态'
       while (service.runner!.controller) await new Promise((r) => setTimeout(r, 10));
       const r = service.store!.db.run(id);
       assert.equal(r.status, 'awaiting_review', `${r.stage}: ${JSON.stringify(r.issues)} ${r.error}`);
+      if (r.pipeline) {
+        assert.ok(r.steps?.some((s) => s.phase === 'prose' && s.profileId === 'mock'));
+        assert.ok(r.steps?.some((s) => s.phase === 'review' && s.profileId === 'reviewer'));
+        assert.ok(r.steps?.some((s) => s.phase === 'memory' && s.profileId === 'extractor'));
+      }
       await service.invoke('run.accept', {
         id,
+        proposalHash: r.proposalHash,
         startNext: false,
         warningReason: '测试夹具：仅验证结构与状态，不代表文学质量'
       });
       stages++;
       if (p.stage === 'S10') {
-        assert.equal(service.store!.db.project().chapters[p.chapter], 'prose_accepted_pending_aftermath');
-        assert.equal(service.store!.db.project().stage, 'S11');
+        assert.equal(service.store!.db.project().chapters[p.chapter], 'complete');
+        if (!service.store!.db.project().finished) assert.notEqual(service.store!.db.project().stage, 'S11');
       }
       if (stages > 20) throw new Error('流程没有结束');
     }
-    assert.equal(stages, 14);
+    assert.equal(stages, 12);
     assert.equal(service.store!.db.project().chapters[2], 'complete');
     assert.ok(
       service.store!.read(archivePath(activeBatch(service.store!.db.project()))).content.includes('第2章')

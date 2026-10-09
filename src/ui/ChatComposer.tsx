@@ -258,8 +258,8 @@ export function ChatComposer(props: Props) {
           )}
         </div>
       </div>
-      <div className="composer-note" id={`${uid}-hint`}>
-        发送消息开始讨论 · 写作任务确认后执行 · Ctrl + Enter 发送
+      <div className="sr-only" id={`${uid}-hint`}>
+        Ctrl + Enter 发送
       </div>
       {menu &&
         createPortal(

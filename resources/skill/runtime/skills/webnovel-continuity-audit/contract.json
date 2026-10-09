@@ -1,0 +1,34 @@
+{
+  "contract_version": "1.0",
+  "stage": "guard",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "章节候选及来源版本、五台账与实体状态、当前POV、相关原文和计划、修订影响起点。",
+  "outputs": [
+    "连续性问题清单",
+    "待回查来源与受影响依赖"
+  ],
+  "acceptance_criteria": [
+    "矛盾有双向来源定位",
+    "不确定性明确",
+    "真相/谎言/计划隔离",
+    "没有审阅即擅改"
+  ]
+}

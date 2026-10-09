@@ -57,12 +57,14 @@ export function Editor({
   value,
   onChange,
   onSelection,
+  highlight,
   readOnly = false
 }: {
   value: string;
   onChange?: (v: string) => void;
   onSelection?: (v: string) => void;
   readOnly?: boolean;
+  highlight?: { start: number; end: number };
 }) {
   const parent = useRef<HTMLDivElement>(null),
     view = useRef<EditorView | null>(null),
@@ -94,6 +96,16 @@ export function Editor({
     if (v && v.state.doc.toString() !== value)
       v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: value } });
   }, [value]);
+  useEffect(() => {
+    if (!highlight || !view.current) return;
+    const chars = Array.from(value),
+      from = chars.slice(0, highlight.start).join('').length,
+      to = chars.slice(0, highlight.end).join('').length;
+    view.current.dispatch({
+      selection: { anchor: from, head: to },
+      effects: EditorView.scrollIntoView(from, { y: 'center' })
+    });
+  }, [highlight?.start, highlight?.end, value]);
   return <div className="editor" ref={parent} />;
 }
 export function Difference({ before, after }: { before: string; after: string }) {

@@ -1,0 +1,34 @@
+{
+  "contract_version": "1.0",
+  "stage": "S7",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "当前范围已接受章节总纲、近章结构特征、题材/读者承诺、未兑现承诺和作者例外。",
+  "outputs": [
+    "05_长篇大纲/第{start}-{end}章节奏.md",
+    "重复结构与承诺调度检查"
+  ],
+  "acceptance_criteria": [
+    "节奏覆盖范围等于总纲范围",
+    "不强迫每章高潮",
+    "重复判断有结构证据",
+    "例外带理由"
+  ]
+}

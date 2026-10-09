@@ -1,12 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
+import type { EmbeddingSettings } from '../shared/studio';
 import { Conversations } from './conversations';
 import { FileStore, fileHash, safePath } from './storage';
 import { hash, id, now, paths, stageNames, stageOutputs } from './domain';
 import { inputTokenBudget, requireModelLimits } from '../shared/model-limits';
 import { invokeModel, requestBody, RequestError } from './provider';
 import { rebuildMemory, searchMemory } from './memory';
+import { retrieveMemory, scopedRead, writingScope, visibleFact } from './memory-studio';
 import { loadNamingRules, namingPrompt, readNamingModules } from './naming';
 import { PublicSearch } from './search';
 import type { Caller } from './runner';
@@ -21,6 +23,8 @@ import type {
 } from '../shared/assistant';
 
 export interface AssistantRuntime {
+  embedding?: EmbeddingSettings;
+  embeddingKey?: string;
   roles: RoleRule[];
   search: SearchSettings;
   searchKey: string;
@@ -294,7 +298,7 @@ export class ConversationRunner {
       const read = (relative: string, reason: string, start = 1, lines = 180) => {
         const accepted = this.store.db.document(relative);
         if (!accepted) throw new Error('只能读取已登记的正式资料；自由草稿和控制文件不在资料工具范围内');
-        const data = this.store.read(relative);
+        const data = scopedRead(this.store, relative, writingScope(p));
         if (data.hash !== accepted.hash) throw new Error(`${relative} 有未接受的外部改动，请先比较`);
         if (p.stale.includes(relative)) throw new Error(`${relative} 因前文修订待核对，不可作为当前事实`);
         const source = data.content.split('\n'),
@@ -313,7 +317,7 @@ export class ConversationRunner {
         .facts()
         .filter(
           (f) =>
-            f.reviewStatus === 'accepted' &&
+            visibleFact(f, writingScope(p)) &&
             f.state === 'active' &&
             f.mandatory &&
             f.scope === 'global' &&
@@ -484,7 +488,7 @@ export class ConversationRunner {
                   .parse(a.lines ?? 180)
               );
             else if (call.name === 'search_memory') {
-              const result = searchMemory(this.store, textArg(a.query, 500), p.chapter, 12);
+              const result = retrieveMemory(this.store, textArg(a.query, 500), writingScope(p), 12);
               output = result;
               cite({ kind: 'memory', label: `记忆检索：${a.query}`, reason: '相关正式资料与证据' });
               for (const d of result.documents)

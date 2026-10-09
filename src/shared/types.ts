@@ -28,6 +28,17 @@ export const configSchema = z
     recentChapters: z.number().int().min(1).max(30).default(3),
     defaultProfileId: z.string().default(''),
     stageProfiles: z.record(z.string(), z.string()).default({}),
+    modelRouting: z
+      .object({
+        writing: z.string().default(''),
+        extraction: z.string().default(''),
+        review: z.string().default('')
+      })
+      .default({ writing: '', extraction: '', review: '' }),
+    preview: z
+      .object({ enabled: z.boolean().default(true), maxCalls: z.number().int().min(0).max(30).default(8) })
+      .default({ enabled: true, maxCalls: 8 }),
+    viewpointCharacterId: z.string().default(''),
     maxRounds: z.number().int().min(1).max(100).default(12),
     maxTools: z.number().int().min(1).max(500).default(64),
     stageBudget: z.number().nonnegative().nullable().default(null),
@@ -146,7 +157,10 @@ export interface Issue {
 export const evidenceSchema = z.object({
   path: z.string().min(1),
   hash: z.string().regex(/^[a-f0-9]{64}$/),
-  quote: z.string().min(1)
+  quote: z.string().min(1),
+  start: z.number().int().nonnegative().optional(),
+  end: z.number().int().nonnegative().optional(),
+  snapshotId: z.string().optional()
 });
 export const factSchema = z
   .object({
@@ -187,6 +201,8 @@ export const factSchema = z
     mandatory: z.boolean().default(false),
     scope: z.enum(['entity', 'global']).default('entity'),
     entityIds: z.array(z.string()).default([]),
+    worldId: z.string().default('main'),
+    timelineId: z.string().default('main'),
     relatedIds: z.array(z.string()).default([]),
     replacementReason: z.string().default(''),
     acceptedAt: z.string().optional(),
@@ -203,6 +219,9 @@ export interface ContextSource {
   mode: 'full' | 'excerpt';
 }
 export interface ContextManifest {
+  snapshotId?: string;
+  coverage?: import('./studio').LedgerCoverage[];
+  retrievedFacts?: Fact[];
   id: string;
   projectRevision: number;
   chapter: number;
@@ -230,12 +249,25 @@ export type RunStatus =
   | 'awaiting_input'
   | 'awaiting_permission';
 export interface Run {
+  candidateWrites?: Record<string, number>;
+  modelBindings?: Record<string, { id: string; version: number }>;
+  proposalHash?: string;
+  baseSnapshotId?: string;
+  skillId?: string;
+  pipeline?: {
+    phase: 'prose' | 'review' | 'memory' | 'ready';
+    proseHash?: string;
+    epoch: string;
+    version: number;
+    previewCalls: number;
+  };
+  steps?: { phase: string; profileId: string; profileVersion: number; usage: Usage }[];
   skillHash?: string;
   id: string;
   stage: StageId;
   chapter: number;
   batch: Batch;
-  mode: 'stage' | 'revision' | 'manual' | 'import';
+  mode: 'stage' | 'revision' | 'manual' | 'import' | 'analysis';
   request: string;
   status: RunStatus;
   profileId: string;
@@ -303,6 +335,9 @@ export interface ModelResult {
   stop: 'complete' | 'tools' | 'length' | 'filtered';
 }
 export interface Snapshot {
+  studio?: import('./studio').StudioState;
+  eventSeq?: number;
+  epoch?: string;
   conversations?: import('./assistant').Conversation[];
   chatBusy?: boolean;
   purgedDrafts?: { entryId: string; projectId: string }[];
@@ -317,6 +352,22 @@ export interface Snapshot {
   issues: Issue[];
 }
 export const commands = [
+  'studio.read',
+  'snapshot.list',
+  'memory.retrieve',
+  'memory.list',
+  'memory.trace',
+  'state.getCharacter',
+  'state.proposeCorrection',
+  'embedding.settings.save',
+  'embedding.test',
+  'embedding.reindex',
+  'embedding.cancel',
+  'assessment.refresh',
+  'draft.checkpoint',
+  'skills.list',
+  'skill.run',
+  'outbox.retry',
   'chat.list',
   'chat.create',
   'chat.update',
@@ -393,7 +444,13 @@ export const commands = [
 ] as const;
 export type Command = (typeof commands)[number];
 export interface AppEvent {
-  type: 'snapshot' | 'run-event' | 'delta' | 'error';
+  type: 'snapshot' | 'run-event' | 'delta' | 'error' | 'prose-delta' | 'assessment';
+  projectId?: string;
+  snapshotId?: string;
+  epoch?: string;
+  streamEpoch?: string;
+  seq?: number;
+  draftVersion?: number;
   runId?: string;
   text?: string;
   data?: unknown;

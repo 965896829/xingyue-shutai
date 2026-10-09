@@ -1,0 +1,35 @@
+{
+  "contract_version": "1.0",
+  "stage": "S2",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "已接受设定拆解、作者要求、当前配置版本、宿主批准模式与可用模型能力。",
+  "outputs": [
+    "02_项目配置/项目配置.md",
+    "02_项目配置/文风样本与规则.md",
+    "项目配置sidecar"
+  ],
+  "acceptance_criteria": [
+    "字数上下界有效",
+    "batch_size正整数且末批合法",
+    "明确生成/接受/发布授权差异",
+    "旧书不静默重置默认"
+  ]
+}

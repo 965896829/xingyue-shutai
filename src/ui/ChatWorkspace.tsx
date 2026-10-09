@@ -363,9 +363,7 @@ export function ChatWorkspace({
         <header className="assistant-heading">
           <div>
             <h2>{view?.conversation.title ?? '创作讨论'}</h2>
-            <small>
-              当前流程 {p.stage} · 第 {p.chapter} 章 · 可自由讨论
-            </small>
+            <small>第 {p.chapter} 章</small>
           </div>
           <div className="button-row">
             <button
@@ -407,8 +405,6 @@ export function ChatWorkspace({
               <div className="assistant-welcome">
                 <Sparkles size={28} />
                 <h2>从你的故事聊起</h2>
-                <p>讨论设定、人物和剧情，或让我帮你审稿。需要试写或执行 Skill 时，会先给你一张任务确认卡。</p>
-                <button onClick={() => input('接下来应该做什么？')}>了解当前写作流程</button>
               </div>
             )}
             {view?.conversation.summary && (
@@ -575,7 +571,7 @@ export function ChatWorkspace({
               ×
             </button>
           </header>
-          <small>独立保存，不推进阶段或同步正式记忆。</small>
+
           <select
             aria-label="选择自由草稿"
             value={draft?.id ?? ''}

@@ -1,0 +1,33 @@
+{
+  "contract_version": "1.0",
+  "stage": "S6",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "分卷大纲、已接受正文与偏差、当前记忆、读者承诺、下一批范围。",
+  "outputs": [
+    "05_长篇大纲/章节总纲.md"
+  ],
+  "acceptance_criteria": [
+    "当前批次完整覆盖",
+    "先序因果成立",
+    "每章有功能与变化",
+    "计划与事实不混"
+  ]
+}

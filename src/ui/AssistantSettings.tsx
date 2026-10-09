@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { RoleRule, SearchSettings } from '../shared/assistant';
 import type { Command } from '../shared/types';
+import type { EmbeddingSettings } from '../shared/studio';
 
-type Settings = { roles: RoleRule[]; search: SearchSettings; hasKey: boolean };
+type Settings = { roles: RoleRule[]; search: SearchSettings; hasKey: boolean; embedding: EmbeddingSettings };
 export function AssistantSettings({ onClose }: { onClose: () => void }) {
   const [data, setData] = useState<Settings>(),
     [selected, select] = useState('editor'),
@@ -19,7 +20,8 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
     setNotice('');
     try {
       const result = await window.wenxu!.invoke<any>(command, args);
-      if (command !== 'search.test') setData(result);
+      if (command === 'embedding.test') setNotice(`连接成功 · ${result.dimensions} 维`);
+      else if (command !== 'search.test') setData(result);
       else
         setNotice(
           `连接成功：取得 ${result.results.length} 条公开结果${result.results.length ? '' : '，服务可达但本次无可用结果'}。`
@@ -48,8 +50,7 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
       >
         <header>
           <div>
-            <h2>智能体与联网设置</h2>
-            <p>一个助手，按问题调用专业规则；正式执行仍须确认。</p>
+            <h2>创作助手</h2>
           </div>
           <button onClick={onClose} aria-label="关闭">
             ×
@@ -64,6 +65,9 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
           <button className={selected === 'search' ? 'active' : ''} onClick={() => select('search')}>
             联网搜索
           </button>
+          <button className={selected === 'embedding' ? 'active' : ''} onClick={() => select('embedding')}>
+            语义检索
+          </button>
         </div>
         {error && (
           <p role="alert" className="inline-warning">
@@ -71,9 +75,179 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
           </p>
         )}
         {notice && <p role="status">{notice}</p>}
-        {role ? (
+        {data && selected === 'embedding' ? (
           <div className="assistant-settings-body">
-            <p>{role.summary}</p>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={data.embedding.enabled}
+                onChange={(e) =>
+                  setData({ ...data, embedding: { ...data.embedding, enabled: e.target.checked } })
+                }
+              />
+              启用语义检索
+            </label>
+            <label>
+              接口根地址
+              <input
+                aria-label="语义接口根地址"
+                value={data.embedding.baseUrl}
+                onChange={(e) =>
+                  setData({ ...data, embedding: { ...data.embedding, baseUrl: e.target.value } })
+                }
+              />
+            </label>
+            <label>
+              模型
+              <input
+                aria-label="嵌入模型"
+                value={data.embedding.model}
+                onChange={(e) =>
+                  setData({ ...data, embedding: { ...data.embedding, model: e.target.value } })
+                }
+              />
+            </label>
+            <label>
+              API Key
+              <input
+                aria-label="语义 API Key"
+                type="password"
+                autoComplete="off"
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+                placeholder={data.embedding.hasKey ? '已加密保存' : '填写 Key'}
+              />
+            </label>
+            <div className="search-limits">
+              <label>
+                向量维度
+                <input
+                  type="number"
+                  min={1}
+                  value={data.embedding.dimensions ?? ''}
+                  placeholder="自动识别"
+                  onChange={(e) =>
+                    setData({
+                      ...data,
+                      embedding: {
+                        ...data.embedding,
+                        dimensions: e.target.value ? Number(e.target.value) : null
+                      }
+                    })
+                  }
+                />
+              </label>
+              <label>
+                单次输入预算
+                <input
+                  type="number"
+                  min={128}
+                  value={data.embedding.inputBudget}
+                  onChange={(e) =>
+                    setData({
+                      ...data,
+                      embedding: { ...data.embedding, inputBudget: Number(e.target.value) }
+                    })
+                  }
+                />
+              </label>
+              <label>
+                价格 / 百万 Token
+                <input
+                  type="number"
+                  step="any"
+                  min={0}
+                  value={data.embedding.price ?? ''}
+                  onChange={(e) =>
+                    setData({
+                      ...data,
+                      embedding: { ...data.embedding, price: e.target.value ? Number(e.target.value) : null }
+                    })
+                  }
+                />
+              </label>
+              <label>
+                币种
+                <input
+                  value={data.embedding.currency}
+                  onChange={(e) =>
+                    setData({ ...data, embedding: { ...data.embedding, currency: e.target.value } })
+                  }
+                />
+              </label>
+            </div>
+            <label>
+              发送范围
+              <select
+                value={data.embedding.dataScope}
+                onChange={(e) =>
+                  setData({
+                    ...data,
+                    embedding: {
+                      ...data.embedding,
+                      dataScope: e.target.value as EmbeddingSettings['dataScope']
+                    }
+                  })
+                }
+              >
+                <option value="prose">已接受正文</option>
+                <option value="prose-and-memory">已接受正文与记忆</option>
+              </select>
+            </label>
+            <details>
+              <summary>高级设置</summary>
+              <label className="check">
+                <input
+                  type="checkbox"
+                  checked={data.embedding.sendDimensions}
+                  onChange={(e) =>
+                    setData({ ...data, embedding: { ...data.embedding, sendDimensions: e.target.checked } })
+                  }
+                />
+                在请求中指定维度
+              </label>
+              <label>
+                超时 / 秒
+                <input
+                  type="number"
+                  value={data.embedding.timeoutSeconds}
+                  onChange={(e) =>
+                    setData({
+                      ...data,
+                      embedding: { ...data.embedding, timeoutSeconds: Number(e.target.value) }
+                    })
+                  }
+                />
+              </label>
+            </details>
+            <div className="button-row">
+              <button
+                className="primary"
+                disabled={busy}
+                onClick={async () => {
+                  if (await call('embedding.settings.save', { settings: data.embedding, apiKey: key })) {
+                    setKey('');
+                    setNotice('已保存');
+                  }
+                }}
+              >
+                保存
+              </button>
+              <button disabled={busy || !data.embedding.hasKey} onClick={() => void call('embedding.test')}>
+                测试连接
+              </button>
+              <button
+                disabled={busy || !data.embedding.hasKey}
+                onClick={() =>
+                  void call('embedding.settings.save', { settings: data.embedding, clearKey: true })
+                }
+              >
+                清除 Key
+              </button>
+            </div>
+          </div>
+        ) : role ? (
+          <div className="assistant-settings-body">
             <label>
               角色规则
               <textarea
@@ -83,7 +257,6 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setText(e.target.value)}
               />
             </label>
-            <small>版本：{role.current.id}。规则仅影响回答方法，不能更改批准和文件保护权限。</small>
             <div className="button-row">
               <button
                 className="primary"
@@ -115,7 +288,6 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
           </div>
         ) : data && selected === 'search' ? (
           <div className="assistant-settings-body">
-            <p>Tavily Search / Extract 兼容服务。查询词、来源及时间保存在当前回答的执行记录中。</p>
             <label>
               接口根地址
               <input
@@ -189,7 +361,6 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
                 清除 Key
               </button>
             </div>
-            <small>测试会发起一次公开搜索请求，可能消耗服务商额度。关闭联网不影响本地资料读取。</small>
           </div>
         ) : (
           <p>正在读取设置…</p>

@@ -28,6 +28,7 @@ import { fetchModelCatalog, resolveCatalogConnection, sameEndpoint } from '../sr
 import { prepareProviderGroup } from '../src/core/provider-groups';
 import { connectionId } from '../src/shared/provider-groups';
 import { AssistantSettings } from '../src/core/assistant-settings';
+import { embeddingSettingsSchema } from '../src/shared/studio';
 import { roleIds, searchSettingsSchema } from '../src/shared/assistant';
 import {
   limitsCacheKey,
@@ -76,6 +77,10 @@ function sync() {
     assistant: {
       roles: assistantSettings.roles(),
       search: assistantSettings.settings().search,
+      embedding: assistantSettings.settings().embedding,
+      embeddingKey: assistantSettings.embeddingSecret()
+        ? safeStorage.decryptString(Buffer.from(assistantSettings.embeddingSecret(), 'base64'))
+        : '',
       searchKey: assistantSettings.secret()
         ? safeStorage.decryptString(Buffer.from(assistantSettings.secret(), 'base64'))
         : ''
@@ -136,6 +141,25 @@ async function handle(command: Command, a: Record<string, unknown>) {
     return true;
   }
   if (command === 'assistant.settings') return assistantSettings.settings();
+  if (command === 'embedding.settings.save') {
+    const settings = embeddingSettingsSchema.parse(a.settings),
+      key = typeof a.apiKey === 'string' ? a.apiKey.trim() : '';
+    endpoint(settings, 'embeddings');
+    if (
+      !key &&
+      a.clearKey !== true &&
+      assistantSettings.embeddingSecret() &&
+      !sameEndpoint(settings.baseUrl, assistantSettings.settings().embedding.baseUrl)
+    )
+      throw new Error('语义服务地址改变，请重新填写 Key');
+    if (key && !safeStorage.isEncryptionAvailable()) throw new Error('Windows 密钥加密不可用');
+    assistantSettings.saveEmbedding(
+      settings,
+      a.clearKey === true ? '' : key ? safeStorage.encryptString(key).toString('base64') : undefined
+    );
+    sync();
+    return assistantSettings.settings();
+  }
   if (command.startsWith('assistant.role.')) {
     const key = z.enum(roleIds).parse(a.id);
     if (command === 'assistant.role.save') assistantSettings.saveRole(key, z.string().parse(a.text));

@@ -19,6 +19,7 @@ export const countWords = (text: string) =>
   Array.from(
     text
       .replace(/^\uFEFF/, '')
+      .replace(/^\s*(?=#(?!#))/, '')
       .replace(/^#(?!#)[^\r\n]*(?:\r?\n|$)/, '')
       .replace(/\s/gu, '')
   ).length;

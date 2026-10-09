@@ -1,0 +1,33 @@
+{
+  "contract_version": "1.0",
+  "stage": "optional",
+  "optional": true,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "宿主快照与来源、角色或场景、授权预算和量表/审计规则版本",
+  "outputs": [
+    "narrative_assessment",
+    "evidence_refs",
+    "plan_deviation_findings"
+  ],
+  "acceptance_criteria": [
+    "所有观点或数值有原文依据或明确未知",
+    "版本与POV匹配",
+    "模型输出不修改正史",
+    "显示边界与评估局限"
+  ]
+}

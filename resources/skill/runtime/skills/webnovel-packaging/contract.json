@@ -1,0 +1,34 @@
+{
+  "contract_version": "1.0",
+  "stage": "optional",
+  "optional": true,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "已确认读者承诺、实际开篇或可用计划、题材命名规则、平台公开格式要求、候选数量与授权。",
+  "outputs": [
+    "10_市场与读者/书名简介候选.md",
+    "入口承诺匹配检查"
+  ],
+  "acceptance_criteria": [
+    "包装与正文相符",
+    "无虚构平台认证",
+    "不复制竞品标志性表达",
+    "不自动改已接受书名或发布"
+  ]
+}

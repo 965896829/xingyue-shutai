@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { atomicWrite } from './storage';
 import { hash, id, now } from './domain';
+import { embeddingSettingsSchema, type EmbeddingSettings } from '../shared/studio';
 import {
   roleIds,
   searchSettingsSchema,
@@ -66,6 +67,8 @@ export class AssistantSettings {
     roles: Partial<Record<RoleId, { current: string; history: RoleVersion[] }>>;
     search: SearchSettings;
     encryptedKey: string;
+    embedding: EmbeddingSettings;
+    encryptedEmbeddingKey: string;
   };
   constructor(directory: string) {
     this.file = path.join(directory, 'assistant-settings.json');
@@ -73,7 +76,9 @@ export class AssistantSettings {
     this.data = {
       roles: raw.roles ?? {},
       search: searchSettingsSchema.parse(raw.search ?? {}),
-      encryptedKey: raw.encryptedKey ?? ''
+      encryptedKey: raw.encryptedKey ?? '',
+      embedding: embeddingSettingsSchema.parse(raw.embedding ?? {}),
+      encryptedEmbeddingKey: raw.encryptedEmbeddingKey ?? ''
     };
   }
   roles(): RoleRule[] {
@@ -121,7 +126,21 @@ export class AssistantSettings {
     return this.saveRole(key, old.text, `回退至 ${version}`);
   }
   settings() {
-    return { roles: this.roles(), search: this.data.search, hasKey: !!this.data.encryptedKey };
+    return {
+      roles: this.roles(),
+      search: this.data.search,
+      hasKey: !!this.data.encryptedKey,
+      embedding: { ...this.data.embedding, hasKey: !!this.data.encryptedEmbeddingKey }
+    };
+  }
+  embeddingSecret() {
+    return this.data.encryptedEmbeddingKey;
+  }
+  saveEmbedding(settings: unknown, encryptedKey?: string) {
+    this.data.embedding = embeddingSettingsSchema.parse(settings);
+    if (encryptedKey !== undefined) this.data.encryptedEmbeddingKey = encryptedKey;
+    this.persist();
+    return this.settings();
   }
   secret() {
     return this.data.encryptedKey;

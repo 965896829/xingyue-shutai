@@ -1,0 +1,35 @@
+{
+  "contract_version": "1.0",
+  "stage": "S4",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "已确认配置/世界；已有角色ID、关系与出处；当前批次目标。",
+  "outputs": [
+    "04_人物记忆库/角色卡.md",
+    "04_人物记忆库/人物关系.md",
+    "人物行为与连续性台账初始化候选"
+  ],
+  "acceptance_criteria": [
+    "角色行动可由动机和知情解释",
+    "稳定ID不因改名变化",
+    "没有同名盲合并",
+    "未发生事件不写成历史"
+  ]
+}

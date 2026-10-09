@@ -1,0 +1,221 @@
+{
+  "schema_version": "1.0",
+  "kind": "custom-client-workflow-proposal",
+  "notice": "描述待实现宿主编排，不是可直接运行的Codex配置；进入与接受授权由宿主执行。",
+  "stage_instances": [
+    {
+      "id": "S1",
+      "name": "设定拆解",
+      "skills": [
+        "webnovel-premise-lab"
+      ],
+      "predecessors": [],
+      "outputs": [
+        "premise"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "project"
+    },
+    {
+      "id": "S2",
+      "name": "项目配置",
+      "skills": [
+        "webnovel-project-config",
+        "webnovel-voice-profile"
+      ],
+      "predecessors": [
+        "S1"
+      ],
+      "outputs": [
+        "project_config",
+        "voice_profile"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "project"
+    },
+    {
+      "id": "S3",
+      "name": "世界规则与卖点",
+      "skills": [
+        "webnovel-world-engine"
+      ],
+      "predecessors": [
+        "S2"
+      ],
+      "outputs": [
+        "world_rules"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "project"
+    },
+    {
+      "id": "S4",
+      "name": "人物与连续性记忆",
+      "skills": [
+        "webnovel-character-engine"
+      ],
+      "predecessors": [
+        "S3"
+      ],
+      "outputs": [
+        "characters",
+        "relationships",
+        "behavior_log",
+        "batch_summaries",
+        "continuity_ledgers"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "project"
+    },
+    {
+      "id": "S5",
+      "name": "长篇分卷",
+      "skills": [
+        "webnovel-volume-architect"
+      ],
+      "predecessors": [
+        "S4"
+      ],
+      "outputs": [
+        "volume_outline"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "project"
+    },
+    {
+      "id": "S6",
+      "name": "章节总纲",
+      "skills": [
+        "webnovel-chapter-roadmap"
+      ],
+      "predecessors": [
+        "S5"
+      ],
+      "outputs": [
+        "chapter_roadmap"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "batch"
+    },
+    {
+      "id": "S7",
+      "name": "批次节奏",
+      "skills": [
+        "webnovel-rhythm-designer"
+      ],
+      "predecessors": [
+        "S6"
+      ],
+      "outputs": [
+        "batch_rhythm"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "batch"
+    },
+    {
+      "id": "S8",
+      "name": "批量细纲",
+      "skills": [
+        "webnovel-batch-outline"
+      ],
+      "predecessors": [
+        "S7"
+      ],
+      "outputs": [
+        "batch_outline"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "batch"
+    },
+    {
+      "id": "S9",
+      "name": "单章任务与细纲",
+      "skills": [
+        "webnovel-chapter-planner"
+      ],
+      "predecessors": [
+        "S8"
+      ],
+      "outputs": [
+        "chapter_task",
+        "chapter_outline"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "chapter"
+    },
+    {
+      "id": "S10",
+      "name": "正文候选与审阅",
+      "skills": [
+        "webnovel-chapter-drafter",
+        "webnovel-chapter-reviewer"
+      ],
+      "predecessors": [
+        "S9"
+      ],
+      "outputs": [
+        "prose_candidate",
+        "review_report"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "chapter"
+    },
+    {
+      "id": "S11",
+      "name": "章后差异与接受闭环",
+      "skills": [
+        "webnovel-memory-extractor"
+      ],
+      "predecessors": [
+        "S10"
+      ],
+      "outputs": [
+        "memory_delta",
+        "chapter_update",
+        "progress",
+        "index"
+      ],
+      "entry_gate": "authorized_and_dependencies_current",
+      "exit_gate": "host_accepted_outputs",
+      "scope": "chapter"
+    }
+  ],
+  "overrides": {
+    "S10_to_S11": "reviewed immutable prose candidate may enter S11 to prepare memory deltas; S10 and S11 close only on host-accepted full changeset",
+    "next_chapter": "after S11 accepted: if within accepted active batch, next chapter S9; if at batch boundary, batch-close then S6->S7->S8 under separate applicable authorization",
+    "batch_range": "start=((chapter-1)//batch_size)*batch_size+1; end=min(start+batch_size-1,total_chapters)"
+  },
+  "mandatory_host_guards": [
+    "project_branch_scope",
+    "revision_and_source_hash",
+    "generation_authorization",
+    "candidate_only_write",
+    "chapter_dependency_gate",
+    "deterministic_validation",
+    "changeset_bound_approval",
+    "idempotent_commit"
+  ],
+  "conditional_skills": {
+    "new_names": "webnovel-name-governance",
+    "prose_or_revision": "webnovel-continuity-audit",
+    "language_repair": "webnovel-prose-polisher",
+    "accepted_fact_change": "webnovel-revision-cascade",
+    "batch_end": "webnovel-batch-close"
+  },
+  "optional_routes": {
+    "market_request": "webnovel-market-research",
+    "title_blurb_request": "webnovel-packaging",
+    "actual_reader_feedback": "webnovel-reader-feedback",
+    "pilot": "isolated noncanonical branch, explicit opt-in and separate workflow/acceptance; no silent S8 bypass"
+  }
+}

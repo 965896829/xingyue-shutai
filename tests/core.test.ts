@@ -383,9 +383,20 @@ test('阶段请求必须显式发起，候选拒绝不写正式稿，接受幂�
     assert.equal(service.store!.db.run(rid).status, 'awaiting_review');
     const style = service.store!.read(paths.style).content;
     fs.appendFileSync(path.join(service.store!.root, paths.style), '\n作者外部修订\n');
-    await assert.rejects(service.invoke('run.accept', { id: rid, startNext: false }), /外部修改/);
+    await assert.rejects(
+      service.invoke('run.accept', {
+        id: rid,
+        proposalHash: service.store!.db.run(rid).proposalHash,
+        startNext: false
+      }),
+      /外部修改/
+    );
     fs.writeFileSync(path.join(service.store!.root, paths.style), style);
-    await service.invoke('run.accept', { id: rid, startNext: false });
+    await service.invoke('run.accept', {
+      id: rid,
+      proposalHash: service.store!.db.run(rid).proposalHash,
+      startNext: false
+    });
     assert.equal(service.store!.db.project().stage, 'S02');
     assert.equal(calls, 2);
     const revision = service.store!.db.project().revision;

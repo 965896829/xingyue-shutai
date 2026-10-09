@@ -1,0 +1,34 @@
+{
+  "contract_version": "1.0",
+  "stage": "S2/guard",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "用户样本或描述及权限；当前文风状态；配置POV/字数/类型；实际场景集合。",
+  "outputs": [
+    "02_项目配置/文风样本与规则.md",
+    "文风版本与样本来源映射"
+  ],
+  "acceptance_criteria": [
+    "未启用不覆盖配置",
+    "源样本hash与启用范围齐全",
+    "推导规则有标注",
+    "不能以去AI味删除必要解释"
+  ]
+}

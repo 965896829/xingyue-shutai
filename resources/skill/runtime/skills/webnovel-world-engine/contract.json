@@ -1,0 +1,34 @@
+{
+  "contract_version": "1.0",
+  "stage": "S3",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "已确认设定与配置；规则台账；当前命名空间；既有正文证据。",
+  "outputs": [
+    "03_世界规则与卖点/世界规则与卖点.md",
+    "规则/揭示预算候选"
+  ],
+  "acceptance_criteria": [
+    "规则能落成事件",
+    "有界而非万能",
+    "新限制不任意作弊",
+    "已发生与未来揭示分离"
+  ]
+}

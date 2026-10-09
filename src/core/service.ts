@@ -11,10 +11,22 @@ import {
   type Change,
   type ProjectState
 } from '../shared/types';
-import { FileStore, safePath, fileHash } from './storage';
+import { FileStore, safePath, fileHash, proposalHash } from './storage';
+import { retrieveMemory, traceSource, characterState, syncEntities } from './memory-studio';
+import {
+  memoryScopeSchema,
+  embeddingSettingsSchema,
+  type Assessment,
+  type DraftIdentity,
+  type StudioState
+} from '../shared/studio';
+import { SemanticIndex, CompatibleEmbeddings } from './embeddings';
+import { SkillRegistry, stageSkills } from './skill-registry';
+import { recoverUsage } from './telemetry';
 import {
   id,
   now,
+  hash,
   newProject,
   activeBatch,
   advance,
@@ -25,6 +37,7 @@ import {
   updateConfigDocument,
   reconfigure,
   prosePath,
+  detailPath,
   archivePath
 } from './domain';
 import { initialFiles, renderIndex } from './skill';
@@ -56,6 +69,10 @@ function finishImpactReview(p: ProjectState) {
   delete p.chapterStatesBeforeReview;
 }
 export class Service {
+  index: SemanticIndex | null = null;
+  private eventSeq = 0;
+  private eventEpoch = id();
+  readonly emit: (event: AppEvent) => void;
   store: FileStore | null = null;
   runner: AgentRunner | null = null;
   chat: ConversationRunner | null = null;
@@ -71,22 +88,38 @@ export class Service {
   recycleBin: ProjectRecycleBin | null = null;
   constructor(
     readonly skillRoot: string,
-    readonly emit: (event: AppEvent) => void,
+    emit: (event: AppEvent) => void,
     readonly caller?: Caller
-  ) {}
+  ) {
+    this.emit = (event) =>
+      emit({
+        ...event,
+        projectId: event.projectId ?? this.store?.db.project()?.id,
+        snapshotId: event.snapshotId ?? this.store?.db.get<string>('headSnapshot'),
+        streamEpoch: this.eventEpoch,
+        seq: ++this.eventSeq,
+        epoch: event.epoch ?? this.eventEpoch
+      });
+  }
   close() {
+    if (this.index?.controller) throw new Error('请先停止语义索引更新');
     if (this.chat?.controller) throw new Error('请先停止当前聊天任务');
     if (this.coverController) throw new Error('封面请求尚未结束，请先停止或等待结果');
     if (this.runner?.controller) throw new Error('请先停止当前任务');
+    if (this.runner?.telemetry.busy) throw new Error('评估尚未结束，请先停止或等待结果');
     this.store?.close();
     this.store = null;
     this.runner = null;
     this.chat = null;
+    this.index = null;
   }
   snapshot(): Snapshot {
     const store = this.store;
     if (this.recycleBin) this.recent = this.recycleBin.reconcileRecent(this.recent);
     return {
+      eventSeq: this.eventSeq,
+      epoch: this.eventEpoch,
+      studio: store ? this.studio() : undefined,
       conversations: this.chat?.records.all('conversations') ?? [],
       chatBusy: !!this.chat?.controller,
       purgedDrafts: this.recycleBin?.purgedDrafts(this.recent) ?? [],
@@ -104,6 +137,45 @@ export class Service {
       }))
     };
   }
+  studio(): StudioState {
+    const store = this.store!;
+    const head = store.db.head();
+    return {
+      snapshot: head
+        ? { id: head.id, projectId: head.projectId, revision: head.revision, createdAt: head.createdAt }
+        : null,
+      snapshots: store.db.snapshots(),
+      outbox: store.db.sql
+        .prepare("SELECT id,status,error FROM materialization_outbox WHERE status<>'complete'")
+        .all() as StudioState['outbox'],
+      assessments: (
+        store.db.sql.prepare('SELECT data FROM assessments ORDER BY rowid DESC LIMIT 500').all() as {
+          data: string;
+        }[]
+      ).map((x) => {
+        const a = JSON.parse(x.data) as Assessment;
+        const identity = store.db.get<DraftIdentity | null>(`candidateIdentity:${a.draftId}`);
+        return {
+          ...a,
+          stale:
+            a.track === 'accepted' || a.track === 'plan'
+              ? a.evidence.length
+                ? a.evidence.some((e) => store.db.document(e.path)?.hash !== e.hash)
+                : store.db.document(a.track === 'plan' ? detailPath(a.chapter) : prosePath(a.chapter))
+                    ?.hash !== a.hash
+              : a.snapshotId !== head?.id ||
+                !identity ||
+                identity.hash !== a.hash ||
+                identity.epoch !== a.epoch ||
+                identity.draftVersion !== a.draftVersion
+        };
+      }),
+      index: store.db.get('vectorIndex') ?? null,
+      reviewQueue: store.db.sql
+        .prepare("SELECT * FROM review_queue WHERE status='pending' LIMIT 500")
+        .all() as StudioState['reviewQueue']
+    };
+  }
   async open(root: string) {
     if (isRecyclePath(root)) throw new Error('请先从客户端回收站恢复作品，再打开编辑');
     this.close();
@@ -115,8 +187,20 @@ export class Service {
       if (!p) throw new Error('此目录不是文序项目；请新建作品后导入文档');
       if (p.schemaVersion !== 1) throw new Error('此项目版本需要更新客户端');
       p.root = store.root;
+      p.config = configSchema.parse(p.config);
       store.db.set('project', p);
       this.runner = new AgentRunner(store, this.skillRoot, () => this.profiles, this.emit, this.caller);
+      this.index = new SemanticIndex(
+        store,
+        () => ({
+          settings: embeddingSettingsSchema.parse(this.assistant.embedding ?? {}),
+          apiKey: this.assistant.embeddingKey ?? ''
+        }),
+        () => this.emit({ type: 'snapshot' })
+      );
+      this.runner.retrieve = (query, scope, budget) => this.index!.retrieve(query, scope, 12, budget);
+      this.runner.research = (signal) =>
+        new PublicSearch(this.assistant.search, this.assistant.searchKey, true, signal);
       this.chat = new ConversationRunner(
         store,
         this.skillRoot,
@@ -134,7 +218,32 @@ export class Service {
           r.error = '上次执行中断，恢复前将核对输入和未完成请求';
           store.db.saveRun(r);
         }
+      recoverUsage(store);
+      for (const r of store.db.runs()) {
+        if (r.accepted || ['discarded', 'stale'].includes(r.status)) continue;
+        if (!r.baseSnapshotId && r.baseRevision === p.revision) {
+          r.baseSnapshotId = store.db.head()!.id;
+          if (r.stage === 'S10' && r.mode === 'stage' && !r.pipeline) {
+            const prose = r.changes.find((c) => c.path === prosePath(r.chapter));
+            r.pipeline = {
+              phase: prose ? 'review' : 'prose',
+              proseHash: prose ? hash(prose.content) : undefined,
+              epoch: id(),
+              version: 1,
+              previewCalls: 0
+            };
+            r.changes = prose ? [prose] : [];
+            r.facts = [];
+            r.messages = [];
+            r.skillHash = undefined;
+            r.status = 'paused';
+            r.error = '候选已保留，继续后核对正文与记忆';
+          }
+          store.db.saveRun(r);
+        }
+      }
       rebuildMemory(store);
+      syncEntities(store);
       this.recent = [{ title: p.title, root: p.root }, ...this.recent.filter((x) => x.root !== p.root)].slice(
         0,
         20
@@ -157,6 +266,12 @@ export class Service {
       );
     return {
       id: id(),
+      baseSnapshotId: this.store!.db.get<string>('headSnapshot'),
+      skillId: mode === 'revision' ? 'webnovel-revision-cascade' : stageSkills[p.stage],
+      pipeline:
+        mode === 'stage' && p.stage === 'S10'
+          ? { phase: 'prose', epoch: id(), version: 0, previewCalls: 0 }
+          : undefined,
       stage: p.stage,
       chapter: p.chapter,
       batch: activeBatch(p),
@@ -196,7 +311,7 @@ export class Service {
   }
   change(relative: string, content: string): Change {
     const { s } = this.require();
-    return { path: relative, content, baseHash: fileHash(safePath(s.root, relative)) };
+    return { path: relative, content, baseHash: s.db.document(relative)?.hash ?? null };
   }
   async invoke(command: Command, a: Record<string, unknown> = {}): Promise<any> {
     if (
@@ -205,6 +320,18 @@ export class Service {
     )
       throw new Error('正在建立一致备份，请稍后再进行写入或切换项目');
     if (command === 'app.snapshot') return this.snapshot();
+    if (command === 'embedding.test') {
+      const result = await new CompatibleEmbeddings(
+        embeddingSettingsSchema.parse(this.assistant.embedding ?? {}),
+        this.assistant.embeddingKey ?? ''
+      ).embed(['连接测试'], new AbortController().signal);
+      return { ok: true, dimensions: result.vectors[0].length, tokens: result.tokens };
+    }
+    if (command === 'skills.list')
+      return new SkillRegistry(this.skillRoot).entries.map((e) => ({
+        ...e,
+        host: new SkillRegistry(this.skillRoot).get(e.id).host
+      }));
     if (command === 'search.test') {
       const result = await new PublicSearch(
         { ...this.assistant.search, enabled: true },
@@ -348,6 +475,149 @@ export class Service {
       if (runner.controller || chat.controller || this.coverController)
         throw new Error('同一本书同时只能运行一个模型任务，请等待或停止当前任务');
     };
+    if (command === 'studio.read') return { ...this.studio(), entities: syncEntities(s) };
+    if (command === 'embedding.reindex') {
+      void this.index!.rebuild().catch((e) => this.emit({ type: 'error', text: (e as Error).message }));
+      return true;
+    }
+    if (command === 'embedding.cancel') {
+      this.index?.stop();
+      return true;
+    }
+    if (command === 'snapshot.list') return s.db.snapshots();
+    if (command === 'outbox.retry') {
+      s.materialize();
+      return this.studio();
+    }
+    if (command === 'memory.list') {
+      const browse = z
+        .object({
+          category: z
+            .enum(['all', 'character', 'injury', 'item', 'hook', 'knowledge', 'obligations'])
+            .default('all'),
+          offset: z.number().int().min(0).default(0),
+          pageSize: z.number().int().min(1).max(100).default(60)
+        })
+        .parse(a);
+      return retrieveMemory(s, '', a.scope ?? { chapter: p.chapter }, 20, browse);
+    }
+    if (command === 'memory.retrieve')
+      return this.index!.retrieve(
+        typeof a.query === 'string' ? a.query : '',
+        memoryScopeSchema.parse(a.scope ?? { chapter: p.chapter })
+      );
+    if (command === 'memory.trace')
+      return traceSource(
+        s,
+        z
+          .object({
+            path: z.string(),
+            hash: z.string(),
+            quote: z.string(),
+            start: z.number().optional(),
+            end: z.number().optional()
+          })
+          .parse(a)
+      );
+    if (command === 'state.getCharacter')
+      return characterState(s, str(a.entityId), a.scope ?? { chapter: p.chapter });
+    if (command === 'state.proposeCorrection') {
+      idle();
+      const v = z
+        .object({
+          kind: z.enum(['extraction', 'plan', 'story', 'assessment']),
+          factId: z.string().optional(),
+          request: z.string().min(1)
+        })
+        .parse(a);
+      const r = this.makeRun(
+        v.kind === 'plan' || v.kind === 'assessment' ? 'analysis' : 'revision',
+        `修正类型：${v.kind}；记录：${v.factId ?? '未指定'}；${v.request}`
+      );
+      r.skillId =
+        v.kind === 'assessment'
+          ? 'webnovel-narrative-telemetry'
+          : v.kind === 'plan'
+            ? 'webnovel-chapter-planner'
+            : 'webnovel-revision-cascade';
+      return this.launch(r);
+    }
+    if (command === 'skill.run') {
+      idle();
+      const entry = new SkillRegistry(this.skillRoot).get(str(a.skillId));
+      if (entry.host) {
+        if (entry.id === 'webnovel-project-bootstrap')
+          return this.invoke('project.repair', { preview: true });
+        if (entry.id === 'webnovel-project-validator')
+          return { documents: s.scan(), issues: rebuildMemory(s).issues };
+        if (entry.id === 'webnovel-memory-audit')
+          return { ...retrieveMemory(s, '', { chapter: p.chapter }), entities: syncEntities(s) };
+        if (entry.id === 'webnovel-context-retriever') return this.invoke('context.preview', a);
+        return { batch: activeBatch(p), chapter: p.chapter, complete: p.chapters[p.chapter] === 'complete' };
+      }
+      const mode =
+        entry.id === stageSkills[p.stage]
+          ? 'stage'
+          : [
+                'webnovel-market-research',
+                'webnovel-packaging',
+                'webnovel-reader-feedback',
+                'webnovel-narrative-telemetry',
+                'webnovel-continuity-audit'
+              ].includes(entry.id)
+            ? 'analysis'
+            : 'revision';
+      let request = str(a.request);
+      if (entry.id === 'webnovel-reader-feedback') {
+        const feedback = z
+          .object({
+            source: z.string().min(1),
+            window: z.string().min(1),
+            sampleSize: z.number().int().nonnegative(),
+            synthetic: z.boolean()
+          })
+          .parse(a.feedback);
+        request += `\n反馈资料：${JSON.stringify(feedback)}。${feedback.synthetic ? '此为模拟读者意见，不得表述为真实读者数据。' : '样本仅代表作者提供的采集范围。'}请区分原始反馈、分析推断和建议，不扩大样本结论。`;
+      }
+      const r = this.makeRun(mode, request, typeof a.profileId === 'string' ? a.profileId : undefined);
+      r.skillId = entry.id;
+      return this.launch(r);
+    }
+    if (command === 'draft.checkpoint' || command === 'assessment.refresh') {
+      if (runner.controller) throw new Error('正文生成中，请等待任务完成');
+      const r = s.db.run(str(a.id));
+      if (r.baseSnapshotId !== s.db.get('headSnapshot') || r.accepted || r.status === 'discarded')
+        throw new Error('候选版本已改变');
+      const content =
+        typeof a.content === 'string'
+          ? z.string().max(1000000).parse(a.content)
+          : r.changes.find((c) => c.path === prosePath(r.chapter))?.content;
+      if (!content) throw new Error('没有可评估正文');
+      const profile = this.profiles.find(
+        (x) => x.id === (p.config.modelRouting.review || p.config.modelRouting.writing || r.profileId)
+      );
+      if (!profile) throw new Error('请先选择评估模型');
+      const previous = s.db.get<{ hash: string; version: number }>(`draftObservation:${r.id}`);
+      const version =
+        previous?.hash === hash(content)
+          ? previous.version
+          : Math.max(previous?.version ?? 0, r.pipeline?.version ?? 0) + 1;
+      s.db.set(`draftObservation:${r.id}`, { hash: hash(content), version });
+      if (r.pipeline) r.pipeline.version = version;
+      if (command === 'draft.checkpoint') {
+        runner.telemetry.checkpoint(r, content, profile);
+        this.emit({ type: 'snapshot' });
+        return true;
+      }
+      idle();
+      const assessment = await runner.telemetry.final(
+        r,
+        content,
+        profile,
+        a.track === 'plan' ? 'plan' : 'candidate'
+      );
+      return assessment;
+    }
     if (command === 'chat.list') return records.all('conversations');
     if (command === 'chat.create')
       return records.create(
@@ -605,7 +875,11 @@ export class Service {
     if (command === 'cover.save') return saveCover(s, str(a.dataUrl), a.metadata);
     if (command === 'project.scan') return this.snapshot();
     if (command === 'document.read')
-      return s.read(str(a.path), typeof a.hash === 'string' ? a.hash : undefined);
+      return typeof a.hash === 'string'
+        ? s.read(str(a.path), a.hash)
+        : a.disk === true
+          ? s.read(str(a.path))
+          : s.readAccepted(str(a.path));
     if (command === 'document.history') return s.db.history(str(a.path));
     if (command === 'document.save' || command === 'document.restore') {
       const relative = str(a.path);
@@ -694,8 +968,10 @@ export class Service {
         if (!r.permission) throw new Error('没有待批准动作');
         r.permission.status = a.approved === true ? 'approved' : 'denied';
       }
-      if (typeof a.instruction === 'string' && a.instruction.trim())
+      if (typeof a.instruction === 'string' && a.instruction.trim()) {
         r.messages.push({ role: 'user', content: a.instruction });
+        r.candidateWrites = {};
+      }
       return this.launch(r);
     }
     if (command === 'run.discard') {
@@ -711,6 +987,17 @@ export class Service {
       const at = r.changes.findIndex((c) => c.path === str(a.path));
       if (at < 0) throw new Error('候选不存在');
       r.changes[at].content = z.string().parse(a.content);
+      if (r.pipeline && r.changes[at].path === prosePath(r.chapter)) {
+        runner.telemetry.invalidate(r.id);
+        r.pipeline.phase = 'review';
+        r.pipeline.proseHash = hash(r.changes[at].content);
+        r.pipeline.version++;
+        r.sourceProseHash = r.pipeline.proseHash;
+        r.messages = [];
+        r.facts = [];
+        r.candidateWrites = {};
+        r.changes = [r.changes[at]];
+      }
       runner.check(r, p);
       r.status = r.issues.some((i) => i.severity === 'error') ? 'needs_repair' : 'awaiting_review';
       s.db.saveRun(r);
@@ -719,7 +1006,14 @@ export class Service {
     if (command === 'run.accept') {
       if (runner.controller) throw new Error('任务还在运行');
       const r = s.db.run(str(a.id));
-      if (r.accepted) return { alreadyAccepted: true };
+      if (r.accepted) {
+        if (a.proposalHash !== undefined && a.proposalHash !== proposalHash(r))
+          throw new Error('提交编号与候选内容不匹配');
+        return { alreadyAccepted: true };
+      }
+      if (str(a.proposalHash) !== proposalHash(r)) throw new Error('候选内容已改变，请重新打开审阅');
+      if (r.baseSnapshotId && r.baseSnapshotId !== s.db.get('headSnapshot'))
+        throw new Error('候选依据的快照已改变');
       if (!['awaiting_review', 'needs_repair'].includes(r.status))
         throw new Error('请先完成任务并进入候选审阅');
       if (r.baseRevision !== p.revision) throw new Error('候选基于旧项目版本，请重新审阅并建立候选');
@@ -737,6 +1031,7 @@ export class Service {
         throw new Error('请填写保留警告的审阅理由');
       if (a.warningReason) s.db.event(r.id, 'warning-review', String(a.warningReason));
       let next = r.mode === 'stage' ? advance(p, r.id) : structuredClone(p);
+      if (r.pipeline) next = advance(next, r.id);
       next.revision++;
       let changes = structuredClone(r.changes);
       // Merge authoritative evidence records even when a model replaces a whole human-readable ledger.
@@ -756,7 +1051,7 @@ export class Service {
         }
       for (const raw of r.facts) {
         const f = { ...raw, reviewStatus: 'accepted' as const, acceptedAt: now(), acceptedRunId: r.id };
-        const errors = validateEvidence(s, f, p.chapter);
+        const errors = validateEvidence(s, f, p.chapter, r.pipeline ? r.changes : []);
         if (errors.length) throw new Error(errors.join('；'));
         if (facts.some((x) => x.id === f.id))
           throw new Error(`记忆编号已存在，请新建编号并引用 supersedes：${f.id}`);
@@ -789,13 +1084,18 @@ export class Service {
         )
           changes.push(this.change(relative, encodeFacts(s.read(relative).content, fileFacts)));
       }
-      if (r.mode === 'stage' && r.stage === 'S11' && p.chapter === activeBatch(p).end) {
+      if (r.mode === 'stage' && (r.stage === 'S11' || r.pipeline) && p.chapter === activeBatch(p).end) {
         const batch = activeBatch(p),
           behavior = changes.find((c) => c.path === paths.behavior)!,
           summary = changes.find((c) => c.path === paths.summary)!;
         const sources = Array.from({ length: batch.end - batch.start + 1 }, (_, i) => {
           const file = prosePath(batch.start + i);
-          return { path: file, hash: s.db.document(file)?.hash ?? null };
+          return {
+            path: file,
+            hash: changes.find((c) => c.path === file)
+              ? hash(changes.find((c) => c.path === file)!.content)
+              : (s.db.document(file)?.hash ?? null)
+          };
         });
         summary.content += `\n\n## 摘要覆盖回执\n\n- 来源：${sources.map((v) => `${v.path} @ ${v.hash}`).join('；')}\n- 未解决事项：${
           facts
@@ -809,7 +1109,7 @@ export class Service {
           facts.filter((f) => primaryPath(f) === paths.behavior)
         );
       }
-      if (r.mode !== 'stage') {
+      if (r.mode !== 'stage' && r.mode !== 'analysis') {
         const changed = changes.map((c) => c.path),
           earliest = Math.min(...changed.map((f) => Number(f.match(/^07_.*第(\d+)章/)?.[1] ?? Infinity)));
         const placeholders = initialFiles(p, this.skillRoot, '');
@@ -859,6 +1159,17 @@ export class Service {
       r.updatedAt = now();
       s.commit(changes, next, r);
       rebuildMemory(s);
+      syncEntities(s);
+      for (const row of s.db.sql.prepare('SELECT id,data FROM assessments').all() as {
+        id: string;
+        data: string;
+      }[]) {
+        const value = JSON.parse(row.data) as Assessment;
+        if (value.track === 'candidate' && value.draftId === r.id && value.hash === r.pipeline?.proseHash) {
+          const accepted = { ...value, id: id(), track: 'accepted', snapshotId: s.db.get('headSnapshot') };
+          s.db.sql.prepare('INSERT INTO assessments VALUES(?,?)').run(accepted.id, JSON.stringify(accepted));
+        }
+      }
       s.db.event(r.id, 'accepted', '作者接受结果，已提交正式文件');
       if (next.config.backupDirectory) {
         this.backingUp = true;

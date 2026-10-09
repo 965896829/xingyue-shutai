@@ -1,0 +1,34 @@
+{
+  "contract_version": "1.0",
+  "stage": "S10",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "当前snapshot、完整依赖manifest、已确认任务/细纲、启用文风、字数范围、知识/名称守卫。",
+  "outputs": [
+    "07_正文章节/第{chapter}章.md（候选目标）",
+    "候选prose blob及hash"
+  ],
+  "acceptance_criteria": [
+    "正文保存后复读计数",
+    "2300—2700或项目指定区间",
+    "主角选择与回报可定位",
+    "只有宿主能接受"
+  ]
+}

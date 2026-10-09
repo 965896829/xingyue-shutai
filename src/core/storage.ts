@@ -2,7 +2,30 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { hash, id, now } from './domain';
-import type { Change, DocumentInfo, Fact, ProjectState, Run, RunEvent } from '../shared/types';
+import {
+  factSchema,
+  type Change,
+  type DocumentInfo,
+  type Fact,
+  type ProjectState,
+  type Run,
+  type RunEvent
+} from '../shared/types';
+import type { CanonicalSnapshot, ChangeSet, SnapshotRef } from '../shared/studio';
+
+export const proposalHash = (run: Run) =>
+  hash(
+    JSON.stringify({
+      project: run.baseSnapshotId ?? run.baseRevision,
+      stage: run.stage,
+      chapter: run.chapter,
+      changes: run.changes,
+      facts: run.facts,
+      dependencies: run.manifest?.sources.map((s) => [s.path, s.hash]),
+      pipeline: run.pipeline,
+      skill: run.skillHash
+    })
+  );
 
 export function safePath(root: string, relative: string, internal = false): string {
   if (!relative || path.isAbsolute(relative) || relative.includes('\0') || relative.includes(':'))
@@ -63,16 +86,57 @@ export class Database {
   constructor(readonly filename: string) {
     this.sql = new DatabaseSync(filename);
     const schema = (this.sql.prepare('PRAGMA user_version').get() as { user_version: number }).user_version;
-    if (schema > 2) {
+    if (schema > 3) {
       this.sql.close();
       throw new Error(`数据库版本 ${schema} 高于本客户端支持版本，已停止打开且未修改原数据库`);
     }
-    // VACUUM INTO captures WAL contents too; never copy a live SQLite main file alone.
-    if (schema === 1) {
-      const backup = `${filename}.before-v2-${id()}.bak`;
-      this.sql.prepare('VACUUM INTO ?').run(backup);
-    }
     try {
+      // VACUUM INTO captures WAL contents too; never copy a live SQLite main file alone.
+      if (schema > 0 && schema < 3) {
+        const backup = `${filename}.before-v3-${id()}.bak`;
+        this.sql.prepare('VACUUM INTO ?').run(backup);
+        const control = path.dirname(filename),
+          destination = `${control}.before-v3-${id()}`;
+        fs.mkdirSync(destination);
+        const savedControl = path.join(destination, '.novelclient');
+        fs.mkdirSync(savedControl);
+        fs.copyFileSync(backup, path.join(savedControl, 'state.sqlite'));
+        for (const name of ['objects', 'transactions']) {
+          const source = path.join(control, name);
+          if (fs.existsSync(source))
+            fs.cpSync(source, path.join(savedControl, name), { recursive: true, dereference: false });
+        }
+        const copyProjectFiles = (directory: string, relative = '') => {
+          for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+            if (
+              entry.isSymbolicLink() ||
+              entry.name.startsWith('.novelclient') ||
+              ['node_modules', '.git'].includes(entry.name)
+            )
+              continue;
+            const rel = relative + entry.name,
+              source = path.join(directory, entry.name);
+            if (entry.isDirectory()) copyProjectFiles(source, rel + '/');
+            else if (entry.isFile()) atomicWrite(path.join(destination, rel), fs.readFileSync(source));
+          }
+        };
+        if (path.basename(control) === '.novelclient') copyProjectFiles(path.dirname(control));
+        const manifest: { path: string; hash: string }[] = [];
+        const collect = (directory: string, relative = '') => {
+          for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+            if (entry.isSymbolicLink()) continue;
+            const rel = relative + entry.name,
+              source = path.join(directory, entry.name);
+            if (entry.isDirectory()) collect(source, rel + '/');
+            else manifest.push({ path: rel, hash: hash(fs.readFileSync(source)) });
+          }
+        };
+        collect(destination);
+        atomicWrite(
+          path.join(destination, 'wenxu-backup.json'),
+          JSON.stringify({ schema: 1, createdAt: now(), manifest }, null, 2)
+        );
+      }
       this.sql
         .exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=3000;
       BEGIN IMMEDIATE;
@@ -90,7 +154,17 @@ export class Database {
       CREATE TABLE IF NOT EXISTS conversation_turns(id TEXT PRIMARY KEY,conversation_id TEXT NOT NULL,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS action_proposals(id TEXT PRIMARY KEY,conversation_id TEXT NOT NULL,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS draft_artifacts(id TEXT PRIMARY KEY,data TEXT NOT NULL);
-      PRAGMA user_version=2; COMMIT;`);
+      CREATE TABLE IF NOT EXISTS snapshots(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,revision INTEGER NOT NULL,created_at TEXT NOT NULL,data TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS snapshot_project ON snapshots(project_id,revision);
+      CREATE TABLE IF NOT EXISTS changesets(id TEXT PRIMARY KEY,payload_hash TEXT NOT NULL,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS materialization_outbox(id TEXT PRIMARY KEY,status TEXT NOT NULL,data TEXT NOT NULL,error TEXT);
+      CREATE TABLE IF NOT EXISTS dependencies(source_path TEXT NOT NULL,source_hash TEXT NOT NULL,dependent TEXT NOT NULL,kind TEXT NOT NULL,PRIMARY KEY(source_path,source_hash,dependent,kind));
+      CREATE TABLE IF NOT EXISTS review_queue(id TEXT PRIMARY KEY,source TEXT NOT NULL,dependent TEXT NOT NULL,status TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS entities(id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS vector_chunks(id TEXT PRIMARY KEY,generation TEXT NOT NULL,path TEXT NOT NULL,hash TEXT NOT NULL,chapter INTEGER NOT NULL,start INTEGER NOT NULL,end INTEGER NOT NULL,text TEXT NOT NULL,vector TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS vector_generation ON vector_chunks(generation,path,hash);
+      CREATE TABLE IF NOT EXISTS assessments(id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      PRAGMA user_version=3; COMMIT;`);
     } catch (error) {
       try {
         this.sql.exec('ROLLBACK');
@@ -112,6 +186,7 @@ export class Database {
     return this.get<ProjectState>('project')!;
   }
   saveRun(run: Run) {
+    run.proposalHash = proposalHash(run);
     this.sql
       .prepare('INSERT INTO runs VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
       .run(run.id, JSON.stringify(run));
@@ -167,6 +242,48 @@ export class Database {
       JSON.parse(r.data)
     );
   }
+  head(): CanonicalSnapshot | null {
+    const key = this.get<string>('headSnapshot');
+    return key ? this.snapshot(key) : null;
+  }
+  snapshot(key: string): CanonicalSnapshot {
+    const row = this.sql.prepare('SELECT data FROM snapshots WHERE id=?').get(key) as
+      { data: string } | undefined;
+    if (!row) throw new Error('此历史快照不可用');
+    const value = JSON.parse(row.data) as CanonicalSnapshot;
+    value.facts = value.facts.map((f) => factSchema.parse(f));
+    if (value.projectId !== this.project()?.id) throw new Error('快照不属于当前作品');
+    return value;
+  }
+  snapshots(): SnapshotRef[] {
+    return this.sql
+      .prepare(
+        'SELECT id, project_id AS projectId, revision, created_at AS createdAt FROM snapshots ORDER BY rowid DESC LIMIT 1000'
+      )
+      .all() as unknown as SnapshotRef[];
+  }
+  captureSnapshot(snapshotId: string = id()) {
+    const project = this.project();
+    if (!project) return;
+    const snapshot: CanonicalSnapshot = {
+      id: snapshotId,
+      projectId: project.id,
+      revision: project.revision,
+      createdAt: now(),
+      parentId: this.get<string>('headSnapshot') ?? null,
+      project,
+      documents: Object.fromEntries(
+        this.acceptedDocuments()
+          .filter((d) => d.hash)
+          .map((d) => [d.path, d.hash!])
+      ),
+      facts: this.facts()
+    };
+    this.sql
+      .prepare('INSERT INTO snapshots VALUES(?,?,?,?,?)')
+      .run(snapshotId, project.id, project.revision, snapshot.createdAt, JSON.stringify(snapshot));
+    this.set('headSnapshot', snapshotId);
+  }
   close() {
     this.sql.close();
   }
@@ -178,6 +295,9 @@ interface Journal {
   changes: { path: string; baseHash: string | null; newHash: string }[];
   project: ProjectState;
   run?: Run;
+  baseSnapshotId?: string | null;
+  payloadHash?: string;
+  facts?: Fact[];
 }
 export class FileStore {
   readonly root: string;
@@ -264,12 +384,24 @@ export class FileStore {
       hash: hash(raw)
     };
   }
+  readAccepted(relative: string, snapshotId?: string) {
+    safePath(this.root, relative);
+    const version = snapshotId
+      ? this.db.snapshot(snapshotId).documents[relative]
+      : this.db.document(relative)?.hash;
+    if (!version) throw new Error(`没有已接受版本：${relative}`);
+    return {
+      path: relative,
+      hash: version,
+      content: new TextDecoder('utf-8', { fatal: true }).decode(this.object(version))
+    };
+  }
   scan(): DocumentInfo[] {
     const found = new Map<string, DocumentInfo>();
     const walk = (dir: string, prefix = '') => {
       for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
         if (
-          ent.name === '.novelclient' ||
+          ent.name.startsWith('.novelclient') ||
           ent.name === 'node_modules' ||
           ent.name === '.git' ||
           ent.isSymbolicLink()
@@ -327,7 +459,35 @@ export class FileStore {
       if (change.baseHash) this.putObject(fs.readFileSync(file));
       return { path: change.path, baseHash: change.baseHash, newHash: this.putObject(change.content) };
     });
-    const journal: Journal = { id: tx, state: 'prepared', createdAt: now(), changes: entries, project, run };
+    const baseSnapshotId = this.db.get<string>('headSnapshot') ?? null;
+    const payloadHash = hash(
+      JSON.stringify({ entries, project, run: run ? proposalHash(run) : null, baseSnapshotId })
+    );
+    const changeset: ChangeSet = {
+      id: tx,
+      projectId: project.id,
+      baseSnapshotId,
+      payloadHash,
+      changes,
+      createdAt: now(),
+      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
+      actor: 'local-author',
+      runId: run?.id,
+      scope: entries.map((c) => c.path)
+    };
+    this.db.sql
+      .prepare('INSERT INTO changesets VALUES(?,?,?)')
+      .run(tx, payloadHash, JSON.stringify(changeset));
+    const journal: Journal = {
+      id: tx,
+      state: 'prepared',
+      createdAt: now(),
+      changes: entries,
+      project,
+      run,
+      baseSnapshotId,
+      payloadHash
+    };
     const jp = safePath(this.root, `.novelclient/transactions/${tx}.json`, true);
     atomicWrite(jp, JSON.stringify(journal, null, 2));
     fault?.('prepared');
@@ -338,16 +498,33 @@ export class FileStore {
     return tx;
   }
   private applyJournal(j: Journal, fault?: (point: string) => void) {
-    if (this.db.sql.prepare('SELECT 1 FROM applied_transactions WHERE id=?').get(j.id)) return;
+    if (j.payloadHash) {
+      const expected = hash(
+        JSON.stringify({
+          entries: j.changes,
+          project: j.project,
+          run: j.run ? proposalHash(j.run) : null,
+          baseSnapshotId: j.baseSnapshotId
+        })
+      );
+      const row = this.db.sql.prepare('SELECT payload_hash FROM changesets WHERE id=?').get(j.id) as
+        { payload_hash: string } | undefined;
+      if (expected !== j.payloadHash || row?.payload_hash !== j.payloadHash)
+        throw new Error('提交内容与作者确认的变更集不一致');
+    }
+    if (this.db.sql.prepare('SELECT 1 FROM applied_transactions WHERE id=?').get(j.id)) {
+      const row = this.db.sql.prepare('SELECT payload_hash FROM changesets WHERE id=?').get(j.id) as
+        { payload_hash: string } | undefined;
+      if (j.payloadHash && row?.payload_hash !== j.payloadHash) throw new Error('提交编号对应的内容不一致');
+      this.materialize(j.id, fault);
+      return;
+    }
+    if (j.baseSnapshotId !== undefined && j.baseSnapshotId !== (this.db.get('headSnapshot') ?? null))
+      throw new Error('提交基于旧快照，未写入正式版本');
     for (const c of j.changes) {
       const h = fileHash(safePath(this.root, c.path));
       if (h !== c.baseHash && h !== c.newHash)
         throw new Error(`恢复遇到外部改稿，已保留，请先比较：${c.path}`);
-    }
-    for (const c of j.changes) {
-      const f = safePath(this.root, c.path);
-      if (fileHash(f) !== c.newHash) atomicWrite(f, this.object(c.newHash));
-      fault?.('file:' + c.path);
     }
     fault?.('before-database');
     this.db.sql.exec('BEGIN IMMEDIATE');
@@ -371,22 +548,91 @@ export class FileStore {
       }
       this.db.set('project', j.project);
       if (j.run) this.db.saveRun(j.run);
+      const facts: Fact[] = [];
+      for (const doc of this.db.acceptedDocuments()) {
+        if (!doc.path.startsWith('04_') || !doc.hash) continue;
+        const match = this.object(doc.hash)
+          .toString('utf8')
+          .match(/<!-- wenxu-facts:v1 -->\s*```json\s*\n([\s\S]*?)\n```/);
+        if (match) facts.push(...JSON.parse(match[1]).map((f: unknown) => factSchema.parse(f)));
+      }
+      for (const f of facts) {
+        if (f.evidence.some((e) => this.db.document(e.path)?.hash !== e.hash)) {
+          f.state = 'disputed';
+          f.reviewStatus = 'disputed';
+        }
+        for (const e of f.evidence)
+          this.db.sql
+            .prepare('INSERT OR IGNORE INTO dependencies VALUES(?,?,?,?)')
+            .run(e.path, e.hash, f.id, 'fact');
+      }
+      this.db.replaceFacts(facts, j.project.revision);
+      for (const c of j.changes) {
+        const affected = this.db.sql
+          .prepare('SELECT dependent,kind FROM dependencies WHERE source_path=? AND source_hash<>?')
+          .all(c.path, c.newHash) as { dependent: string; kind: string }[];
+        for (const dependent of affected)
+          this.db.sql
+            .prepare('INSERT OR IGNORE INTO review_queue VALUES(?,?,?,?)')
+            .run(hash(`${j.id}:${c.path}:${dependent.dependent}`), c.path, dependent.dependent, 'pending');
+        this.db.sql
+          .prepare("DELETE FROM vector_chunks WHERE path=? AND hash<>? AND id NOT LIKE 'fact:%'")
+          .run(c.path, c.newHash);
+      }
+      if (j.run?.manifest)
+        for (const source of j.run.manifest.sources)
+          for (const c of j.changes.filter((c) => c.path.startsWith('07_')))
+            this.db.sql
+              .prepare('INSERT OR IGNORE INTO dependencies VALUES(?,?,?,?)')
+              .run(source.path, source.hash, c.path, 'prose');
+      this.db.captureSnapshot(j.id);
+      this.db.sql
+        .prepare('INSERT INTO materialization_outbox VALUES(?,?,?,NULL)')
+        .run(j.id, 'pending', JSON.stringify(j.changes));
       this.db.sql.prepare('INSERT INTO applied_transactions VALUES(?,?)').run(j.id, now());
-      this.db.set('indexRevision', -1);
       this.db.sql.exec('COMMIT');
     } catch (e) {
       this.db.sql.exec('ROLLBACK');
       throw e;
     }
     fault?.('after-database');
+    this.materialize(j.id, fault);
+  }
+  materialize(tx?: string, fault?: (point: string) => void) {
+    const rows = this.db.sql
+      .prepare(
+        `SELECT id,data FROM materialization_outbox WHERE status<>'complete' ${tx ? 'AND id=?' : ''} ORDER BY rowid`
+      )
+      .all(...(tx ? [tx] : [])) as { id: string; data: string }[];
+    for (const row of rows) {
+      const changes = JSON.parse(row.data) as Journal['changes'];
+      const conflict = changes.find((c) => {
+        const current = fileHash(safePath(this.root, c.path));
+        return current !== c.baseHash && current !== c.newHash;
+      });
+      if (conflict) {
+        this.db.sql
+          .prepare('UPDATE materialization_outbox SET status=?,error=? WHERE id=?')
+          .run('conflict', `外部改稿已保留：${conflict.path}`, row.id);
+        continue;
+      }
+      for (const c of changes) {
+        const file = safePath(this.root, c.path);
+        if (fileHash(file) !== c.newHash) atomicWrite(file, this.object(c.newHash));
+        fault?.('file:' + c.path);
+      }
+      this.db.sql
+        .prepare('UPDATE materialization_outbox SET status=?,error=NULL WHERE id=?')
+        .run('complete', row.id);
+    }
   }
   recover(): string[] {
     const dir = safePath(this.root, '.novelclient/transactions', true);
-    if (!fs.existsSync(dir)) return [];
     const messages: string[] = [];
     const journals = fs
-      .readdirSync(dir)
+      .readdirSync(fs.existsSync(dir) ? dir : this.control)
       .filter((f) => f.endsWith('.json'))
+      .filter((f) => fs.existsSync(path.join(dir, f)))
       .map((f) => ({ p: path.join(dir, f), j: JSON.parse(readUtf8(path.join(dir, f))) as Journal }))
       .sort((a, b) => a.j.createdAt.localeCompare(b.j.createdAt));
     for (const { p, j } of journals)
@@ -396,6 +642,8 @@ export class FileStore {
         atomicWrite(p, JSON.stringify(j, null, 2));
         messages.push(`已恢复提交 ${j.id}`);
       }
+    this.materialize();
+    if (this.db.project() && !this.db.get('headSnapshot')) this.db.captureSnapshot();
     return messages;
   }
   snapshotFile(relative: string) {

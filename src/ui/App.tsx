@@ -53,6 +53,12 @@ import { ProximitySidebar, type ProximitySection } from './ProximitySidebar';
 import { RecycleBin } from './RecycleBin';
 import { ChatWorkspace } from './ChatWorkspace';
 import { AssistantSettings } from './AssistantSettings';
+import { MemoryStudio, CharacterInspector, SourceDialog } from './MemoryStudio';
+import { NarrativePanel } from './NarrativePanel';
+import { SkillLauncher } from './SkillLauncher';
+import type { SourceRef } from '../shared/studio';
+import { gateEvent, syncEventCursor, type EventCursor } from '../shared/event-gate';
+import './studio.css';
 import './assistant.css';
 
 const names = {
@@ -138,6 +144,11 @@ function Modal({
   );
 }
 export function App() {
+  const [inspector, setInspector] = useState<'manuscript' | 'characters' | 'details'>('manuscript');
+  const [source, setSource] = useState<SourceRef | null>(null);
+  const [focus, setFocus] = useState(false);
+  const refreshSeq = useRef(0),
+    eventCursor = useRef<EventCursor>({ seq: 0, waiting: false });
   const [workView, setWorkView] = useState<'chat' | 'tasks'>('chat');
   const [agentSettings, setAgentSettings] = useState(false);
   const [snapshot, setSnapshot] = useState(empty),
@@ -177,8 +188,11 @@ export function App() {
     [timeline, setTimeline] = useState(false),
     [deltas, setDeltas] = useState<Record<string, string>>({});
   const refresh = useCallback(async () => {
+    const requestId = ++refreshSeq.current;
     try {
       const s = await invoke<Snapshot>('app.snapshot');
+      if (requestId !== refreshSeq.current) return;
+      syncEventCursor(eventCursor.current, s);
       setSnapshot(s);
     } catch (e) {
       setError((e as Error).message);
@@ -203,12 +217,22 @@ export function App() {
     void refresh();
     let timeout: ReturnType<typeof setTimeout>;
     const unsub = window.wenxu?.onEvent((event) => {
+      const decision = gateEvent(eventCursor.current, event);
+      if (decision === 'ignore') return;
+      if (decision === 'refresh') {
+        setDeltas({});
+        void refresh();
+        return;
+      }
       if (event.type === 'delta')
         setDeltas((d) => ({ ...d, [event.runId!]: ((d[event.runId!] ?? '') + event.text).slice(-20000) }));
       else if (event.type === 'error') setError(event.text ?? '执行错误');
       else {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => void refresh(), 180);
+        if (!timeout)
+          timeout = setTimeout(() => {
+            timeout = undefined as any;
+            void refresh();
+          }, 350);
       }
     });
     return () => {
@@ -239,6 +263,29 @@ export function App() {
     run = snapshot.runs.find((r) => r.id === selectedRun) ?? snapshot.runs[0],
     running = snapshot.runs.find((r) => r.status === 'running'),
     dirty = doc && text !== doc.content;
+  useEffect(() => {
+    const active = snapshot.runs.find((r) => r.status === 'running' && r.pipeline);
+    const prose = active?.changes.find((c) => c.path.startsWith('07_'));
+    if (!active || !prose || (dirty && doc?.runId !== active.id)) return;
+    setDoc({
+      path: prose.path,
+      content: prose.content,
+      hash: prose.baseHash,
+      runId: active.id,
+      before: doc?.runId === active.id ? doc.before : ''
+    });
+    setText(prose.content);
+    setEditorOpen(true);
+    setInspector('manuscript');
+    setEditorTab('edit');
+  }, [snapshot.runs.find((r) => r.status === 'running' && r.pipeline)?.pipeline?.version]);
+  useEffect(() => {
+    if (!doc?.runId || !dirty || running || !doc.path.startsWith('07_')) return;
+    const timer = setTimeout(() => {
+      void invoke('draft.checkpoint', { id: doc.runId, content: text }).catch(() => {});
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [text, doc?.runId]);
   useEffect(() => {
     setWorkView('chat');
   }, [p?.id]);
@@ -381,7 +428,9 @@ export function App() {
       ]
     : [];
   return (
-    <div className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div
+      className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${focus && editorOpen && page === 'work' ? 'studio-focus' : ''}`}
+    >
       <aside className="sidebar" aria-label="作品与功能导航">
         <div className="brand">
           <div className="brand-mark" aria-hidden="true">
@@ -389,7 +438,6 @@ export function App() {
           </div>
           <div>
             <b>文序</b>
-            <small>让长篇有迹可循</small>
           </div>
           <button
             className="icon sidebar-toggle"
@@ -590,11 +638,6 @@ export function App() {
               <Feather size={32} strokeWidth={1.7} />
             </div>
             <h1>今天，写下哪一段故事？</h1>
-            <p>
-              把人物、世界与每一次选择留在作品里。
-              <br />
-              你决定故事的方向，文序负责整理过程。
-            </p>
             <div className="welcome-actions">
               <button className="primary large" onClick={() => setModal('new')}>
                 {btn(<Plus size={18} />, '创建我的第一部作品')}
@@ -603,227 +646,33 @@ export function App() {
                 {btn(<FolderOpen size={18} />, '打开已有作品')}
               </button>
             </div>
-            <div className="welcome-cards">
-              <div>
-                <span>01</span>
-                <h3>有序创作</h3>
-                <p>11 个阶段，逐步规划。每次开始和采纳都由你确认。</p>
-              </div>
-              <div>
-                <span>02</span>
-                <h3>有据可查</h3>
-                <p>记忆关联原文，持续跟踪人物、伏笔与未解决的限制。</p>
-              </div>
-              <div>
-                <span>03</span>
-                <h3>作品归你</h3>
-                <p>中文目录与 Markdown，随时编辑、备份和导出。</p>
-              </div>
-            </div>
-            <small className="welcome-note">当前为开发验证版。真实模型能力与长篇质量需要实际端点验收。</small>
           </div>
         ) : page === 'memory' ? (
-          <div className="page-content">
-            <div className="eyebrow">STORY MEMORY</div>
-            <h1>记忆与连续性</h1>
-            <p className="muted">
-              持续限制不会随近期窗口消失。当前使用本地实体、关系和全文检索；向量增强未启用。召回结果显示来源，人物误解与已发生事件分别保存。
-            </p>
-            <div className="memory-search">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="角色、伏笔编号、物品或原文短语"
-                aria-label="检索记忆"
-              />
-              <input
-                type="number"
-                min="0"
-                value={memoryChapter}
-                onChange={(e) => setMemoryChapter(e.target.value)}
-                placeholder={`截至第 ${p.chapter} 章`}
-                aria-label="历史章节"
-              />
-              <button
-                className="primary"
-                onClick={() =>
-                  void act(async () =>
-                    setMemory(
-                      await invoke('memory.search', { query, chapter: Number(memoryChapter) || p.chapter })
-                    )
-                  )
-                }
-              >
-                检索
-              </button>
-              <button onClick={() => void act(() => invoke('memory.rebuild'), '记忆索引已重建')}>
-                重建索引
-              </button>
-            </div>
-            <div className="stat-grid">
-              <div>
-                <small>瞬时记忆</small>
-                <strong>{snapshot.runs.length}</strong>
-                <span>任务与检查点</span>
-              </div>
-              <div>
-                <small>短期记忆</small>
-                <strong>{p.config.recentChapters} 章</strong>
-                <span>近期变化窗口</span>
-              </div>
-              <div>
-                <small>长期记忆</small>
-                <strong>{snapshot.facts.length}</strong>
-                <span>有来源的结构化事实</span>
-              </div>
-            </div>
-            {snapshot.issues.map((v, i) => (
-              <p className="issue error-text" key={i}>
-                {v.message}
-              </p>
-            ))}
-            <div className="facts">
-              {(memory?.facts?.map((x: any) => x.fact) ?? snapshot.facts).map((f: any) => (
-                <article key={f.id}>
-                  <div>
-                    <b>{f.subject}</b>
-                    <span className="tag">
-                      {
-                        (
-                          {
-                            event: '实际事件',
-                            world_rule: '世界规则',
-                            author_constraint: '作者约束',
-                            plan: '未来计划',
-                            belief: '人物认知',
-                            inference: '推断'
-                          } as any
-                        )[f.kind]
-                      }
-                    </span>
-                    <span className="tag">{f.state}</span>
-                    {f.mandatory && <span className="tag green">持续约束</span>}
-                  </div>
-                  <p>
-                    {f.predicate}：{f.value}
-                  </p>
-                  <small>
-                    有效章节 {f.fromChapter}—{f.toChapter ?? '持续'} · {f.id} · {f.reviewStatus}
-                  </small>
-                  <details>
-                    <summary>时间、知情范围与替代依据</summary>
-                    <p>
-                      故事时间：{f.storyTime} · 首次揭示：第 {f.revealedAt} 章
-                    </p>
-                    <p>
-                      实体编号：{f.entityIds?.join('、') || '待登记'} · 替代：{f.supersedes ?? '无'} · 原因：
-                      {f.replacementReason || '不适用'}
-                    </p>
-                    {f.knowledge?.length ? (
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>人物</th>
-                            <th>获知方式</th>
-                            <th>起始章节</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {f.knowledge.map((k: any, i: number) => (
-                            <tr key={i}>
-                              <td>{k.who}</td>
-                              <td>
-                                {
-                                  (
-                                    {
-                                      seen: '亲见',
-                                      told: '被告知',
-                                      inferred: '推断',
-                                      misunderstood: '误解',
-                                      unknown: '未知'
-                                    } as any
-                                  )[k.mode]
-                                }
-                              </td>
-                              <td>{k.fromChapter}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <p>没有登记角色知情范围；不得自动视为所有人知晓。</p>
-                    )}
-                  </details>
-                  {f.evidence.map((e: any, i: number) => (
-                    <button className="source" key={i} onClick={() => void openDoc(e.path)}>
-                      {e.quote}
-                      <small>
-                        ↗ {e.path} · {e.hash.slice(0, 8)}
-                      </small>
-                    </button>
-                  ))}
-                </article>
-              ))}
-            </div>
-            {memory?.documents?.map((d: any) => (
-              <article className="source-result" key={d.path}>
-                <button
-                  onClick={() => {
-                    setPage('work');
-                    void openDoc(d.path);
-                  }}
-                >
-                  {d.path}
-                </button>
-                <p>{d.excerpt}</p>
-              </article>
-            ))}
-            {memory?.status === 'not_found' && (
-              <p className="empty-state">未命中。未命中不代表事实不存在，可以换实体名、编号或原文查找。</p>
-            )}
-            {!snapshot.facts.length && !memory && (
-              <p className="empty-state">
-                正式正文完成后，在章后同步阶段提出并接受记忆。现在不会用空白模板伪造人物经历。
-              </p>
-            )}
-            {p.stale.length > 0 && (
-              <section className="impact">
-                <h3>修订影响 · {p.stale.length} 个文件待核对</h3>
-                {p.stale.map((f) => (
-                  <div key={f}>
-                    <button
-                      onClick={() => {
-                        setPage('work');
-                        void openDoc(f);
-                      }}
-                    >
-                      {f}
-                    </button>
-                    <button
-                      onClick={() => {
-                        const reason = prompt('填写核对结果：为何无需修改，或已如何修正？');
-                        if (reason)
-                          void act(() => invoke('impact.review', { path: f, reason }), '已记录核对结果');
-                      }}
-                    >
-                      记录核对
-                    </button>
-                  </div>
-                ))}
-              </section>
-            )}
-          </div>
+          <MemoryStudio
+            key={p.id}
+            snapshot={snapshot}
+            onSource={setSource}
+            onRefresh={() => void refresh()}
+          />
         ) : page === 'cover' ? (
           <Cover key={p.id} profiles={snapshot.profiles} title={p.title} act={act} />
         ) : (
-          <div className="workspace">
+          <div className={`workspace ${focus ? 'studio-focus' : ''}`}>
             <div className="work-area">
               <div className="work-tabs">
+                <SkillLauncher
+                  profileId={profileId}
+                  onRun={(id) => {
+                    if (id) setSelectedRun(id);
+                    setWorkView('tasks');
+                    void refresh();
+                  }}
+                />
                 <button className={workView === 'chat' ? 'active' : ''} onClick={() => setWorkView('chat')}>
                   创作讨论
                 </button>
                 <button className={workView === 'tasks' ? 'active' : ''} onClick={() => setWorkView('tasks')}>
-                  历史任务与阶段执行
+                  创作任务
                 </button>
               </div>
               {workView === 'chat' ? (
@@ -911,18 +760,7 @@ export function App() {
                           <div className="assistant-mark">
                             <Sparkles size={20} />
                           </div>
-                          <h2>先把故事的起点说清楚</h2>
-                          <p>
-                            写下你希望本阶段解决的问题，或直接开始。客户端会先读取必需资料，提出候选，再等你审阅。
-                          </p>
-                          <div className="start-features">
-                            <span>
-                              <Shield size={14} /> 生成前由你确认
-                            </span>
-                            <span>
-                              <History size={14} /> 接受后保留历史
-                            </span>
-                          </div>
+                          <h2>开始这一段创作</h2>
                         </div>
                       ) : (
                         <>
@@ -960,18 +798,11 @@ export function App() {
                                 <b>文序</b>
                                 <span className={`status ${run.status}`}>{status[run.status]}</span>
                               </div>
-                              <p className="execution-summary">
-                                {run.status === 'running'
-                                  ? '正在按已批准的阶段执行。你可以随时停止。'
-                                  : run.accepted
-                                    ? '结果已接受，正式文件及历史版本已保存。'
-                                    : '候选会保留在这个任务中；只有接受后才写入正式作品。'}
-                              </p>
                               {run.manifest && (
                                 <button className="context-card" onClick={() => setManifest(run.manifest)}>
                                   <Layers size={16} />
                                   <div>
-                                    <b>本次上下文</b>
+                                    <b>资料详情</b>
                                     <small>
                                       {run.manifest.sources.length} 份资料 · {run.manifest.factIds.length}{' '}
                                       条关联事实 · 项目版本 {run.manifest.projectRevision}
@@ -1006,7 +837,7 @@ export function App() {
                                 {run.changes.map((c) => (
                                   <button key={c.path} onClick={() => void openDoc(c.path, run)}>
                                     <FileText size={15} />
-                                    <span>{c.path}</span>
+                                    <span title={c.path}>{c.path.split('/').at(-1)}</span>
                                     <span className="diff-count">
                                       {c.content.length.toLocaleString()} 字符
                                     </span>
@@ -1102,8 +933,7 @@ export function App() {
                             )}
                             {!run.accepted && ['awaiting_review', 'needs_repair'].includes(run.status) && (
                               <div className="approval-box" id="chat-decision">
-                                <h3>由你决定是否采用</h3>
-                                <p>检查右侧差异与校验结果后，接受为正式版本。</p>
+                                <h3>{run.pipeline ? '正文与记忆待验收' : '候选待验收'}</h3>
                                 {run.issues.some((i) => i.severity === 'warning') && (
                                   <label>
                                     保留警告的审阅理由
@@ -1122,6 +952,7 @@ export function App() {
                                       void act(
                                         () =>
                                           invoke('run.accept', {
+                                            proposalHash: run.proposalHash,
                                             id: run.id,
                                             startNext: run.mode === 'stage',
                                             warningReason: reviewReason
@@ -1130,7 +961,7 @@ export function App() {
                                       )
                                     }
                                   >
-                                    {run.mode === 'stage' ? '确认结果并开始下一阶段' : '接受修改'}
+                                    {run.mode === 'stage' ? '接受并继续' : '接受修改'}
                                   </button>
                                   {run.mode === 'stage' && (
                                     <button
@@ -1139,6 +970,7 @@ export function App() {
                                         void act(
                                           () =>
                                             invoke('run.accept', {
+                                              proposalHash: run.proposalHash,
                                               id: run.id,
                                               startNext: false,
                                               warningReason: reviewReason
@@ -1147,7 +979,7 @@ export function App() {
                                         )
                                       }
                                     >
-                                      只接受并暂停
+                                      接受并暂停
                                     </button>
                                   )}
                                 </div>
@@ -1327,7 +1159,7 @@ export function App() {
                       </div>
                     </div>
                   </div>
-                  <div className="composer-note" id="composer-confirmation">
+                  <div className="sr-only" id="composer-confirmation">
                     {running
                       ? '正在执行，可点击 ■ 停止。'
                       : mode === 'stage'
@@ -1337,179 +1169,242 @@ export function App() {
                   </div>
                 </section>
               )}
+              <NarrativePanel snapshot={snapshot} onSource={setSource} />
             </div>
             {editorOpen && (
               <aside className="editor-panel">
-                <header>
-                  <div>
-                    <FileText size={16} />
-                    <b title={doc?.path}>{doc?.path.split('/').at(-1) ?? '文稿与差异'}</b>
-                    {dirty && <span className="draft-dot" />}
-                  </div>
-                  <button className="icon" aria-label="关闭编辑面板" onClick={() => setEditorOpen(false)}>
-                    <X size={15} />
+                <nav className="inspector-tabs" aria-label="作品面板">
+                  {(
+                    [
+                      ['manuscript', '文稿'],
+                      ['characters', '人物'],
+                      ['details', '详情']
+                    ] as const
+                  ).map(([key, label]) => (
+                    <button
+                      key={key}
+                      className={inspector === key ? 'active' : ''}
+                      onClick={() => setInspector(key)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <button aria-pressed={focus} onClick={() => setFocus(!focus)}>
+                    {focus ? '退出专注' : '专注'}
                   </button>
-                </header>
-                {doc ? (
-                  <>
-                    <div className="editor-tabs">
-                      {[
-                        ['edit', '编辑'],
-                        ['preview', '预览'],
-                        ['diff', '基础差异'],
-                        ['disk', '磁盘差异'],
-                        ['history', '历史']
-                      ].map(([key, label]) => (
-                        <button
-                          key={key}
-                          className={editorTab === key ? 'active' : ''}
-                          onClick={() => {
-                            setEditorTab(key);
-                            if (key === 'history')
-                              void act(async () =>
-                                setHistories(await invoke('document.history', { path: doc.path }))
-                              );
-                          }}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                      <span>{doc.runId ? '候选版本' : '磁盘文稿'}</span>
-                    </div>
-                    {snapshot.documents.find((d) => d.path === doc.path)?.status === 'external' && (
-                      <div className="inline-warning">
-                        发现外部改稿
-                        <button
-                          onClick={() =>
-                            void act(async () =>
-                              setSelectedRun(await invoke('project.importAccept', { path: doc.path }))
-                            )
-                          }
-                        >
-                          建立待审候选
-                        </button>
-                      </div>
+                </nav>
+                {inspector === 'characters' ? (
+                  <CharacterInspector snapshot={snapshot} onSource={setSource} />
+                ) : inspector === 'details' ? (
+                  <div className="diagnostics-inspector">
+                    <h3>当前任务</h3>
+                    <p>{run ? status[run.status] : '暂无任务'}</p>
+                    {run?.manifest && (
+                      <>
+                        <p>上下文 · {run.manifest.estimatedTokens.toLocaleString()}（保守估计）</p>
+                        <p>记忆 · {run.manifest.factIds.length}</p>
+                        <details>
+                          <summary>来源</summary>
+                          {run.manifest.sources.map((s) => (
+                            <p key={s.path}>
+                              {s.path} · {s.hash.slice(0, 8)}
+                            </p>
+                          ))}
+                        </details>
+                      </>
                     )}
-                    {editorTab === 'edit' ? (
-                      <Editor value={text} onChange={setText} onSelection={setSelection} />
-                    ) : editorTab === 'diff' || editorTab === 'disk' ? (
-                      <Difference
-                        before={editorTab === 'disk' ? (doc.disk ?? doc.before) : doc.before}
-                        after={text}
-                      />
-                    ) : editorTab === 'preview' ? (
-                      <div
-                        className="markdown-preview"
-                        onClick={(e) => {
-                          const anchor = (e.target as HTMLElement).closest('a');
-                          if (anchor) {
-                            e.preventDefault();
-                            const href = anchor.getAttribute('href') ?? '';
-                            if (!/^[a-z]+:/i.test(href) && !href.startsWith('#')) {
-                              const relative = decodeURIComponent(
-                                new URL(href, 'https://local/' + doc.path).pathname.slice(1)
-                              );
-                              void openDoc(relative);
-                            }
-                          }
-                        }}
-                        dangerouslySetInnerHTML={{
-                          __html: DOMPurify.sanitize(marked.parse(text, { async: false }) as string)
-                        }}
-                      />
-                    ) : (
-                      <div className="history-list">
-                        {histories.map((h) => (
-                          <div key={h.hash}>
-                            <time>{new Date(h.createdAt).toLocaleString()}</time>
-                            <small>{h.hash.slice(0, 12)}</small>
+                    {run?.steps?.map((s, i) => (
+                      <p key={i}>
+                        {s.phase} · {snapshot.profiles.find((p) => p.id === s.profileId)?.name ?? s.profileId}
+                      </p>
+                    ))}
+                    {snapshot.studio?.outbox.map((o) => (
+                      <p key={o.id}>
+                        {o.error || '文件同步待完成'}
+                        <button onClick={() => void act(() => invoke('outbox.retry'))}>重试同步</button>
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <header>
+                      <div>
+                        <FileText size={16} />
+                        <b title={doc?.path}>{doc?.path.split('/').at(-1) ?? '文稿与差异'}</b>
+                        {dirty && <span className="draft-dot" />}
+                      </div>
+                      <button className="icon" aria-label="关闭编辑面板" onClick={() => setEditorOpen(false)}>
+                        <X size={15} />
+                      </button>
+                    </header>
+                    {doc ? (
+                      <>
+                        <div className="editor-tabs">
+                          {[
+                            ['edit', '编辑'],
+                            ['preview', '预览'],
+                            ['diff', '基础差异'],
+                            ['disk', '磁盘差异'],
+                            ['history', '历史']
+                          ].map(([key, label]) => (
                             <button
-                              onClick={() =>
-                                void act(async () => {
-                                  const old = await invoke<{ content: string }>('document.read', {
-                                    path: doc.path,
-                                    hash: h.hash
-                                  });
-                                  setDoc({ ...doc, before: old.content });
-                                  setEditorTab('diff');
-                                })
-                              }
+                              key={key}
+                              className={editorTab === key ? 'active' : ''}
+                              onClick={() => {
+                                setEditorTab(key);
+                                if (key === 'history')
+                                  void act(async () =>
+                                    setHistories(await invoke('document.history', { path: doc.path }))
+                                  );
+                              }}
                             >
-                              比较
+                              {label}
                             </button>
+                          ))}
+                          <span>{doc.runId ? '候选' : '文稿'}</span>
+                        </div>
+                        {snapshot.documents.find((d) => d.path === doc.path)?.status === 'external' && (
+                          <div className="inline-warning">
+                            发现外部改稿
                             <button
                               onClick={() =>
                                 void act(async () =>
-                                  setSelectedRun(
-                                    await invoke('document.restore', {
-                                      path: doc.path,
-                                      hash: h.hash,
-                                      baseHash: doc.hash
-                                    })
-                                  )
+                                  setSelectedRun(await invoke('project.importAccept', { path: doc.path }))
                                 )
                               }
                             >
-                              恢复为候选
+                              建立待审候选
                             </button>
                           </div>
-                        ))}
+                        )}
+                        {editorTab === 'edit' ? (
+                          <Editor
+                            value={text}
+                            onChange={setText}
+                            onSelection={setSelection}
+                            readOnly={
+                              !!(
+                                doc.runId &&
+                                snapshot.runs.find((r) => r.id === doc.runId)?.status === 'running'
+                              )
+                            }
+                          />
+                        ) : editorTab === 'diff' || editorTab === 'disk' ? (
+                          <Difference
+                            before={editorTab === 'disk' ? (doc.disk ?? doc.before) : doc.before}
+                            after={text}
+                          />
+                        ) : editorTab === 'preview' ? (
+                          <div
+                            className="markdown-preview"
+                            onClick={(e) => {
+                              const anchor = (e.target as HTMLElement).closest('a');
+                              if (anchor) {
+                                e.preventDefault();
+                                const href = anchor.getAttribute('href') ?? '';
+                                if (!/^[a-z]+:/i.test(href) && !href.startsWith('#')) {
+                                  const relative = decodeURIComponent(
+                                    new URL(href, 'https://local/' + doc.path).pathname.slice(1)
+                                  );
+                                  void openDoc(relative);
+                                }
+                              }
+                            }}
+                            dangerouslySetInnerHTML={{
+                              __html: DOMPurify.sanitize(marked.parse(text, { async: false }) as string)
+                            }}
+                          />
+                        ) : (
+                          <div className="history-list">
+                            {histories.map((h) => (
+                              <div key={h.hash}>
+                                <time>{new Date(h.createdAt).toLocaleString()}</time>
+                                <small>{h.hash.slice(0, 12)}</small>
+                                <button
+                                  onClick={() =>
+                                    void act(async () => {
+                                      const old = await invoke<{ content: string }>('document.read', {
+                                        path: doc.path,
+                                        hash: h.hash
+                                      });
+                                      setDoc({ ...doc, before: old.content });
+                                      setEditorTab('diff');
+                                    })
+                                  }
+                                >
+                                  比较
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    void act(async () =>
+                                      setSelectedRun(
+                                        await invoke('document.restore', {
+                                          path: doc.path,
+                                          hash: h.hash,
+                                          baseHash: doc.hash
+                                        })
+                                      )
+                                    )
+                                  }
+                                >
+                                  恢复为候选
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <footer>
+                          <small>
+                            {Array.from(text.replace(/\s/g, '')).length.toLocaleString()} 字符 · UTF-8
+                          </small>
+                          <div>
+                            {selection && (
+                              <button
+                                onClick={() => {
+                                  setMode('revision');
+                                  setRequest(
+                                    `仅修改 ${doc.path} 中以下选区，保持其他内容不变。修改目标：\n\n${selection}`
+                                  );
+                                }}
+                              >
+                                修改选区
+                              </button>
+                            )}
+                            <button
+                              className="primary"
+                              disabled={
+                                busy ||
+                                !dirty ||
+                                !!(doc.runId && snapshot.runs.find((r) => r.id === doc.runId)?.accepted)
+                              }
+                              onClick={() => void saveDraft()}
+                            >
+                              保存候选
+                            </button>
+                          </div>
+                        </footer>
+                      </>
+                    ) : (
+                      <div className="editor-empty">
+                        <FileText size={32} strokeWidth={1} />
+                        <h3>选择文稿</h3>
+                        <div className="paper-illustration">
+                          <i />
+                          <i />
+                          <i />
+                          <i />
+                          <i />
+                        </div>
                       </div>
                     )}
-                    <footer>
-                      <small>
-                        {Array.from(text.replace(/\s/g, '')).length.toLocaleString()} 字符 · UTF-8
-                      </small>
-                      <div>
-                        {selection && (
-                          <button
-                            onClick={() => {
-                              setMode('revision');
-                              setRequest(
-                                `仅修改 ${doc.path} 中以下选区，保持其他内容不变。修改目标：\n\n${selection}`
-                              );
-                            }}
-                          >
-                            修改选区
-                          </button>
-                        )}
-                        <button
-                          className="primary"
-                          disabled={
-                            busy ||
-                            !dirty ||
-                            !!(doc.runId && snapshot.runs.find((r) => r.id === doc.runId)?.accepted)
-                          }
-                          onClick={() => void saveDraft()}
-                        >
-                          保存候选
-                        </button>
-                      </div>
-                    </footer>
                   </>
-                ) : (
-                  <div className="editor-empty">
-                    <FileText size={32} strokeWidth={1} />
-                    <h3>让每一次改动清晰可见</h3>
-                    <p>
-                      选择左侧文稿，或点击任务中的候选文件。
-                      <br />
-                      在这里编辑、比较并回看历史。
-                    </p>
-                    <div className="paper-illustration">
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                    </div>
-                  </div>
                 )}
               </aside>
             )}
           </div>
         )}
       </main>
+      {source && <SourceDialog source={source} onClose={() => setSource(null)} />}
       {modal === 'legacy' && (
         <LegacyDialog
           onClose={() => setModal(null)}
@@ -1659,7 +1554,7 @@ function NewProject({ onClose, onCreated, act }: { onClose: () => void; onCreate
             void act(async () => setPreviewList(await invoke('project.preview', { title, premise })))
           }
         >
-          预览将创建的文件（不写磁盘）
+          查看初始文件
         </button>
         {previewList.length > 0 && (
           <details open>
@@ -1667,9 +1562,6 @@ function NewProject({ onClose, onCreated, act }: { onClose: () => void; onCreate
             <pre>{previewList.join('\n')}</pre>
           </details>
         )}
-        <div className="info-box">
-          默认 300 万字，每章 2500 字，每批 30 章。创建后可在写作参数中调整。创建作品不会调用模型。
-        </div>
         <div className="modal-footer">
           <button type="button" onClick={onClose}>
             取消
@@ -1697,12 +1589,7 @@ function ProjectSettings({
     [advanced, setAdvanced] = useState(JSON.stringify(config.stageProfiles, null, 2));
   const field = (key: keyof ProjectConfig, value: unknown) => setC((s) => ({ ...s, [key]: value }));
   return (
-    <Modal
-      title="作品设置"
-      subtitle="已规划的批次保留原范围，新的批次大小从下一批生效。"
-      onClose={onClose}
-      wide
-    >
+    <Modal title="作品设置" onClose={onClose} wide>
       <form
         className="modal-body form"
         onSubmit={(e) => {
@@ -1714,6 +1601,56 @@ function ProjectSettings({
         }}
       >
         <div className="form-grid">
+          {(
+            [
+              ['writing', '写作模型'],
+              ['extraction', '记忆提取'],
+              ['review', '质量评估']
+            ] as const
+          ).map(([key, label]) => (
+            <label key={key}>
+              {label}
+              <select
+                value={c.modelRouting[key]}
+                onChange={(e) => field('modelRouting', { ...c.modelRouting, [key]: e.target.value })}
+              >
+                <option value="">{key === 'writing' ? '沿用本次模型' : '沿用写作模型'}</option>
+                {profiles
+                  .filter((p) => p.protocol !== 'images')
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {modelLabel(p, profiles)}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          ))}
+          <label>
+            视角人物
+            <input
+              value={c.viewpointCharacterId}
+              onChange={(e) => field('viewpointCharacterId', e.target.value)}
+              placeholder="人物编号或姓名"
+            />
+          </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={c.preview.enabled}
+              onChange={(e) => field('preview', { ...c.preview, enabled: e.target.checked })}
+            />
+            实时评估
+          </label>
+          <label>
+            每章预览次数
+            <input
+              type="number"
+              min={0}
+              max={30}
+              value={c.preview.maxCalls}
+              onChange={(e) => field('preview', { ...c.preview, maxCalls: Number(e.target.value) })}
+            />
+          </label>
           {[
             ['targetWords', '目标总字数'],
             ['chapterWords', '单章目标字数'],
@@ -1774,20 +1711,6 @@ function ProjectSettings({
               value={c.stageBudget ?? ''}
               onChange={(e) => field('stageBudget', e.target.value === '' ? null : Number(e.target.value))}
             />
-          </label>
-          <label>
-            终端、安装、脚本
-            <select value={c.terminalPolicy} onChange={(e) => field('terminalPolicy', e.target.value)}>
-              <option value="ask">每次确认具体动作</option>
-              <option value="disabled">禁用</option>
-            </select>
-          </label>
-          <label>
-            工具联网读取
-            <select value={c.networkPolicy} onChange={(e) => field('networkPolicy', e.target.value)}>
-              <option value="ask">每次确认具体地址</option>
-              <option value="disabled">禁用</option>
-            </select>
           </label>
         </div>
         <label>

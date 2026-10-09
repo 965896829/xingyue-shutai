@@ -127,11 +127,11 @@ test('SQLite v1 事务升级前有完整备份；旧记录保留且不会伪造�
   before.sql.exec('PRAGMA user_version=1');
   before.close();
   const after = new Database(file);
-  assert.equal(after.sql.prepare('PRAGMA user_version').get()!.user_version, 2);
+  assert.equal(after.sql.prepare('PRAGMA user_version').get()!.user_version, 3);
   assert.deepEqual(after.get('marker'), { old: true });
   assert.equal(after.sql.prepare('SELECT count(*) AS n FROM conversations').get()!.n, 0);
   after.close();
-  const backup = fs.readdirSync(path.dirname(file)).find((f) => f.includes('before-v2'))!;
+  const backup = fs.readdirSync(path.dirname(file)).find((f) => f.includes('before-v3'))!;
   assert.ok(backup);
   const saved = new DatabaseSync(path.join(path.dirname(file), backup), { readOnly: true });
   assert.equal(saved.prepare('PRAGMA user_version').get()!.user_version, 1);

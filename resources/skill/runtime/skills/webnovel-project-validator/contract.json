@@ -1,0 +1,30 @@
+{
+  "contract_version": "1.0",
+  "stage": "guard",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "validate.run"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "project snapshot、artifact states、mode=scaffold/stage/chapter/full、目标阶段/章号、配置与依赖。",
+  "outputs": [
+    "ValidationReport",
+    "阶段或章节硬门槛结果"
+  ],
+  "acceptance_criteria": [
+    "1000/1200章可识别",
+    "末批不强要30章",
+    "占位字段不能过关",
+    "报告没有编造语义检查已完成"
+  ]
+}

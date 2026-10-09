@@ -1,0 +1,35 @@
+{
+  "contract_version": "1.0",
+  "stage": "revision",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "用户修改指令、旧接受版本、作者当前编辑版本、实体ID、依赖图、保护区、授权范围。",
+  "outputs": [
+    "09_续写状态/改动影响记录.md",
+    "影响图与changeset",
+    "必要的正文/计划/记忆候选"
+  ],
+  "acceptance_criteria": [
+    "无全书无差别替换",
+    "旧批准不能覆盖新手稿",
+    "历史别名保留",
+    "下游闭环或明确stale"
+  ]
+}

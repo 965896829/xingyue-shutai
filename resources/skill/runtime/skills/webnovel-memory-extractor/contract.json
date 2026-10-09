@@ -1,0 +1,35 @@
+{
+  "contract_version": "1.0",
+  "stage": "S11",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "复读后的正文候选或已接受版本及hash；旧快照；提取范围；实体及五类台账。",
+  "outputs": [
+    "08_章后更新/第{chapter}章记忆更新.md候选",
+    "memory delta",
+    "09_续写状态/当前进度.md与索引候选"
+  ],
+  "acceptance_criteria": [
+    "每个关键事实有原文出处",
+    "无计划污染",
+    "不对全部角色假更新",
+    "未提交不标已同步"
+  ]
+}

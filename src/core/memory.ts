@@ -7,8 +7,10 @@ import {
   type StageId
 } from '../shared/types';
 import { hash, id, now, paths, requiredInputs, prosePath, updatePath } from './domain';
+import type { Change } from '../shared/types';
 import { FileStore, fileHash, safePath } from './storage';
 import { inputTokenBudget, requireModelLimits } from '../shared/model-limits';
+import { retrieveMemory, scopedRead, writingScope } from './memory-studio';
 
 const marker = '<!-- wenxu-facts:v1 -->';
 const factsPattern = /<!-- wenxu-facts:v1 -->\s*```json\s*\n([\s\S]*?)\n```/;
@@ -39,7 +41,12 @@ export function encodeFacts(content: string, facts: Fact[]): string {
     ? content.replace(factsPattern, () => block)
     : `${content.trimEnd()}\n\n## 可追溯事实记录\n\n${block}\n`;
 }
-export function validateEvidence(store: FileStore, fact: Fact, chapter: number): string[] {
+export function validateEvidence(
+  store: FileStore,
+  fact: Fact,
+  chapter: number,
+  candidates: Change[] = []
+): string[] {
   const errors: string[] = [];
   if (fact.kind === 'event' && fact.fromChapter > chapter) errors.push('未来计划不能作为已发生事件');
   if (fact.revealedAt > chapter && fact.kind !== 'plan' && fact.kind !== 'world_rule')
@@ -47,8 +54,9 @@ export function validateEvidence(store: FileStore, fact: Fact, chapter: number):
   for (const source of fact.evidence) {
     try {
       const d = store.db.document(source.path);
-      if (!d || d.hash !== source.hash) throw new Error('来源不是当前已接受版本');
-      if (fileHash(safePath(store.root, source.path)) !== source.hash)
+      const candidate = candidates.find((c) => c.path === source.path && hash(c.content) === source.hash);
+      if (!candidate && (!d || d.hash !== source.hash)) throw new Error('来源不是当前已接受版本');
+      if (!candidate && fileHash(safePath(store.root, source.path)) !== source.hash)
         throw new Error('来源文件存在未确认的外部改动');
       const sourceChapter = source.path.match(/^07_.*第(\d+)章/);
       if (sourceChapter && Number(sourceChapter[1]) > chapter) throw new Error('不能以未来章节证明当前事件');
@@ -59,8 +67,23 @@ export function validateEvidence(store: FileStore, fact: Fact, chapter: number):
         !(fact.kind === 'plan' && /^(05_|06_)/.test(source.path))
       )
         throw new Error('事件依据必须来自正文；计划可引用规划，但台账和摘要不能自证');
-      const text = store.read(source.path, source.hash).content;
+      const text = candidate?.content ?? store.readAccepted(source.path).content;
       if (!text.includes(source.quote)) throw new Error('原文中找不到这段证据');
+      const points = Array.from(text),
+        quote = Array.from(source.quote);
+      if ((source.start === undefined) !== (source.end === undefined))
+        throw new Error('证据位置必须同时包含起点和终点');
+      if (
+        source.start !== undefined &&
+        (source.end! - source.start !== quote.length ||
+          points.slice(source.start, source.end).join('') !== source.quote)
+      )
+        throw new Error('证据位置与原文不一致');
+      if (source.start === undefined) {
+        const offset = text.indexOf(source.quote);
+        source.start = Array.from(text.slice(0, offset)).length;
+        source.end = source.start + quote.length;
+      }
     } catch (e) {
       errors.push(`${fact.id}：${(e as Error).message}`);
     }
@@ -188,7 +211,11 @@ export function searchMemory(store: FileStore, query: string, chapter: number, l
           tokens.filter((t) => row.content.toLowerCase().includes(t)).length +
           (row.content.toLowerCase().includes(query.toLowerCase()) ? 100 : 0)
       }))
-      .filter((x) => x.score > 0)
+      .filter(
+        (x) =>
+          x.score > 0 &&
+          (!x.row.path.startsWith('07_') || Number(x.row.path.match(/第(\d+)章/)?.[1]) <= chapter)
+      )
       .sort((a, b) => b.score - a.score);
     for (const { row } of scoredDocs.slice(0, limit)) {
       const doc = store.db.document(row.path);
@@ -229,7 +256,14 @@ export function assembleContext(
 ): ContextManifest {
   requireModelLimits(profile);
   const scan = store.scan(),
-    required = requiredInputs(stage, p);
+    required = requiredInputs(stage, p)
+      .filter(
+        (file) =>
+          stage < 'S09' ||
+          !file.startsWith('04_') ||
+          (file === paths.summary && writingScope(p).viewpoint === 'author')
+      )
+      .filter((file) => writingScope(p).viewpoint === 'author' || !/^(00_|01_|03_|04_|05_|09_)/.test(file));
   if (stage >= 'S09')
     for (let n = Math.max(1, p.chapter - p.config.recentChapters); n < p.chapter; n++) {
       const file = updatePath(n);
@@ -254,7 +288,10 @@ export function assembleContext(
     const doc = scan.find((d) => d.path === relative);
     if (!doc || doc.status === 'missing') throw new Error(`缺少本阶段必读资料：${relative}`);
     if (doc.status !== 'accepted') throw new Error(`必读资料存在待确认的外部修改：${relative}`);
-    const source = store.read(relative, doc.acceptedHash!);
+    const source =
+      writingScope(p).viewpoint === 'author'
+        ? store.readAccepted(relative)
+        : scopedRead(store, relative, writingScope(p));
     m.sources.push({
       path: relative,
       hash: source.hash,
@@ -270,7 +307,15 @@ export function assembleContext(
       .filter((s) => s.path.includes('任务清单') || s.path === prosePath(p.chapter - 1))
       .map((s) => s.content)
   ].join('\n');
-  const found = searchMemory(store, query, p.chapter, 8);
+  const found = retrieveMemory(store, query, writingScope(p), 8);
+  m.snapshotId = found.snapshotId;
+  m.coverage = found.coverage;
+  m.retrievedFacts = found.facts.map((x) => x.fact);
+  m.assemblyVersion = '3.1-layered';
+  m.conflicts.push(
+    ...found.issues,
+    ...found.coverage.filter((c) => c.status === 'missing').map((c) => `缺少连续性台账：${c.ledger}`)
+  );
   m.factIds = found.facts.map((f) => f.fact.id);
   for (const { fact } of found.facts) m.conflicts.push(...validateEvidence(store, fact, p.chapter));
   for (const { fact } of found.facts) if (fact.state === 'disputed') m.conflicts.push(fact.id);
@@ -293,12 +338,12 @@ export function assembleContext(
       mode: 'excerpt'
     });
   }
-  m.estimatedTokens = Buffer.byteLength(JSON.stringify(m.sources), 'utf8');
+  m.estimatedTokens = Buffer.byteLength(JSON.stringify([m.sources, m.retrievedFacts]), 'utf8');
   while (m.estimatedTokens > m.availableTokens && m.sources.some((s) => !s.required)) {
     const at = m.sources.findLastIndex((s) => !s.required);
     m.omitted!.push({ path: m.sources[at].path, reason: '可选原文因输入预算未装入' });
     m.sources.splice(at, 1);
-    m.estimatedTokens = Buffer.byteLength(JSON.stringify(m.sources), 'utf8');
+    m.estimatedTokens = Buffer.byteLength(JSON.stringify([m.sources, m.retrievedFacts]), 'utf8');
   }
   if (m.estimatedTokens > m.availableTokens)
     throw new Error(

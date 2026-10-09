@@ -1,0 +1,251 @@
+{
+  "source": "naming-system.md v2.0",
+  "notice": "G01-G37 是原技能内部路由，G37=其他；不是已核实的平台分类ID。T01-T12 是原技能组合标签。",
+  "modules": [
+    {
+      "id": "G01",
+      "title": "都市日常",
+      "path": "genres/G01.md"
+    },
+    {
+      "id": "G02",
+      "title": "都市脑洞",
+      "path": "genres/G02.md"
+    },
+    {
+      "id": "G03",
+      "title": "都市高武",
+      "path": "genres/G03.md"
+    },
+    {
+      "id": "G04",
+      "title": "都市修真",
+      "path": "genres/G04.md"
+    },
+    {
+      "id": "G05",
+      "title": "都市种田",
+      "path": "genres/G05.md"
+    },
+    {
+      "id": "G06",
+      "title": "战神赘婿",
+      "path": "genres/G06.md"
+    },
+    {
+      "id": "G07",
+      "title": "传统玄幻",
+      "path": "genres/G07.md"
+    },
+    {
+      "id": "G08",
+      "title": "玄幻脑洞",
+      "path": "genres/G08.md"
+    },
+    {
+      "id": "G09",
+      "title": "东方仙侠",
+      "path": "genres/G09.md"
+    },
+    {
+      "id": "G10",
+      "title": "西方奇幻",
+      "path": "genres/G10.md"
+    },
+    {
+      "id": "G11",
+      "title": "历史古代",
+      "path": "genres/G11.md"
+    },
+    {
+      "id": "G12",
+      "title": "历史脑洞",
+      "path": "genres/G12.md"
+    },
+    {
+      "id": "G13",
+      "title": "抗战谍战",
+      "path": "genres/G13.md"
+    },
+    {
+      "id": "G14",
+      "title": "悬疑脑洞",
+      "path": "genres/G14.md"
+    },
+    {
+      "id": "G15",
+      "title": "悬疑灵异",
+      "path": "genres/G15.md"
+    },
+    {
+      "id": "G16",
+      "title": "女频悬疑",
+      "path": "genres/G16.md"
+    },
+    {
+      "id": "G17",
+      "title": "科幻末世",
+      "path": "genres/G17.md"
+    },
+    {
+      "id": "G18",
+      "title": "游戏体育",
+      "path": "genres/G18.md"
+    },
+    {
+      "id": "G19",
+      "title": "男频衍生",
+      "path": "genres/G19.md"
+    },
+    {
+      "id": "G20",
+      "title": "女频衍生",
+      "path": "genres/G20.md"
+    },
+    {
+      "id": "G21",
+      "title": "动漫衍生",
+      "path": "genres/G21.md"
+    },
+    {
+      "id": "G22",
+      "title": "豪门总裁",
+      "path": "genres/G22.md"
+    },
+    {
+      "id": "G23",
+      "title": "青春甜宠",
+      "path": "genres/G23.md"
+    },
+    {
+      "id": "G24",
+      "title": "星光璀璨",
+      "path": "genres/G24.md"
+    },
+    {
+      "id": "G25",
+      "title": "职场婚恋",
+      "path": "genres/G25.md"
+    },
+    {
+      "id": "G26",
+      "title": "现言脑洞",
+      "path": "genres/G26.md"
+    },
+    {
+      "id": "G27",
+      "title": "古风世情",
+      "path": "genres/G27.md"
+    },
+    {
+      "id": "G28",
+      "title": "宫斗宅斗",
+      "path": "genres/G28.md"
+    },
+    {
+      "id": "G29",
+      "title": "古言脑洞",
+      "path": "genres/G29.md"
+    },
+    {
+      "id": "G30",
+      "title": "民国言情",
+      "path": "genres/G30.md"
+    },
+    {
+      "id": "G31",
+      "title": "玄幻言情",
+      "path": "genres/G31.md"
+    },
+    {
+      "id": "G32",
+      "title": "年代",
+      "path": "genres/G32.md"
+    },
+    {
+      "id": "G33",
+      "title": "种田",
+      "path": "genres/G33.md"
+    },
+    {
+      "id": "G34",
+      "title": "快穿",
+      "path": "genres/G34.md"
+    },
+    {
+      "id": "G35",
+      "title": "双男主",
+      "path": "genres/G35.md"
+    },
+    {
+      "id": "G36",
+      "title": "双女主",
+      "path": "genres/G36.md"
+    },
+    {
+      "id": "G37",
+      "title": "其他",
+      "path": "genres/G37.md"
+    },
+    {
+      "id": "T01",
+      "title": "规则怪谈、无限流、副本与生存游戏",
+      "path": "tags/T01.md"
+    },
+    {
+      "id": "T02",
+      "title": "系统、面板、职业与任务机制",
+      "path": "tags/T02.md"
+    },
+    {
+      "id": "T03",
+      "title": "重生、穿越、穿书与时间循环",
+      "path": "tags/T03.md"
+    },
+    {
+      "id": "T04",
+      "title": "历史穿梭、诸天与跨作品融合",
+      "path": "tags/T04.md"
+    },
+    {
+      "id": "T05",
+      "title": "末日求生、天灾、囤物资与废土",
+      "path": "tags/T05.md"
+    },
+    {
+      "id": "T06",
+      "title": "克苏鲁、诡异、赛博朋克与其他异质文化标签",
+      "path": "tags/T06.md"
+    },
+    {
+      "id": "T07",
+      "title": "神豪、商业、经营、黑科技、医术与专业职业",
+      "path": "tags/T07.md"
+    },
+    {
+      "id": "T08",
+      "title": "反派、女强、萌宝、奶爸、学霸与人物属性",
+      "path": "tags/T08.md"
+    },
+    {
+      "id": "T09",
+      "title": "甜宠、虐恋、先婚后爱、追妻、救赎与关系结构",
+      "path": "tags/T09.md"
+    },
+    {
+      "id": "T10",
+      "title": "搞笑、沙雕、反套路与谐音风格",
+      "path": "tags/T10.md"
+    },
+    {
+      "id": "T11",
+      "title": "武侠与江湖补充",
+      "path": "tags/T11.md"
+    },
+    {
+      "id": "T12",
+      "title": "短故事与篇幅形式",
+      "path": "tags/T12.md"
+    }
+  ]
+}

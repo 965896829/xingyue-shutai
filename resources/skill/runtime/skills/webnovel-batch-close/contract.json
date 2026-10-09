@@ -1,0 +1,35 @@
+{
+  "contract_version": "1.0",
+  "stage": "S11/boundary",
+  "optional": false,
+  "tools": [
+    "project.read_snapshot",
+    "artifact.read",
+    "memory.query",
+    "memory.trace_source",
+    "skill.load",
+    "candidate.write",
+    "candidate.diff",
+    "changeset.propose",
+    "validate.run",
+    "review.request"
+  ],
+  "write_scope": "candidate-only",
+  "can_approve": false,
+  "can_commit": false,
+  "can_publish": false,
+  "requires_consistent_snapshot": true,
+  "max_repairs": 2,
+  "inputs": "批次实际范围、全部已接受章、当前行为日志、五台账、未兑现承诺、偏差记录和阶段授权。",
+  "outputs": [
+    "04_人物记忆库/历史归档/第{start}-{end}章情绪与行为.md",
+    "04_人物记忆库/批次人物摘要.md",
+    "下一批承接与归档changeset"
+  ],
+  "acceptance_criteria": [
+    "所有章已接受",
+    "归档与摘要source hash齐全",
+    "不复制全部旧行为到新批",
+    "末批范围正确"
+  ]
+}
