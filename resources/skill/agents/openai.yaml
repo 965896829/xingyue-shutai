@@ -1,0 +1,4 @@
+interface:
+  display_name: "网文神设成章"
+  short_description: "把任意神级设定拆成长篇大纲、连续性记忆和逐章正文"
+  default_prompt: "Use $webnovel-seed-to-chapter 把这个神级设定按阶段拆成长篇网文方案、人物与连续性记忆、三十章细纲和第一章。"

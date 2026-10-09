@@ -1,0 +1,308 @@
+[
+  {
+    "models": [
+      "gpt-4o",
+      "gpt-4o-2024-08-06"
+    ],
+    "contextLimit": 128000,
+    "inputLimit": null,
+    "outputLimit": 16384,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-4o",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-4o-mini",
+      "gpt-4o-mini-2024-07-18"
+    ],
+    "contextLimit": 128000,
+    "inputLimit": null,
+    "outputLimit": 16384,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-4o-mini",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-4.1",
+      "gpt-4.1-2025-04-14"
+    ],
+    "contextLimit": 1047576,
+    "inputLimit": null,
+    "outputLimit": 32768,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-4.1",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-4.1-mini",
+      "gpt-4.1-mini-2025-04-14"
+    ],
+    "contextLimit": 1047576,
+    "inputLimit": null,
+    "outputLimit": 32768,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-4.1-mini",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-4.1-nano",
+      "gpt-4.1-nano-2025-04-14"
+    ],
+    "contextLimit": 1047576,
+    "inputLimit": null,
+    "outputLimit": 32768,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-4.1-nano",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5",
+      "gpt-5-2025-08-07"
+    ],
+    "contextLimit": 400000,
+    "inputLimit": 272000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5-mini",
+      "gpt-5-mini-2025-08-07"
+    ],
+    "contextLimit": 400000,
+    "inputLimit": 272000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5-mini",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5-nano",
+      "gpt-5-nano-2025-08-07"
+    ],
+    "contextLimit": 400000,
+    "inputLimit": 272000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5-nano",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5.1",
+      "gpt-5.1-2025-11-13"
+    ],
+    "contextLimit": 400000,
+    "inputLimit": null,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.1",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5.2",
+      "gpt-5.2-2025-12-11"
+    ],
+    "contextLimit": 400000,
+    "inputLimit": null,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.2",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5.2-chat-latest"
+    ],
+    "contextLimit": 128000,
+    "inputLimit": null,
+    "outputLimit": 16384,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.2-chat-latest",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs",
+    "note": "官方页面的独立输入字段与总窗口矛盾，按总窗口与输出共同约束；不采用矛盾字段。"
+  },
+  {
+    "models": [
+      "gpt-5.2-pro",
+      "gpt-5.2-pro-2025-12-11"
+    ],
+    "contextLimit": 400000,
+    "inputLimit": null,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.2-pro",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5.4",
+      "gpt-5.4-2026-03-05"
+    ],
+    "contextLimit": 1050000,
+    "inputLimit": null,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.4",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5.4-mini",
+      "gpt-5.4-mini-2026-03-17"
+    ],
+    "contextLimit": 400000,
+    "inputLimit": 272000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5.5",
+      "gpt-5.5-2026-04-23"
+    ],
+    "contextLimit": 1050000,
+    "inputLimit": null,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.5",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5.5-pro",
+      "gpt-5.5-pro-2026-04-23"
+    ],
+    "contextLimit": 1050000,
+    "inputLimit": null,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.5-pro",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5.6-sol",
+      "gpt-5.6"
+    ],
+    "contextLimit": 1050000,
+    "inputLimit": 922000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5.6-luna"
+    ],
+    "contextLimit": 1050000,
+    "inputLimit": 922000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-5.6-terra"
+    ],
+    "contextLimit": 1050000,
+    "inputLimit": 922000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-6-astra"
+    ],
+    "contextLimit": 1050000,
+    "inputLimit": 922000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-6-sol"
+    ],
+    "contextLimit": 1050000,
+    "inputLimit": 922000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-6-sol",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-6-luna"
+    ],
+    "contextLimit": 1050000,
+    "inputLimit": 922000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-6.1-sol"
+    ],
+    "contextLimit": 1050000,
+    "inputLimit": 922000,
+    "outputLimit": 128000,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  },
+  {
+    "models": [
+      "gpt-4o-audio-preview",
+      "gpt-4o-audio-preview-2025-06-03"
+    ],
+    "contextLimit": 128000,
+    "inputLimit": null,
+    "outputLimit": 16384,
+    "windowKind": "shared",
+    "source": "https://developers.openai.com/api/docs/models/gpt-4o-audio-preview",
+    "checkedAt": "2026-10-08",
+    "origin": "official-docs"
+  }
+]

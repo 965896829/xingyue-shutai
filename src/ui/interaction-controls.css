@@ -1,0 +1,268 @@
+/* Interaction patterns supplied by the author, adapted to both existing themes. */
+.delete-control {
+  --delete-accent: #ff5f2e;
+  position: relative;
+  height: var(--delete-size);
+  flex: 0 0 auto;
+  border-radius: 16px;
+  color: var(--muted);
+  background: var(--raised);
+  z-index: 1;
+}
+.delete-control.compact {
+  border-radius: 10px;
+}
+.delete-control[data-state='open'] {
+  z-index: 10;
+}
+/* Scoped selectors override sidebar/form button rules without changing other controls. */
+.delete-control button.delete-trigger {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: var(--delete-size);
+  height: var(--delete-size);
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+}
+.delete-control svg {
+  margin: 0 !important;
+  flex-shrink: 0;
+}
+.delete-panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: inherit;
+  background: var(--inset);
+}
+.delete-panel::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: calc(50% - 5px);
+  width: 6px;
+  height: 10px;
+  background: var(--inset);
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+.delete-control button.delete-circle {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--raised);
+  color: var(--muted);
+  box-shadow:
+    0 1px 3px #0002,
+    inset 0 0.5px #ffffff30;
+}
+.delete-description {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 240px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  box-shadow: 0 6px 24px #0002;
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  pointer-events: none;
+}
+.delete-description p {
+  color: var(--danger);
+  margin: 6px 0 0;
+}
+.compact .delete-description {
+  left: auto;
+  right: 0;
+  width: 184px;
+}
+.delete-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.delete-action > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.provider-list-row,
+.recent-book-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+.provider-list-row > button,
+.recent-book-row > button {
+  flex: 1;
+  min-width: 0;
+}
+.provider-layout > aside .provider-list-row > button {
+  margin: 0;
+}
+.provider-list-row {
+  margin-bottom: 8px;
+}
+.recent-book-row > button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.current-book {
+  position: relative;
+}
+.current-book-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.current-book .book-folder {
+  flex-shrink: 0;
+}
+.sidebar .recent {
+  padding-bottom: 105px;
+}
+.recycle-body {
+  padding: 22px 28px;
+  overflow: auto;
+}
+.recycle-intro {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  color: var(--muted);
+}
+.recycle-intro svg {
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+.recycle-intro p {
+  margin-top: 0;
+}
+.recycle-entry {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.recycle-entry-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.recycle-entry h3 {
+  margin: 0;
+}
+.recycle-entry p {
+  overflow-wrap: anywhere;
+}
+.recycle-entry .button-row {
+  margin: 16px 0 8px;
+}
+.provider-layout > aside {
+  padding-bottom: 130px;
+}
+
+.conversation {
+  container-type: inline-size;
+}
+.conversation > .chat-layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 16px;
+  /* Keep the reading column aligned with the composer when navigation appears. */
+  max-width: 850px;
+}
+.chat-layout .chat-scroll {
+  min-width: 0;
+  min-height: 0;
+}
+.proximity-sidebar {
+  display: flex;
+  align-items: center;
+  width: 72px;
+  flex-shrink: 0;
+  min-height: 0;
+}
+.proximity-track {
+  width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.proximity-sidebar button.proximity-dash {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: 28px;
+  padding: 0 3px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+}
+.proximity-dash span {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: var(--soft);
+  opacity: 0.5;
+}
+.proximity-dash[aria-current='location'] span {
+  background: var(--accent);
+  opacity: 1;
+  height: 2px;
+}
+.proximity-sidebar button:hover {
+  background: var(--inset);
+}
+.chat-scroll [id^='chat-'] {
+  scroll-margin-top: 8px;
+}
+@container (max-width: 550px) {
+  .conversation > .chat-layout {
+    gap: 8px;
+  }
+  .proximity-sidebar {
+    width: 32px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .delete-control *,
+  .proximity-sidebar * {
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+  }
+}
