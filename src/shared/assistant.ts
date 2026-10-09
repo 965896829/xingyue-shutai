@@ -55,6 +55,7 @@ export interface ConversationMessage {
   citations: Citation[];
 }
 export interface ConversationTurn {
+  expressionRules?: import('./expression').ExpressionBinding;
   id: string;
   conversationId: string;
   messageId: string;

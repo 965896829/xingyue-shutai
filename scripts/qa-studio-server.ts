@@ -27,7 +27,9 @@ const server = createServer(async (req, res) => {
     const db = new DatabaseSync(path.join(qa.root, '.novelclient/state.sqlite'), { readOnly: true });
     let text = '',
       calls: any[] = [],
-      kind = '';
+      kind = '',
+      expressionMode = '',
+      expressionRuleIds: string[] = [];
     try {
       const p = JSON.parse(
         (db.prepare("SELECT value FROM kv WHERE key='project'").get() as any).value
@@ -50,7 +52,15 @@ const server = createServer(async (req, res) => {
         .filter((m: any) => m.role === 'system')
         .map((m: any) => m.content)
         .join('\n');
-      if (!input.tools?.length) {
+      expressionMode = system.match(/<expression_rules version="3\.1\.0" mode="([a-z]+)">/)?.[1] ?? '';
+      expressionRuleIds = [...system.matchAll(/^\[([A-Z]+-\d{3})\]/gm)].map((m) => m[1]);
+      if (expressionMode === 'discussion' || expressionMode === 'draft') {
+        text =
+          expressionMode === 'discussion'
+            ? '让争论围绕一个眼前的决定展开：谁先下船，谁留下看守玉钥。两个人各有顾虑，先把顾虑说清楚。'
+            : '阿宁把缆绳放回船头。“你先走。”阿甲没有动，伸手按住了那枚玉钥。';
+        kind = expressionMode;
+      } else if (!input.tools?.length) {
         if (system.includes('rubric narrative-1')) {
           const supplied = JSON.parse(input.messages.at(-1).content).text;
           text = JSON.stringify({
@@ -95,6 +105,8 @@ const server = createServer(async (req, res) => {
         at: new Date().toISOString(),
         kind,
         model: input.model,
+        expressionMode,
+        expressionRuleIds,
         tools: (input.tools ?? []).map((t: any) => t.function.name)
       }) + '\n'
     );
@@ -133,4 +145,6 @@ const server = createServer(async (req, res) => {
     res.writeHead(500).end(JSON.stringify({ error: (e as Error).message }));
   }
 });
-server.listen(19457, '127.0.0.1', () => console.log('Studio QA model ready: 127.0.0.1:19457'));
+const port = Number(process.env.WENXU_QA_PORT ?? 19457);
+if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('无效的本机验收端口');
+server.listen(port, '127.0.0.1', () => console.log(`Studio QA model ready: 127.0.0.1:${port}`));

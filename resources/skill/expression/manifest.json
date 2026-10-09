@@ -1,0 +1,10 @@
+{
+  "version": "3.1.0",
+  "ruleCount": 905,
+  "moduleCount": 145,
+  "source": "novel_quality_v3_1",
+  "files": {
+    "rules_master.json": "9b3ccd74b7f9d4b790ff81a79494dafee9f510bf15b38bef73550791b94da11e",
+    "tag_system.json": "6882ad6cf4e17e77a055fae8bcb96c84c4be25b0d588f8e43af0fee11f8c07dd"
+  }
+}

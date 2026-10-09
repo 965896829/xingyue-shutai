@@ -1,0 +1,3127 @@
+{
+  "version": "3.1.0",
+  "kind": "internal_axes_not_official_tags",
+  "default_genre": null,
+  "selection_fields": {
+    "genre_modules": "genre",
+    "tag_modules": "tag",
+    "scene_modules": "scene",
+    "relationship_modules": "relationship",
+    "tone_modules": "tone",
+    "form_modules": "form"
+  },
+  "modules": [
+    {
+      "id": "XUAN",
+      "name": "东方玄幻",
+      "layer": "genre",
+      "aliases": [
+        "东方玄幻",
+        "玄幻",
+        "东方幻想"
+      ],
+      "context": [
+        "项目合同",
+        "当前正文",
+        "前文证据"
+      ],
+      "protected_conventions": "保留既定类型技法、必要解释与作者风格，单个词句形式不构成问题。",
+      "rule_ids": [
+        "XUAN-001",
+        "XUAN-002",
+        "XUAN-003",
+        "XUAN-004",
+        "XUAN-005",
+        "XUAN-007",
+        "XUAN-008",
+        "XUAN-009",
+        "XUAN-010",
+        "XUAN-011",
+        "XUAN-012"
+      ],
+      "rule_count": 11
+    },
+    {
+      "id": "FIGHT",
+      "name": "战斗空间、目标与代价",
+      "layer": "scene",
+      "aliases": [
+        "战斗",
+        "打斗",
+        "动作战"
+      ],
+      "context": [
+        "项目合同",
+        "当前正文",
+        "前文证据"
+      ],
+      "protected_conventions": "保留既定类型技法、必要解释与作者风格，单个词句形式不构成问题。",
+      "rule_ids": [
+        "FIGHT-001",
+        "FIGHT-002",
+        "FIGHT-003",
+        "FIGHT-004",
+        "FIGHT-005",
+        "FIGHT-006",
+        "FIGHT-007",
+        "FIGHT-008",
+        "FIGHT-009",
+        "FIGHT-010",
+        "FIGHT-011",
+        "FIGHT-012"
+      ],
+      "rule_count": 12
+    },
+    {
+      "id": "XIAN",
+      "name": "仙侠修真",
+      "layer": "genre",
+      "aliases": [
+        "仙侠",
+        "修仙",
+        "凡人流",
+        "修真"
+      ],
+      "context": [
+        "修炼规则",
+        "寿命与时间表",
+        "宗门资源账"
+      ],
+      "protected_conventions": "保留修行过程、清谈、境界术语和长期时间跨度；不强迫每次修行都打脸。",
+      "rule_ids": [
+        "XIAN-001",
+        "XIAN-002",
+        "XIAN-003",
+        "XIAN-004",
+        "XIAN-005",
+        "XIAN-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "WUX",
+      "name": "武侠江湖",
+      "layer": "genre",
+      "aliases": [
+        "武侠",
+        "江湖",
+        "新武侠"
+      ],
+      "context": [
+        "武学边界",
+        "门派关系",
+        "名声与恩怨账"
+      ],
+      "protected_conventions": "保留招式名、侠义议论、江湖口吻及风格化决斗。",
+      "rule_ids": [
+        "WUX-001",
+        "WUX-002",
+        "WUX-003",
+        "WUX-004",
+        "WUX-005",
+        "WUX-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "FANT",
+      "name": "西方奇幻与异世魔法",
+      "layer": "genre",
+      "aliases": [
+        "奇幻",
+        "西幻",
+        "异世大陆",
+        "剑与魔法",
+        "魔法学院",
+        "蒸汽魔法"
+      ],
+      "context": [
+        "魔法契约",
+        "族群社会",
+        "技术与信仰边界"
+      ],
+      "protected_conventions": "保留异域专名、史诗语调和必要的魔法解释；不一律改成中文修仙框架。",
+      "rule_ids": [
+        "FANT-001",
+        "FANT-002",
+        "FANT-003",
+        "FANT-004",
+        "FANT-005",
+        "FANT-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "MYTH",
+      "name": "神话洪荒与仙神志怪",
+      "layer": "genre",
+      "aliases": [
+        "神话",
+        "洪荒",
+        "封神",
+        "仙神",
+        "神话改编"
+      ],
+      "context": [
+        "神话版本",
+        "神职体系",
+        "改编边界"
+      ],
+      "protected_conventions": "保留神话夸张、仪式语言和非现实因果；考证与二创设定分开。",
+      "rule_ids": [
+        "MYTH-001",
+        "MYTH-002",
+        "MYTH-003",
+        "MYTH-004",
+        "MYTH-005",
+        "MYTH-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "URBAN",
+      "name": "都市生活与现实成长",
+      "layer": "genre",
+      "aliases": [
+        "都市",
+        "现实",
+        "都市日常",
+        "社会现实",
+        "现实成长"
+      ],
+      "context": [
+        "城市与年代",
+        "人物收入时间",
+        "现实素材"
+      ],
+      "protected_conventions": "保留普通生活、小目标和不圆满结局；不强加升级或奇遇。",
+      "rule_ids": [
+        "URBAN-001",
+        "URBAN-002",
+        "URBAN-003",
+        "URBAN-004",
+        "URBAN-005",
+        "URBAN-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "POWER",
+      "name": "都市异能与高武",
+      "layer": "genre",
+      "aliases": [
+        "都市异能",
+        "高武",
+        "灵气复苏",
+        "超凡都市",
+        "全球觉醒"
+      ],
+      "context": [
+        "能力边界",
+        "社会反应",
+        "保密范围"
+      ],
+      "protected_conventions": "保留爽点、觉醒与等级；社会反应只补影响当前因果的部分。",
+      "rule_ids": [
+        "POWER-001",
+        "POWER-002",
+        "POWER-003",
+        "POWER-004",
+        "POWER-005",
+        "POWER-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "MROM",
+      "name": "现代言情与都市情感",
+      "layer": "genre",
+      "aliases": [
+        "现代言情",
+        "现言",
+        "都市言情",
+        "豪门言情"
+      ],
+      "context": [
+        "关系阶段",
+        "各自主线",
+        "亲密边界"
+      ],
+      "protected_conventions": "保留心动、暧昧、甜宠、夸张浪漫和符合合同的情感强度。",
+      "rule_ids": [
+        "MROM-001",
+        "MROM-002",
+        "MROM-003",
+        "MROM-004",
+        "MROM-005",
+        "MROM-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "AROM",
+      "name": "古代言情与宫廷宅斗",
+      "layer": "genre",
+      "aliases": [
+        "古代言情",
+        "古言",
+        "古偶",
+        "权谋言情"
+      ],
+      "context": [
+        "身份亲属表",
+        "制度版本",
+        "信息流",
+        "财产与婚姻设定"
+      ],
+      "protected_conventions": "保留古风对白、礼仪、情感张力和架空制度；不按现代婚恋强改人物。",
+      "rule_ids": [
+        "AROM-001",
+        "AROM-002",
+        "AROM-003",
+        "AROM-004",
+        "AROM-005",
+        "AROM-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "CAMPUS",
+      "name": "校园青春与成长",
+      "layer": "genre",
+      "aliases": [
+        "校园",
+        "青春",
+        "学园",
+        "青春成长"
+      ],
+      "context": [
+        "人物年龄",
+        "校历课程",
+        "成长阶段"
+      ],
+      "protected_conventions": "保留青涩、重复试探与成长中的错误；不把青少年写成成年情感顾问。",
+      "rule_ids": [
+        "CAMPUS-001",
+        "CAMPUS-002",
+        "CAMPUS-003",
+        "CAMPUS-004",
+        "CAMPUS-005",
+        "CAMPUS-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "FAMILY",
+      "name": "婚恋家庭与亲子",
+      "layer": "genre",
+      "aliases": [
+        "婚恋",
+        "家庭伦理",
+        "亲子",
+        "家庭生活",
+        "育儿"
+      ],
+      "context": [
+        "家庭分工",
+        "生活账目",
+        "年龄表",
+        "关系历史"
+      ],
+      "protected_conventions": "保留琐事、反复磨合与复杂家庭关系，不强迫每章大事件。",
+      "rule_ids": [
+        "FAMILY-001",
+        "FAMILY-002",
+        "FAMILY-003",
+        "FAMILY-004",
+        "FAMILY-005",
+        "FAMILY-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "ERA",
+      "name": "年代与近现代生活",
+      "layer": "genre",
+      "aliases": [
+        "年代",
+        "年代文",
+        "近现代",
+        "民国生活",
+        "知青",
+        "四合院"
+      ],
+      "context": [
+        "具体年份与地区",
+        "物价制度资料",
+        "人物代际"
+      ],
+      "protected_conventions": "保留时代口吻和生活程序；现代常识不能自动代替当时条件。",
+      "rule_ids": [
+        "ERA-001",
+        "ERA-002",
+        "ERA-003",
+        "ERA-004",
+        "ERA-005",
+        "ERA-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "CAREER",
+      "name": "职场与行业成长",
+      "layer": "genre",
+      "aliases": [
+        "职场",
+        "行业文",
+        "职业成长",
+        "打工人"
+      ],
+      "context": [
+        "岗位权限",
+        "任务流程",
+        "项目交付物",
+        "组织关系"
+      ],
+      "protected_conventions": "保留术语、流程与工作对白；问题在空话替代实际任务而非专业本身。",
+      "rule_ids": [
+        "CAREER-001",
+        "CAREER-002",
+        "CAREER-003",
+        "CAREER-004",
+        "CAREER-005",
+        "CAREER-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "BUSINESS",
+      "name": "商战创业与金融叙事",
+      "layer": "genre",
+      "aliases": [
+        "商战",
+        "创业",
+        "经商",
+        "金融",
+        "神豪商战"
+      ],
+      "context": [
+        "商业模式",
+        "资金账",
+        "交易对手目标",
+        "行业资料"
+      ],
+      "protected_conventions": "保留商业爽点、专业表达和适当简化；不把小说建议当现实投资建议。",
+      "rule_ids": [
+        "BUSINESS-001",
+        "BUSINESS-002",
+        "BUSINESS-003",
+        "BUSINESS-004",
+        "BUSINESS-005",
+        "BUSINESS-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "SHOWBIZ",
+      "name": "娱乐圈与文娱",
+      "layer": "genre",
+      "aliases": [
+        "娱乐圈",
+        "文娱",
+        "华娱",
+        "明星",
+        "综艺"
+      ],
+      "context": [
+        "作品与节目表",
+        "制作流程",
+        "受众差异",
+        "舆论时间线"
+      ],
+      "protected_conventions": "保留观众反应、作品呈现、粉圈语言和舞台高光。",
+      "rule_ids": [
+        "SHOWBIZ-001",
+        "SHOWBIZ-002",
+        "SHOWBIZ-003",
+        "SHOWBIZ-004",
+        "SHOWBIZ-005",
+        "SHOWBIZ-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "RURAL",
+      "name": "乡村田园与生活经营",
+      "layer": "genre",
+      "aliases": [
+        "乡村",
+        "田园",
+        "山村",
+        "手艺",
+        "非遗生活"
+      ],
+      "context": [
+        "地理季节",
+        "劳动过程",
+        "买卖关系",
+        "地方素材"
+      ],
+      "protected_conventions": "保留慢节奏、劳动、食物和无大反转的日常乐趣。",
+      "rule_ids": [
+        "RURAL-001",
+        "RURAL-002",
+        "RURAL-003",
+        "RURAL-004",
+        "RURAL-005",
+        "RURAL-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "BUILD",
+      "name": "种田基建与经营",
+      "layer": "genre",
+      "aliases": [
+        "种田",
+        "基建",
+        "领地经营",
+        "经营",
+        "城市建设"
+      ],
+      "context": [
+        "人口资源账",
+        "施工依赖",
+        "供应与制度"
+      ],
+      "protected_conventions": "保留清单、报表、进度与经营反馈；只删重复无变化的结算。",
+      "rule_ids": [
+        "BUILD-001",
+        "BUILD-002",
+        "BUILD-003",
+        "BUILD-004",
+        "BUILD-005",
+        "BUILD-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "OFFICE",
+      "name": "官场仕途与政务叙事",
+      "layer": "genre",
+      "aliases": [
+        "官场",
+        "仕途",
+        "政务",
+        "政治职场"
+      ],
+      "context": [
+        "岗位权限",
+        "程序版本",
+        "组织关系",
+        "项目时地"
+      ],
+      "protected_conventions": "保留含蓄对白、程序和多重动机；本模块不是现实办事或规避监管指南。",
+      "rule_ids": [
+        "OFFICE-001",
+        "OFFICE-002",
+        "OFFICE-003",
+        "OFFICE-004",
+        "OFFICE-005",
+        "OFFICE-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "HISTORY",
+      "name": "历史架空与历史穿越",
+      "layer": "genre",
+      "aliases": [
+        "历史",
+        "架空历史",
+        "历史穿越",
+        "朝堂",
+        "三国",
+        "两宋",
+        "明清"
+      ],
+      "context": [
+        "时期地域",
+        "史实与改编基线",
+        "人物知情表"
+      ],
+      "protected_conventions": "保留史论、古代制度与架空创新；不把历史结果当角色事先知识。",
+      "rule_ids": [
+        "HISTORY-001",
+        "HISTORY-002",
+        "HISTORY-003",
+        "HISTORY-004",
+        "HISTORY-005",
+        "HISTORY-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "WAR",
+      "name": "军事与战争",
+      "layer": "genre",
+      "aliases": [
+        "军事",
+        "战争",
+        "军旅",
+        "战史架空"
+      ],
+      "context": [
+        "任务目标",
+        "编制指挥",
+        "时间与补给",
+        "战争资料"
+      ],
+      "protected_conventions": "保留热血、荣誉、牺牲与必要军事术语；审查叙事因果，不提供现实伤害教程。",
+      "rule_ids": [
+        "WAR-001",
+        "WAR-002",
+        "WAR-003",
+        "WAR-004",
+        "WAR-005",
+        "WAR-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "SPY",
+      "name": "谍战卧底与秘密行动",
+      "layer": "genre",
+      "aliases": [
+        "谍战",
+        "卧底",
+        "特工叙事",
+        "隐秘战线"
+      ],
+      "context": [
+        "身份掩护",
+        "信息权限",
+        "任务目标",
+        "时地资料"
+      ],
+      "protected_conventions": "保留暗语、试探和多重身份；不将叙事规则写成现实潜伏教程。",
+      "rule_ids": [
+        "SPY-001",
+        "SPY-002",
+        "SPY-003",
+        "SPY-004",
+        "SPY-005",
+        "SPY-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "MYSTERY",
+      "name": "悬疑推理与刑侦",
+      "layer": "genre",
+      "aliases": [
+        "悬疑",
+        "推理",
+        "刑侦",
+        "探案",
+        "侦探",
+        "法庭悬疑"
+      ],
+      "context": [
+        "线索来源",
+        "事件时间线",
+        "角色知情表",
+        "揭示计划"
+      ],
+      "protected_conventions": "保留误导、留白、不可靠叙述与分阶段揭示；不为了完整解释提前泄底。",
+      "rule_ids": [
+        "MYSTERY-001",
+        "MYSTERY-002",
+        "MYSTERY-003",
+        "MYSTERY-004",
+        "MYSTERY-005",
+        "MYSTERY-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "HORROR",
+      "name": "惊悚恐怖与民俗灵异",
+      "layer": "genre",
+      "aliases": [
+        "恐怖",
+        "惊悚",
+        "灵异",
+        "民俗",
+        "怪谈",
+        "志怪恐怖",
+        "克苏鲁"
+      ],
+      "context": [
+        "恐惧来源",
+        "超自然边界",
+        "民俗资料",
+        "视角权限"
+      ],
+      "protected_conventions": "保留不可解释的恐惧、气氛与缓慢积累；不强迫恐怖故事成为破案说明书。",
+      "rule_ids": [
+        "HORROR-001",
+        "HORROR-002",
+        "HORROR-003",
+        "HORROR-004",
+        "HORROR-005",
+        "HORROR-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "RULEHOR",
+      "name": "规则怪谈",
+      "layer": "genre",
+      "aliases": [
+        "规则怪谈",
+        "生存规则",
+        "怪谈副本"
+      ],
+      "context": [
+        "规则原文与版本",
+        "观察记录",
+        "例外来源"
+      ],
+      "protected_conventions": "保留编号规则、矛盾提示和未知来源；规则面板本身不是生成残留。",
+      "rule_ids": [
+        "RULEHOR-001",
+        "RULEHOR-002",
+        "RULEHOR-003",
+        "RULEHOR-004",
+        "RULEHOR-005",
+        "RULEHOR-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "INFINITE",
+      "name": "无限流与诸天副本",
+      "layer": "genre",
+      "aliases": [
+        "无限流",
+        "诸天无限",
+        "诸天流",
+        "副本",
+        "闯关"
+      ],
+      "context": [
+        "副本规则",
+        "跨世界状态",
+        "回归结算",
+        "成长承诺"
+      ],
+      "protected_conventions": "保留副本切换、任务公告、阶段结算与类型混搭。",
+      "rule_ids": [
+        "INFINITE-001",
+        "INFINITE-002",
+        "INFINITE-003",
+        "INFINITE-004",
+        "INFINITE-005",
+        "INFINITE-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "BATTLE",
+      "name": "大逃杀与生存博弈",
+      "layer": "genre",
+      "aliases": [
+        "大逃杀",
+        "生存游戏",
+        "死亡游戏",
+        "生存博弈"
+      ],
+      "context": [
+        "人数与资源账",
+        "可见地图",
+        "赛制",
+        "胜利条件"
+      ],
+      "protected_conventions": "保留强冲突、背叛与策略；审查虚构博弈，不提供现实伤害实施指导。",
+      "rule_ids": [
+        "BATTLE-001",
+        "BATTLE-002",
+        "BATTLE-003",
+        "BATTLE-004",
+        "BATTLE-005",
+        "BATTLE-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "SCIFI",
+      "name": "科幻与未来社会",
+      "layer": "genre",
+      "aliases": [
+        "科幻",
+        "硬科幻",
+        "软科幻",
+        "未来",
+        "时间科幻"
+      ],
+      "context": [
+        "技术假设",
+        "社会影响",
+        "术语资料",
+        "时间模型"
+      ],
+      "protected_conventions": "保留思辨、技术解释与假设性科学；不把现实未知当自动错误。",
+      "rule_ids": [
+        "SCIFI-001",
+        "SCIFI-002",
+        "SCIFI-003",
+        "SCIFI-004",
+        "SCIFI-005",
+        "SCIFI-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "CYBER",
+      "name": "赛博朋克与机甲",
+      "layer": "genre",
+      "aliases": [
+        "赛博朋克",
+        "机甲",
+        "未来都市",
+        "义体",
+        "人工智能叙事"
+      ],
+      "context": [
+        "身体与接口状态",
+        "技术权限",
+        "组织利益",
+        "控制规则"
+      ],
+      "protected_conventions": "保留霓虹意象、接口术语、机甲重量感与人机主题，不只靠换词做风格。",
+      "rule_ids": [
+        "CYBER-001",
+        "CYBER-002",
+        "CYBER-003",
+        "CYBER-004",
+        "CYBER-005",
+        "CYBER-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "APOC",
+      "name": "末世灾变与灾难生存",
+      "layer": "genre",
+      "aliases": [
+        "末世",
+        "灾变",
+        "丧尸",
+        "天灾",
+        "灾难",
+        "末日"
+      ],
+      "context": [
+        "灾害时间线",
+        "物资账",
+        "基础设施",
+        "群体状态"
+      ],
+      "protected_conventions": "保留紧张生存、囤货乐趣与特殊能力；不强迫所有社会关系全面崩坏。",
+      "rule_ids": [
+        "APOC-001",
+        "APOC-002",
+        "APOC-003",
+        "APOC-004",
+        "APOC-005",
+        "APOC-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "SPACE",
+      "name": "星际文明与太空冒险",
+      "layer": "genre",
+      "aliases": [
+        "星际",
+        "星际文明",
+        "太空冒险",
+        "太空歌剧",
+        "舰队"
+      ],
+      "context": [
+        "星图时差",
+        "航行规则",
+        "文明关系",
+        "船员状态"
+      ],
+      "protected_conventions": "保留宏大尺度、舰队场面与外星文明，不按玄幻宗门一比一替换。",
+      "rule_ids": [
+        "SPACE-001",
+        "SPACE-002",
+        "SPACE-003",
+        "SPACE-004",
+        "SPACE-005",
+        "SPACE-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "GAME",
+      "name": "游戏网游与全民转职",
+      "layer": "genre",
+      "aliases": [
+        "游戏",
+        "网游",
+        "虚拟现实",
+        "游戏异界",
+        "全民转职",
+        "全民游戏",
+        "第四天灾"
+      ],
+      "context": [
+        "规则版本",
+        "角色数值",
+        "资源冷却",
+        "玩家与NPC权限"
+      ],
+      "protected_conventions": "保留面板、技能说明、掉落、练级与玩家术语；不一律删成纯文学。",
+      "rule_ids": [
+        "GAME-001",
+        "GAME-002",
+        "GAME-003",
+        "GAME-004",
+        "GAME-005",
+        "GAME-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "ESPORT",
+      "name": "电竞与职业比赛",
+      "layer": "genre",
+      "aliases": [
+        "电竞",
+        "电子竞技",
+        "职业电竞"
+      ],
+      "context": [
+        "游戏版本",
+        "赛制赛程",
+        "队伍分工",
+        "比赛记录"
+      ],
+      "protected_conventions": "保留解说、操作术语、观众反应与赛场热血。",
+      "rule_ids": [
+        "ESPORT-001",
+        "ESPORT-002",
+        "ESPORT-003",
+        "ESPORT-004",
+        "ESPORT-005",
+        "ESPORT-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "SPORT",
+      "name": "体育竞技",
+      "layer": "genre",
+      "aliases": [
+        "体育",
+        "竞技",
+        "足球",
+        "篮球",
+        "赛车",
+        "格斗竞技"
+      ],
+      "context": [
+        "赛事规则版本",
+        "训练伤病",
+        "赛程成绩",
+        "个人与团队目标"
+      ],
+      "protected_conventions": "保留热血解说、技术动作、重复训练和关键比赛细节。",
+      "rule_ids": [
+        "SPORT-001",
+        "SPORT-002",
+        "SPORT-003",
+        "SPORT-004",
+        "SPORT-005",
+        "SPORT-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "LIGHT",
+      "name": "原创轻小说与二次元",
+      "layer": "genre",
+      "aliases": [
+        "轻小说",
+        "二次元原创",
+        "日轻风",
+        "日常轻小说"
+      ],
+      "context": [
+        "人物声线",
+        "风格约定",
+        "叙述层与吐槽范围"
+      ],
+      "protected_conventions": "保留吐槽、夸张反应、萌属性、轻快对白与风格化结构。",
+      "rule_ids": [
+        "LIGHT-001",
+        "LIGHT-002",
+        "LIGHT-003",
+        "LIGHT-004",
+        "LIGHT-005",
+        "LIGHT-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "FANFIC",
+      "name": "同人衍生与综漫",
+      "layer": "genre",
+      "aliases": [
+        "同人",
+        "衍生",
+        "综漫",
+        "动漫同人",
+        "游戏同人",
+        "影视同人"
+      ],
+      "context": [
+        "原作版本",
+        "角色卡",
+        "二设清单",
+        "世界融合规则"
+      ],
+      "protected_conventions": "保留粉丝默契与既有设定，明确原作事实、二设和本作变更。",
+      "rule_ids": [
+        "FANFIC-001",
+        "FANFIC-002",
+        "FANFIC-003",
+        "FANFIC-004",
+        "FANFIC-005",
+        "FANFIC-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "NONHUM",
+      "name": "兽世非人与异族社会",
+      "layer": "genre",
+      "aliases": [
+        "兽世",
+        "非人主角",
+        "异族",
+        "动物主角",
+        "异兽进化"
+      ],
+      "context": [
+        "物种与感官",
+        "社会规则",
+        "拟人化范围"
+      ],
+      "protected_conventions": "保留拟人、变身与异族幻想；不把现实动物习性强加给明示幻想种族。",
+      "rule_ids": [
+        "NONHUM-001",
+        "NONHUM-002",
+        "NONHUM-003",
+        "NONHUM-004",
+        "NONHUM-005",
+        "NONHUM-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "BEAST",
+      "name": "御兽召唤与宠物伙伴",
+      "layer": "genre",
+      "aliases": [
+        "御兽",
+        "召唤",
+        "宠物伙伴",
+        "驭兽",
+        "卡牌召唤"
+      ],
+      "context": [
+        "伙伴个体",
+        "契约规则",
+        "培养资源",
+        "战斗配合"
+      ],
+      "protected_conventions": "保留收集、培养、进化与面板反馈，伙伴不必全被写成人类。",
+      "rule_ids": [
+        "BEAST-001",
+        "BEAST-002",
+        "BEAST-003",
+        "BEAST-004",
+        "BEAST-005",
+        "BEAST-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "ADVENTURE",
+      "name": "探险寻宝与荒野",
+      "layer": "genre",
+      "aliases": [
+        "探险",
+        "寻宝",
+        "盗墓",
+        "荒野求生",
+        "航海探险"
+      ],
+      "context": [
+        "路线环境",
+        "装备状态",
+        "遗迹资料",
+        "风险合同"
+      ],
+      "protected_conventions": "保留未知、谜题与发现感；不是现实进入危险地点的操作手册。",
+      "rule_ids": [
+        "ADVENTURE-001",
+        "ADVENTURE-002",
+        "ADVENTURE-003",
+        "ADVENTURE-004",
+        "ADVENTURE-005",
+        "ADVENTURE-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "RESEARCH",
+      "name": "科研工业与技术成长",
+      "layer": "genre",
+      "aliases": [
+        "科研",
+        "学霸",
+        "科技强国",
+        "工业",
+        "制造",
+        "技术流"
+      ],
+      "context": [
+        "研究假设",
+        "实验记录",
+        "工程资源",
+        "专业来源"
+      ],
+      "protected_conventions": "保留实验、技术细节与突破乐趣；虚构成果与现实已证实成果分开。",
+      "rule_ids": [
+        "RESEARCH-001",
+        "RESEARCH-002",
+        "RESEARCH-003",
+        "RESEARCH-004",
+        "RESEARCH-005",
+        "RESEARCH-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "PROF",
+      "name": "医疗法律与专业服务叙事",
+      "layer": "genre",
+      "aliases": [
+        "医疗",
+        "医生",
+        "律政",
+        "律师",
+        "法医",
+        "专业服务"
+      ],
+      "context": [
+        "职业身份",
+        "程序场景",
+        "时地资料",
+        "事实核验记录"
+      ],
+      "protected_conventions": "保留专业术语与程序、职业伦理冲突；不由小说审校器提供现实诊疗或法律结论。",
+      "rule_ids": [
+        "PROF-001",
+        "PROF-002",
+        "PROF-003",
+        "PROF-004",
+        "PROF-005",
+        "PROF-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "SYS",
+      "name": "系统与金手指",
+      "layer": "tag",
+      "aliases": [
+        "系统",
+        "金手指",
+        "外挂",
+        "开挂"
+      ],
+      "context": [
+        "系统权限",
+        "奖励惩罚",
+        "提示来源"
+      ],
+      "protected_conventions": "保留系统面板与机械播报；不因存在【】就删除。",
+      "rule_ids": [
+        "SYS-001",
+        "SYS-002",
+        "SYS-003",
+        "SYS-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "REBIRTH",
+      "name": "重生与前世记忆",
+      "layer": "tag",
+      "aliases": [
+        "重生",
+        "重生逆袭",
+        "前世今生"
+      ],
+      "context": [
+        "前世时间线",
+        "记忆来源",
+        "干预记录"
+      ],
+      "protected_conventions": "保留信息优势与重来乐趣，不强制主角遗忘以制造难度。",
+      "rule_ids": [
+        "REBIRTH-001",
+        "REBIRTH-002",
+        "REBIRTH-003",
+        "REBIRTH-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "TRAVEL",
+      "name": "穿越转生与群穿",
+      "layer": "tag",
+      "aliases": [
+        "穿越",
+        "转生",
+        "魂穿",
+        "身穿",
+        "群穿",
+        "古穿今"
+      ],
+      "context": [
+        "原身份",
+        "身体与物品",
+        "时代世界知识差"
+      ],
+      "protected_conventions": "保留穿越适应、文化碰撞和先知优势。",
+      "rule_ids": [
+        "TRAVEL-001",
+        "TRAVEL-002",
+        "TRAVEL-003",
+        "TRAVEL-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "BOOK",
+      "name": "穿书与角色觉醒",
+      "layer": "tag",
+      "aliases": [
+        "穿书",
+        "女配",
+        "炮灰",
+        "恶役",
+        "书中觉醒"
+      ],
+      "context": [
+        "原书文本",
+        "读过范围",
+        "角色身份",
+        "偏离记录"
+      ],
+      "protected_conventions": "保留元叙事、剧情预判及原书与现实差异。",
+      "rule_ids": [
+        "BOOK-001",
+        "BOOK-002",
+        "BOOK-003",
+        "BOOK-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "QUICK",
+      "name": "快穿与多世界任务",
+      "layer": "tag",
+      "aliases": [
+        "快穿",
+        "快穿攻略",
+        "位面任务"
+      ],
+      "context": [
+        "世界身份表",
+        "跨世界记忆",
+        "任务合同"
+      ],
+      "protected_conventions": "保留快速换世界和阶段任务，不强迫每个小世界同等展开。",
+      "rule_ids": [
+        "QUICK-001",
+        "QUICK-002",
+        "QUICK-003",
+        "QUICK-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "LOOP",
+      "name": "时间回溯循环与读档",
+      "layer": "tag",
+      "aliases": [
+        "时间循环",
+        "回溯",
+        "读档",
+        "闭环",
+        "轮回"
+      ],
+      "context": [
+        "时间模型",
+        "重置范围",
+        "记忆与分支"
+      ],
+      "protected_conventions": "保留循环重复和因果谜题，区分主观记忆与客观世界状态。",
+      "rule_ids": [
+        "LOOP-001",
+        "LOOP-002",
+        "LOOP-003",
+        "LOOP-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "PAYOFF",
+      "name": "爽文逆袭与打脸",
+      "layer": "tag",
+      "aliases": [
+        "爽文",
+        "打脸",
+        "逆袭",
+        "龙傲天",
+        "赘婿",
+        "龙王"
+      ],
+      "context": [
+        "读者承诺",
+        "压制依据",
+        "反击结果"
+      ],
+      "protected_conventions": "保留爽点和期待兑现，不以套路存在本身判错。",
+      "rule_ids": [
+        "PAYOFF-001",
+        "PAYOFF-002",
+        "PAYOFF-003",
+        "PAYOFF-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "INVINCIBLE",
+      "name": "无敌与强者归来",
+      "layer": "tag",
+      "aliases": [
+        "无敌",
+        "无敌流",
+        "强者归来",
+        "战神归来"
+      ],
+      "context": [
+        "能力上限",
+        "隐藏动机",
+        "非战斗目标"
+      ],
+      "protected_conventions": "保留压倒性力量；不为去AI味强行削弱主角。",
+      "rule_ids": [
+        "INVINCIBLE-001",
+        "INVINCIBLE-002",
+        "INVINCIBLE-003",
+        "INVINCIBLE-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "CAUTIOUS",
+      "name": "苟道与稳健流",
+      "layer": "tag",
+      "aliases": [
+        "苟道",
+        "稳健流",
+        "苟王"
+      ],
+      "context": [
+        "风险偏好",
+        "已知信息",
+        "备用资源"
+      ],
+      "protected_conventions": "保留谨慎、低调和准备的乐趣，不把所有准备都删成冗余。",
+      "rule_ids": [
+        "CAUTIOUS-001",
+        "CAUTIOUS-002",
+        "CAUTIOUS-003",
+        "CAUTIOUS-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "VILLAIN",
+      "name": "反派与灰度主角",
+      "layer": "tag",
+      "aliases": [
+        "反派",
+        "黑莲花",
+        "灰度主角",
+        "疯批"
+      ],
+      "context": [
+        "人物价值观",
+        "行动目标",
+        "叙述立场"
+      ],
+      "protected_conventions": "保留不讨喜人物与黑暗选择；呈现不等于赞同。",
+      "rule_ids": [
+        "VILLAIN-001",
+        "VILLAIN-002",
+        "VILLAIN-003",
+        "VILLAIN-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "REVENGE",
+      "name": "复仇与虐渣",
+      "layer": "tag",
+      "aliases": [
+        "复仇",
+        "虐渣",
+        "复仇虐渣"
+      ],
+      "context": [
+        "损失证据",
+        "对象责任",
+        "复仇目标"
+      ],
+      "protected_conventions": "保留愤怒、报复与清算，不强迫原谅或说教。",
+      "rule_ids": [
+        "REVENGE-001",
+        "REVENGE-002",
+        "REVENGE-003",
+        "REVENGE-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "SWEET",
+      "name": "甜宠与温暖恋爱",
+      "layer": "tag",
+      "aliases": [
+        "甜宠",
+        "甜文",
+        "宠文",
+        "恋爱日常"
+      ],
+      "context": [
+        "关系阶段",
+        "双方偏好",
+        "互动历史"
+      ],
+      "protected_conventions": "保留甜与顺利，不强行加入误会、背叛和伤害。",
+      "rule_ids": [
+        "SWEET-001",
+        "SWEET-002",
+        "SWEET-003",
+        "SWEET-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "ANGST",
+      "name": "虐恋追爱与破镜重圆",
+      "layer": "tag",
+      "aliases": [
+        "虐恋",
+        "虐文",
+        "追妻",
+        "追夫",
+        "追爱火葬场",
+        "破镜重圆",
+        "替身"
+      ],
+      "context": [
+        "伤害记录",
+        "责任与信任",
+        "修复阶段"
+      ],
+      "protected_conventions": "保留痛苦、拉扯与不圆满结局，不以道德正确替代人物选择。",
+      "rule_ids": [
+        "ANGST-001",
+        "ANGST-002",
+        "ANGST-003",
+        "ANGST-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "MARRIAGE",
+      "name": "先婚后爱与契约关系",
+      "layer": "tag",
+      "aliases": [
+        "先婚后爱",
+        "契约婚姻",
+        "恋爱合约"
+      ],
+      "context": [
+        "合同条件",
+        "相处边界",
+        "情感与利益"
+      ],
+      "protected_conventions": "保留契约设定及从合作到亲密的过程。",
+      "rule_ids": [
+        "MARRIAGE-001",
+        "MARRIAGE-002",
+        "MARRIAGE-003",
+        "MARRIAGE-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "SECRET",
+      "name": "马甲掉马与身份隐瞒",
+      "layer": "tag",
+      "aliases": [
+        "马甲",
+        "马甲文",
+        "掉马",
+        "身份隐瞒",
+        "女扮男装"
+      ],
+      "context": [
+        "身份清单",
+        "各方知情",
+        "暴露证据"
+      ],
+      "protected_conventions": "保留身份反差、掉马爽点与角色表演。",
+      "rule_ids": [
+        "SECRET-001",
+        "SECRET-002",
+        "SECRET-003",
+        "SECRET-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "IDENTITY",
+      "name": "真假身份与团宠",
+      "layer": "tag",
+      "aliases": [
+        "真假千金",
+        "真假少爷",
+        "团宠",
+        "万人迷"
+      ],
+      "context": [
+        "血缘与身份",
+        "关系形成史",
+        "利益记录"
+      ],
+      "protected_conventions": "保留身份反转、受欢迎与偏爱；不要求所有人平均善良。",
+      "rule_ids": [
+        "IDENTITY-001",
+        "IDENTITY-002",
+        "IDENTITY-003",
+        "IDENTITY-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "CHILD",
+      "name": "萌宝养崽与家庭陪伴",
+      "layer": "tag",
+      "aliases": [
+        "萌宝",
+        "养崽",
+        "萌娃",
+        "奶爸",
+        "养成亲子"
+      ],
+      "context": [
+        "儿童年龄",
+        "照护状态",
+        "家庭关系"
+      ],
+      "protected_conventions": "保留可爱、童言与亲子乐趣，不将儿童当万能成人工具。",
+      "rule_ids": [
+        "CHILD-001",
+        "CHILD-002",
+        "CHILD-003",
+        "CHILD-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "LIVE",
+      "name": "直播弹幕与舆论场",
+      "layer": "tag",
+      "aliases": [
+        "直播",
+        "弹幕",
+        "网红",
+        "舆论",
+        "综艺直播"
+      ],
+      "context": [
+        "可见镜头",
+        "观众知情",
+        "平台设定",
+        "传播时间"
+      ],
+      "protected_conventions": "保留弹幕、集体梗与观众反应，不把碎片表达改成正式对白。",
+      "rule_ids": [
+        "LIVE-001",
+        "LIVE-002",
+        "LIVE-003",
+        "LIVE-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "CHAT",
+      "name": "聊天群与群聊叙事",
+      "layer": "tag",
+      "aliases": [
+        "聊天群",
+        "红包群",
+        "群聊"
+      ],
+      "context": [
+        "成员身份",
+        "可见消息",
+        "交流历史"
+      ],
+      "protected_conventions": "保留短消息、梗、跑题和群体语言，同时维护成员差异。",
+      "rule_ids": [
+        "CHAT-001",
+        "CHAT-002",
+        "CHAT-003",
+        "CHAT-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "HEROINE",
+      "name": "女强与事业主线",
+      "layer": "tag",
+      "aliases": [
+        "女强",
+        "大女主",
+        "事业文",
+        "独立成长"
+      ],
+      "context": [
+        "角色自主目标",
+        "能力来源",
+        "关系边界"
+      ],
+      "protected_conventions": "保留人物的事业与情感选择，不以性别决定冷酷程度或恋爱必要性。",
+      "rule_ids": [
+        "HEROINE-001",
+        "HEROINE-002",
+        "HEROINE-003",
+        "HEROINE-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "LEVEL",
+      "name": "升级养成与进阶",
+      "layer": "tag",
+      "aliases": [
+        "升级流",
+        "养成升级",
+        "成长流"
+      ],
+      "context": [
+        "能力阶段",
+        "资源投入",
+        "下一阶段承诺"
+      ],
+      "protected_conventions": "保留等级、训练与成长反馈；升级并非AI味证据。",
+      "rule_ids": [
+        "LEVEL-001",
+        "LEVEL-002",
+        "LEVEL-003",
+        "LEVEL-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "NATION",
+      "name": "国运领主与群体竞逐",
+      "layer": "tag",
+      "aliases": [
+        "国运",
+        "领主",
+        "文明竞赛",
+        "国战"
+      ],
+      "context": [
+        "参赛规则",
+        "群体利益",
+        "奖励分配"
+      ],
+      "protected_conventions": "保留群体荣誉与竞赛爽点，不让所有群体变成一种人格。",
+      "rule_ids": [
+        "NATION-001",
+        "NATION-002",
+        "NATION-003",
+        "NATION-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "ADAPT",
+      "name": "文抄记忆与作品搬运",
+      "layer": "tag",
+      "aliases": [
+        "文抄",
+        "文抄公",
+        "作品搬运"
+      ],
+      "context": [
+        "原作来源",
+        "记忆范围",
+        "世界差异",
+        "改编过程"
+      ],
+      "protected_conventions": "保留记忆金手指与传播乐趣；不输出或默许大段未授权照搬。",
+      "rule_ids": [
+        "ADAPT-001",
+        "ADAPT-002",
+        "ADAPT-003",
+        "ADAPT-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "TRIANGLE",
+      "name": "修罗场与多方关系张力",
+      "layer": "tag",
+      "aliases": [
+        "修罗场",
+        "三角关系",
+        "多方关系张力"
+      ],
+      "context": [
+        "各方知情",
+        "关系承诺",
+        "利益与情绪"
+      ],
+      "protected_conventions": "保留误会、吃醋、互怼与多方张力，不把所有争执调成理性会议。",
+      "rule_ids": [
+        "TRIANGLE-001",
+        "TRIANGLE-002",
+        "TRIANGLE-003",
+        "TRIANGLE-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "ABO",
+      "name": "ABO世界设定",
+      "layer": "tag",
+      "aliases": [
+        "ABO",
+        "abo",
+        "ABO世界"
+      ],
+      "context": [
+        "本作分类规则",
+        "社会制度",
+        "感知边界",
+        "人物意愿"
+      ],
+      "protected_conventions": "仅讨论虚构世界规则与人物选择，不预设生理设定、性格或配对模式。",
+      "rule_ids": [
+        "ABO-001",
+        "ABO-002",
+        "ABO-003",
+        "ABO-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "GUIDE",
+      "name": "哨向世界设定",
+      "layer": "tag",
+      "aliases": [
+        "哨向",
+        "向哨",
+        "哨兵向导"
+      ],
+      "context": [
+        "精神能力",
+        "联结权限",
+        "组织规则",
+        "精神体状态"
+      ],
+      "protected_conventions": "只按本作设定审查，不把其他作品的哨向规则当唯一标准。",
+      "rule_ids": [
+        "GUIDE-001",
+        "GUIDE-002",
+        "GUIDE-003",
+        "GUIDE-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "MEET",
+      "name": "初遇与人物登场",
+      "layer": "scene",
+      "aliases": [
+        "初遇",
+        "登场"
+      ],
+      "context": [
+        "场景目标",
+        "视角认知",
+        "人物关系"
+      ],
+      "protected_conventions": "保留亮相高光与外貌观察。",
+      "rule_ids": [
+        "MEET-001",
+        "MEET-002",
+        "MEET-003",
+        "MEET-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "TALK",
+      "name": "对话谈判与争执",
+      "layer": "scene",
+      "aliases": [
+        "对白",
+        "谈判",
+        "争执",
+        "对话"
+      ],
+      "context": [
+        "双方目标",
+        "语言习惯",
+        "知情范围"
+      ],
+      "protected_conventions": "保留打断、含糊、冲动和必要解释，不强制所有人完整陈述。",
+      "rule_ids": [
+        "TALK-001",
+        "TALK-002",
+        "TALK-003",
+        "TALK-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "CLUE",
+      "name": "调查与线索获取",
+      "layer": "scene",
+      "aliases": [
+        "调查",
+        "取证",
+        "搜寻",
+        "线索"
+      ],
+      "context": [
+        "当前问题",
+        "信息渠道",
+        "线索状态"
+      ],
+      "protected_conventions": "保留不完整信息、错误假设与等待验证。",
+      "rule_ids": [
+        "CLUE-001",
+        "CLUE-002",
+        "CLUE-003",
+        "CLUE-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "REVEAL",
+      "name": "反转揭晓与真相公布",
+      "layer": "scene",
+      "aliases": [
+        "揭晓",
+        "反转",
+        "真相"
+      ],
+      "context": [
+        "既有线索",
+        "揭示范围",
+        "人物反应"
+      ],
+      "protected_conventions": "保留反转冲击与分阶段解释，不强迫一次讲完。",
+      "rule_ids": [
+        "REVEAL-001",
+        "REVEAL-002",
+        "REVEAL-003",
+        "REVEAL-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "CLOSENESS",
+      "name": "亲密关系推进",
+      "layer": "scene",
+      "aliases": [
+        "亲密",
+        "暧昧",
+        "告白",
+        "关系推进"
+      ],
+      "context": [
+        "关系阶段",
+        "人物意愿",
+        "共同经历"
+      ],
+      "protected_conventions": "保留心动和亲密，不提供露骨内容模板。",
+      "rule_ids": [
+        "CLOSENESS-001",
+        "CLOSENESS-002",
+        "CLOSENESS-003",
+        "CLOSENESS-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "LOSS",
+      "name": "失去悲伤与挫折",
+      "layer": "scene",
+      "aliases": [
+        "悲伤",
+        "失去",
+        "挫折",
+        "创伤后场景"
+      ],
+      "context": [
+        "损失事实",
+        "人物反应",
+        "后续影响"
+      ],
+      "protected_conventions": "保留沉默、麻木、矛盾反应；不强制哭泣或励志。",
+      "rule_ids": [
+        "LOSS-001",
+        "LOSS-002",
+        "LOSS-003",
+        "LOSS-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "DAILY",
+      "name": "日常生活与慢场景",
+      "layer": "scene",
+      "aliases": [
+        "日常",
+        "生活",
+        "慢场景",
+        "吃饭"
+      ],
+      "context": [
+        "人物偏好",
+        "相处历史",
+        "生活状态"
+      ],
+      "protected_conventions": "愉悦、观察与陪伴本身可以是价值，不要求每个细节都服务主线。",
+      "rule_ids": [
+        "DAILY-001",
+        "DAILY-002",
+        "DAILY-003",
+        "DAILY-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "EXPLAIN",
+      "name": "设定说明与知识传递",
+      "layer": "scene",
+      "aliases": [
+        "说明",
+        "设定介绍",
+        "科普",
+        "教学"
+      ],
+      "context": [
+        "读者已知",
+        "角色理解",
+        "当前任务"
+      ],
+      "protected_conventions": "保留必要说明与类型知识乐趣，不把所有告诉都改成展示。",
+      "rule_ids": [
+        "EXPLAIN-001",
+        "EXPLAIN-002",
+        "EXPLAIN-003",
+        "EXPLAIN-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "MATCH",
+      "name": "比赛与公开较量",
+      "layer": "scene",
+      "aliases": [
+        "比赛",
+        "竞赛",
+        "比试",
+        "选拔"
+      ],
+      "context": [
+        "规则",
+        "参赛目标",
+        "分数与轮次"
+      ],
+      "protected_conventions": "保留解说、高光与观众情绪；动作比赛和智力竞赛可采用不同节奏。",
+      "rule_ids": [
+        "MATCH-001",
+        "MATCH-002",
+        "MATCH-003",
+        "MATCH-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "MANAGE",
+      "name": "经营决策与组织协作",
+      "layer": "scene",
+      "aliases": [
+        "经营决策",
+        "管理",
+        "组织协作",
+        "工作任务"
+      ],
+      "context": [
+        "资源权限",
+        "相关人员",
+        "实施状态"
+      ],
+      "protected_conventions": "保留表格式信息与必要流程，但必须分清已计划和已完成。",
+      "rule_ids": [
+        "MANAGE-001",
+        "MANAGE-002",
+        "MANAGE-003",
+        "MANAGE-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "TRAVELSC",
+      "name": "旅途转场与时间跳跃",
+      "layer": "scene",
+      "aliases": [
+        "旅途",
+        "转场",
+        "时间跳跃",
+        "公路场景"
+      ],
+      "context": [
+        "位置时间",
+        "行进目标",
+        "同行状态"
+      ],
+      "protected_conventions": "保留旅途见闻与压缩，不要求所有移动都详写。",
+      "rule_ids": [
+        "TRAVELSC-001",
+        "TRAVELSC-002",
+        "TRAVELSC-003",
+        "TRAVELSC-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "END",
+      "name": "章尾与阶段结束",
+      "layer": "scene",
+      "aliases": [
+        "章尾",
+        "结尾",
+        "阶段结束"
+      ],
+      "context": [
+        "本章承诺",
+        "下一步行动",
+        "已揭示信息"
+      ],
+      "protected_conventions": "保留断章、余韵、钩子和阶段总结；不要求每章悬命。",
+      "rule_ids": [
+        "END-001",
+        "END-002",
+        "END-003",
+        "END-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "MF",
+      "name": "男女情感关系",
+      "layer": "relationship",
+      "aliases": [
+        "言情关系",
+        "男女CP",
+        "BG"
+      ],
+      "context": [
+        "双方目标",
+        "关系阶段",
+        "角色个体"
+      ],
+      "protected_conventions": "性别不决定性格、强弱与主动方；不改掉作者既定关系模式。",
+      "rule_ids": [
+        "MF-001",
+        "MF-002",
+        "MF-003",
+        "MF-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "MM",
+      "name": "双男主与男性情感关系",
+      "layer": "relationship",
+      "aliases": [
+        "双男主",
+        "纯爱",
+        "耽美",
+        "BL",
+        "男男CP"
+      ],
+      "context": [
+        "两个角色个体",
+        "关系边界",
+        "叙事焦点"
+      ],
+      "protected_conventions": "双男主也可能只是双主角；启用此模块表示项目明确包含男性情感关系。",
+      "rule_ids": [
+        "MM-001",
+        "MM-002",
+        "MM-003",
+        "MM-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "FF",
+      "name": "双女主与女性情感关系",
+      "layer": "relationship",
+      "aliases": [
+        "双女主",
+        "百合",
+        "GL",
+        "女女CP"
+      ],
+      "context": [
+        "两人自主目标",
+        "社会关系",
+        "亲密阶段"
+      ],
+      "protected_conventions": "双女主可以无爱情；本模块须由项目确认情感关系后启用。",
+      "rule_ids": [
+        "FF-001",
+        "FF-002",
+        "FF-003",
+        "FF-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "NOCP",
+      "name": "无CP与非恋爱主线",
+      "layer": "relationship",
+      "aliases": [
+        "无CP",
+        "无cp",
+        "无恋爱线",
+        "无感情线"
+      ],
+      "context": [
+        "项目情感边界",
+        "重要非恋爱关系"
+      ],
+      "protected_conventions": "保留友情亲情师徒与强情绪；无CP不等于没有感情。",
+      "rule_ids": [
+        "NOCP-001",
+        "NOCP-002",
+        "NOCP-003",
+        "NOCP-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "MULTI",
+      "name": "多CP与多方情感结构",
+      "layer": "relationship",
+      "aliases": [
+        "多CP",
+        "多对CP",
+        "后宫",
+        "多方情感"
+      ],
+      "context": [
+        "关系网络",
+        "各方知情",
+        "承诺与选择"
+      ],
+      "protected_conventions": "不默认所有关系互斥或平等；按作者声明的关系结构审查。",
+      "rule_ids": [
+        "MULTI-001",
+        "MULTI-002",
+        "MULTI-003",
+        "MULTI-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "SERIAL",
+      "name": "长篇连载",
+      "layer": "form",
+      "aliases": [
+        "长篇",
+        "连载",
+        "长篇连载"
+      ],
+      "context": [
+        "卷章目标",
+        "前章末尾",
+        "长期状态与伏笔"
+      ],
+      "protected_conventions": "保留阶段目标、过渡和必要提醒，不把每章都写成独立完整作文。",
+      "rule_ids": [
+        "SERIAL-001",
+        "SERIAL-002",
+        "SERIAL-003",
+        "SERIAL-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "SHORT",
+      "name": "中短篇与短故事",
+      "layer": "form",
+      "aliases": [
+        "短篇",
+        "中短篇",
+        "短故事"
+      ],
+      "context": [
+        "篇幅目标",
+        "核心冲突",
+        "结局承诺"
+      ],
+      "protected_conventions": "允许省略背景、跳时与高密度，不用长篇标准要求铺设所有社会细节。",
+      "rule_ids": [
+        "SHORT-001",
+        "SHORT-002",
+        "SHORT-003",
+        "SHORT-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "HOOK",
+      "name": "极短篇与强钩子叙事",
+      "layer": "form",
+      "aliases": [
+        "极短篇",
+        "强钩子短篇",
+        "盐选风"
+      ],
+      "context": [
+        "单篇承诺",
+        "叙述权限",
+        "反转证据"
+      ],
+      "protected_conventions": "保留直接入局、强情绪与密集转折，不把节奏快本身当问题。",
+      "rule_ids": [
+        "HOOK-001",
+        "HOOK-002",
+        "HOOK-003",
+        "HOOK-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "EPISODE",
+      "name": "单元文与系列故事",
+      "layer": "form",
+      "aliases": [
+        "单元文",
+        "单元剧",
+        "系列故事"
+      ],
+      "context": [
+        "单元目标",
+        "跨单元状态",
+        "常驻人物"
+      ],
+      "protected_conventions": "保留单元独立性与重复仪式，同时区分固定结构和内容复用。",
+      "rule_ids": [
+        "EPISODE-001",
+        "EPISODE-002",
+        "EPISODE-003",
+        "EPISODE-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "DOCFORM",
+      "name": "书信论坛聊天与记录体",
+      "layer": "form",
+      "aliases": [
+        "书信体",
+        "论坛体",
+        "聊天体",
+        "对话体",
+        "记录体"
+      ],
+      "context": [
+        "发信者权限",
+        "时间戳",
+        "媒介限制"
+      ],
+      "protected_conventions": "保留非标准段落、格式、重复引用和碎片语言。",
+      "rule_ids": [
+        "DOCFORM-001",
+        "DOCFORM-002",
+        "DOCFORM-003",
+        "DOCFORM-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "COMEDY",
+      "name": "轻松沙雕与喜剧",
+      "layer": "tone",
+      "aliases": [
+        "轻松",
+        "沙雕",
+        "搞笑",
+        "爆笑",
+        "喜剧",
+        "吐槽"
+      ],
+      "context": [
+        "笑点来源",
+        "人物声线",
+        "夸张范围"
+      ],
+      "protected_conventions": "保留不严肃、夸张与网络梗；不强改成克制正剧。",
+      "rule_ids": [
+        "COMEDY-001",
+        "COMEDY-002",
+        "COMEDY-003",
+        "COMEDY-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "HEAL",
+      "name": "治愈温暖与陪伴",
+      "layer": "tone",
+      "aliases": [
+        "治愈",
+        "温暖",
+        "陪伴",
+        "温馨"
+      ],
+      "context": [
+        "人物需要",
+        "关系基础",
+        "生活细节"
+      ],
+      "protected_conventions": "保留平静、善意与顺利；不为真实强加伤害。",
+      "rule_ids": [
+        "HEAL-001",
+        "HEAL-002",
+        "HEAL-003",
+        "HEAL-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "PASSION",
+      "name": "热血与燃向",
+      "layer": "tone",
+      "aliases": [
+        "热血",
+        "燃",
+        "少年热血"
+      ],
+      "context": [
+        "人物信念",
+        "行动选择",
+        "高潮节奏"
+      ],
+      "protected_conventions": "保留喊话、排比与强情绪；只修没有行动支撑的空燃。",
+      "rule_ids": [
+        "PASSION-001",
+        "PASSION-002",
+        "PASSION-003",
+        "PASSION-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "DARK",
+      "name": "黑暗压抑与悲剧",
+      "layer": "tone",
+      "aliases": [
+        "黑暗",
+        "压抑",
+        "悲剧",
+        "BE"
+      ],
+      "context": [
+        "人物处境",
+        "暴力后果",
+        "结局合同"
+      ],
+      "protected_conventions": "保留绝望、恶意与悲剧，不强行积极升华或全员和解。",
+      "rule_ids": [
+        "DARK-001",
+        "DARK-002",
+        "DARK-003",
+        "DARK-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "REALISM",
+      "name": "正剧与写实",
+      "layer": "tone",
+      "aliases": [
+        "正剧",
+        "写实",
+        "现实主义"
+      ],
+      "context": [
+        "人物经验",
+        "时地资料",
+        "叙述立场"
+      ],
+      "protected_conventions": "保留平实、复杂和不圆满；写实不等于必须沉闷或悲惨。",
+      "rule_ids": [
+        "REALISM-001",
+        "REALISM-002",
+        "REALISM-003",
+        "REALISM-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "LYRIC",
+      "name": "抒情古风与文学化",
+      "layer": "tone",
+      "aliases": [
+        "抒情",
+        "古风",
+        "文学化",
+        "诗性"
+      ],
+      "context": [
+        "作者范文",
+        "意象系统",
+        "叙述视角"
+      ],
+      "protected_conventions": "保留美感、长句、比喻与古典修辞，不把华丽一概等同AI。",
+      "rule_ids": [
+        "LYRIC-001",
+        "LYRIC-002",
+        "LYRIC-003",
+        "LYRIC-004"
+      ],
+      "rule_count": 4
+    },
+    {
+      "id": "EXAM",
+      "name": "科举与教育晋身",
+      "layer": "genre",
+      "aliases": [
+        "科举",
+        "科举文"
+      ],
+      "context": [
+        "时代制度卡",
+        "考试阶段表",
+        "学习与经济记录"
+      ],
+      "protected_conventions": "保留读书、制艺与考试过程；不强迫每场考试都作弊或反转。",
+      "rule_ids": [
+        "EXAM-001",
+        "EXAM-002",
+        "EXAM-003",
+        "EXAM-004",
+        "EXAM-005",
+        "EXAM-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "FLEE",
+      "name": "逃荒与迁徙生存",
+      "layer": "genre",
+      "aliases": [
+        "逃荒",
+        "流民迁徙"
+      ],
+      "context": [
+        "路线表",
+        "成员状态",
+        "物资记录"
+      ],
+      "protected_conventions": "保留求生、善意互助与快速叙事，不把苦难密度当文学质量。",
+      "rule_ids": [
+        "FLEE-001",
+        "FLEE-002",
+        "FLEE-003",
+        "FLEE-004",
+        "FLEE-005",
+        "FLEE-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "MATRI",
+      "name": "女尊与性别秩序架空",
+      "layer": "genre",
+      "aliases": [
+        "女尊",
+        "女尊世界"
+      ],
+      "context": [
+        "世界制度卡",
+        "亲属关系表",
+        "关系合同"
+      ],
+      "protected_conventions": "不预设一对多、男性弱化或固定生育规则；由作者单独确定。",
+      "rule_ids": [
+        "MATRI-001",
+        "MATRI-002",
+        "MATRI-003",
+        "MATRI-004",
+        "MATRI-005",
+        "MATRI-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "TYCOON",
+      "name": "神豪与财富奇遇",
+      "layer": "genre",
+      "aliases": [
+        "神豪",
+        "财富奇遇"
+      ],
+      "context": [
+        "财富规则",
+        "资产记录",
+        "消费事件"
+      ],
+      "protected_conventions": "保留夸张消费和金钱爽点；不强迫每笔消费都写审计过程。",
+      "rule_ids": [
+        "TYCOON-001",
+        "TYCOON-002",
+        "TYCOON-003",
+        "TYCOON-004",
+        "TYCOON-005",
+        "TYCOON-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "APPRAISE",
+      "name": "鉴宝与收藏交易",
+      "layer": "genre",
+      "aliases": [
+        "鉴宝",
+        "收藏捡漏"
+      ],
+      "context": [
+        "物件履历",
+        "鉴定依据",
+        "交易状态"
+      ],
+      "protected_conventions": "保留捡漏与超凡鉴定；不要强制把幻想能力写成现实鉴定。",
+      "rule_ids": [
+        "APPRAISE-001",
+        "APPRAISE-002",
+        "APPRAISE-003",
+        "APPRAISE-004",
+        "APPRAISE-005",
+        "APPRAISE-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "CEO",
+      "name": "豪门总裁与家族资本",
+      "layer": "genre",
+      "aliases": [
+        "豪门总裁",
+        "豪门情感"
+      ],
+      "context": [
+        "企业与家族关系",
+        "角色行程",
+        "感情边界"
+      ],
+      "protected_conventions": "保留总裁人设与浪漫夸张；身份不自动推导强制关系。",
+      "rule_ids": [
+        "CEO-001",
+        "CEO-002",
+        "CEO-003",
+        "CEO-004",
+        "CEO-005",
+        "CEO-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "COURT",
+      "name": "宫斗与宫廷关系",
+      "layer": "genre",
+      "aliases": [
+        "宫斗",
+        "后宫争斗"
+      ],
+      "context": [
+        "宫廷制度卡",
+        "信息路径",
+        "人物权限"
+      ],
+      "protected_conventions": "不强制争宠、黑化或残酷；权谋和日常均可成立。",
+      "rule_ids": [
+        "COURT-001",
+        "COURT-002",
+        "COURT-003",
+        "COURT-004",
+        "COURT-005",
+        "COURT-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "HOUSE",
+      "name": "宅斗与家族日常秩序",
+      "layer": "genre",
+      "aliases": [
+        "宅斗",
+        "家族宅院"
+      ],
+      "context": [
+        "亲属谱",
+        "财产与居住记录",
+        "家庭约定"
+      ],
+      "protected_conventions": "保留家庭琐碎和人情，不要求把每场家事升级成宫廷阴谋。",
+      "rule_ids": [
+        "HOUSE-001",
+        "HOUSE-002",
+        "HOUSE-003",
+        "HOUSE-004",
+        "HOUSE-005",
+        "HOUSE-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "MEDFANT",
+      "name": "神医与医术奇遇",
+      "layer": "genre",
+      "aliases": [
+        "神医",
+        "医术奇遇"
+      ],
+      "context": [
+        "虚构能力边界",
+        "患者状态",
+        "职业资料"
+      ],
+      "protected_conventions": "幻想疗效按世界规则审；现实医疗事实另行核验，不输出自疗教程。",
+      "rule_ids": [
+        "MEDFANT-001",
+        "MEDFANT-002",
+        "MEDFANT-003",
+        "MEDFANT-004",
+        "MEDFANT-005",
+        "MEDFANT-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "URBANCULT",
+      "name": "都市修真与超凡隐匿",
+      "layer": "genre",
+      "aliases": [
+        "都市修真",
+        "都市修仙"
+      ],
+      "context": [
+        "能力公开程度",
+        "城市规则",
+        "资源来源"
+      ],
+      "protected_conventions": "保留都市与修真混合前提；不以纯现实标准否定超凡。",
+      "rule_ids": [
+        "URBANCULT-001",
+        "URBANCULT-002",
+        "URBANCULT-003",
+        "URBANCULT-004",
+        "URBANCULT-005",
+        "URBANCULT-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "RICHRET",
+      "name": "战神归来与赘婿逆袭",
+      "layer": "genre",
+      "aliases": [
+        "战神赘婿",
+        "赘婿",
+        "强者归乡"
+      ],
+      "context": [
+        "身份隐藏原因",
+        "能力范围",
+        "家庭关系"
+      ],
+      "protected_conventions": "保留身份反差与打脸；不预设主角一定忍辱或暴力报复。",
+      "rule_ids": [
+        "RICHRET-001",
+        "RICHRET-002",
+        "RICHRET-003",
+        "RICHRET-004",
+        "RICHRET-005",
+        "RICHRET-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "MYSTROM",
+      "name": "悬疑恋爱与情感探案",
+      "layer": "genre",
+      "aliases": [
+        "悬疑恋爱",
+        "情感悬疑"
+      ],
+      "context": [
+        "案件线索表",
+        "关系阶段",
+        "知识权限"
+      ],
+      "protected_conventions": "悬疑与恋爱可不等量；按项目承诺保护两条主线。",
+      "rule_ids": [
+        "MYSTROM-001",
+        "MYSTROM-002",
+        "MYSTROM-003",
+        "MYSTROM-004",
+        "MYSTROM-005",
+        "MYSTROM-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "FANTROM",
+      "name": "玄幻言情与超凡情感",
+      "layer": "genre",
+      "aliases": [
+        "玄幻言情",
+        "仙侠言情"
+      ],
+      "context": [
+        "力量契约",
+        "寿命时间",
+        "感情合同"
+      ],
+      "protected_conventions": "允许宿命和感应；有设定的感应不自动等于双方同意。",
+      "rule_ids": [
+        "FANTROM-001",
+        "FANTROM-002",
+        "FANTROM-003",
+        "FANTROM-004",
+        "FANTROM-005",
+        "FANTROM-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "FOOD",
+      "name": "美食与手艺经营",
+      "layer": "genre",
+      "aliases": [
+        "美食",
+        "手艺经营",
+        "厨娘"
+      ],
+      "context": [
+        "制作条件",
+        "顾客关系",
+        "经营状态"
+      ],
+      "protected_conventions": "保留食物描写和制作乐趣；真实工艺不等于危险操作指南。",
+      "rule_ids": [
+        "FOOD-001",
+        "FOOD-002",
+        "FOOD-003",
+        "FOOD-004",
+        "FOOD-005",
+        "FOOD-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "FISH",
+      "name": "赶海钓鱼与户外收获",
+      "layer": "genre",
+      "aliases": [
+        "赶海",
+        "钓鱼",
+        "渔业日常"
+      ],
+      "context": [
+        "地点季节",
+        "装备状态",
+        "收获账"
+      ],
+      "protected_conventions": "保留休闲节奏与夸张收获；不强制把日常写成求生惊险。",
+      "rule_ids": [
+        "FISH-001",
+        "FISH-002",
+        "FISH-003",
+        "FISH-004",
+        "FISH-005",
+        "FISH-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "FOLK",
+      "name": "都市玄学与民俗奇谈",
+      "layer": "genre",
+      "aliases": [
+        "都市玄学",
+        "玄学文"
+      ],
+      "context": [
+        "超凡规则",
+        "民俗来源",
+        "客户知情状态"
+      ],
+      "protected_conventions": "明确故事内真伪；不把虚构术法包装成现实有效服务。",
+      "rule_ids": [
+        "FOLK-001",
+        "FOLK-002",
+        "FOLK-003",
+        "FOLK-004",
+        "FOLK-005",
+        "FOLK-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "ENSEMBLE",
+      "name": "群像与多主角分配",
+      "layer": "tag",
+      "aliases": [
+        "群像",
+        "多主角群像"
+      ],
+      "context": [
+        "视角表",
+        "角色目标网",
+        "登场记录"
+      ],
+      "protected_conventions": "群像不等于平均戏份，不等于聊天群，也不自动规定CP。",
+      "rule_ids": [
+        "ENSEMBLE-001",
+        "ENSEMBLE-002",
+        "ENSEMBLE-003",
+        "ENSEMBLE-004",
+        "ENSEMBLE-005",
+        "ENSEMBLE-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "READMIND",
+      "name": "读心与心声传播",
+      "layer": "tag",
+      "aliases": [
+        "读心",
+        "心声",
+        "全员读心"
+      ],
+      "context": [
+        "听取权限",
+        "读心范围",
+        "知情表"
+      ],
+      "protected_conventions": "允许读心设定；心声不是旁白真相，更不自动是行动授权。",
+      "rule_ids": [
+        "READMIND-001",
+        "READMIND-002",
+        "READMIND-003",
+        "READMIND-004",
+        "READMIND-005",
+        "READMIND-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "POCKET",
+      "name": "空间储物与独立小世界",
+      "layer": "tag",
+      "aliases": [
+        "空间",
+        "储物空间",
+        "随身空间"
+      ],
+      "context": [
+        "容量与时间规则",
+        "物品账",
+        "出入权限"
+      ],
+      "protected_conventions": "保留面板与便利能力，不强迫每次拿取都说明规则。",
+      "rule_ids": [
+        "POCKET-001",
+        "POCKET-002",
+        "POCKET-003",
+        "POCKET-004",
+        "POCKET-005",
+        "POCKET-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "HOARD",
+      "name": "囤货与物资规划",
+      "layer": "tag",
+      "aliases": [
+        "囤货",
+        "囤物资"
+      ],
+      "context": [
+        "库存账",
+        "时间线",
+        "用途与损耗"
+      ],
+      "protected_conventions": "允许清单和数字爽点；检查矛盾而非见表就删。",
+      "rule_ids": [
+        "HOARD-001",
+        "HOARD-002",
+        "HOARD-003",
+        "HOARD-004",
+        "HOARD-005",
+        "HOARD-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "CHILDFRIEND",
+      "name": "青梅竹马与长期相识",
+      "layer": "tag",
+      "aliases": [
+        "青梅竹马",
+        "竹马"
+      ],
+      "context": [
+        "共同历史",
+        "关系边界",
+        "当前年龄"
+      ],
+      "protected_conventions": "长期相识不等于必须恋爱，不必发生在校园。",
+      "rule_ids": [
+        "CHILDFRIEND-001",
+        "CHILDFRIEND-002",
+        "CHILDFRIEND-003",
+        "CHILDFRIEND-004",
+        "CHILDFRIEND-005",
+        "CHILDFRIEND-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "CRUSH",
+      "name": "暗恋与双向试探",
+      "layer": "tag",
+      "aliases": [
+        "暗恋",
+        "双向暗恋"
+      ],
+      "context": [
+        "感情知识表",
+        "互动记录",
+        "角色声线"
+      ],
+      "protected_conventions": "保留克制、重复犹豫与慢节奏；不强制尽快告白。",
+      "rule_ids": [
+        "CRUSH-001",
+        "CRUSH-002",
+        "CRUSH-003",
+        "CRUSH-004",
+        "CRUSH-005",
+        "CRUSH-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "CHECKIN",
+      "name": "签到抽奖与任务奖励",
+      "layer": "tag",
+      "aliases": [
+        "签到",
+        "抽奖",
+        "任务奖励"
+      ],
+      "context": [
+        "触发规则",
+        "奖励账",
+        "冷却记录"
+      ],
+      "protected_conventions": "保留签到与奖励快感；不要求每个奖励付出对称代价。",
+      "rule_ids": [
+        "CHECKIN-001",
+        "CHECKIN-002",
+        "CHECKIN-003",
+        "CHECKIN-004",
+        "CHECKIN-005",
+        "CHECKIN-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "FATEFIX",
+      "name": "预知与改命信息",
+      "layer": "tag",
+      "aliases": [
+        "预知",
+        "剧透",
+        "改命"
+      ],
+      "context": [
+        "前知来源",
+        "分支图",
+        "失效条件"
+      ],
+      "protected_conventions": "允许准确预知；不强制所有先知都因蝴蝶效应失准。",
+      "rule_ids": [
+        "FATEFIX-001",
+        "FATEFIX-002",
+        "FATEFIX-003",
+        "FATEFIX-004",
+        "FATEFIX-005",
+        "FATEFIX-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "SALTED",
+      "name": "咸鱼与低欲望主角",
+      "layer": "tag",
+      "aliases": [
+        "咸鱼",
+        "躺平主角"
+      ],
+      "context": [
+        "欲望边界",
+        "生活偏好",
+        "主线合同"
+      ],
+      "protected_conventions": "低欲望不等于无人物；不强迫主角积极升级或创业。",
+      "rule_ids": [
+        "SALTED-001",
+        "SALTED-002",
+        "SALTED-003",
+        "SALTED-004",
+        "SALTED-005",
+        "SALTED-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "PREMISE",
+      "name": "脑洞前提与机制兑现",
+      "layer": "tag",
+      "aliases": [
+        "脑洞",
+        "机制脑洞"
+      ],
+      "context": [
+        "一句话前提",
+        "规则版本",
+        "可观察后果"
+      ],
+      "protected_conventions": "脑洞不是一定要系统或升级；新奇程度不等于可证明全网唯一。",
+      "rule_ids": [
+        "PREMISE-001",
+        "PREMISE-002",
+        "PREMISE-003",
+        "PREMISE-004",
+        "PREMISE-005",
+        "PREMISE-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "TRANSMEDIA",
+      "name": "短剧改编与跨媒介叙事",
+      "layer": "form",
+      "aliases": [
+        "短剧改编",
+        "短剧感",
+        "漫剧改编"
+      ],
+      "context": [
+        "目标媒介",
+        "篇幅合同",
+        "原作授权与事实"
+      ],
+      "protected_conventions": "不把网文都改成分镜，不保证版权价值或商业成绩。",
+      "rule_ids": [
+        "TRANSMEDIA-001",
+        "TRANSMEDIA-002",
+        "TRANSMEDIA-003",
+        "TRANSMEDIA-004",
+        "TRANSMEDIA-005",
+        "TRANSMEDIA-006"
+      ],
+      "rule_count": 6
+    },
+    {
+      "id": "PACKAGING",
+      "name": "书名简介与开篇承诺",
+      "layer": "scene",
+      "aliases": [
+        "简介",
+        "书名",
+        "开篇承诺"
+      ],
+      "context": [
+        "作品策划",
+        "已写章节",
+        "目标读者合同"
+      ],
+      "protected_conventions": "不承诺爆款，不强制第三章高潮；标题与正文可保留悬念。",
+      "rule_ids": [
+        "PACKAGING-001",
+        "PACKAGING-002",
+        "PACKAGING-003",
+        "PACKAGING-004",
+        "PACKAGING-005",
+        "PACKAGING-006"
+      ],
+      "rule_count": 6
+    }
+  ]
+}

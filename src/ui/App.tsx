@@ -56,6 +56,7 @@ import { AssistantSettings } from './AssistantSettings';
 import { MemoryStudio, CharacterInspector, SourceDialog } from './MemoryStudio';
 import { NarrativePanel } from './NarrativePanel';
 import { SkillLauncher } from './SkillLauncher';
+import { ExpressionSettings } from './ExpressionSettings';
 import type { SourceRef } from '../shared/studio';
 import { gateEvent, syncEventCursor, type EventCursor } from '../shared/event-gate';
 import './studio.css';
@@ -1684,6 +1685,7 @@ function ProjectSettings({
           文风
           <input value={c.style} onChange={(e) => field('style', e.target.value)} />
         </label>
+        <ExpressionSettings value={c.expressionRules} onChange={(value) => field('expressionRules', value)} />
         <label>
           作者硬约束
           <textarea value={c.constraints} onChange={(e) => field('constraints', e.target.value)} />

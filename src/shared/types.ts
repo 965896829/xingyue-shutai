@@ -25,6 +25,15 @@ export const configSchema = z
     genre: z.string().default('脑洞玄幻'),
     style: z.string().default('清晰、快节奏；人物主动选择；强弱节奏交替'),
     constraints: z.string().default(''),
+    expressionRules: z
+      .object({
+        enabled: z.boolean().default(true),
+        modules: z
+          .array(z.string().regex(/^[A-Z]+$/))
+          .max(145)
+          .default([])
+      })
+      .default({ enabled: true, modules: [] }),
     recentChapters: z.number().int().min(1).max(30).default(3),
     defaultProfileId: z.string().default(''),
     stageProfiles: z.record(z.string(), z.string()).default({}),
@@ -249,6 +258,9 @@ export type RunStatus =
   | 'awaiting_input'
   | 'awaiting_permission';
 export interface Run {
+  expressionRules?: Partial<
+    Record<import('./expression').ExpressionMode, import('./expression').ExpressionBinding>
+  >;
   candidateWrites?: Record<string, number>;
   modelBindings?: Record<string, { id: string; version: number }>;
   proposalHash?: string;
@@ -366,6 +378,7 @@ export const commands = [
   'assessment.refresh',
   'draft.checkpoint',
   'skills.list',
+  'expression.catalog',
   'skill.run',
   'outbox.retry',
   'chat.list',

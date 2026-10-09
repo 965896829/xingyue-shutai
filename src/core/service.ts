@@ -22,6 +22,7 @@ import {
 } from '../shared/studio';
 import { SemanticIndex, CompatibleEmbeddings } from './embeddings';
 import { SkillRegistry, stageSkills } from './skill-registry';
+import { expressionLibrary, validateExpressionSelection } from './expression-rules';
 import { recoverUsage } from './telemetry';
 import {
   id,
@@ -320,6 +321,7 @@ export class Service {
     )
       throw new Error('正在建立一致备份，请稍后再进行写入或切换项目');
     if (command === 'app.snapshot') return this.snapshot();
+    if (command === 'expression.catalog') return expressionLibrary(this.skillRoot).catalog;
     if (command === 'embedding.test') {
       const result = await new CompatibleEmbeddings(
         embeddingSettingsSchema.parse(this.assistant.embedding ?? {}),
@@ -372,6 +374,7 @@ export class Service {
         })
         .parse(a);
       const title = args.title.trim();
+      validateExpressionSelection(this.skillRoot, configSchema.parse(args.config ?? {}));
       if (isRecyclePath(args.parent)) throw new Error('不能在回收站内新建作品');
       if (/[<>:"/\\|?*\x00-\x1f]/.test(title) || /[. ]$/.test(title))
         throw new Error('作品名称包含无效路径字符');
@@ -906,6 +909,7 @@ export class Service {
       if (s.read(paths.config).hash !== s.db.document(paths.config)?.hash)
         throw new Error('配置文件存在外部改动，请先比较并接受，不能用旧设置覆盖');
       const cfg = configSchema.parse(a.config);
+      validateExpressionSelection(this.skillRoot, cfg);
       const next = reconfigure(p, cfg);
       s.commit(
         [

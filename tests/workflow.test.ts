@@ -28,10 +28,17 @@ import { fixture } from './fixtures/workflow';
 test('S01—S11 全流程、正文记忆一次批准与批次归档', async () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-full-'));
   let service: Service;
+  const expressionModes = new Set<string>();
   service = new Service(
     root,
     () => {},
     async (_p, _s, messages, tools, _signal, onDelta) => {
+      const mode = _s.match(/<expression_rules version="3\.1\.0" mode="([a-z]+)">/)?.[1];
+      assert.ok(mode, '每次实际模型请求必须包含表达规则');
+      expressionModes.add(mode);
+      assert.match(_s, /\[SYN-001\]/);
+      assert.match(_s, /对比论辩、角色口癖或强节奏段落/);
+      if (_s.includes('rubric narrative-1')) assert.equal(mode, 'record');
       const current = service.store!.db.project();
       if (!tools.length) {
         const prose = fixture(current, prosePath(current.chapter), service);
@@ -123,6 +130,9 @@ test('S01—S11 全流程、正文记忆一次批准与批次归档', async () =
       const r = service.store!.db.run(id);
       assert.equal(r.status, 'awaiting_review', `${r.stage}: ${JSON.stringify(r.issues)} ${r.error}`);
       if (r.pipeline) {
+        assert.ok(r.expressionRules?.prose?.ruleIds.includes('META-001'));
+        assert.ok(r.expressionRules?.review?.ruleIds.includes('EDIT-001'));
+        assert.equal(r.expressionRules?.record?.mode, 'record');
         assert.ok(r.steps?.some((s) => s.phase === 'prose' && s.profileId === 'mock'));
         assert.ok(r.steps?.some((s) => s.phase === 'review' && s.profileId === 'reviewer'));
         assert.ok(r.steps?.some((s) => s.phase === 'memory' && s.profileId === 'extractor'));
@@ -141,6 +151,7 @@ test('S01—S11 全流程、正文记忆一次批准与批次归档', async () =
       if (stages > 20) throw new Error('流程没有结束');
     }
     assert.equal(stages, 12);
+    assert.deepEqual([...expressionModes].sort(), ['planning', 'prose', 'record', 'review']);
     assert.equal(service.store!.db.project().chapters[2], 'complete');
     assert.ok(
       service.store!.read(archivePath(activeBatch(service.store!.db.project()))).content.includes('第2章')

@@ -11,6 +11,7 @@ import { rebuildMemory, searchMemory } from './memory';
 import { retrieveMemory, scopedRead, writingScope, visibleFact } from './memory-studio';
 import { loadNamingRules, namingPrompt, readNamingModules } from './naming';
 import { PublicSearch } from './search';
+import { expressionFingerprint, expressionPack } from './expression-rules';
 import type { Caller } from './runner';
 import type { AppEvent, SecretProfile, ToolDefinition, ModelMessage } from '../shared/types';
 import type {
@@ -127,7 +128,11 @@ export class ConversationRunner {
           e.isDirectory() ? walk(path.join(dir, e.name)) : [hash(fs.readFileSync(path.join(dir, e.name)))]
         );
     return hash(
-      JSON.stringify([this.settings().roles.map((r) => [r.id, r.current.id]), walk(this.skillRoot)])
+      JSON.stringify([
+        this.settings().roles.map((r) => [r.id, r.current.id]),
+        walk(this.skillRoot),
+        expressionFingerprint(this.skillRoot, this.store.db.project().config)
+      ])
     );
   }
   profile(profileId: string) {
@@ -344,7 +349,13 @@ export class ConversationRunner {
         this.records.save('conversations', conv);
       }
       const premise = this.store.db.get<string>('premise') ?? '';
-      const system = `你是文序网文创作助手。使用编辑、番茄创作和起点创作的专业判断方法，统一回答，不冒充真实头衔，不保证商业成功。
+      const expression = expressionPack(
+        this.skillRoot,
+        p.config,
+        turn.kind === 'draft' ? 'draft' : 'discussion'
+      );
+      const system =
+        `你是文序网文创作助手。使用编辑、番茄创作和起点创作的专业判断方法，统一回答，不冒充真实头衔，不保证商业成功。
 当前是${turn.kind === 'draft' ? '作者已确认的自由试写任务，只生成聊天草稿；不写正式文件。严格按任务范围。' : '自由讨论。自动判断讨论、流程指导或执行意图；用户一句想法只讨论与澄清，不启动阶段。'}
 讨论人物、剧情、命名、审稿、改稿方案、题材、书名简介和研究都可进行；询问怎么做只解释。几个名字、解释用的短例子直接回答；整章试写、批量正式产物和实际修订必须先调用 propose_action 提交任务卡，等待作者点击确认，不能在同轮先写正文。现阶段用户说“开始”也只能提议，不等于点击确认。${turn.kind === 'draft' ? '本轮已获得试写授权，无需再提议；结果始终是未采纳草稿。' : ''}
 不得把“时间穿越”自动确定为死亡回档；事实、作者决定、建议、未决问题分开。正式资料优先于未采纳聊天意见。用户确认建议也不等于文件已更新。
@@ -360,14 +371,16 @@ export class ConversationRunner {
 已确认文风文件：${style.content}
 全局持续约束：${JSON.stringify(constraints)}
 本书资料目录（只是路径，不表示已阅读）：${this.store.db
-        .acceptedDocuments()
-        .map((d) => d.path)
-        .join('\n')}
+          .acceptedDocuments()
+          .map((d) => d.path)
+          .join('\n')}
 较早聊天摘要（讨论，不是事实）：${summary || '无'}
 用户最近消息中的不明确之处请提出少量关键问题；不要强迫填写模板。
-回答以清晰自然的中文为主，重要意见有具体依据，避免空话、盲目赞同和大量套路新词。`;
+回答以清晰自然的中文为主，重要意见有具体依据，避免空话、盲目赞同和大量套路新词。` + expression.prompt;
+      turn.expressionRules = expression.binding;
       turn.rules = [
         { id: 'conversation-resident', version: hash(system) },
+        ...(expression.binding ? [{ id: 'natural-expression', version: expression.binding.promptHash }] : []),
         ...runtime.roles.map((r) => ({ id: r.id, version: r.current.id }))
       ];
       turn.messages = [

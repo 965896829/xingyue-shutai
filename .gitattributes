@@ -1,1 +1,2 @@
 resources/skill/runtime/** -text -whitespace
+resources/skill/expression/** -text -whitespace

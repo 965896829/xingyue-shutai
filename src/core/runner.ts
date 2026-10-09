@@ -35,6 +35,7 @@ import { systemPrompt } from './skill';
 import { loadNamingRules, readNamingModules, type NamingRules } from './naming';
 import { validateCandidate, validateCoverage } from './validation';
 import { invokeModel, RequestError, requestBody } from './provider';
+import { expressionFingerprint, expressionPack, bindExpressionRules } from './expression-rules';
 
 const object = (properties: Record<string, unknown>, required: string[] = Object.keys(properties)) => ({
   type: 'object',
@@ -123,7 +124,7 @@ export class AgentRunner {
     readonly emit: (e: AppEvent) => void,
     readonly caller: Caller = invokeModel
   ) {
-    this.telemetry = new NarrativeTelemetry(store, emit, caller);
+    this.telemetry = new NarrativeTelemetry(store, emit, caller, skillRoot);
   }
   event(run: Run, kind: string, text: string) {
     this.store.db.event(run.id, kind, text);
@@ -246,6 +247,18 @@ export class AgentRunner {
       r.manifest = assembleContext(this.store, p, r.stage, r.request, profile, r.mode === 'revision');
       await this.enrichContext(r, p);
       const tools = this.toolsFor(r);
+      const expression = expressionPack(
+        this.skillRoot,
+        p.config,
+        r.mode === 'revision'
+          ? 'revision'
+          : r.mode === 'analysis'
+            ? 'discussion'
+            : r.stage === 'S11'
+              ? 'record'
+              : 'planning'
+      );
+      bindExpressionRules(r, expression.binding);
       const system =
         (r.mode === 'revision'
           ? '当前是作者授权的修订任务，不推进阶段。已失效事实只用于定位冲突，不能当作当前依据。请检查明确范围内的相关文件，提出候选与有来源的记忆替代。\n'
@@ -253,7 +266,8 @@ export class AgentRunner {
         systemPrompt(this.skillRoot, p, r.stage, naming, r.skillId ?? stageSkills[r.stage]) +
         (r.mode === 'analysis'
           ? '\n当前为独立研究任务，不推进章节。上文阶段产物要求不适用。只可通过 propose_changes 提议 11_创作研究/ 下的 Markdown 报告，保留日期、来源网址、样本范围、假设与未知。不可更改正文、台账或登记书内事实。仅调用此请求实际提供的工具。'
-          : '');
+          : '') +
+        expression.prompt;
       const currentSkillHash = hash(system + JSON.stringify(tools));
       if (r.skillHash && r.skillHash !== currentSkillHash)
         throw new Error('任务规则或工具契约发生变化，请重新组装上下文');
@@ -289,6 +303,8 @@ export class AgentRunner {
       }
       while (r.rounds < p.config.maxRounds) {
         if (signal.aborted) throw new RequestError('作者已停止执行', false);
+        if (expressionFingerprint(this.skillRoot, this.store.db.project().config) !== expression.fingerprint)
+          throw new Error('表达规则已改变，请重新组装上下文');
         if (r.manifest.sources.some((s) => fileHash(safePath(this.store.root, s.path)) !== s.hash))
           throw new Error('任务资料已被外部修改，需核对后重新建立任务');
         const estimated = Buffer.byteLength(
@@ -498,12 +514,15 @@ export class AgentRunner {
       return profile;
     };
     const registry = new SkillRegistry(this.skillRoot);
+    const expressionVersion = expressionFingerprint(this.skillRoot, p.config);
     const lock = hash(
       JSON.stringify(
         ['webnovel-chapter-drafter', 'webnovel-chapter-reviewer', 'webnovel-memory-extractor'].map(
           (k) => registry.load(k).hash
         )
-      ) + naming.hash
+      ) +
+        naming.hash +
+        expressionVersion
     );
     if (r.skillHash && r.skillHash !== lock) throw new Error('任务规则或工具契约发生变化，请重新组装上下文');
     r.skillHash = lock;
@@ -530,6 +549,8 @@ export class AgentRunner {
       delta?: (text: string) => void
     ) => {
       if (signal.aborted) throw new RequestError('作者已停止执行', false);
+      if (expressionFingerprint(this.skillRoot, this.store.db.project().config) !== expressionVersion)
+        throw new Error('表达规则已改变，请重新组装上下文');
       if (this.profiles().find((v) => v.id === profile.id)?.version !== profile.version)
         throw new Error('模型配置在运行期间改变');
       if (
@@ -576,7 +597,9 @@ export class AgentRunner {
       const file = prosePath(r.chapter);
       let draft = '',
         lastFlush = 0;
-      const system = `${systemPrompt(this.skillRoot, p, 'S10', naming)}\n本子调用只写小说正文，含章节标题。禁止工具调用、JSON、解释、评语和代码围栏。由宿主保存正文候选并安排独立校验，忽略上文要求本子调用提交工具或评分的表述。`;
+      const expression = expressionPack(this.skillRoot, p.config, 'prose');
+      bindExpressionRules(r, expression.binding);
+      const system = `${systemPrompt(this.skillRoot, p, 'S10', naming)}\n本子调用只写小说正文，含章节标题。禁止工具调用、JSON、解释、评语和代码围栏。由宿主保存正文候选并安排独立校验，忽略上文要求本子调用提交工具或评分的表述。${expression.prompt}`;
       for (let repair = 0; repair <= 2; repair++) {
         draft = '';
         const messages: Run['messages'] = [
@@ -641,7 +664,9 @@ export class AgentRunner {
       const stage = phase === 'memory' ? 'S11' : 'S10',
         profile = phase === 'memory' ? extractor : reviewer;
       const skillId = phase === 'memory' ? 'webnovel-memory-extractor' : 'webnovel-chapter-reviewer';
-      const system = `${systemPrompt(this.skillRoot, p, stage, naming, skillId)}\n宿主分工：本阶段为 ${phase}。必须复读提供的候选正文。正文已固定，不得改写。${phase === 'memory' ? '从候选正文提取记忆，与正文一起待作者确认。证据 hash 必须使用候选哈希；同步字段填待提交。' : `只提交 ${qualityPath(r.chapter)} 质量报告。`}实际字数 ${countWords(prose.content)}；候选哈希 ${pipeline.proseHash}。只调用此请求提供的工具，工具名以提供的实际契约为准。`;
+      const expression = expressionPack(this.skillRoot, p.config, phase === 'memory' ? 'record' : 'review');
+      bindExpressionRules(r, expression.binding);
+      const system = `${systemPrompt(this.skillRoot, p, stage, naming, skillId)}\n宿主分工：本阶段为 ${phase}。必须复读提供的候选正文。正文已固定，不得改写。${phase === 'memory' ? '从候选正文提取记忆，与正文一起待作者确认。证据 hash 必须使用候选哈希；同步字段填待提交。' : `只提交 ${qualityPath(r.chapter)} 质量报告。`}实际字数 ${countWords(prose.content)}；候选哈希 ${pipeline.proseHash}。只调用此请求提供的工具，工具名以提供的实际契约为准。${expression.prompt}`;
       if (!r.messages.length)
         r.messages.push({
           role: 'user',
