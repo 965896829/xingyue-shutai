@@ -1,0 +1,7 @@
+{
+  "importsPendingAtClose": true,
+  "closePageMs": 7,
+  "previewCharacters": 1349998,
+  "unreviewedImportDisabled": true,
+  "screenshot": "output/playwright/optimization-0.4.2-import.png"
+}

@@ -1,0 +1,75 @@
+{
+  "workflowDirection": {
+    "savedInput": "年轻检修员在夜间故障中发现局部异常，不引入全城灾变",
+    "selectedDirectionId": null,
+    "editFields": [
+      "",
+      ""
+    ],
+    "text": "采用「夜间检修」\n\n以下是这个方向拟采用的设定。没有修改意见，直接确认即可；需要调整的内容写在对应位置。\n\n正常社会持续运转，异常仅有局部影响\n主角是检修员，依靠记录和试验辨认规则\n确认这个方向及以上设定，继续\n不满意，重新生成这个方向"
+  },
+  "workflowReady": {
+    "readyRunId": "89afc3df-0670-4ec0-87d8-0ec70664d0a4",
+    "status": "awaiting_review",
+    "resolutions": {
+      "A_WORLD": "作者已确认采用此设定",
+      "A_HERO": "作者已确认采用此设定"
+    },
+    "issues": [],
+    "text": "标签与开书策划\n策划模型\n选择模型\n本地流程模拟 · fixture\n\n填写想法 → 确认方向 → 审阅设定并继续。输入保存和方案检查会自动完成。\n\n标签与作者输入\n\n等待你确认结果 · 已用 4 次模型调用\n\n查看方向方案与推荐理由\n本阶段结果：设定拆解\n设定拆解\n原始设定：具体事件与原因\n题材类型：具体事件与原因\n一句话卖点：具体事件与原因\n核心神级点：具体事件与原因\n主角初始困境：具体事件与原因\n世界不公平规则：具体事件与原因\n主角破局方式：具体事件与原因\n最大反差：具体事件与原因\n第一章核心事件：具体事件与原因\n长线连载动力：具体事件与原因\n爽点升级路线：具体事件与原因\n风险与修正：具体事件与原因\n沿用的创作约定\n\n开放问题：无\n\n确认并继续\n保存，暂不继续\n更多操作\n\n确认后保存以上结果，并开始“项目与文风”。下一阶段完成后会再次等你确认。"
+  },
+  "workflowNext": {
+    "dirtyInputBlocksApproval": true,
+    "stage": "S02",
+    "selected": "1156fe8d-61be-4c93-9dee-aac5d8158f75",
+    "current": {
+      "id": "1156fe8d-61be-4c93-9dee-aac5d8158f75",
+      "stage": "S02",
+      "status": "awaiting_review",
+      "accepted": false,
+      "issues": []
+    },
+    "runs": [
+      {
+        "id": "1156fe8d-61be-4c93-9dee-aac5d8158f75",
+        "stage": "S02",
+        "status": "awaiting_review",
+        "accepted": false,
+        "issues": []
+      },
+      {
+        "id": "89afc3df-0670-4ec0-87d8-0ec70664d0a4",
+        "stage": "S01",
+        "status": "complete",
+        "accepted": true,
+        "issues": []
+      }
+    ],
+    "text": "项目与文风S02\n\n第 001 章 · 2,500 字 / 章 · 当前批次 1—30 章\n\n创作流程 2 / 11\nS02 · 第 1 章 · 等待审阅 · 01:12:49\nS01 · 第 1 章 · 已接受 · 01:12:05\n你的任务\n\n完成 项目配置与文风。沿用已接受要求，开始前复核全部必读资料。\n\n星月书台\n等待审阅\n资料详情\n6 份资料 · 0 条关联事实 · 项目版本 2\n本地模拟结果已准备好本阶段方案已完成。请审阅结果，确认后继续下一阶段。\n重新检查候选\n候选改动 · 2 个文件\n项目配置.md\n1,125 字符\n文风样本与规则.md\n32 字符\n候选待验收\n确认并继续\n保存，暂不继续\n重建上下文 / 用所选模型继续\n继续修改 / 恢复\n放弃候选\n2 轮调用 · 1 次工具 · 费用未知 · 输入 40 / 输出 40\n项目与文风\n修订资料\n选择模型\nfixture\n点击 ↑ 确认开始本阶段。AI 提交候选，由你确认采纳。"
+  },
+  "workflowPause": {
+    "followedSecondTransition": true,
+    "pausedStage": "S04",
+    "runs": [
+      {
+        "id": "45c76721-5292-4b45-abb1-90fbdf0f9c4e",
+        "stage": "S03",
+        "accepted": true,
+        "status": "complete"
+      },
+      {
+        "id": "1156fe8d-61be-4c93-9dee-aac5d8158f75",
+        "stage": "S02",
+        "accepted": true,
+        "status": "complete"
+      },
+      {
+        "id": "89afc3df-0670-4ec0-87d8-0ec70664d0a4",
+        "stage": "S01",
+        "accepted": true,
+        "status": "complete"
+      }
+    ],
+    "noNextRunAfterPause": true
+  }
+}

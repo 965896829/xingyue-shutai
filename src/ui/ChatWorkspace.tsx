@@ -1,3 +1,6 @@
+import { invokeCommand } from '../shared/client';
+import { mergeRows as merge, readChatUpdates } from '../shared/chat-history';
+import type { CommandInput, CommandOutput } from '../shared/contracts';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus, Archive, RotateCcw, Sparkles, FileText } from 'lucide-react';
 import DOMPurify from 'dompurify';
@@ -12,6 +15,11 @@ import type {
 } from '../shared/assistant';
 import { ProximitySidebar } from './ProximitySidebar';
 import { ChatComposer } from './ChatComposer';
+import { brand } from '../shared/brand';
+import { requestErrorText } from '../shared/run-presentation';
+import { jumpToChatTarget } from './chat-navigation';
+import { renderNativeCitations } from '../shared/web-search';
+import { WebSearchEvidence } from './WebSearchEvidence';
 
 interface ChatData {
   conversation: Conversation;
@@ -56,14 +64,15 @@ export function ChatWorkspace({
     });
   const scroll = useRef<HTMLDivElement>(null),
     request = useRef(0);
-  const conversations = snapshot.conversations ?? [],
+  const cursor = useRef<{ nextBefore: number | null; watermark: number; latestWatermark: number; loading: boolean }>({ nextBefore: null, watermark: 0, latestWatermark: 0, loading: false });
+  const conversations = (snapshot.conversations ?? []).filter(conversation => !conversation.runId),
     p = snapshot.project!,
     key = `draft:${p.id}:chat-inputs`;
   const currentText = inputs[selected] ?? '',
     modelBusy = snapshot.chatBusy || snapshot.runs.some((r) => r.status === 'running');
   async function openDraft(id: string, useCache = true) {
     try {
-      const result = await window.wenxu!.invoke<DraftEdit>('draft.read', { id });
+      const result = await invokeCommand('draft.read', { id });
       const cacheKey = `draft:${p.id}:free:${id}`;
       const cached = useCache ? JSON.parse(localStorage.getItem(cacheKey) ?? 'null') : null;
       setDraft(cached ? { ...result, content: cached.content, currentHash: cached.baseHash } : result);
@@ -96,14 +105,20 @@ export function ChatWorkspace({
     if (!selected) return;
     const seq = ++request.current;
     try {
-      const result = await window.wenxu!.invoke<ChatData>('chat.read', { id: selected });
-      if (request.current === seq) setData(result);
+      const result = await readChatUpdates(invokeCommand, selected, cursor.current.latestWatermark);
+      if (request.current === seq) {
+        setError(current => /执行内核.*(?:恢复|尚未就绪)|作品会话已改变/.test(current) ? '' : current);
+        if (!cursor.current.watermark) cursor.current = { nextBefore: result.nextBefore, watermark: result.watermark, latestWatermark: result.watermark, loading: false };
+        cursor.current.latestWatermark = result.watermark;
+        setData((previous) => !previous || previous.conversation.id !== selected ? result : { ...result, messages: merge(previous.messages, result.messages), turns: merge(previous.turns, result.turns), proposals: merge(previous.proposals, result.proposals) });
+      }
     } catch (e) {
       if (request.current === seq) setError((e as Error).message);
     }
   }, [selected]);
   useEffect(() => {
     setData(undefined);
+    cursor.current = { nextBefore: null, watermark: 0, latestWatermark: 0, loading: false };
     setRefs([]);
     void load();
     return () => {
@@ -112,7 +127,10 @@ export function ChatWorkspace({
   }, [load]);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const unsubscribe = window.wenxu!.onEvent(() => {
+    const unsubscribe = window.wenxu!.onEvent((event) => {
+      if (event.projectSessionId && event.projectSessionId !== snapshot.projectSessionId) return;
+      if (event.resource && (event.resource !== 'chat' || event.resourceId && event.resourceId !== selected)) return;
+      if (event.type === 'delta' || event.type === 'prose-delta' || event.type === 'assessment' || event.type === 'run-event') return;
       if (!timer)
         timer = setTimeout(() => {
           timer = undefined;
@@ -123,12 +141,31 @@ export function ChatWorkspace({
       unsubscribe();
       clearTimeout(timer);
     };
-  }, [load]);
-  async function call<T>(command: Command, args: Record<string, unknown> = {}): Promise<T | undefined> {
+  }, [load, selected, snapshot.projectSessionId]);
+  useEffect(() => {
+    const element = scroll.current;
+    if (!element) return;
+    const older = () => {
+      const current = cursor.current;
+      if (element.scrollTop > 80 || current.loading || current.nextBefore === null) return;
+      current.loading = true;
+      const height = element.scrollHeight;
+      const sequence = request.current;
+      void invokeCommand('chat.page', { id: selected, before: current.nextBefore, watermark: current.watermark }).then((page) => {
+        if (sequence !== request.current) return;
+        cursor.current.nextBefore = page.nextBefore;
+        setData((previous) => previous && ({ ...previous, messages: merge(page.messages, previous.messages), turns: merge(page.turns, previous.turns), proposals: merge(page.proposals, previous.proposals) }));
+        requestAnimationFrame(() => { element.scrollTop += element.scrollHeight - height; });
+      }).catch((error) => setError((error as Error).message)).finally(() => { current.loading = false; });
+    };
+    element.addEventListener('scroll', older);
+    return () => element.removeEventListener('scroll', older);
+  }, [selected, data?.conversation.id]);
+  async function call<C extends Command>(command: C, args?: CommandInput<C>): Promise<CommandOutput<C> | undefined> {
     setBusy(true);
     setError('');
     try {
-      const result = await window.wenxu!.invoke<T>(command, args);
+      const result = await invokeCommand(command, args);
       await refresh();
       await load();
       return result;
@@ -167,7 +204,7 @@ export function ChatWorkspace({
       `讨论草稿-${new Date().toLocaleDateString().replaceAll('/', '-')}`
     );
     if (!title?.trim()) return;
-    const saved = await call<DraftArtifact>('draft.save', {
+    const saved = await call('draft.save', {
       title,
       content: message.content,
       conversationId: message.conversationId,
@@ -175,7 +212,7 @@ export function ChatWorkspace({
     });
     if (saved) {
       setShowDrafts(true);
-      setDrafts(await window.wenxu!.invoke('draft.list'));
+      setDrafts(await invokeCommand('draft.list'));
       await openDraft(saved.id, false);
     }
   }
@@ -235,7 +272,7 @@ export function ChatWorkspace({
               className="primary"
               disabled={busy || modelBusy || view?.conversation.archived}
               onClick={async () => {
-                const result = await call<{ kind: string; id: string }>('proposal.confirm', {
+                const result = await call('proposal.confirm', {
                   id: card.id,
                   version: card.version
                 });
@@ -271,7 +308,11 @@ export function ChatWorkspace({
         const anchor = (e.target as HTMLElement).closest('a');
         if (anchor) {
           e.preventDefault();
-          void call('app.openUrl', { url: anchor.href });
+          const href = anchor.getAttribute('href') ?? '';
+          if (href.startsWith('#')) {
+            if (!jumpToChatTarget(scroll.current, href.slice(1))) setError('该消息不在当前已加载的记录中，请先查看较早对话');
+          } else if (/^https?:\/\//i.test(href)) void invokeCommand('app.openUrl', { url: href }).catch(error => setError((error as Error).message));
+          else setError('此链接无法打开，请使用资料来源中的文稿入口');
         }
       }}
     >
@@ -321,7 +362,7 @@ export function ChatWorkspace({
             onClick={async () => {
               const title = await ask('聊天主题', '新的创作讨论');
               if (title) {
-                const c = await call<Conversation>('chat.create', { title });
+                const c = await call('chat.create', { title });
                 if (c) {
                   select(c.id);
                   setArchived(false);
@@ -351,7 +392,7 @@ export function ChatWorkspace({
           <button
             onClick={async () => {
               setShowDrafts(!showDrafts);
-              setDrafts(await window.wenxu!.invoke('draft.list'));
+              setDrafts(await invokeCommand('draft.list'));
             }}
           >
             自由草稿
@@ -368,6 +409,7 @@ export function ChatWorkspace({
           <div className="button-row">
             <button
               aria-label="重命名聊天"
+              disabled={!view || busy || !!modelBusy}
               onClick={async () => {
                 const title = await ask('新的聊天标题', view?.conversation.title);
                 if (title) void call('chat.update', { id: selected, title });
@@ -377,6 +419,7 @@ export function ChatWorkspace({
             </button>
             <button
               aria-label={view?.conversation.archived ? '恢复聊天' : '归档聊天'}
+              disabled={!view || busy || !!modelBusy}
               onClick={() =>
                 void call('chat.update', { id: selected, archived: !view?.conversation.archived })
               }
@@ -396,7 +439,7 @@ export function ChatWorkspace({
             scrollRef={scroll}
             sections={(view?.messages ?? []).map((m) => ({
               id: `message-${m.id}`,
-              label: `${m.role === 'user' ? '你的消息' : '文序回答'}：${m.content.slice(0, 20)}`,
+              label: `${m.role === 'user' ? '你的消息' : `${brand.name}回答`}：${m.content.slice(0, 20)}`,
               kind: 'section'
             }))}
           />
@@ -418,7 +461,7 @@ export function ChatWorkspace({
               return (
                 <article key={m.id} id={`message-${m.id}`} className={`conversation-message ${m.role}`}>
                   <small>
-                    {m.role === 'user' ? '你' : '文序'} · {new Date(m.createdAt).toLocaleTimeString()}{' '}
+                    {m.role === 'user' ? '你' : brand.name} · {new Date(m.createdAt).toLocaleTimeString()}{' '}
                     {m.role === 'assistant' &&
                       {
                         running: '正在回答…',
@@ -433,14 +476,15 @@ export function ChatWorkspace({
                     dangerouslySetInnerHTML={{
                       __html: DOMPurify.sanitize(
                         marked.parse(
-                          m.content || (m.status === 'running' ? '正在读取资料与组织回答…' : '没有返回正文')
+                          renderNativeCitations(m.content, m.webSearch?.citations) || (m.status === 'running' ? '正在读取资料与组织回答…' : '没有返回正文')
                         ) as string
                       )
                     }}
                   />
                   {m.role === 'assistant' && (
                     <>
-                      {turn?.error && <p className="inline-warning">{turn.error}</p>}
+                      <WebSearchEvidence state={m.webSearch} running={m.status === 'running'} />
+                      {turn?.error && <p className="inline-warning">{requestErrorText(turn.error)}</p>}
                       {turn?.calls
                         .filter((c) => ['public_search', 'extract_pages'].includes(c.name))
                         .map((c, i) => {
@@ -474,7 +518,7 @@ export function ChatWorkspace({
                       )}
                       {turn && (
                         <details>
-                          <summary>调用、规则与上下文记录 · {turn.calls.length} 次工具</summary>
+                          <summary>调用、规则与上下文记录 · {turn.calls.length + (turn.webSearch?.calls.length ?? 0)} 次工具</summary>
                           <p>
                             模型：
                             {snapshot.profiles.find((x) => x.id === turn.profileId)?.model ??
@@ -601,7 +645,7 @@ export function ChatWorkspace({
               <button
                 disabled={busy}
                 onClick={async () => {
-                  const result = await call<DraftArtifact>('draft.save', {
+                  const result = await call('draft.save', {
                     id: draft.id,
                     title: draft.title,
                     content: draft.content,
@@ -628,7 +672,7 @@ export function ChatWorkspace({
                   <button
                     key={v.hash}
                     onClick={async () => {
-                      const old = await window.wenxu!.invoke<DraftEdit>('draft.read', {
+                      const old = await invokeCommand('draft.read', {
                         id: draft.id,
                         hash: v.hash
                       });
@@ -644,7 +688,7 @@ export function ChatWorkspace({
                 onClick={async () => {
                   const scope = await ask('要转入哪些正式资料？请说明目标文件、保留内容及修订范围。');
                   if (!scope) return;
-                  const card = await call<ActionProposal>('draft.promote', {
+                  const card = await call('draft.promote', {
                     id: draft.id,
                     hash: draft.currentHash,
                     profileId,

@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-10T13:38:45.893Z",
+  "versionBefore": "0.4.1",
+  "versionAfter": "0.4.2",
+  "dependenciesUnchanged": true,
+  "lockfileChangedOnlyRootVersion": true,
+  "preserved": [
+    {
+      "file": "src/core/runtime/scheduler.ts",
+      "unchanged": true
+    },
+    {
+      "file": "src/core/storage.ts",
+      "unchanged": true
+    }
+  ],
+  "comments": [
+    {
+      "file": "electron/document-worker.ts",
+      "comments": 0
+    },
+    {
+      "file": "src/core/document-import.ts",
+      "comments": 0
+    },
+    {
+      "file": "src/core/runtime/document-importer.ts",
+      "comments": 0
+    },
+    {
+      "file": "tests/document-importer.test.ts",
+      "comments": 0
+    },
+    {
+      "file": "scripts/build-main.mjs",
+      "comments": 0
+    },
+    {
+      "file": "scripts/refactor-audit.mjs",
+      "comments": 0
+    }
+  ]
+}

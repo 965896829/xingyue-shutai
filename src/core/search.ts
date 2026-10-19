@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { boundedBody, endpoint } from './provider';
 import type { SearchSettings } from '../shared/assistant';
 import { now } from './domain';
+import type { FileStore } from './storage';
+import { callExternal, type AttemptOwner } from './runtime/model-gateway';
 
 export function publicUrl(value: string) {
   const u = new URL(value),
@@ -26,13 +28,15 @@ export class PublicSearch {
     readonly settings: SearchSettings,
     readonly key: string,
     readonly enabled: boolean,
-    readonly signal: AbortSignal
+    readonly signal: AbortSignal,
+    readonly journal?: { store: FileStore; owner: AttemptOwner }
   ) {}
   private async post(operation: string, payload: object) {
     if (!this.enabled || !this.settings.enabled) throw new Error('联网搜索已关闭');
     if (!this.key) throw new Error('尚未配置联网搜索 Key，未进行网上核实');
     const signal = AbortSignal.any([this.signal, AbortSignal.timeout(this.settings.timeoutSeconds * 1000)]);
     try {
+      const send = async () => {
       const response = await fetch(endpoint(this.settings, operation), {
         method: 'POST',
         redirect: 'error',
@@ -45,6 +49,13 @@ export class PublicSearch {
         throw new Error(`搜索服务 HTTP ${response.status}${response.status === 429 ? '：已限流' : ''}`);
       }
       return JSON.parse((await boundedBody(response.body, 2_000_000)).toString('utf8'));
+      };
+      if (!this.journal) return await send();
+      const { store, owner } = this.journal;
+      return await callExternal(store, owner, `web-${operation}`, {
+        provider: 'public-search', model: operation, version: 1, identity: this.settings,
+        pricing: null, currency: owner.usage.currency
+      }, payload, null, signal, send, () => ({ input: null, output: null, cost: null, currency: owner.usage.currency }));
     } catch (error) {
       if (signal.aborted)
         throw new Error(this.signal.aborted ? '联网已停止' : '联网请求超时，未取得可核实结果');

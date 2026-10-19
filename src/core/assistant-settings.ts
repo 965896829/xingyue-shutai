@@ -1,4 +1,6 @@
 import fs from 'node:fs';
+import { z } from 'zod';
+import { readSettings } from './settings-recovery';
 import path from 'node:path';
 import { atomicWrite } from './storage';
 import { hash, id, now } from './domain';
@@ -62,6 +64,7 @@ export function builtInRoles(): RoleRule[] {
   });
 }
 export class AssistantSettings {
+  recoveryNotice?: string;
   readonly file: string;
   private data: {
     roles: Partial<Record<RoleId, { current: string; history: RoleVersion[] }>>;
@@ -72,7 +75,15 @@ export class AssistantSettings {
   };
   constructor(directory: string) {
     this.file = path.join(directory, 'assistant-settings.json');
-    const raw = fs.existsSync(this.file) ? JSON.parse(fs.readFileSync(this.file, 'utf8')) : {};
+    const schema = z.object({
+      roles: z.record(z.string(), z.object({ current: z.string(), history: z.array(z.object({ id: z.string(), text: z.string(), at: z.string(), reason: z.string() })) })).default({}),
+      search: searchSettingsSchema.default(searchSettingsSchema.parse({})),
+      encryptedKey: z.string().default(''), embedding: embeddingSettingsSchema.default(embeddingSettingsSchema.parse({})),
+      encryptedEmbeddingKey: z.string().default('')
+    });
+    const loaded = readSettings(this.file, schema, schema.parse({}));
+    const raw = loaded.value;
+    if (loaded.recovered) this.recoveryNotice = '智能体配置损坏，已保留原配置副本并使用默认设置';
     this.data = {
       roles: raw.roles ?? {},
       search: searchSettingsSchema.parse(raw.search ?? {}),

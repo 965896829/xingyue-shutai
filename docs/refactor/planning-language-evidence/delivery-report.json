@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-10T17:01:32.758Z",
+  "docs": 26,
+  "brokenLinks": [],
+  "requirementIds": 180,
+  "skillFilesByteExact": 152,
+  "skills": {
+    "source": "resources/skill",
+    "packaged": "release\\planning-language\\win-unpacked\\resources\\skill",
+    "runtimeLockedFiles": 128,
+    "registeredSkills": 26,
+    "runtimeLockSha256": "51a46a39340fc0fcb40ffc1ceb320740864673663f7e76ecc057e1230b5b8104",
+    "expressionLockedFiles": 2,
+    "expressionRules": 905,
+    "expressionModules": 145,
+    "tagOptions": 482,
+    "taxonomyVersion": "fanqie-user-snapshot-v1",
+    "tagLockedFiles": 10,
+    "tagLockSha256": "de7d22a471f27f416ff2d56d0cc7e4fea1719e2561afb4a0b0b4626ffdaa9229",
+    "expressionManifestSha256": "f62aae7ab86ef7608eb91241a96dae03d4521ccedf92f9118fe087cd13e98fb9"
+  },
+  "testLog": {
+    "path": ".test-output/planning-language-20261011/tests.log",
+    "sha256": "ae3f7c62acf141c75ea976abc33c5d3ecb7077db009032f82ba4c2a1648c292c"
+  },
+  "tests": 206,
+  "failures": 0,
+  "installer": {
+    "path": "release\\planning-language\\星月书台 Setup 0.4.3.exe",
+    "bytes": 126587891,
+    "sha256": "93a3b82f80cd3d15fcf59ed3df865096d44483964fda5dc8728b22536201beb8"
+  },
+  "buildInputs": {
+    "lockfile": "993bfc588a7554a3b90593e2fc5a4afc5ff4523d031295b714b0106b7ef95b7b",
+    "main": "5faa8d7e17d13f7cbd53fccbef869f21f1f4e3cfa9aa8627311957b6334e1ef5",
+    "worker": "2abaae8ddd4cbff35c077e5dad4ee8b9fec5f8ab06cfe8c224ab87c88d1ad3d2"
+  },
+  "note": "文档和构建完整性检查，不能替代未完成的真实端点、文学效果与操作系统矩阵验收"
+}

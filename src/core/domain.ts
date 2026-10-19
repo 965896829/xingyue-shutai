@@ -192,6 +192,7 @@ export function updateConfigDocument(text: string, p: ProjectState): string {
   const newline = text.includes('\r\n') ? '\r\n' : '\n',
     c = p.config;
   const values: Record<string, string | number> = {
+    项目: p.title,
     工作流版本: '2.0',
     目标总字数: c.targetWords,
     单章目标字数: c.chapterWords,

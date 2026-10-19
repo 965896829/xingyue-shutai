@@ -1,8 +1,8 @@
 {
   "name": "wenxu-desktop",
-  "version": "0.3.1",
+  "version": "0.4.19",
   "private": true,
-  "description": "文序 · 本地网文创作工作台",
+  "description": "星月书台 · 本地网文创作工作台",
   "author": "AIkehuduan",
   "type": "module",
   "main": "dist-electron/main.cjs",
@@ -15,11 +15,13 @@
     "pack": "npm run build && electron-builder --win dir",
     "dist": "npm run build && electron-builder --win nsis",
     "preview": "vite --host 127.0.0.1",
-    "test:scale": "node --import tsx tests/scale.ts"
+    "test:scale": "node --import tsx tests/scale.ts",
+    "test:large-book": "node scripts/test-large-book.mjs",
+    "eval:context": "node --import tsx scripts/context-eval.ts --run-context-eval"
   },
   "build": {
     "appId": "local.wenxu.desktop",
-    "productName": "文序",
+    "productName": "星月书台",
     "directories": {
       "output": "release"
     },
@@ -45,13 +47,18 @@
         }
       ],
       "icon": "resources/icon.ico",
-      "signExecutable": false
+      "signExecutable": false,
+      "executableName": "星月书台"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "guid": "abaa7e0a-484b-5222-a08b-20b012130b6d",
+      "shortcutName": "星月书台",
+      "uninstallDisplayName": "${productName} ${version}",
+      "artifactName": "${productName} Setup ${version}.${ext}"
     },
     "publish": null,
     "electronDist": "node_modules/electron/dist"
@@ -67,6 +74,7 @@
     "docx": "9.9.0",
     "dompurify": "3.4.16",
     "fflate": "0.8.3",
+    "js-tiktoken": "1.0.21",
     "lucide-react": "1.52.0",
     "marked": "18.1.0",
     "motion": "14.0.0",
@@ -76,6 +84,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@mariozechner/pi-agent-core": "0.73.1",
     "@types/diff": "7.0.2",
     "@types/node": "26.6.4",
     "@types/react": "19.3.0",

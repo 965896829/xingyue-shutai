@@ -1,0 +1,12 @@
+{
+  "chapters": 1200,
+  "bodyCharacters": 3000000,
+  "commitMs": 59365,
+  "scanMs": 1710,
+  "searchMs": 141,
+  "scopedSearchMs": 1655,
+  "node": "24.11.1",
+  "platform": "win32",
+  "at": "2026-10-10T10:19:50.062Z",
+  "meaning": "仅验证本机合成数据容量、编号、检索和计时，不代表真实文学效果"
+}

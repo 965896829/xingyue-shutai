@@ -1,0 +1,6589 @@
+[
+  {
+    "name": "history.preview",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "operation.query",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "app.snapshot",
+    "access": "read",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "resource.read",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "resources": {
+          "minItems": 1,
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "runs",
+              "chat",
+              "documents",
+              "studio"
+            ]
+          }
+        }
+      },
+      "required": [
+        "resources"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "app.chooseDirectory",
+    "access": "system",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "app.chooseFile",
+    "access": "system",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "save": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "app.reveal",
+    "access": "system",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "app.openUrl",
+    "access": "system",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.create",
+    "access": "lifecycle",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "parent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "premise": {
+          "type": "string"
+        },
+        "tagInput": {
+          "type": "object",
+          "properties": {
+            "selection": {
+              "type": "object",
+              "properties": {
+                "reading": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 12000
+                    },
+                    "theme": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "role": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "plot": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "theme",
+                    "role",
+                    "plot"
+                  ],
+                  "additionalProperties": false
+                },
+                "content": {
+                  "type": "object",
+                  "properties": {
+                    "plot": {
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "emotion": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "persona": {
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "world": {
+                      "maxItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    }
+                  },
+                  "required": [
+                    "plot",
+                    "emotion",
+                    "persona",
+                    "world"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "reading",
+                "content"
+              ],
+              "additionalProperties": false
+            },
+            "premise": {
+              "type": "string",
+              "maxLength": 20000
+            },
+            "mustKeep": {
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 12000
+              }
+            },
+            "mustAvoid": {
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 12000
+              }
+            }
+          },
+          "required": [
+            "selection",
+            "premise",
+            "mustKeep",
+            "mustAvoid"
+          ],
+          "additionalProperties": false
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "targetWords": {
+              "default": 3000000,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "chapterWords": {
+              "default": 2500,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "minWords": {
+              "default": 2300,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "maxWords": {
+              "default": 2700,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "batchSize": {
+              "default": 30,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "pov": {
+              "default": "第三人称",
+              "type": "string",
+              "minLength": 1
+            },
+            "genre": {
+              "default": "脑洞玄幻",
+              "type": "string"
+            },
+            "style": {
+              "default": "清晰、快节奏；人物主动选择；强弱节奏交替",
+              "type": "string"
+            },
+            "constraints": {
+              "default": "",
+              "type": "string"
+            },
+            "expressionRules": {
+              "default": {
+                "enabled": true,
+                "modules": []
+              },
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "modules": {
+                  "default": [],
+                  "maxItems": 145,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-Z]+$"
+                  }
+                }
+              },
+              "required": [
+                "enabled",
+                "modules"
+              ],
+              "additionalProperties": false
+            },
+            "recentChapters": {
+              "default": 3,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            },
+            "defaultProfileId": {
+              "default": "",
+              "type": "string"
+            },
+            "stageProfiles": {
+              "default": {},
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "modelRouting": {
+              "default": {
+                "writing": "",
+                "extraction": "",
+                "review": ""
+              },
+              "type": "object",
+              "properties": {
+                "writing": {
+                  "default": "",
+                  "type": "string"
+                },
+                "extraction": {
+                  "default": "",
+                  "type": "string"
+                },
+                "review": {
+                  "default": "",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "writing",
+                "extraction",
+                "review"
+              ],
+              "additionalProperties": false
+            },
+            "preview": {
+              "default": {
+                "enabled": true,
+                "maxCalls": 8
+              },
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "maxCalls": {
+                  "default": 8,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30
+                }
+              },
+              "required": [
+                "enabled",
+                "maxCalls"
+              ],
+              "additionalProperties": false
+            },
+            "viewpointCharacterId": {
+              "default": "",
+              "type": "string"
+            },
+            "maxRounds": {
+              "default": 12,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "maxTools": {
+              "default": 64,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            },
+            "stageBudget": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "terminalPolicy": {
+              "default": "ask",
+              "type": "string",
+              "enum": [
+                "ask",
+                "disabled"
+              ]
+            },
+            "networkPolicy": {
+              "default": "ask",
+              "type": "string",
+              "enum": [
+                "ask",
+                "disabled"
+              ]
+            },
+            "backupDirectory": {
+              "default": "",
+              "type": "string"
+            }
+          },
+          "required": [
+            "targetWords",
+            "chapterWords",
+            "minWords",
+            "maxWords",
+            "batchSize",
+            "pov",
+            "genre",
+            "style",
+            "constraints",
+            "expressionRules",
+            "recentChapters",
+            "defaultProfileId",
+            "stageProfiles",
+            "modelRouting",
+            "preview",
+            "viewpointCharacterId",
+            "maxRounds",
+            "maxTools",
+            "stageBudget",
+            "terminalPolicy",
+            "networkPolicy",
+            "backupDirectory"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "parent",
+        "title",
+        "premise"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.open",
+    "access": "lifecycle",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "root": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "root"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.close",
+    "access": "lifecycle",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.preview",
+    "access": "read",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "premise": {
+          "type": "string"
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "targetWords": {
+              "default": 3000000,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "chapterWords": {
+              "default": 2500,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "minWords": {
+              "default": 2300,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "maxWords": {
+              "default": 2700,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "batchSize": {
+              "default": 30,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "pov": {
+              "default": "第三人称",
+              "type": "string",
+              "minLength": 1
+            },
+            "genre": {
+              "default": "脑洞玄幻",
+              "type": "string"
+            },
+            "style": {
+              "default": "清晰、快节奏；人物主动选择；强弱节奏交替",
+              "type": "string"
+            },
+            "constraints": {
+              "default": "",
+              "type": "string"
+            },
+            "expressionRules": {
+              "default": {
+                "enabled": true,
+                "modules": []
+              },
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "modules": {
+                  "default": [],
+                  "maxItems": 145,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-Z]+$"
+                  }
+                }
+              },
+              "required": [
+                "enabled",
+                "modules"
+              ],
+              "additionalProperties": false
+            },
+            "recentChapters": {
+              "default": 3,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            },
+            "defaultProfileId": {
+              "default": "",
+              "type": "string"
+            },
+            "stageProfiles": {
+              "default": {},
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "modelRouting": {
+              "default": {
+                "writing": "",
+                "extraction": "",
+                "review": ""
+              },
+              "type": "object",
+              "properties": {
+                "writing": {
+                  "default": "",
+                  "type": "string"
+                },
+                "extraction": {
+                  "default": "",
+                  "type": "string"
+                },
+                "review": {
+                  "default": "",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "writing",
+                "extraction",
+                "review"
+              ],
+              "additionalProperties": false
+            },
+            "preview": {
+              "default": {
+                "enabled": true,
+                "maxCalls": 8
+              },
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "maxCalls": {
+                  "default": 8,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30
+                }
+              },
+              "required": [
+                "enabled",
+                "maxCalls"
+              ],
+              "additionalProperties": false
+            },
+            "viewpointCharacterId": {
+              "default": "",
+              "type": "string"
+            },
+            "maxRounds": {
+              "default": 12,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "maxTools": {
+              "default": 64,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            },
+            "stageBudget": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "terminalPolicy": {
+              "default": "ask",
+              "type": "string",
+              "enum": [
+                "ask",
+                "disabled"
+              ]
+            },
+            "networkPolicy": {
+              "default": "ask",
+              "type": "string",
+              "enum": [
+                "ask",
+                "disabled"
+              ]
+            },
+            "backupDirectory": {
+              "default": "",
+              "type": "string"
+            }
+          },
+          "required": [
+            "targetWords",
+            "chapterWords",
+            "minWords",
+            "maxWords",
+            "batchSize",
+            "pov",
+            "genre",
+            "style",
+            "constraints",
+            "expressionRules",
+            "recentChapters",
+            "defaultProfileId",
+            "stageProfiles",
+            "modelRouting",
+            "preview",
+            "viewpointCharacterId",
+            "maxRounds",
+            "maxTools",
+            "stageBudget",
+            "terminalPolicy",
+            "networkPolicy",
+            "backupDirectory"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.repair",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "preview": {
+          "type": "boolean"
+        },
+        "indexOnly": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.importLegacy",
+    "access": "lifecycle",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "preview": {
+              "type": "boolean",
+              "const": true
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "preview",
+            "source"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "preview": {
+              "type": "boolean",
+              "const": false
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "parent": {
+              "type": "string",
+              "minLength": 1
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1
+            },
+            "chapter": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "stage": {
+              "type": "string",
+              "enum": [
+                "S01",
+                "S02",
+                "S03",
+                "S04",
+                "S05",
+                "S06",
+                "S07",
+                "S08",
+                "S09",
+                "S10",
+                "S11"
+              ]
+            },
+            "config": {
+              "type": "object",
+              "properties": {
+                "targetWords": {
+                  "default": 3000000,
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "chapterWords": {
+                  "default": 2500,
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "minWords": {
+                  "default": 2300,
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "maxWords": {
+                  "default": 2700,
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "batchSize": {
+                  "default": 30,
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "pov": {
+                  "default": "第三人称",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "genre": {
+                  "default": "脑洞玄幻",
+                  "type": "string"
+                },
+                "style": {
+                  "default": "清晰、快节奏；人物主动选择；强弱节奏交替",
+                  "type": "string"
+                },
+                "constraints": {
+                  "default": "",
+                  "type": "string"
+                },
+                "expressionRules": {
+                  "default": {
+                    "enabled": true,
+                    "modules": []
+                  },
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "default": true,
+                      "type": "boolean"
+                    },
+                    "modules": {
+                      "default": [],
+                      "maxItems": 145,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[A-Z]+$"
+                      }
+                    }
+                  },
+                  "required": [
+                    "enabled",
+                    "modules"
+                  ],
+                  "additionalProperties": false
+                },
+                "recentChapters": {
+                  "default": 3,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                "defaultProfileId": {
+                  "default": "",
+                  "type": "string"
+                },
+                "stageProfiles": {
+                  "default": {},
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "modelRouting": {
+                  "default": {
+                    "writing": "",
+                    "extraction": "",
+                    "review": ""
+                  },
+                  "type": "object",
+                  "properties": {
+                    "writing": {
+                      "default": "",
+                      "type": "string"
+                    },
+                    "extraction": {
+                      "default": "",
+                      "type": "string"
+                    },
+                    "review": {
+                      "default": "",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "writing",
+                    "extraction",
+                    "review"
+                  ],
+                  "additionalProperties": false
+                },
+                "preview": {
+                  "default": {
+                    "enabled": true,
+                    "maxCalls": 8
+                  },
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "default": true,
+                      "type": "boolean"
+                    },
+                    "maxCalls": {
+                      "default": 8,
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 30
+                    }
+                  },
+                  "required": [
+                    "enabled",
+                    "maxCalls"
+                  ],
+                  "additionalProperties": false
+                },
+                "viewpointCharacterId": {
+                  "default": "",
+                  "type": "string"
+                },
+                "maxRounds": {
+                  "default": 12,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                },
+                "maxTools": {
+                  "default": 64,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 500
+                },
+                "stageBudget": {
+                  "default": null,
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "terminalPolicy": {
+                  "default": "ask",
+                  "type": "string",
+                  "enum": [
+                    "ask",
+                    "disabled"
+                  ]
+                },
+                "networkPolicy": {
+                  "default": "ask",
+                  "type": "string",
+                  "enum": [
+                    "ask",
+                    "disabled"
+                  ]
+                },
+                "backupDirectory": {
+                  "default": "",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "targetWords",
+                "chapterWords",
+                "minWords",
+                "maxWords",
+                "batchSize",
+                "pov",
+                "genre",
+                "style",
+                "constraints",
+                "expressionRules",
+                "recentChapters",
+                "defaultProfileId",
+                "stageProfiles",
+                "modelRouting",
+                "preview",
+                "viewpointCharacterId",
+                "maxRounds",
+                "maxTools",
+                "stageBudget",
+                "terminalPolicy",
+                "networkPolicy",
+                "backupDirectory"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "source",
+            "parent",
+            "title",
+            "chapter",
+            "stage",
+            "config"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  {
+    "name": "project.trash",
+    "access": "lifecycle",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "root": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "root"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.listTrash",
+    "access": "read",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.restoreTrash",
+    "access": "lifecycle",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parent": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.configure",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "config": {
+          "type": "object",
+          "properties": {
+            "targetWords": {
+              "default": 3000000,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "chapterWords": {
+              "default": 2500,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "minWords": {
+              "default": 2300,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "maxWords": {
+              "default": 2700,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "batchSize": {
+              "default": 30,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "pov": {
+              "default": "第三人称",
+              "type": "string",
+              "minLength": 1
+            },
+            "genre": {
+              "default": "脑洞玄幻",
+              "type": "string"
+            },
+            "style": {
+              "default": "清晰、快节奏；人物主动选择；强弱节奏交替",
+              "type": "string"
+            },
+            "constraints": {
+              "default": "",
+              "type": "string"
+            },
+            "expressionRules": {
+              "default": {
+                "enabled": true,
+                "modules": []
+              },
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "modules": {
+                  "default": [],
+                  "maxItems": 145,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-Z]+$"
+                  }
+                }
+              },
+              "required": [
+                "enabled",
+                "modules"
+              ],
+              "additionalProperties": false
+            },
+            "recentChapters": {
+              "default": 3,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            },
+            "defaultProfileId": {
+              "default": "",
+              "type": "string"
+            },
+            "stageProfiles": {
+              "default": {},
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "modelRouting": {
+              "default": {
+                "writing": "",
+                "extraction": "",
+                "review": ""
+              },
+              "type": "object",
+              "properties": {
+                "writing": {
+                  "default": "",
+                  "type": "string"
+                },
+                "extraction": {
+                  "default": "",
+                  "type": "string"
+                },
+                "review": {
+                  "default": "",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "writing",
+                "extraction",
+                "review"
+              ],
+              "additionalProperties": false
+            },
+            "preview": {
+              "default": {
+                "enabled": true,
+                "maxCalls": 8
+              },
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "maxCalls": {
+                  "default": 8,
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30
+                }
+              },
+              "required": [
+                "enabled",
+                "maxCalls"
+              ],
+              "additionalProperties": false
+            },
+            "viewpointCharacterId": {
+              "default": "",
+              "type": "string"
+            },
+            "maxRounds": {
+              "default": 12,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "maxTools": {
+              "default": 64,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            },
+            "stageBudget": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "terminalPolicy": {
+              "default": "ask",
+              "type": "string",
+              "enum": [
+                "ask",
+                "disabled"
+              ]
+            },
+            "networkPolicy": {
+              "default": "ask",
+              "type": "string",
+              "enum": [
+                "ask",
+                "disabled"
+              ]
+            },
+            "backupDirectory": {
+              "default": "",
+              "type": "string"
+            }
+          },
+          "required": [
+            "targetWords",
+            "chapterWords",
+            "minWords",
+            "maxWords",
+            "batchSize",
+            "pov",
+            "genre",
+            "style",
+            "constraints",
+            "expressionRules",
+            "recentChapters",
+            "defaultProfileId",
+            "stageProfiles",
+            "modelRouting",
+            "preview",
+            "viewpointCharacterId",
+            "maxRounds",
+            "maxTools",
+            "stageBudget",
+            "terminalPolicy",
+            "networkPolicy",
+            "backupDirectory"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.scan",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.importAccept",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.backup",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "directory": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.restoreBackup",
+    "access": "lifecycle",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parent": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "source",
+        "parent"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.export",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "paths": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "paths",
+        "target"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "project.importDocument",
+    "access": "read",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "file"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "document.read",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hash": {
+          "type": "string"
+        },
+        "disk": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "document.save",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content": {
+          "type": "string"
+        },
+        "baseHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "path",
+        "content",
+        "baseHash"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "document.restore",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "path",
+        "hash",
+        "baseHash"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "document.history",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "document.historyPage",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "before": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "watermark": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.start",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "stage",
+            "revision"
+          ]
+        },
+        "request": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profileId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "request"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.resume",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retryUnknown": {
+          "type": "boolean"
+        },
+        "instruction": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.answer",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "answer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retryUnknown": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "answer"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.permission",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved": {
+          "type": "boolean"
+        },
+        "retryUnknown": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "approved"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.handoff",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retryUnknown": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "profileId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.cancel",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "terminal.cancel",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.accept",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposalHash": {
+          "type": "string"
+        },
+        "warningReason": {
+          "type": "string"
+        },
+        "startNext": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.discard",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.update",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "content"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.revalidate",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewSaved": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.events",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "afterSeq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "run.page",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "before": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "watermark": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "context.preview",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string"
+        },
+        "request": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "diagnostics.export",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "impact.review",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "path",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "tags.catalog",
+    "access": "read",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "tags.validate",
+    "access": "read",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "object",
+          "properties": {
+            "selection": {
+              "type": "object",
+              "properties": {
+                "reading": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 12000
+                    },
+                    "theme": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "role": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "plot": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "theme",
+                    "role",
+                    "plot"
+                  ],
+                  "additionalProperties": false
+                },
+                "content": {
+                  "type": "object",
+                  "properties": {
+                    "plot": {
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "emotion": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "persona": {
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "world": {
+                      "maxItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    }
+                  },
+                  "required": [
+                    "plot",
+                    "emotion",
+                    "persona",
+                    "world"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "reading",
+                "content"
+              ],
+              "additionalProperties": false
+            },
+            "premise": {
+              "type": "string",
+              "maxLength": 20000
+            },
+            "mustKeep": {
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 12000
+              }
+            },
+            "mustAvoid": {
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 12000
+              }
+            }
+          },
+          "required": [
+            "selection",
+            "premise",
+            "mustKeep",
+            "mustAvoid"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "input"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "tags.saveDraft",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "object",
+          "properties": {
+            "selection": {
+              "type": "object",
+              "properties": {
+                "reading": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 12000
+                    },
+                    "theme": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "role": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "plot": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "theme",
+                    "role",
+                    "plot"
+                  ],
+                  "additionalProperties": false
+                },
+                "content": {
+                  "type": "object",
+                  "properties": {
+                    "plot": {
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "emotion": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "persona": {
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    },
+                    "world": {
+                      "maxItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      }
+                    }
+                  },
+                  "required": [
+                    "plot",
+                    "emotion",
+                    "persona",
+                    "world"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "reading",
+                "content"
+              ],
+              "additionalProperties": false
+            },
+            "premise": {
+              "type": "string",
+              "maxLength": 20000
+            },
+            "mustKeep": {
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 12000
+              }
+            },
+            "mustAvoid": {
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 12000
+              }
+            }
+          },
+          "required": [
+            "selection",
+            "premise",
+            "mustKeep",
+            "mustAvoid"
+          ],
+          "additionalProperties": false
+        },
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "input",
+        "expectedRevision"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "tags.start",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "inputHash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "profileId": {
+          "type": "string"
+        },
+        "request": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "inputHash",
+        "requestId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "tags.selectDirection",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reportHash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "directionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolutions": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        }
+      },
+      "required": [
+        "id",
+        "reportHash",
+        "directionId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "tags.reviseDirection",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reportHash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "directionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "instruction": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 6000
+        }
+      },
+      "required": [
+        "id",
+        "reportHash",
+        "directionId",
+        "instruction"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "tags.diff",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "tags.restoreProjection",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "baseHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "baseHash"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "studio.read",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "snapshot.list",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "snapshot.page",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "before": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "watermark": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "outbox.retry",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "memory.list",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": [
+            "all",
+            "character",
+            "injury",
+            "item",
+            "hook",
+            "knowledge",
+            "obligations"
+          ]
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string"
+            },
+            "chapter": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "snapshotId": {
+              "type": "string"
+            },
+            "mode": {
+              "default": "current",
+              "type": "string",
+              "enum": [
+                "current",
+                "historical"
+              ]
+            },
+            "viewpoint": {
+              "default": "author",
+              "type": "string",
+              "enum": [
+                "author",
+                "reader",
+                "character"
+              ]
+            },
+            "characterId": {
+              "type": "string"
+            },
+            "worldId": {
+              "default": "main",
+              "type": "string"
+            },
+            "timelineId": {
+              "default": "main",
+              "type": "string"
+            }
+          },
+          "required": [
+            "chapter",
+            "mode",
+            "viewpoint",
+            "worldId",
+            "timelineId"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "memory.retrieve",
+    "access": "remote",
+    "scope": "project",
+    "timeout": 1830000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string"
+            },
+            "chapter": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "snapshotId": {
+              "type": "string"
+            },
+            "mode": {
+              "default": "current",
+              "type": "string",
+              "enum": [
+                "current",
+                "historical"
+              ]
+            },
+            "viewpoint": {
+              "default": "author",
+              "type": "string",
+              "enum": [
+                "author",
+                "reader",
+                "character"
+              ]
+            },
+            "characterId": {
+              "type": "string"
+            },
+            "worldId": {
+              "default": "main",
+              "type": "string"
+            },
+            "timelineId": {
+              "default": "main",
+              "type": "string"
+            }
+          },
+          "required": [
+            "chapter",
+            "mode",
+            "viewpoint",
+            "worldId",
+            "timelineId"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "memory.search",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "chapter": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "memory.rebuild",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "memory.trace",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quote": {
+          "type": "string"
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "snapshotId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "hash",
+        "quote"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "state.getCharacter",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "entityId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string"
+            },
+            "chapter": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "snapshotId": {
+              "type": "string"
+            },
+            "mode": {
+              "default": "current",
+              "type": "string",
+              "enum": [
+                "current",
+                "historical"
+              ]
+            },
+            "viewpoint": {
+              "default": "author",
+              "type": "string",
+              "enum": [
+                "author",
+                "reader",
+                "character"
+              ]
+            },
+            "characterId": {
+              "type": "string"
+            },
+            "worldId": {
+              "default": "main",
+              "type": "string"
+            },
+            "timelineId": {
+              "default": "main",
+              "type": "string"
+            }
+          },
+          "required": [
+            "chapter",
+            "mode",
+            "viewpoint",
+            "worldId",
+            "timelineId"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "entityId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "state.proposeCorrection",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "extraction",
+            "plan",
+            "story",
+            "assessment"
+          ]
+        },
+        "factId": {
+          "type": "string"
+        },
+        "request": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "request"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "embedding.settings.save",
+    "access": "write",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "settings": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "default": false,
+              "type": "boolean"
+            },
+            "baseUrl": {
+              "default": "https://api.openai.com/v1",
+              "type": "string"
+            },
+            "model": {
+              "default": "",
+              "type": "string"
+            },
+            "dimensions": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65536
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sendDimensions": {
+              "default": false,
+              "type": "boolean"
+            },
+            "inputBudget": {
+              "default": 8000,
+              "type": "integer",
+              "minimum": 128,
+              "maximum": 1000000
+            },
+            "price": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "currency": {
+              "default": "USD",
+              "type": "string"
+            },
+            "dataScope": {
+              "default": "prose",
+              "type": "string",
+              "enum": [
+                "prose",
+                "prose-and-memory"
+              ]
+            },
+            "timeoutSeconds": {
+              "default": 60,
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 300
+            },
+            "hasKey": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "enabled",
+            "baseUrl",
+            "model",
+            "dimensions",
+            "sendDimensions",
+            "inputBudget",
+            "price",
+            "currency",
+            "dataScope",
+            "timeoutSeconds",
+            "hasKey"
+          ],
+          "additionalProperties": false
+        },
+        "apiKey": {
+          "type": "string"
+        },
+        "clearKey": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "settings"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "embedding.test",
+    "access": "remote",
+    "scope": "global",
+    "timeout": 1830000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "embedding.reindex",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "embedding.cancel",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "assessment.refresh",
+    "access": "remote",
+    "scope": "project",
+    "timeout": 1830000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content": {
+          "type": "string"
+        },
+        "track": {
+          "type": "string",
+          "enum": [
+            "plan",
+            "candidate"
+          ]
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "draft.checkpoint",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "skills.list",
+    "access": "read",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "expression.catalog",
+    "access": "read",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "skill.run",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "skillId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request": {
+          "type": "string"
+        },
+        "profileId": {
+          "type": "string"
+        },
+        "feedback": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "window": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sampleSize": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "synthetic": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "source",
+            "window",
+            "sampleSize",
+            "synthetic"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "skillId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "chat.list",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "chat.create",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "chat.update",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "online": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "chat.read",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "chat.page",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "before": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "watermark": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "chat.send",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profileId": {
+          "type": "string"
+        },
+        "referenceChats": {
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "conversationId",
+        "text"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "chat.retry",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confirmRetry": {
+          "type": "boolean",
+          "const": true
+        },
+        "profileId": {
+          "type": "string"
+        },
+        "referenceChats": {
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "confirmRetry"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "chat.stop",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "proposal.create",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposal": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "stage",
+                "revision",
+                "draft"
+              ]
+            },
+            "goal": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 3000
+            },
+            "request": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20000
+            },
+            "outputs": {
+              "minItems": 1,
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "goal",
+            "scope",
+            "request",
+            "outputs"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "conversationId",
+        "profileId",
+        "proposal"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "proposal.refresh",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profileId": {
+          "type": "string"
+        },
+        "proposal": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "stage",
+                "revision",
+                "draft"
+              ]
+            },
+            "goal": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 3000
+            },
+            "request": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20000
+            },
+            "outputs": {
+              "minItems": 1,
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "proposal.confirm",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "proposal.cancel",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "draft.list",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "draft.read",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hash": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "draft.save",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000000
+        },
+        "baseHash": {
+          "type": "string"
+        },
+        "conversationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "messageId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "title",
+        "content",
+        "conversationId",
+        "messageId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "draft.promote",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "stage",
+            "revision"
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "hash",
+        "profileId",
+        "scope"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "assistant.settings",
+    "access": "read",
+    "scope": "global",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "assistant.role.save",
+    "access": "write",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "assistant.role.reset",
+    "access": "write",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "assistant.role.rollback",
+    "access": "write",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "search.settings.save",
+    "access": "write",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "search": {
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "default": "https://api.tavily.com",
+              "type": "string",
+              "format": "uri"
+            },
+            "enabled": {
+              "default": true,
+              "type": "boolean"
+            },
+            "maxResults": {
+              "default": 5,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "maxSearches": {
+              "default": 3,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "maxExtracts": {
+              "default": 3,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "timeoutSeconds": {
+              "default": 30,
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 120
+            }
+          },
+          "required": [
+            "baseUrl",
+            "enabled",
+            "maxResults",
+            "maxSearches",
+            "maxExtracts",
+            "timeoutSeconds"
+          ],
+          "additionalProperties": false
+        },
+        "apiKey": {
+          "type": "string"
+        },
+        "clearKey": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "search"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "search.test",
+    "access": "remote",
+    "scope": "global",
+    "timeout": 1830000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "profiles.save",
+    "access": "write",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "connectionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "enabled": {
+              "default": true,
+              "type": "boolean"
+            },
+            "protocol": {
+              "type": "string",
+              "enum": [
+                "chat",
+                "responses",
+                "anthropic",
+                "gemini",
+                "images"
+              ]
+            },
+            "baseUrl": {
+              "type": "string",
+              "format": "uri"
+            },
+            "model": {
+              "type": "string",
+              "minLength": 1
+            },
+            "contextLimit": {
+              "default": 128000,
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 10000000
+            },
+            "outputLimit": {
+              "default": 8192,
+              "type": "integer",
+              "minimum": 128,
+              "maximum": 1000000
+            },
+            "inputLimit": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1024,
+                  "maximum": 10000000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "limitMode": {
+              "default": "manual",
+              "type": "string",
+              "enum": [
+                "official",
+                "manual"
+              ]
+            },
+            "modelLimits": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "model": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "contextLimit": {
+                      "type": "integer",
+                      "minimum": 1024,
+                      "maximum": 10000000
+                    },
+                    "inputLimit": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 1024,
+                          "maximum": 10000000
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "outputLimit": {
+                      "type": "integer",
+                      "minimum": 128,
+                      "maximum": 1000000
+                    },
+                    "windowKind": {
+                      "type": "string",
+                      "enum": [
+                        "shared",
+                        "separate"
+                      ]
+                    },
+                    "source": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "checkedAt": {
+                      "type": "string"
+                    },
+                    "origin": {
+                      "type": "string",
+                      "enum": [
+                        "official-docs",
+                        "official-api"
+                      ]
+                    },
+                    "note": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "model",
+                    "contextLimit",
+                    "inputLimit",
+                    "outputLimit",
+                    "windowKind",
+                    "source",
+                    "checkedAt",
+                    "origin"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "stream": {
+              "default": true,
+              "type": "boolean"
+            },
+            "tools": {
+              "default": true,
+              "type": "boolean"
+            },
+            "temperature": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 2
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "inputPrice": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "outputPrice": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "currency": {
+              "default": "USD",
+              "type": "string"
+            },
+            "timeoutSeconds": {
+              "default": 180,
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 1800
+            },
+            "proxy": {
+              "default": "",
+              "type": "string"
+            },
+            "headers": {
+              "default": {},
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "version": {
+              "default": 1,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "hasKey": {
+              "default": false,
+              "type": "boolean"
+            },
+            "capabilities": {
+              "default": {},
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "enum": [
+                  "unknown",
+                  "verified",
+                  "failed"
+                ]
+              }
+            },
+            "imageSize": {
+              "default": "1024x1536",
+              "type": "string"
+            },
+            "imageQuality": {
+              "default": "auto",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "enabled",
+            "protocol",
+            "baseUrl",
+            "model",
+            "contextLimit",
+            "outputLimit",
+            "inputLimit",
+            "limitMode",
+            "modelLimits",
+            "stream",
+            "tools",
+            "temperature",
+            "inputPrice",
+            "outputPrice",
+            "currency",
+            "timeoutSeconds",
+            "proxy",
+            "headers",
+            "version",
+            "hasKey",
+            "capabilities",
+            "imageSize",
+            "imageQuality"
+          ],
+          "additionalProperties": false
+        },
+        "apiKey": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "profiles.saveGroup",
+    "access": "write",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "connection": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "protocol": {
+              "type": "string",
+              "enum": [
+                "chat",
+                "responses",
+                "anthropic",
+                "gemini",
+                "images"
+              ]
+            },
+            "baseUrl": {
+              "type": "string",
+              "format": "uri"
+            },
+            "proxy": {
+              "type": "string"
+            },
+            "headers": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "protocol",
+            "baseUrl"
+          ],
+          "additionalProperties": false
+        },
+        "models": {
+          "minItems": 1,
+          "maxItems": 2000,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "connectionId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "enabled": {
+                "default": true,
+                "type": "boolean"
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "contextLimit": {
+                "default": 128000,
+                "type": "integer",
+                "minimum": 1024,
+                "maximum": 10000000
+              },
+              "outputLimit": {
+                "default": 8192,
+                "type": "integer",
+                "minimum": 128,
+                "maximum": 1000000
+              },
+              "inputLimit": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1024,
+                    "maximum": 10000000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "limitMode": {
+                "default": "manual",
+                "type": "string",
+                "enum": [
+                  "official",
+                  "manual"
+                ]
+              },
+              "modelLimits": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "model": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "contextLimit": {
+                        "type": "integer",
+                        "minimum": 1024,
+                        "maximum": 10000000
+                      },
+                      "inputLimit": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 1024,
+                            "maximum": 10000000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "outputLimit": {
+                        "type": "integer",
+                        "minimum": 128,
+                        "maximum": 1000000
+                      },
+                      "windowKind": {
+                        "type": "string",
+                        "enum": [
+                          "shared",
+                          "separate"
+                        ]
+                      },
+                      "source": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "checkedAt": {
+                        "type": "string"
+                      },
+                      "origin": {
+                        "type": "string",
+                        "enum": [
+                          "official-docs",
+                          "official-api"
+                        ]
+                      },
+                      "note": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "model",
+                      "contextLimit",
+                      "inputLimit",
+                      "outputLimit",
+                      "windowKind",
+                      "source",
+                      "checkedAt",
+                      "origin"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "stream": {
+                "default": true,
+                "type": "boolean"
+              },
+              "tools": {
+                "default": true,
+                "type": "boolean"
+              },
+              "temperature": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 2
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "inputPrice": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "outputPrice": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "currency": {
+                "default": "USD",
+                "type": "string"
+              },
+              "timeoutSeconds": {
+                "default": 180,
+                "type": "integer",
+                "minimum": 10,
+                "maximum": 1800
+              },
+              "proxy": {
+                "default": "",
+                "type": "string"
+              },
+              "headers": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "version": {
+                "default": 1,
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "hasKey": {
+                "default": false,
+                "type": "boolean"
+              },
+              "capabilities": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "enum": [
+                    "unknown",
+                    "verified",
+                    "failed"
+                  ]
+                }
+              },
+              "imageSize": {
+                "default": "1024x1536",
+                "type": "string"
+              },
+              "imageQuality": {
+                "default": "auto",
+                "type": "string"
+              }
+            },
+            "required": [
+              "enabled",
+              "model",
+              "contextLimit",
+              "outputLimit",
+              "inputLimit",
+              "limitMode",
+              "modelLimits",
+              "stream",
+              "tools",
+              "temperature",
+              "inputPrice",
+              "outputPrice",
+              "currency",
+              "timeoutSeconds",
+              "proxy",
+              "headers",
+              "version",
+              "hasKey",
+              "capabilities",
+              "imageSize",
+              "imageQuality"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "apiKey": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "connection",
+        "models"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "profiles.deleteGroup",
+    "access": "write",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "profiles.delete",
+    "access": "write",
+    "scope": "global",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "profiles.test",
+    "access": "remote",
+    "scope": "global",
+    "timeout": 1830000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tools": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "profiles.models",
+    "access": "remote",
+    "scope": "global",
+    "timeout": 1830000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "connection": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "protocol": {
+              "type": "string",
+              "enum": [
+                "chat",
+                "responses",
+                "anthropic",
+                "gemini",
+                "images"
+              ]
+            },
+            "baseUrl": {
+              "type": "string",
+              "format": "uri"
+            },
+            "proxy": {
+              "type": "string"
+            },
+            "headers": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "protocol",
+            "baseUrl"
+          ],
+          "additionalProperties": false
+        },
+        "apiKey": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "cover.generate",
+    "access": "remote",
+    "scope": "project",
+    "timeout": 1830000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "profileId",
+        "prompt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "cover.cancel",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "cover.save",
+    "access": "write",
+    "scope": "project",
+    "timeout": 120000,
+    "idempotent": false,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "dataUrl": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "book": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "author": {
+              "type": "string"
+            },
+            "subtitle": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            },
+            "prompt": {
+              "type": "string"
+            },
+            "font": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "size": {
+              "type": "number"
+            },
+            "x": {
+              "type": "number"
+            },
+            "authorX": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "authorY": {
+              "type": "number"
+            },
+            "picture": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/__schema0"
+          }
+        }
+      },
+      "required": [
+        "dataUrl",
+        "metadata"
+      ],
+      "additionalProperties": false,
+      "$defs": {
+        "__schema0": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/__schema0"
+              }
+            },
+            {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/__schema0"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "cover.list",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "cover.load",
+    "access": "read",
+    "scope": "project",
+    "timeout": 30000,
+    "idempotent": true,
+    "errors": [
+      "VALIDATION_ERROR",
+      "PROTOCOL_MISMATCH",
+      "PROJECT_SESSION_STALE",
+      "PROJECT_VERSION_UNSUPPORTED",
+      "VERSION_CONFLICT",
+      "APPROVAL_STALE",
+      "PERMISSION_DENIED",
+      "BUDGET_UNCONFIRMED",
+      "BUDGET_EXCEEDED",
+      "REMOTE_RESULT_UNKNOWN",
+      "WORKER_UNAVAILABLE",
+      "TIMEOUT_WAITING_RESPONSE",
+      "STORAGE_FAILURE",
+      "CANCEL_REQUESTED"
+    ],
+    "input": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

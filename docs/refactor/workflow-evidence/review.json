@@ -1,0 +1,81 @@
+{
+  "scope": "Workflow controls and copy intentionally changed in two existing components; visual style and all other component structures preserved",
+  "changedUI": [
+    "src/ui/App.tsx",
+    "src/ui/TagWorkspace.tsx"
+  ],
+  "unchangedUI": 18,
+  "unchangedAssets": 26,
+  "newSourceComments": 0,
+  "newTestComments": 0,
+  "dependenciesUnchanged": true,
+  "renderer": [
+    {
+      "file": "dist\\assets\\index-9pPoihbL.js",
+      "matches": true
+    },
+    {
+      "file": "dist\\assets\\index-9pPoihbL.js.map",
+      "matches": true
+    },
+    {
+      "file": "dist\\assets\\index-BcVQ_Te_.css",
+      "matches": true
+    },
+    {
+      "file": "dist\\brand\\app-icon.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\brand\\day-symbol.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\brand\\night-symbol.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\brand\\wordmark-day.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\brand\\wordmark-night.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\icon.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\index.html",
+      "matches": true
+    }
+  ],
+  "package": {
+    "version": "0.4.4",
+    "name": "wenxu-desktop",
+    "configuredAppId": "local.wenxu.desktop",
+    "archiveHash": "c19b20dbec8e1392a9c44dd7a6c044ce92e0f44d15aab357d13f1445f78daafe",
+    "piFiles": [],
+    "testSecrets": [],
+    "bundles": [
+      {
+        "file": "main",
+        "matches": true
+      },
+      {
+        "file": "preload",
+        "matches": true
+      },
+      {
+        "file": "worker",
+        "matches": true
+      },
+      {
+        "file": "document-worker",
+        "matches": true
+      }
+    ],
+    "workerMatches": true
+  }
+}

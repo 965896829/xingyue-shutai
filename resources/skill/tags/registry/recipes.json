@@ -1,0 +1,97 @@
+{
+  "version": "recipes-v1-draft",
+  "recipes": [
+    {
+      "id": "recipe.postapoc.storage-base",
+      "title": "空间囤货转基地经营",
+      "mainOptionIds": [
+        "reading.main.003"
+      ],
+      "allOfConceptIds": [
+        "concept.reading.plot.078",
+        "concept.9666bc2237c2",
+        "concept.content.plot.098",
+        "concept.content.plot.041"
+      ],
+      "mechanism": "储备优势→幸存者协作→生产和治理→更大范围的组织问题",
+      "noveltyAxes": [
+        "固定基地/流动基地",
+        "公共品/私有储备",
+        "贸易/技术维护/社区协商"
+      ],
+      "risks": [
+        "空间越权解决生产",
+        "囤货段挤占建设主线"
+      ],
+      "status": "editorial_draft"
+    },
+    {
+      "id": "recipe.mystery.rules-investigation",
+      "title": "规则试探与证据推理",
+      "mainOptionIds": [
+        "reading.main.007",
+        "reading.main.006"
+      ],
+      "allOfConceptIds": [
+        "concept.df9d3e9874d3",
+        "concept.132411ba41da"
+      ],
+      "mechanism": "异常→证据→假设→有代价验证→规则重构",
+      "noveltyAxes": [
+        "规则来源",
+        "主角知情程度",
+        "合作与利益分歧"
+      ],
+      "risks": [
+        "后加规则取消推理"
+      ],
+      "status": "editorial_draft"
+    },
+    {
+      "id": "recipe.history.exam-institution",
+      "title": "科举成长与制度行动",
+      "mainOptionIds": [
+        "reading.main.009",
+        "reading.main.010"
+      ],
+      "allOfConceptIds": [
+        "concept.reading.plot.029",
+        "concept.ca48cff4eea0"
+      ],
+      "mechanism": "资源与学习→选拔→身份变化→制度内的新责任",
+      "noveltyAxes": [
+        "原生/其他经确认身份",
+        "家庭条件",
+        "地方治理问题"
+      ],
+      "risks": [
+        "时代制度混用",
+        "科举后主线断裂"
+      ],
+      "status": "editorial_draft"
+    },
+    {
+      "id": "recipe.fantasy.players-construction",
+      "title": "玩家群体与经营世界",
+      "mainOptionIds": [
+        "reading.main.014",
+        "reading.main.001"
+      ],
+      "allOfConceptIds": [
+        "concept.601adba70dd6",
+        "concept.content.plot.041"
+      ],
+      "mechanism": "目标发布→玩家群体行动→世界反馈→经营与规则调整",
+      "noveltyAxes": [
+        "玩家利益差异",
+        "原住民自主性",
+        "资源循环"
+      ],
+      "risks": [
+        "玩家全体同质化",
+        "管理者任意修改规则"
+      ],
+      "status": "editorial_draft"
+    }
+  ]
+}

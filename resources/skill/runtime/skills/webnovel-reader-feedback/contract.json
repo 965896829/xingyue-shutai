@@ -1,19 +1,15 @@
 {
-  "contract_version": "1.0",
+  "contract_version": "2.0",
   "stage": "optional",
   "optional": true,
   "tools": [
-    "project.read_snapshot",
-    "artifact.read",
-    "memory.query",
-    "memory.trace_source",
-    "skill.load",
-    "candidate.write",
-    "candidate.diff",
-    "changeset.propose",
-    "validate.run",
-    "review.request",
-    "metrics.read"
+    "read_naming_rules",
+    "read_document",
+    "search_memory",
+    "propose_changes",
+    "propose_memory",
+    "validate",
+    "ask_author"
   ],
   "write_scope": "candidate-only",
   "can_approve": false,
@@ -23,7 +19,7 @@
   "max_repairs": 2,
   "inputs": "授权聚合数据/反馈文本、指标定义、版本、观察窗口、曝光/渠道、同期对照与作者目标。",
   "outputs": [
-    "10_市场与读者/反馈诊断.md",
+    "11_创作研究/反馈诊断.md",
     "实验计划与指标定义",
     "限定范围修订建议"
   ],

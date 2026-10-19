@@ -18,6 +18,8 @@ export interface RoleRule {
   history: RoleVersion[];
 }
 export const searchSettingsSchema = z.object({
+  provider: z.enum(['auto', 'openai', 'tavily']).default('auto'),
+  nativeToolLimit: z.enum(['auto', 'server', 'compatible']).default('auto'),
   baseUrl: z.string().url().default('https://api.tavily.com'),
   enabled: z.boolean().default(true),
   maxResults: z.number().int().min(1).max(20).default(5),
@@ -28,6 +30,7 @@ export const searchSettingsSchema = z.object({
 export type SearchSettings = z.infer<typeof searchSettingsSchema>;
 export interface Conversation {
   id: string;
+  runId?: string;
   title: string;
   createdAt: string;
   updatedAt: string;
@@ -45,6 +48,7 @@ export interface Citation {
   reason: string;
 }
 export interface ConversationMessage {
+  webSearch?: import('./web-search').NativeWebSearchState;
   id: string;
   conversationId: string;
   turnId: string;
@@ -55,6 +59,11 @@ export interface ConversationMessage {
   citations: Citation[];
 }
 export interface ConversationTurn {
+  webSearch?: import('./web-search').NativeWebSearchState;
+  manifest?: import('./types').ContextManifest;
+  taskContext?: string;
+  displayedError?: string;
+  tagBinding?: { inputHash: string; contractRevision: number; knowledgeVersion: string };
   expressionRules?: import('./expression').ExpressionBinding;
   id: string;
   conversationId: string;
@@ -77,6 +86,11 @@ export interface ConversationTurn {
     rules: number;
     history: number;
     sources: number;
+    method?: 'o200k_base' | 'cl100k_base' | 'utf8_upper_bound';
+    inputBytes?: number;
+    providerReserve?: number;
+    safetyReserve?: number;
+    toolReserve?: number;
   }[];
   proposalId?: string;
   kind: 'discussion' | 'draft';
@@ -84,6 +98,8 @@ export interface ConversationTurn {
 }
 export interface ActionProposal {
   id: string;
+  resumeRunId?: string;
+  resumeRunHash?: string;
   conversationId: string;
   turnId: string;
   version: string;

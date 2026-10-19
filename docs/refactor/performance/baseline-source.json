@@ -1,0 +1,395 @@
+{
+  "archive": "D:\\AIkehuduan\\release\\win-unpacked\\resources\\app.asar",
+  "files": [
+    {
+      "relative": "electron/main.ts",
+      "digest": "6799e490cef2c5b67d7ef87b6dc705e4bb30f65a49e43c012b8312a4e5f0a8c7",
+      "expected": "6799e490cef2c5b67d7ef87b6dc705e4bb30f65a49e43c012b8312a4e5f0a8c7",
+      "matched": true
+    },
+    {
+      "relative": "src/shared/types.ts",
+      "digest": "f9be04f05ff291b62dd312f238e93479a95fe9caf0dd14b1a930d57e1f74ad66",
+      "expected": "f9be04f05ff291b62dd312f238e93479a95fe9caf0dd14b1a930d57e1f74ad66",
+      "matched": true
+    },
+    {
+      "relative": "src/core/storage.ts",
+      "digest": "bc66578e6edf2c6d779986c4ff79a36b7132d4a9be283c407c58f4e4a0278de6",
+      "expected": "bc66578e6edf2c6d779986c4ff79a36b7132d4a9be283c407c58f4e4a0278de6",
+      "matched": true
+    },
+    {
+      "relative": "src/core/domain.ts",
+      "digest": "d0f0a0fd0aa34bb9bd8ef665d81f099eed3027edbcb2af2bd5bb5b6ad903298a",
+      "expected": "d0f0a0fd0aa34bb9bd8ef665d81f099eed3027edbcb2af2bd5bb5b6ad903298a",
+      "matched": true
+    },
+    {
+      "relative": "src/shared/tags.ts",
+      "digest": "cf0273554098280c6308f76929e03025ea4eaa6dea4464737d0f517c42d9dfef",
+      "expected": "cf0273554098280c6308f76929e03025ea4eaa6dea4464737d0f517c42d9dfef",
+      "matched": true
+    },
+    {
+      "relative": "src/core/provider.ts",
+      "digest": "3d67767c5f68869ea39fd870ece3d33c0195ab2098e77a244d89efb40e93ef19",
+      "expected": "3d67767c5f68869ea39fd870ece3d33c0195ab2098e77a244d89efb40e93ef19",
+      "matched": true
+    },
+    {
+      "relative": "src/shared/official-model-limits.json",
+      "digest": "3eff02bcb07597c358da4ec5e1dd583b95d5551a9ddb8c8fca937923e27302a8",
+      "expected": "3eff02bcb07597c358da4ec5e1dd583b95d5551a9ddb8c8fca937923e27302a8",
+      "matched": true
+    },
+    {
+      "relative": "src/shared/model-limits.ts",
+      "digest": "e170aa5cda503560779946865831bce595bed90cfe139dfa9826b9344592217e",
+      "expected": "e170aa5cda503560779946865831bce595bed90cfe139dfa9826b9344592217e",
+      "matched": true
+    },
+    {
+      "relative": "src/core/model-catalog.ts",
+      "digest": "1739ea563c430058841c903b78dba6b5c62d3c490588754c52bb40f91b41ae61",
+      "expected": "1739ea563c430058841c903b78dba6b5c62d3c490588754c52bb40f91b41ae61",
+      "matched": true
+    },
+    {
+      "relative": "src/core/model-limits.ts",
+      "digest": "609f15500034e9452eb5e2bd4904d6d9c96ab9356a86bdbe4f4bbfd67717f902",
+      "expected": "609f15500034e9452eb5e2bd4904d6d9c96ab9356a86bdbe4f4bbfd67717f902",
+      "matched": true
+    },
+    {
+      "relative": "src/core/provider-groups.ts",
+      "digest": "68061a703a63af7ae2ab4644d854b01eb6039a1ccd637e97be549e04dadb97c4",
+      "expected": "68061a703a63af7ae2ab4644d854b01eb6039a1ccd637e97be549e04dadb97c4",
+      "matched": true
+    },
+    {
+      "relative": "src/shared/provider-groups.ts",
+      "digest": "2981cfe73f3a4ac25d825bf8341d850880768a0a2490e530336baa39b6c0bc5e",
+      "expected": "2981cfe73f3a4ac25d825bf8341d850880768a0a2490e530336baa39b6c0bc5e",
+      "matched": true
+    },
+    {
+      "relative": "src/core/assistant-settings.ts",
+      "digest": "2e596ef0b98f0fa12cdd92deffd9663ff71ef8e928ff32201e37db6db9962401",
+      "expected": "2e596ef0b98f0fa12cdd92deffd9663ff71ef8e928ff32201e37db6db9962401",
+      "matched": true
+    },
+    {
+      "relative": "src/shared/studio.ts",
+      "digest": "7f39f362441e75089c6c8e898dd1e3dbfb98b50c643fdd40c71d9b0b82321507",
+      "expected": "7f39f362441e75089c6c8e898dd1e3dbfb98b50c643fdd40c71d9b0b82321507",
+      "matched": true
+    },
+    {
+      "relative": "src/shared/assistant.ts",
+      "digest": "efebc2bd7a375c26577a47ac95c86b3ec82379c2eee8f9ce9471a827175b5fd3",
+      "expected": "efebc2bd7a375c26577a47ac95c86b3ec82379c2eee8f9ce9471a827175b5fd3",
+      "matched": true
+    },
+    {
+      "relative": "src/shared/brand.ts",
+      "digest": "889f12770a222a43c3a4418c17346c36474b9fe4ee4573e4f30e64ee6cadbdfe",
+      "expected": "889f12770a222a43c3a4418c17346c36474b9fe4ee4573e4f30e64ee6cadbdfe",
+      "matched": true
+    },
+    {
+      "relative": "electron/close-confirmation.ts",
+      "digest": "f1ba903245b0e2f273eeafd3ba5bc38ed485ab482faccf9a1722a5bc77a9745a",
+      "expected": "f1ba903245b0e2f273eeafd3ba5bc38ed485ab482faccf9a1722a5bc77a9745a",
+      "matched": true
+    },
+    {
+      "relative": "electron/window-appearance.ts",
+      "digest": "985189b672c01e50ea7d9b270e8220f7c78d41fc718f5e9b6e48caa09b25d2e3",
+      "expected": "985189b672c01e50ea7d9b270e8220f7c78d41fc718f5e9b6e48caa09b25d2e3",
+      "matched": true
+    },
+    {
+      "relative": "electron/preload.ts",
+      "digest": "a383304c9fe22fc08cdf9c0871914c02450f76c55aeb9dd1101eae278869295f",
+      "expected": "a383304c9fe22fc08cdf9c0871914c02450f76c55aeb9dd1101eae278869295f",
+      "matched": true
+    },
+    {
+      "relative": "src/core/service.ts",
+      "digest": "ff731ac18924e8a87df1c399cb4e9b035f527d55396e3e3bed1eb6e8b551a53e",
+      "expected": "ff731ac18924e8a87df1c399cb4e9b035f527d55396e3e3bed1eb6e8b551a53e",
+      "matched": true
+    },
+    {
+      "relative": "src/core/tags.ts",
+      "digest": "920f783adac1e43e6f525e249446efb70bfa371faae2fc6c1b57fe5e783d612c",
+      "expected": "920f783adac1e43e6f525e249446efb70bfa371faae2fc6c1b57fe5e783d612c",
+      "matched": true
+    },
+    {
+      "relative": "src/core/memory-studio.ts",
+      "digest": "9f877d5e930fb53d8a961395e43eb7a9bb016e74b408bc5a84f8ce052258136a",
+      "expected": "9f877d5e930fb53d8a961395e43eb7a9bb016e74b408bc5a84f8ce052258136a",
+      "matched": true
+    },
+    {
+      "relative": "src/core/memory.ts",
+      "digest": "26d32193e6d7ae547bacc0966892bb56811ab03e82f4ea634ab73b4d09d50fd5",
+      "expected": "26d32193e6d7ae547bacc0966892bb56811ab03e82f4ea634ab73b4d09d50fd5",
+      "matched": true
+    },
+    {
+      "relative": "src/core/embeddings.ts",
+      "digest": "3621c0c409389e826aa5b57f2edda23e32e760ed63fe3146fe5c70453b98238a",
+      "expected": "3621c0c409389e826aa5b57f2edda23e32e760ed63fe3146fe5c70453b98238a",
+      "matched": true
+    },
+    {
+      "relative": "src/core/skill-registry.ts",
+      "digest": "ab6f215fb191fd48809fc662b03cdae1ce7bef5019101029a01659174bb367b1",
+      "expected": "ab6f215fb191fd48809fc662b03cdae1ce7bef5019101029a01659174bb367b1",
+      "matched": true
+    },
+    {
+      "relative": "src/core/expression-rules.ts",
+      "digest": "ec2d2e25be35c8b34f90840cf7393956b75ea5dbe70ac39647f33fa765a83b32",
+      "expected": "ec2d2e25be35c8b34f90840cf7393956b75ea5dbe70ac39647f33fa765a83b32",
+      "matched": true
+    },
+    {
+      "relative": "src/core/telemetry.ts",
+      "digest": "5b1be6cd95d872c1537db188c35227c4ecfcf71d05e4ca383271bbf41a33ec51",
+      "expected": "5b1be6cd95d872c1537db188c35227c4ecfcf71d05e4ca383271bbf41a33ec51",
+      "matched": true
+    },
+    {
+      "relative": "src/core/skill.ts",
+      "digest": "5a0a4e8f19ea366f9b370a26f8e1354a580cf674d225866c23d64aa8c700a3d7",
+      "expected": "5a0a4e8f19ea366f9b370a26f8e1354a580cf674d225866c23d64aa8c700a3d7",
+      "matched": true
+    },
+    {
+      "relative": "src/core/naming.ts",
+      "digest": "e84ce560c8ef9d5fbe1f5bcf237738a4059663f4c75a538ae7b47ea1c4eb7250",
+      "expected": "e84ce560c8ef9d5fbe1f5bcf237738a4059663f4c75a538ae7b47ea1c4eb7250",
+      "matched": true
+    },
+    {
+      "relative": "src/core/runner.ts",
+      "digest": "ff0999e0a750e1d7aed884fb34a4cbbb6a4f5c966eef0b88213dccebb44dd51d",
+      "expected": "ff0999e0a750e1d7aed884fb34a4cbbb6a4f5c966eef0b88213dccebb44dd51d",
+      "matched": true
+    },
+    {
+      "relative": "src/core/validation.ts",
+      "digest": "57f6489bc36c2a4cc91d4a6fbc35fd0733219b269722721719746dfb2393445b",
+      "expected": "57f6489bc36c2a4cc91d4a6fbc35fd0733219b269722721719746dfb2393445b",
+      "matched": true
+    },
+    {
+      "relative": "src/core/tag-planning.ts",
+      "digest": "e14e68f0461804b5c9af552c27a7c33e3850848e6081e5c5e4ec582f2c971d6c",
+      "expected": "e14e68f0461804b5c9af552c27a7c33e3850848e6081e5c5e4ec582f2c971d6c",
+      "matched": true
+    },
+    {
+      "relative": "src/core/documents.ts",
+      "digest": "740c756de599b78cc32d74e55cdee7dc6f0e879444d99217516115678aabf8a5",
+      "expected": "740c756de599b78cc32d74e55cdee7dc6f0e879444d99217516115678aabf8a5",
+      "matched": true
+    },
+    {
+      "relative": "src/shared/run-presentation.ts",
+      "digest": "0e86eddb54ec125c96cb27096fdefaf48a9570944f17c8e61f2e7438cf5863fa",
+      "expected": "0e86eddb54ec125c96cb27096fdefaf48a9570944f17c8e61f2e7438cf5863fa",
+      "matched": true
+    },
+    {
+      "relative": "src/core/cover.ts",
+      "digest": "ea4e173d2790ea5c571f6c75d45218a58589b85fc7f0826217b63110425b0874",
+      "expected": "ea4e173d2790ea5c571f6c75d45218a58589b85fc7f0826217b63110425b0874",
+      "matched": true
+    },
+    {
+      "relative": "src/core/migration.ts",
+      "digest": "724d4380af2664a43f5d1f7c3eb24dee1cedec69593d2c1942e3f71d6240e11f",
+      "expected": "724d4380af2664a43f5d1f7c3eb24dee1cedec69593d2c1942e3f71d6240e11f",
+      "matched": true
+    },
+    {
+      "relative": "src/core/recycle-bin.ts",
+      "digest": "7ace976ce09c56b2ceeb5c8d3c8b3797fedc33a1138b8fc7b0a6be0c6181c55a",
+      "expected": "7ace976ce09c56b2ceeb5c8d3c8b3797fedc33a1138b8fc7b0a6be0c6181c55a",
+      "matched": true
+    },
+    {
+      "relative": "src/core/conversation-runner.ts",
+      "digest": "594351dd16c09579f67fdd342e6f7cb58a096e63f478b1c9c77f8d74b64b1e99",
+      "expected": "594351dd16c09579f67fdd342e6f7cb58a096e63f478b1c9c77f8d74b64b1e99",
+      "matched": true
+    },
+    {
+      "relative": "src/core/conversations.ts",
+      "digest": "96e25862f24a30c1074df2ccfc7d33806cece413e92ffe5e2d9f2532c455b969",
+      "expected": "96e25862f24a30c1074df2ccfc7d33806cece413e92ffe5e2d9f2532c455b969",
+      "matched": true
+    },
+    {
+      "relative": "src/core/search.ts",
+      "digest": "db2690d43a6db4a5d821daed645a0f103bc1eb44bd3b6b5b3931203065b752af",
+      "expected": "db2690d43a6db4a5d821daed645a0f103bc1eb44bd3b6b5b3931203065b752af",
+      "matched": true
+    },
+    {
+      "relative": "electron/worker.ts",
+      "digest": "0171e661557fb54fe5911fbacf9c3b1351dda23886a600ce57fe6f3b496e6841",
+      "expected": "0171e661557fb54fe5911fbacf9c3b1351dda23886a600ce57fe6f3b496e6841",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/Editor.tsx",
+      "digest": "e94728e142c7df13cf06d57e5d8acae33d4a2ef02bd1ccf14a7e1675bcd19ab4",
+      "expected": "e94728e142c7df13cf06d57e5d8acae33d4a2ef02bd1ccf14a7e1675bcd19ab4",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/LegacyDialog.tsx",
+      "digest": "839009b0bdf23e9cc1bb4438e52a0ae9df188cfd2cfd79389c4ce0ac7e167c68",
+      "expected": "839009b0bdf23e9cc1bb4438e52a0ae9df188cfd2cfd79389c4ce0ac7e167c68",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/DeleteButton.tsx",
+      "digest": "6fa558cc7adbcac33eb283084ed8dfd4f2021b137d97834643b392d48487b7e6",
+      "expected": "6fa558cc7adbcac33eb283084ed8dfd4f2021b137d97834643b392d48487b7e6",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/ProviderSettings.tsx",
+      "digest": "f2a8c1b7cbfd9f19b42bb193bd98cd96f87561f51efe8f066b4a47ed07b2e502",
+      "expected": "f2a8c1b7cbfd9f19b42bb193bd98cd96f87561f51efe8f066b4a47ed07b2e502",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/model-label.ts",
+      "digest": "8cc251bd73fe4d3514a5c7f4113a6940812371a2227ecfcca888e711fc24432f",
+      "expected": "8cc251bd73fe4d3514a5c7f4113a6940812371a2227ecfcca888e711fc24432f",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/color-mode.ts",
+      "digest": "e2553ff4730881dd61283e193f1b90e32ab0ab59125763dd0ffdaab3f81766f8",
+      "expected": "e2553ff4730881dd61283e193f1b90e32ab0ab59125763dd0ffdaab3f81766f8",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/ThemeToggle.tsx",
+      "digest": "23ef1ff761390be099dfb89c78842b293683ef15f101c66b99b75e5b91bdc354",
+      "expected": "23ef1ff761390be099dfb89c78842b293683ef15f101c66b99b75e5b91bdc354",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/BrandLogo.tsx",
+      "digest": "df10b4d3f21f97443c113e5fd9b2e21c95bf1d3d1efedbfe4ae89ef90490cea7",
+      "expected": "df10b4d3f21f97443c113e5fd9b2e21c95bf1d3d1efedbfe4ae89ef90490cea7",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/ProximitySidebar.tsx",
+      "digest": "559ae147954cf796b002bb8acc5c90fa63602217b4af9f3d3554c83434da2f3f",
+      "expected": "559ae147954cf796b002bb8acc5c90fa63602217b4af9f3d3554c83434da2f3f",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/RecycleBin.tsx",
+      "digest": "f149a1afed9197bab36a370a8c01df1d81ec2fa34bd52f969ba6153bc51dadf0",
+      "expected": "f149a1afed9197bab36a370a8c01df1d81ec2fa34bd52f969ba6153bc51dadf0",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/ChatComposer.tsx",
+      "digest": "06a6e2559fbe6aa2e48fcb526518f3418a6208388d452a6ef4535b8cd4ef4894",
+      "expected": "06a6e2559fbe6aa2e48fcb526518f3418a6208388d452a6ef4535b8cd4ef4894",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/ChatWorkspace.tsx",
+      "digest": "5c162527a4844de6a067988fb24244b125ed700b8ca7f1cc06c0922f54a38dde",
+      "expected": "5c162527a4844de6a067988fb24244b125ed700b8ca7f1cc06c0922f54a38dde",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/AssistantSettings.tsx",
+      "digest": "7fc1d3d1c7eb899112807a4e797ac8f85055e9604637c9c01f37e752a8b94116",
+      "expected": "7fc1d3d1c7eb899112807a4e797ac8f85055e9604637c9c01f37e752a8b94116",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/useDialog.ts",
+      "digest": "752181a89cd9de9bb0462c27326bc46e11e7c2572f9d259753a8ab36d2d3a365",
+      "expected": "752181a89cd9de9bb0462c27326bc46e11e7c2572f9d259753a8ab36d2d3a365",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/MemoryStudio.tsx",
+      "digest": "f1398e92b27c7193d3581e4082b35194356e3ded99ecc3dd90156ed4b68d42d4",
+      "expected": "f1398e92b27c7193d3581e4082b35194356e3ded99ecc3dd90156ed4b68d42d4",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/NarrativePanel.tsx",
+      "digest": "110feb49b8c5806c5f526502785e8ec7b59ee66c30d219801bc8f9ca48cf9868",
+      "expected": "110feb49b8c5806c5f526502785e8ec7b59ee66c30d219801bc8f9ca48cf9868",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/SkillLauncher.tsx",
+      "digest": "8606343672fd3f67f92ca3ccbf69ea3e30e0adcec64672a9c4ebb97738920528",
+      "expected": "8606343672fd3f67f92ca3ccbf69ea3e30e0adcec64672a9c4ebb97738920528",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/ExpressionSettings.tsx",
+      "digest": "23ea1de212ebc8771f979c3cff14eea4ebf6e97dd38ab1ac1fea018c5c6ed3b4",
+      "expected": "23ea1de212ebc8771f979c3cff14eea4ebf6e97dd38ab1ac1fea018c5c6ed3b4",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/TagWorkspace.tsx",
+      "digest": "0d1b304c53cd680ff53dd863f60972927bc1815e09638b57dc680e1b92538643",
+      "expected": "0d1b304c53cd680ff53dd863f60972927bc1815e09638b57dc680e1b92538643",
+      "matched": true
+    },
+    {
+      "relative": "src/shared/event-gate.ts",
+      "digest": "1f23ec58349a4ad7d6a424533274bf9b8feadb9c5195de8dd6734de6ef7f64b5",
+      "expected": "1f23ec58349a4ad7d6a424533274bf9b8feadb9c5195de8dd6734de6ef7f64b5",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/App.tsx",
+      "digest": "4571f64721754cac1e7cb9ea5269f3f1f2a3edcd4d17d0e9ce76886bb2c794a6",
+      "expected": "4571f64721754cac1e7cb9ea5269f3f1f2a3edcd4d17d0e9ce76886bb2c794a6",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/WindowTitleBar.tsx",
+      "digest": "81201fd39f9ff4e5f7915305410b1d27364d0bda21fe25332766636bc84055ca",
+      "expected": "81201fd39f9ff4e5f7915305410b1d27364d0bda21fe25332766636bc84055ca",
+      "matched": true
+    },
+    {
+      "relative": "src/ui/ExitConfirmation.tsx",
+      "digest": "3f4b6926338696d63d2cf7fe7a66108c913e4b5b7369a53862c1b10757686b48",
+      "expected": "3f4b6926338696d63d2cf7fe7a66108c913e4b5b7369a53862c1b10757686b48",
+      "matched": true
+    },
+    {
+      "relative": "src/main.tsx",
+      "digest": "c49c8573aaf3c29a4fbe3f1927c84a36bec274083f5d3c34338ebd5196309817",
+      "expected": "c49c8573aaf3c29a4fbe3f1927c84a36bec274083f5d3c34338ebd5196309817",
+      "matched": true
+    }
+  ]
+}

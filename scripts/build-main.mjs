@@ -1,6 +1,6 @@
 import { build } from 'esbuild';
 await build({
-  entryPoints: ['electron/main.ts', 'electron/preload.ts', 'electron/worker.ts'],
+  entryPoints: ['electron/main.ts', 'electron/preload.ts', 'electron/worker.ts', 'electron/document-worker.ts'],
   bundle: true,
   platform: 'node',
   target: 'node24',

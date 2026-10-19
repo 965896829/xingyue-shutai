@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-10T17:19:57.839Z",
+  "docs": 26,
+  "brokenLinks": [],
+  "requirementIds": 180,
+  "skillFilesByteExact": 152,
+  "skills": {
+    "source": "resources/skill",
+    "packaged": "release\\workflow\\win-unpacked\\resources\\skill",
+    "runtimeLockedFiles": 128,
+    "registeredSkills": 26,
+    "runtimeLockSha256": "51a46a39340fc0fcb40ffc1ceb320740864673663f7e76ecc057e1230b5b8104",
+    "expressionLockedFiles": 2,
+    "expressionRules": 905,
+    "expressionModules": 145,
+    "tagOptions": 482,
+    "taxonomyVersion": "fanqie-user-snapshot-v1",
+    "tagLockedFiles": 10,
+    "tagLockSha256": "de7d22a471f27f416ff2d56d0cc7e4fea1719e2561afb4a0b0b4626ffdaa9229",
+    "expressionManifestSha256": "f62aae7ab86ef7608eb91241a96dae03d4521ccedf92f9118fe087cd13e98fb9"
+  },
+  "testLog": {
+    "path": ".test-output/workflow-20261011/tests.log",
+    "sha256": "e35f59dfe2d7b5db7961d428ea198e9fe834818d667d2916f8f26eb3b01e7ac2"
+  },
+  "tests": 210,
+  "failures": 0,
+  "installer": {
+    "path": "release\\workflow\\星月书台 Setup 0.4.4.exe",
+    "bytes": 126591784,
+    "sha256": "ed331b69ccbb94cd85241facd9e8a7523cf096c411a71475050867291f9fb188"
+  },
+  "buildInputs": {
+    "lockfile": "2a8dcd96b1254d706f5a34554ede7c18d86f0c1003d215a573849933d91a2115",
+    "main": "6b0bed6d8f3668ec44968d206ffaf91462122e2e7f57420035b30bc9cd3bf4ab",
+    "worker": "2e07bf485d69a9bbcd348959fa975c20c25b43a9a0cc4c68746619bebd1edd4e"
+  },
+  "note": "文档和构建完整性检查，不能替代未完成的真实端点、文学效果与操作系统矩阵验收"
+}

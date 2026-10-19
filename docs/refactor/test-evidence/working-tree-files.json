@@ -1,0 +1,397 @@
+{
+  "at": "2026-10-10T12:19:28.284Z",
+  "baseHead": "ade3d5c",
+  "note": "Only differs from turn-start filesystem hash; untracked files absent from baseline may include protected pre-existing user files. No commit or staging performed.",
+  "files": [
+    {
+      "file": "src\\core\\assistant-settings.ts",
+      "sha256": "37d6f2a39e7b2ba4a64468931bab5ff90fc42440b3710e1989250adf368b978b",
+      "baseline": "2e596ef0b98f0fa12cdd92deffd9663ff71ef8e928ff32201e37db6db9962401"
+    },
+    {
+      "file": "src\\core\\compatibility.ts",
+      "sha256": "a026556af3bb42456a5964aba4080adaefe47be3e96e6d357a7e5f03238ab780",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\conversation-runner.ts",
+      "sha256": "996b44748383add4c4613e8a0d595026994e6d1833a8b34a7e41bfc09915dbb9",
+      "baseline": "594351dd16c09579f67fdd342e6f7cb58a096e63f478b1c9c77f8d74b64b1e99"
+    },
+    {
+      "file": "src\\core\\conversations.ts",
+      "sha256": "bc7528547f1869d2478be6baff7e66cf22113a101af8ba4d3aa61620134c05e5",
+      "baseline": "96e25862f24a30c1074df2ccfc7d33806cece413e92ffe5e2d9f2532c455b969"
+    },
+    {
+      "file": "src\\core\\documents.ts",
+      "sha256": "2063cc84dc5b59b18d9a7aa3ad0c27fbf9393b9b7e6bc3b27a44b5f540ca522a",
+      "baseline": "740c756de599b78cc32d74e55cdee7dc6f0e879444d99217516115678aabf8a5"
+    },
+    {
+      "file": "src\\core\\embeddings.ts",
+      "sha256": "c2a266b61641121a8a2276925fd75ade504b25e68ab16b192d434def55fcbf82",
+      "baseline": "3621c0c409389e826aa5b57f2edda23e32e760ed63fe3146fe5c70453b98238a"
+    },
+    {
+      "file": "src\\core\\integrity.ts",
+      "sha256": "c95573fc4eb4c88c5ec4a72d02d77071c3e109d1a1025b6decd28c284b3ab1d3",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\materialization.ts",
+      "sha256": "ff597bf17b606876490779447f5363cc1df3f6cc634fcf79c2d7b681060b16a7",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\memory.ts",
+      "sha256": "e84a1efbde440a87282016dde0b242747efc242429614f793404b27de9a8dc2e",
+      "baseline": "26d32193e6d7ae547bacc0966892bb56811ab03e82f4ea634ab73b4d09d50fd5"
+    },
+    {
+      "file": "src\\core\\model-catalog.ts",
+      "sha256": "b0ea1c1218c091448820bc597961de6d4b3ab30696c32a65c2bd595c6bdf1205",
+      "baseline": "1739ea563c430058841c903b78dba6b5c62d3c490588754c52bb40f91b41ae61"
+    },
+    {
+      "file": "src\\core\\project-watcher.ts",
+      "sha256": "7edbb5bac1ded641f58232b976013001961a4339a58038d6ef8fd77fc481eed1",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\provider.ts",
+      "sha256": "5b413bb55eaa4dce80ade8748c5f0f9cf62b6d8f235d0996d9829564d8b646f5",
+      "baseline": "3d67767c5f68869ea39fd870ece3d33c0195ab2098e77a244d89efb40e93ef19"
+    },
+    {
+      "file": "src\\core\\recycle-bin.ts",
+      "sha256": "3b79835568840b9993bd64fc3fc22240aa8becd53e68a71ec72e623c5c9f9ccf",
+      "baseline": "7ace976ce09c56b2ceeb5c8d3c8b3797fedc33a1138b8fc7b0a6be0c6181c55a"
+    },
+    {
+      "file": "src\\core\\runner.ts",
+      "sha256": "c3e89d33fa3fdc53050fd4b14a50f6052f526dfb6457c197ed6f3f79eb94b583",
+      "baseline": "ff0999e0a750e1d7aed884fb34a4cbbb6a4f5c966eef0b88213dccebb44dd51d"
+    },
+    {
+      "file": "src\\core\\runtime\\canonical.ts",
+      "sha256": "e54ceeb2090c4567772ae4e49e74d18b71cb8031d2a9323f96959626cc5dfe4a",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\runtime\\commit-kernel.ts",
+      "sha256": "aa0a6a34502822d721cedd8ce0c68dc9c9762eeb56d69ed9c7603ef8130ade58",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\runtime\\execution-records.ts",
+      "sha256": "8f965bb55de0090a99819c3f66179287f2b1519d0e742878ddd52783ee213081",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\runtime\\executor.ts",
+      "sha256": "5996d920c278e2970717534af7a6f1704b8ad04dd20b6d1d8bbb92f927c119e4",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\runtime\\model-gateway.ts",
+      "sha256": "38a6f604bceb9e739fbac1a0e47ea172fe05dafd5b72f5f56131a31fae760b39",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\runtime\\operations.ts",
+      "sha256": "42973e586168ddd6e214b19d4996a2d17f4dae035210b759831e553aeb526266",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\runtime\\pi-executor.ts",
+      "sha256": "d1c1c0f0459e21ea65874dc518eea69a65d779e474533cc5d191b9338da99c47",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\runtime\\run-state.ts",
+      "sha256": "3a708a83244935e81e54b0750134d2edee585c842539158dfed1d2ef017315df",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\runtime\\scheduler.ts",
+      "sha256": "b3a22cd200bde23dec7793ca8461f258487b3502fa8ae82ea41c4114663616b7",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\runtime\\tool-gateway.ts",
+      "sha256": "a7210f8952279f0c9f302cb67ca25ac42eb09b0976ce8b500d3e90c6fd3b902b",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\search.ts",
+      "sha256": "9df4a4044d3b8401c3bc75e6c38804b33e838ed874fa83aaf8f657b1a7a04cdb",
+      "baseline": "db2690d43a6db4a5d821daed645a0f103bc1eb44bd3b6b5b3931203065b752af"
+    },
+    {
+      "file": "src\\core\\service.ts",
+      "sha256": "77d79a0722a1d731b65d1624c7bfdedd9003465ffd97505ec8ac456a198b1f6f",
+      "baseline": "ff731ac18924e8a87df1c399cb4e9b035f527d55396e3e3bed1eb6e8b551a53e"
+    },
+    {
+      "file": "src\\core\\settings-recovery.ts",
+      "sha256": "516e3889b46f47c55469c40d38b9794dbe3c318e849abf22c1e46d6e62519bc0",
+      "baseline": null
+    },
+    {
+      "file": "src\\core\\storage.ts",
+      "sha256": "42af6348cb66b0c0b3e9d18120b92b638ddad08598fc3121459dc251cd2a2b87",
+      "baseline": "bc66578e6edf2c6d779986c4ff79a36b7132d4a9be283c407c58f4e4a0278de6"
+    },
+    {
+      "file": "src\\core\\tag-planning.ts",
+      "sha256": "23a70a53f6eb645c89741bda26865b447c792a2c57524f4bed2571734fa8a12e",
+      "baseline": "e14e68f0461804b5c9af552c27a7c33e3850848e6081e5c5e4ec582f2c971d6c"
+    },
+    {
+      "file": "src\\core\\telemetry.ts",
+      "sha256": "784a7f70fc5cf94b74d611ac109151072f8236f3c7905d398dd0f24df7b7a91e",
+      "baseline": "5b1be6cd95d872c1537db188c35227c4ecfcf71d05e4ca383271bbf41a33ec51"
+    },
+    {
+      "file": "src\\shared\\build.ts",
+      "sha256": "2958461dbde13231b933ac119b18f991e56351d155b2f2b0a66741ad4e777943",
+      "baseline": null
+    },
+    {
+      "file": "src\\shared\\chat-history.ts",
+      "sha256": "c707bf402ca41a0bdc9733fa3bfea5300bed129218e42c3b86f07104906b9c3f",
+      "baseline": null
+    },
+    {
+      "file": "src\\shared\\client.ts",
+      "sha256": "9bf5564c04ab7256b8c9610cf80152d90c6ffabbcb0fae24832009a8fac06565",
+      "baseline": null
+    },
+    {
+      "file": "src\\shared\\contract-schemas.ts",
+      "sha256": "4c4a7640373218a490f156983f897114c182f09e58e1328da86f1dd414b15437",
+      "baseline": null
+    },
+    {
+      "file": "src\\shared\\contract-shapes.json",
+      "sha256": "c16fc2823e7d013142ae480761a35e896318144a17bbb7132409d07b066a9778",
+      "baseline": null
+    },
+    {
+      "file": "src\\shared\\contracts.ts",
+      "sha256": "8450de22202cfd65bdfae21017745f7db26ae901b55cf5505e6d241b51e7bf38",
+      "baseline": null
+    },
+    {
+      "file": "src\\shared\\errors.ts",
+      "sha256": "c9086d701234f0f3cead1237c5fee73353f1092b37b1ffc200dd709b0eaf445c",
+      "baseline": null
+    },
+    {
+      "file": "src\\shared\\event-gate.ts",
+      "sha256": "c4be0638a34cb33ef7b155d33d08d66a1bf4c43a207d724872f9b39e4ad17024",
+      "baseline": "1f23ec58349a4ad7d6a424533274bf9b8feadb9c5195de8dd6734de6ef7f64b5"
+    },
+    {
+      "file": "src\\shared\\ipc.ts",
+      "sha256": "7619239d628bd78acdbfa0fa71d2aaa69d048422c7a0a9f02c5fd4931fc1dd98",
+      "baseline": null
+    },
+    {
+      "file": "src\\shared\\run-capabilities.ts",
+      "sha256": "8bfcac2e8d3e8d9ebc5ccb06c25ed0b06ef5d0b28c8162ea9c6c707a3d8e633b",
+      "baseline": null
+    },
+    {
+      "file": "src\\shared\\types.ts",
+      "sha256": "5edcdc2597e757fbf67af55c1a3a581cd0d3ac87c1323d0be7b5cec24185967a",
+      "baseline": "f9be04f05ff291b62dd312f238e93479a95fe9caf0dd14b1a930d57e1f74ad66"
+    },
+    {
+      "file": "src\\shared\\wait-for-response.ts",
+      "sha256": "8ea3ac8471f842bf5533ef5b82aef745a14e2f39ce9cfd1e9e79a5d7b0204388",
+      "baseline": null
+    },
+    {
+      "file": "src\\ui\\App.tsx",
+      "sha256": "f359932484c41f5ba8fe07ec68949abcf719c4ff7267a17d62857eddf893bbbc",
+      "baseline": "4571f64721754cac1e7cb9ea5269f3f1f2a3edcd4d17d0e9ce76886bb2c794a6"
+    },
+    {
+      "file": "src\\ui\\AssistantSettings.tsx",
+      "sha256": "946647c0f9e821ebd4127cf91516b0f3a2cc387e9ee12008ef85dffba6ec325c",
+      "baseline": "7fc1d3d1c7eb899112807a4e797ac8f85055e9604637c9c01f37e752a8b94116"
+    },
+    {
+      "file": "src\\ui\\ChatWorkspace.tsx",
+      "sha256": "d2928bdb3dd755f2ec333004532bfba5dc5a094d8ec70c5f4e943a65cac4365b",
+      "baseline": "5c162527a4844de6a067988fb24244b125ed700b8ca7f1cc06c0922f54a38dde"
+    },
+    {
+      "file": "src\\ui\\ExpressionSettings.tsx",
+      "sha256": "ccbf677b0adc38ac01b37270962a23ae5ba2c4f57667eff1b6e0b103da644907",
+      "baseline": "23ea1de212ebc8771f979c3cff14eea4ebf6e97dd38ab1ac1fea018c5c6ed3b4"
+    },
+    {
+      "file": "src\\ui\\LegacyDialog.tsx",
+      "sha256": "80bd35e6c78abf49cae4d92e168a4c0e34a58a7067c11c23c0ebc75adfa7e1f2",
+      "baseline": "839009b0bdf23e9cc1bb4438e52a0ae9df188cfd2cfd79389c4ce0ac7e167c68"
+    },
+    {
+      "file": "src\\ui\\MemoryStudio.tsx",
+      "sha256": "e2ab399dc14953357dd19e5e9c81d7e03bb9c1163902831ebe98583a39a85054",
+      "baseline": "f1398e92b27c7193d3581e4082b35194356e3ded99ecc3dd90156ed4b68d42d4"
+    },
+    {
+      "file": "src\\ui\\ProviderSettings.tsx",
+      "sha256": "650df08eda69930eb7f798fb2f5fc9584fdf41ed8e636b857c476bd2301f436a",
+      "baseline": "f2a8c1b7cbfd9f19b42bb193bd98cd96f87561f51efe8f066b4a47ed07b2e502"
+    },
+    {
+      "file": "src\\ui\\RecycleBin.tsx",
+      "sha256": "154818c7f5bc939e45b19e579bde12ed8dbc6c7c638553d13e64ae36b390e422",
+      "baseline": "f149a1afed9197bab36a370a8c01df1d81ec2fa34bd52f969ba6153bc51dadf0"
+    },
+    {
+      "file": "src\\ui\\SkillLauncher.tsx",
+      "sha256": "25b201393d2a81b5d3dae64a2b8deece4c3ad9a9e63dbdd4a45ee8eb9a8247c7",
+      "baseline": "8606343672fd3f67f92ca3ccbf69ea3e30e0adcec64672a9c4ebb97738920528"
+    },
+    {
+      "file": "src\\ui\\TagWorkspace.tsx",
+      "sha256": "aad6f947687e0ce0ec16d4714c6fd5e16b9b51b9e90dc9b2397cc6a0ae7f3f43",
+      "baseline": "0d1b304c53cd680ff53dd863f60972927bc1815e09638b57dc680e1b92538643"
+    },
+    {
+      "file": "electron\\main.ts",
+      "sha256": "2727e3308c2e05805f160db2009e01077d8ecc8655a127f8c62e27e5706c03d6",
+      "baseline": "6799e490cef2c5b67d7ef87b6dc705e4bb30f65a49e43c012b8312a4e5f0a8c7"
+    },
+    {
+      "file": "electron\\pending-requests.ts",
+      "sha256": "a975470e8d0d3c1592124fc119f6023e926c4cb1aaac83447a5c0b1a6fc031f1",
+      "baseline": null
+    },
+    {
+      "file": "electron\\preload.ts",
+      "sha256": "34aea6ab2a27dffe1d19eca849dfd1fb0b13f70688980d5b0a4aeff69e8e76a1",
+      "baseline": "a383304c9fe22fc08cdf9c0871914c02450f76c55aeb9dd1101eae278869295f"
+    },
+    {
+      "file": "electron\\supervisor.ts",
+      "sha256": "1d442ec9c320807829ab57a005e86e7611cafb96fd4988eb8fbb36bdf7904008",
+      "baseline": null
+    },
+    {
+      "file": "electron\\worker.ts",
+      "sha256": "5e15e412ee3ff32a38a3d44c7ff7bbcc0b34ac185e22b244c2b039bf0b211215",
+      "baseline": "0171e661557fb54fe5911fbacf9c3b1351dda23886a600ce57fe6f3b496e6841"
+    },
+    {
+      "file": "scripts\\check-deliverables.mjs",
+      "sha256": "b7bf843bcb25aa4f29fb4ef4da68c8ced3b1eb302ae8d8a01a5a4800bb609e09",
+      "baseline": "701bc2056c0e3eafd0e216c03ccfb3b5f18fb3b64beca7d8e49dbc66ce84fbd0"
+    },
+    {
+      "file": "scripts\\generate-contract-schemas.mjs",
+      "sha256": "e516386ae32459284e44376639f5cc305b16f260cfe826ddfbd497c9aeb12b9d",
+      "baseline": null
+    },
+    {
+      "file": "scripts\\refactor-audit.mjs",
+      "sha256": "107b754fa9a977df4927d669b3018070a492a11137b1a4b6ee809e87c807bd47",
+      "baseline": null
+    },
+    {
+      "file": "scripts\\refactor-baseline.mjs",
+      "sha256": "2985cffbd2e4e94fa1ef9047111de522e40b80e2811893d466ccacd254f89a62",
+      "baseline": null
+    },
+    {
+      "file": "scripts\\refactor-benchmark.ts",
+      "sha256": "e7157e1b7d1e790f41265f071316200a873ac730ff66e2ad71081ef7ec3d7775",
+      "baseline": null
+    },
+    {
+      "file": "tests\\assistant.test.ts",
+      "sha256": "4e1c8c0f4c00aebd4c7b5c71be78a20f30d3da435b891c034042ec6cfe953853",
+      "baseline": "b02eb6629acfa830914e9885f3fc9541f5e3f7c0c77e2dfef562725f21a8009f"
+    },
+    {
+      "file": "tests\\expression.test.ts",
+      "sha256": "8d7d2a44d4144b3b9b110675ce5690fd0ac35315e07bea2c6d4b68148809fa45",
+      "baseline": "34c1f106f0a4f0d150383085fb9f445f0d0f36a28c14081145b632b218ea873c"
+    },
+    {
+      "file": "tests\\fixtures\\crash-boundary.ts",
+      "sha256": "73a05a1b171fbe03160e3f7fa3180d89d0fe872a7315d990c7066490ecf0510f",
+      "baseline": null
+    },
+    {
+      "file": "tests\\fixtures\\desktop-hanging-provider.ts",
+      "sha256": "4476956a403a71aaa305ef6d180e96e0688ce4dd10b6d42766579a5bda14679d",
+      "baseline": null
+    },
+    {
+      "file": "tests\\fixtures\\desktop-smoke-seed.ts",
+      "sha256": "c947148c210a6f1db4464c601dbdac21f4ddc2cba6d08b51a20f30699ab41bd0",
+      "baseline": null
+    },
+    {
+      "file": "tests\\fixtures\\refactor.ts",
+      "sha256": "be03fe6b4a02c27581881c098c1f332b6d2b41d410a84698bc738516de90a561",
+      "baseline": null
+    },
+    {
+      "file": "tests\\refactor-boundaries.test.ts",
+      "sha256": "890a71accd10ff63afc0b0bfa4d375c0ae62bfe0090199e65ced283cee0308c0",
+      "baseline": null
+    },
+    {
+      "file": "tests\\refactor-compatibility.test.ts",
+      "sha256": "9e9f5eacea4fb48bae61b0d6bf87d51aa1566d71177cc872c72bb8d206985f52",
+      "baseline": null
+    },
+    {
+      "file": "tests\\refactor-crash.test.ts",
+      "sha256": "ebeaf23ba1ad752cb69138d45307f28100af3bf5ed9a52b3521129bb51a30d99",
+      "baseline": null
+    },
+    {
+      "file": "tests\\refactor-pi.test.ts",
+      "sha256": "83cc0135758aaf069317226314d791cc0b08cc0ea8fa3f63f90af7e84773a969",
+      "baseline": null
+    },
+    {
+      "file": "tests\\refactor-runtime.test.ts",
+      "sha256": "e2f1aac566dfcf5ebab4f764aace7f73b89956b7bc48af5e82c8b38268289f21",
+      "baseline": null
+    },
+    {
+      "file": "tests\\stream-recovery.test.ts",
+      "sha256": "aefffbed79946c02cb2b263a4fa756926730f0bb25e6adab5efedca96bf6942c",
+      "baseline": "3f7bd66efe2defd5c9332a5a4987db930e6f2c2941a997b904b7d24798bc9c62"
+    },
+    {
+      "file": "tests\\studio.test.ts",
+      "sha256": "0ced50310bddf6eb04d8217bee38a82760726d6207ee90dd0b92a98d821b6945",
+      "baseline": "926f45fb1303e2490f8aaad63dd6fc4df48bee39e5af81f931a43b78388e47da"
+    },
+    {
+      "file": "package.json",
+      "sha256": "a727ea082a7ee2209e65db70717651ecafa91f95f48a90387ea5cce74c58211f",
+      "baseline": null
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "309ba51e4fa49bcbb14cdca12a1c5764e0c096e95409c04585deb0e511dceb83",
+      "baseline": null
+    },
+    {
+      "file": "scripts/refactor-commit-benchmark.ts",
+      "sha256": "e68d78aecef76a29335f3ab137a007acc583d9ee4fc41238c9d7068d08d8a509",
+      "baseline": null
+    }
+  ]
+}

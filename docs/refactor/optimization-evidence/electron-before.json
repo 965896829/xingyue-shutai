@@ -1,0 +1,39 @@
+{
+  "file": "D:\\AIkehuduan\\.test-output\\optimization-20261010\\large.docx",
+  "project": "文档导入隔离验收",
+  "samples": [
+    {
+      "importMs": 928,
+      "queryMs": 863.7999999970198,
+      "importPendingAtQuery": true,
+      "characters": 1349998,
+      "sourceHash": null,
+      "contentHash": "ae849e6b77e4c003b9fcff84e01472b1ada404df3ec06b8c7eb360982cd08bf2",
+      "warnings": [],
+      "runCount": 0
+    },
+    {
+      "importMs": 890.7000000029802,
+      "queryMs": 834.5999999940395,
+      "importPendingAtQuery": true,
+      "characters": 1349998,
+      "sourceHash": null,
+      "contentHash": "ae849e6b77e4c003b9fcff84e01472b1ada404df3ec06b8c7eb360982cd08bf2",
+      "warnings": [],
+      "runCount": 0
+    },
+    {
+      "importMs": 887.4000000059605,
+      "queryMs": 828.8000000119209,
+      "importPendingAtQuery": true,
+      "characters": 1349998,
+      "sourceHash": null,
+      "contentHash": "ae849e6b77e4c003b9fcff84e01472b1ada404df3ec06b8c7eb360982cd08bf2",
+      "warnings": [],
+      "runCount": 0
+    }
+  ],
+  "documentsUnchanged": true,
+  "runsUnchanged": true,
+  "documents": 25
+}

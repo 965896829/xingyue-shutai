@@ -15,14 +15,22 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
-  commands,
   profileSchema,
   type Profile,
   type SecretProfile,
   type Command,
   type ModelLimits
 } from '../src/shared/types';
-import { atomicWrite } from '../src/core/storage';
+import { atomicWrite, FileStore } from '../src/core/storage';
+import { callExternal, recoverAttempts } from '../src/core/runtime/model-gateway';
+import { commandContracts, isCommand, parseInput, parseOutput, type CommandOutput } from '../src/shared/contracts';
+import { buildVersion, protocolVersion } from '../src/shared/build';
+import { errorPayload, errorSchema, ApplicationError } from '../src/shared/errors';
+import { rendererContextSchema } from '../src/shared/ipc';
+import { PendingRequests } from './pending-requests';
+import { WorkerSupervisor } from './supervisor';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { readSettings } from '../src/core/settings-recovery';
 import { endpoint } from '../src/core/provider';
 import { fetchModelCatalog, resolveCatalogConnection, sameEndpoint } from '../src/core/model-catalog';
 import { prepareProviderGroup } from '../src/core/provider-groups';
@@ -30,6 +38,14 @@ import { connectionId } from '../src/shared/provider-groups';
 import { AssistantSettings } from '../src/core/assistant-settings';
 import { embeddingSettingsSchema } from '../src/shared/studio';
 import { roleIds, searchSettingsSchema } from '../src/shared/assistant';
+import { brand, windowThemes } from '../src/shared/brand';
+import { CloseConfirmation } from './close-confirmation';
+import {
+  appearanceSchema,
+  WindowAppearanceTransition,
+  userDataDirectory,
+  type StoredAppearance
+} from './window-appearance';
 import {
   limitsCacheKey,
   migrateModelLimits,
@@ -45,20 +61,83 @@ let settings: {
   profiles: (Profile & { encryptedKey: string })[];
   recent: { title: string; root: string }[];
 } = { profiles: [], recent: [] };
-const pending = new Map<string, { resolve: (v: any) => void; reject: (e: Error) => void }>();
+const pending = new PendingRequests();
+const supervisor = new WorkerSupervisor();
+const requestContext = new AsyncLocalStorage<z.infer<typeof rendererContextSchema> & { signal?: AbortSignal }>();
+const waiting = new Map<string, AbortController>();
+let projectSessionId: string | undefined;
+let openedProjectRoot: string | undefined;
+let reconnect: Promise<unknown> = Promise.resolve();
+let readyPromise: Promise<void>;
+let resolveReady: () => void;
+let rejectReady: (error: Error) => void;
+let shutdownPromise: Promise<void> | undefined;
+let resolveShutdown: (() => void) | undefined;
+let shutdownComplete = false;
+let settingsNotice = '';
+function decryptKey(value: string) {
+  if (!value) return '';
+  try { return safeStorage.decryptString(Buffer.from(value, 'base64')); }
+  catch { settingsNotice = '密钥解密失败，原加密配置保留；请在模型设置中重新填写 Key'; return ''; }
+}
 let stateFile = '';
 let appearanceFile = '';
 let assistantSettings: AssistantSettings;
-const appearanceSchema = z.object({
-  mode: z.enum(['dark', 'light']),
-  // Production CSS minification shortens #ffffff to #fff.
-  background: z.string().regex(/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i),
-  foreground: z.string().regex(/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i)
-});
-let appearance = { mode: 'dark' as 'dark' | 'light', background: '#151517', foreground: '#f9fafb' };
+let managementJournal: FileStore | undefined;
+const managementController = new AbortController();
+let appearance: StoredAppearance = windowThemes.dark;
+let windowAppearance: WindowAppearanceTransition | undefined;
+const closeConfirmation = new CloseConfirmation();
+let rendererReady = false;
+let rendererResponsive = true;
+let fallbackCloseDialog = false;
+function answerClose(requestId: string, action: 'cancel' | 'quit') {
+  if (!closeConfirmation.respond(requestId, action)) return false;
+  if (action === 'quit') {
+    quitting = true;
+    void stopWorker().finally(() => app.quit());
+  }
+  return true;
+}
+function requestClose() {
+  const requestId = closeConfirmation.request();
+  if (!requestId || !win || win.isDestroyed()) return;
+  if (rendererReady && rendererResponsive && !win.webContents.isDestroyed()) {
+    win.webContents.send('wenxu:close-requested', requestId);
+    return;
+  }
+  // If the renderer cannot display a dialog, still allow an explicit, safe exit.
+  if (fallbackCloseDialog) return;
+  fallbackCloseDialog = true;
+  void dialog
+    .showMessageBox(win, {
+      type: 'question',
+      buttons: ['继续写作', '退出'],
+      defaultId: 0,
+      cancelId: 0,
+      message: `退出${brand.name}？`,
+      detail: '界面尚未就绪或暂时无响应。退出会中断正在运行的请求。'
+    })
+    .then((result) => answerClose(requestId, result.response === 1 ? 'quit' : 'cancel'))
+    .catch(() => {
+      answerClose(requestId, 'cancel');
+    })
+    .finally(() => {
+      fallbackCloseDialog = false;
+    });
+}
 const granted = new Set<string>();
 const modelLimitsCache = new Map<string, ModelLimits>();
-if (process.env.WENXU_DATA_DIR) app.setPath('userData', path.resolve(process.env.WENXU_DATA_DIR));
+// productName is presentation, not a new profile. Keep Chromium's Local State and
+// encrypted keys in the original profile even before app.whenReady() initializes them.
+const userData = userDataDirectory(app.getPath('appData'), process.env.WENXU_DATA_DIR);
+fs.mkdirSync(userData, { recursive: true });
+app.setPath('userData', userData);
+app.setPath('sessionData', userData);
+app.setName(brand.name);
+app.setAppUserModelId(brand.appId);
+if (!app.isPackaged && process.env.WENXU_DEBUG_PORT)
+  app.commandLine.appendSwitch('remote-debugging-port', process.env.WENXU_DEBUG_PORT);
 function saveSettings() {
   atomicWrite(stateFile, JSON.stringify(settings, null, 2));
 }
@@ -67,66 +146,114 @@ function profiles(includeDisabled = false): SecretProfile[] {
     .filter((p) => includeDisabled || p.enabled !== false)
     .map(({ encryptedKey, ...p }) => ({
       ...p,
-      apiKey: encryptedKey ? safeStorage.decryptString(Buffer.from(encryptedKey, 'base64')) : ''
+      apiKey: decryptKey(encryptedKey)
     }));
 }
-function sync() {
-  worker.postMessage({ type: 'profiles', profiles: profiles(), recent: settings.recent });
+function sync(type: 'initialize' | 'configuration' = 'configuration') {
   worker.postMessage({
-    type: 'assistant',
+    type, protocolVersion, buildVersion, workerGeneration: supervisor.generation,
+    profiles: profiles(), recent: settings.recent,
     assistant: {
-      roles: assistantSettings.roles(),
-      search: assistantSettings.settings().search,
+      roles: assistantSettings.roles(), search: assistantSettings.settings().search,
       embedding: assistantSettings.settings().embedding,
-      embeddingKey: assistantSettings.embeddingSecret()
-        ? safeStorage.decryptString(Buffer.from(assistantSettings.embeddingSecret(), 'base64'))
-        : '',
-      searchKey: assistantSettings.secret()
-        ? safeStorage.decryptString(Buffer.from(assistantSettings.secret(), 'base64'))
-        : ''
+      embeddingKey: decryptKey(assistantSettings.embeddingSecret()),
+      searchKey: decryptKey(assistantSettings.secret())
     }
   });
 }
 function startWorker() {
-  worker = utilityProcess.fork(
-    path.join(__dirname, 'worker.cjs'),
-    [
-      app.isPackaged
-        ? path.join(process.resourcesPath, 'skill')
-        : path.join(app.getAppPath(), 'resources/skill'),
-      app.getPath('userData')
-    ],
-    { serviceName: '文序写作内核', stdio: 'pipe', env: { ...process.env, NODE_TLS_REJECT_UNAUTHORIZED: '1' } }
-  );
-  worker.on('message', (m: any) => {
-    if (m.event) {
-      if (!win.isDestroyed()) win.webContents.send('wenxu:event', m.event);
+  const generation = supervisor.start();
+  projectSessionId = undefined;
+  readyPromise = new Promise((resolve, reject) => { resolveReady = resolve; rejectReady = reject; });
+  void readyPromise.catch(() => {});
+  const child = utilityProcess.fork(path.join(__dirname, 'worker.cjs'), [
+    app.isPackaged ? path.join(process.resourcesPath, 'skill') : path.join(app.getAppPath(), 'resources/skill'),
+    app.getPath('userData')
+  ], { serviceName: `${brand.name}写作内核`, stdio: 'pipe', env: { ...process.env, NODE_TLS_REJECT_UNAUTHORIZED: '1' } });
+  worker = child;
+  const startup = setTimeout(() => {
+    if (supervisor.state === 'starting' && supervisor.generation === generation) child.kill();
+  }, 30_000);
+  child.on('message', (raw: unknown) => {
+    if (child !== worker) return;
+    const parsed = z.object({ type: z.string().optional(), requestId: z.string().optional(), workerGeneration: z.number().optional(), projectSessionId: z.string().optional(), event: z.unknown().optional(), error: z.unknown().optional(), result: z.unknown().optional() }).passthrough().safeParse(raw);
+    if (!parsed.success) return;
+    const message = parsed.data;
+    if (message.type === 'ready') {
+      try {
+        supervisor.ready(z.object({ protocolVersion: z.number(), buildVersion: z.string(), workerGeneration: z.number() }).parse(raw));
+        projectSessionId = message.projectSessionId;
+        clearTimeout(startup);
+        resolveReady();
+        if (generation > 1) {
+          reconnect = openedProjectRoot ? rpc('project.open', { root: openedProjectRoot }) : Promise.resolve();
+          void reconnect.catch(() => {
+            if (win && !win.isDestroyed()) win.webContents.send('wenxu:event', { type: 'error', text: '执行内核已重启，原作品恢复未完成，请重新打开并核对', workerGeneration: generation });
+          }).finally(() => {
+            if (win && !win.isDestroyed()) win.webContents.send('wenxu:event', { type: 'snapshot', workerGeneration: generation, projectSessionId });
+          });
+        }
+      } catch (error) { rejectReady(error as Error); child.kill(); }
       return;
     }
-    const job = pending.get(m.id);
-    if (!job) return;
-    pending.delete(m.id);
-    m.error ? job.reject(new Error(m.error)) : job.resolve(m.result);
+    if (message.type === 'shutdown-complete') { resolveShutdown?.(); return; }
+    if (message.workerGeneration !== undefined && message.workerGeneration !== generation) return;
+    if (message.event) {
+      if (win && !win.isDestroyed()) win.webContents.send('wenxu:event', message.event);
+      return;
+    }
+    if (!message.requestId) return;
+    if (message.projectSessionId) projectSessionId = message.projectSessionId;
+    if (message.error) {
+      const error = errorSchema.parse(message.error);
+      pending.reject(message.requestId, new ApplicationError(error.code, error.message, error.actions, error.details));
+    } else pending.resolve(message.requestId, message.result);
   });
-  worker.on('exit', () => {
-    for (const job of pending.values())
-      job.reject(new Error('执行内核已退出，文稿草稿保留；请重新启动客户端恢复任务'));
-    pending.clear();
-    if (!quitting && !win.isDestroyed())
-      win.webContents.send('wenxu:event', {
-        type: 'error',
-        text: '执行内核异常退出，请重启客户端。已提交文件可由日志恢复。'
-      });
+  child.on('exit', () => {
+    clearTimeout(startup);
+    if (child !== worker) return;
+    const error = new ApplicationError('WORKER_UNAVAILABLE', '执行内核已退出，已发送操作的结果可能未知，请查询原操作', ['query_operation', 'refresh']);
+    pending.clear(error);
+    rejectReady(error);
+    if (quitting) resolveShutdown?.();
+    const delay = supervisor.exited(quitting);
+    if (!quitting && win && !win.isDestroyed()) {
+      win.webContents.send('wenxu:event', { type: 'error', text: delay === null ? '执行内核连续启动失败，已停止自动重启。请安全退出后检查诊断。' : '执行内核正在恢复连接；不会自动重新调用模型。', workerGeneration: generation });
+      if (delay !== null) setTimeout(() => { if (!quitting) startWorker(); }, delay);
+    }
   });
-  sync();
+  try { sync('initialize'); } catch (error) { rejectReady(error as Error); child.kill(); }
 }
-function rpc(command: Command, args: Record<string, unknown>) {
-  return new Promise<any>((resolve, reject) => {
-    const id = randomUUID();
-    pending.set(id, { resolve, reject });
-    worker.postMessage({ id, command, args });
-  });
+async function rpc<C extends Command>(command: C, args: Record<string, unknown>): Promise<CommandOutput<C>> {
+  await readyPromise;
+  if (supervisor.state !== 'ready') throw new ApplicationError('WORKER_UNAVAILABLE', '执行内核尚未就绪');
+  const context = requestContext.getStore();
+  const requestId = randomUUID();
+  if (context?.signal?.aborted) throw new ApplicationError('CANCEL_REQUESTED', '已取消等待响应');
+  const result = pending.create(requestId, Math.min(context?.timeoutMs ?? commandContracts[command].timeout, commandContracts[command].timeout), context?.signal);
+  try {
+    worker.postMessage({ protocolVersion, requestId, operationId: context?.operationId,
+      workerGeneration: supervisor.generation, projectSessionId: context?.projectSessionId ?? projectSessionId,
+      command, params: parseInput(command, args) });
+  } catch (error) { pending.reject(requestId, error as Error); }
+  return parseOutput(command, await result);
 }
+function stopWorker() {
+  managementController.abort();
+  if (shutdownPromise) return shutdownPromise;
+  shutdownPromise = new Promise<void>((resolve) => {
+    let settled = false;
+    const finish = () => { if (settled) return; settled = true; clearTimeout(deadline); shutdownComplete = true; resolve(); };
+    const deadline = setTimeout(() => { if (worker?.pid) worker.kill(); finish(); }, 15_000);
+    resolveShutdown = finish;
+    if (!worker?.pid || ['exited', 'stopped', 'degraded'].includes(supervisor.state)) { finish(); return; }
+    supervisor.drain();
+    pending.clear(new ApplicationError('CANCEL_REQUESTED', '客户端正在安全关闭，操作结果保留在原项目中', ['query_operation']));
+    worker.postMessage({ type: 'shutdown' });
+  });
+  return shutdownPromise;
+}
+
 function selected(file: unknown) {
   const target = z.string().parse(file);
   if (!granted.has(path.resolve(target))) throw new Error('请通过系统选择框选择此目录或文件');
@@ -279,7 +406,11 @@ async function handle(command: Command, a: Record<string, unknown>) {
     if (!a.connection && !old) throw new Error('请先填写供应商连接');
     const draft = a.connection ? { ...z.record(z.string(), z.unknown()).parse(a.connection), id: a.id } : old;
     const connection = resolveCatalogConnection(draft, a.apiKey, old);
-    const catalog = await fetchModelCatalog(connection);
+    if (!managementJournal) throw new Error('管理请求账本不可用');
+    const catalog = await callExternal(managementJournal, { id: requestContext.getStore()?.operationId ?? randomUUID(), usage: { input: 0, output: 0, cost: 0, currency: 'USD' } }, 'management-model-catalog', {
+      provider: connection.protocol, model: 'catalog', version: 1, identity: { baseUrl: connection.baseUrl, protocol: connection.protocol }, pricing: null, currency: 'USD'
+    }, { operation: 'list-models' }, null, managementController.signal, () => fetchModelCatalog(connection, managementController.signal),
+    () => ({ input: null, output: null, cost: null, currency: 'USD' }));
     for (const model of catalog.models)
       if (model.limits) modelLimitsCache.set(limitsCacheKey(connection, model.id), model.limits);
     return catalog;
@@ -323,16 +454,21 @@ async function handle(command: Command, a: Record<string, unknown>) {
     return true;
   }
   const result = await rpc(command, a);
+  if (['app.snapshot', 'project.open', 'project.close', 'project.create', 'project.trash', 'project.restoreTrash'].includes(command) || command === 'project.importLegacy' && a.preview !== true)
+    openedProjectRoot = parseOutput('app.snapshot', result).project?.root;
   if (command === 'app.snapshot')
-    return { ...result, savedProfiles: settings.profiles.map(({ encryptedKey, ...p }) => p) };
+    return { ...parseOutput('app.snapshot', result), savedProfiles: settings.profiles.map(({ encryptedKey, ...p }) => p) };
   if (
     command === 'project.open' ||
     command === 'project.create' ||
     command === 'project.trash' ||
     command === 'project.restoreTrash' ||
+    (command === 'run.accept' && (typeof a.title === 'string' || (result as { titleChanged?: boolean }).titleChanged === true)) ||
+    (command === 'titles.select' && !(result as { parentRunId?: string }).parentRunId) ||
     (command === 'project.importLegacy' && a.preview !== true)
   ) {
-    const next = { ...settings, recent: result.recent };
+    const recentSnapshot = command === 'run.accept' || command === 'titles.select' ? await rpc('app.snapshot', {}) : result;
+    const next = { ...settings, recent: parseOutput('app.snapshot', recentSnapshot).recent };
     try {
       atomicWrite(stateFile, JSON.stringify(next, null, 2));
       settings = next;
@@ -352,16 +488,26 @@ else {
     }
   });
   app.whenReady().then(() => {
+    const journalRoot = path.join(app.getPath('userData'), 'management-journal');
+    fs.mkdirSync(journalRoot, { recursive: true });
+    managementJournal = new FileStore(journalRoot);
+    recoverAttempts(managementJournal);
     stateFile = path.join(app.getPath('userData'), 'settings.json');
     assistantSettings = new AssistantSettings(app.getPath('userData'));
     appearanceFile = path.join(app.getPath('userData'), 'appearance.json');
+    let persistedAppearance: StoredAppearance | undefined;
     try {
-      appearance = appearanceSchema.parse(JSON.parse(fs.readFileSync(appearanceFile, 'utf8')));
+      persistedAppearance = appearanceSchema.parse(JSON.parse(fs.readFileSync(appearanceFile, 'utf8')));
+      // Old versions stored their old palette; keep the choice but start with the new colors.
+      appearance = windowThemes[persistedAppearance.mode];
     } catch {
       // Missing or damaged appearance preferences must not prevent opening a book.
     }
     nativeTheme.themeSource = appearance.mode;
-    if (fs.existsSync(stateFile)) settings = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+    const settingsSchema = z.object({ profiles: z.array(z.intersection(profileSchema, z.object({ encryptedKey: z.string() }))), recent: z.array(z.object({ title: z.string(), root: z.string() })) });
+    const loadedSettings = readSettings(stateFile, settingsSchema, settings);
+    settings = loadedSettings.value;
+    if (loadedSettings.recovered) settingsNotice = '模型配置损坏，已保留原配置副本并使用空配置';
     const upgradedProfiles = migrateModelLimits(settings.profiles);
     if (JSON.stringify(upgradedProfiles) !== JSON.stringify(settings.profiles)) {
       const backup = stateFile + '.before-official-limits';
@@ -370,8 +516,6 @@ else {
       atomicWrite(stateFile, JSON.stringify(next, null, 2));
       settings = next;
     }
-    if (!app.isPackaged && process.env.WENXU_DEBUG_PORT)
-      app.commandLine.appendSwitch('remote-debugging-port', process.env.WENXU_DEBUG_PORT);
     win = new BrowserWindow({
       width: 1500,
       height: 980,
@@ -382,7 +526,10 @@ else {
       titleBarStyle: 'hidden',
       titleBarOverlay: { color: appearance.background, symbolColor: appearance.foreground, height: 38 },
       autoHideMenuBar: false,
-      title: '文序',
+      title: brand.windowTitle,
+      icon: app.isPackaged
+        ? path.join(__dirname, '../dist/brand/app-icon.png')
+        : path.join(app.getAppPath(), 'public/brand/app-icon.png'),
       webPreferences: {
         preload: path.join(__dirname, 'preload.cjs'),
         sandbox: true,
@@ -391,6 +538,24 @@ else {
         webSecurity: true
       }
     });
+    windowAppearance = new WindowAppearanceTransition(
+      appearance,
+      (colors) => {
+        if (win.isDestroyed()) return;
+        win.setBackgroundColor(colors.background);
+        win.setTitleBarOverlay({ color: colors.background, symbolColor: colors.foreground, height: 38 });
+      },
+      (colors) => atomicWrite(appearanceFile, JSON.stringify(colors)),
+      undefined,
+      persistedAppearance,
+      () => {
+        if (!win.isDestroyed())
+          win.webContents.send('wenxu:event', {
+            type: 'error',
+            text: '主题偏好保存失败；当前界面可以继续使用，退出时会重试保存。'
+          });
+      }
+    );
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     win.webContents.on('will-navigate', (e, url) => {
       if (url !== win.webContents.getURL()) e.preventDefault();
@@ -398,7 +563,7 @@ else {
     win.webContents.session.setPermissionRequestHandler((_, __, cb) => cb(false));
     Menu.setApplicationMenu(
       Menu.buildFromTemplate([
-        { id: 'app', label: '文序', submenu: [{ role: 'quit', label: '退出' }] },
+        { id: 'app', label: brand.name, submenu: [{ label: '退出', click: requestClose }] },
         {
           id: 'edit',
           label: '编辑',
@@ -427,17 +592,38 @@ else {
     // Keep native menu roles and accelerators, but render its top-level buttons in our theme.
     win.setMenuBarVisibility(false);
     win.once('ready-to-show', () => win.show());
+    win.on('unresponsive', () => {
+      rendererResponsive = false;
+    });
+    win.on('responsive', () => {
+      rendererResponsive = true;
+    });
+    win.webContents.on('render-process-gone', () => {
+      rendererReady = false;
+    });
+    win.webContents.on('did-start-loading', () => {
+      rendererReady = false;
+    });
+    ipcMain.handle('wenxu:close-ready', (event) => {
+      if (event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame)
+        throw new Error('未授权的调用');
+      rendererReady = true;
+      return closeConfirmation.pending;
+    });
+    ipcMain.handle('wenxu:close-response', (event, input: unknown) => {
+      if (event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame)
+        throw new Error('未授权的调用');
+      const value = z
+        .object({ requestId: z.string().uuid(), action: z.enum(['cancel', 'quit']) })
+        .parse(input);
+      return answerClose(value.requestId, value.action);
+    });
     ipcMain.handle('wenxu:appearance', (event, input: unknown) => {
       if (event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame)
         throw new Error('未授权的调用');
       const next = appearanceSchema.parse(input);
       nativeTheme.themeSource = next.mode;
-      win.setBackgroundColor(next.background);
-      win.setTitleBarOverlay({ color: next.background, symbolColor: next.foreground, height: 38 });
-      if (JSON.stringify(appearance) !== JSON.stringify(next) || !fs.existsSync(appearanceFile)) {
-        appearance = next;
-        atomicWrite(appearanceFile, JSON.stringify(appearance));
-      }
+      windowAppearance!.set(next);
     });
     ipcMain.handle('wenxu:menu', (event, input: unknown, position: unknown) => {
       if (event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame)
@@ -460,42 +646,70 @@ else {
       });
     });
     startWorker();
-    ipcMain.handle('wenxu:invoke', async (event, command: Command, args: Record<string, unknown> = {}) => {
+    win.webContents.once('did-finish-load', () => {
+      const notice = settingsNotice || assistantSettings.recoveryNotice;
+      if (notice) win.webContents.send('wenxu:event', { type: 'error', text: notice });
+    });
+    ipcMain.on('wenxu:cancel-wait', (event, waitId: unknown) => {
+      if (event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame || typeof waitId !== 'string') return;
+      waiting.get(waitId)?.abort();
+    });
+    ipcMain.handle('wenxu:invoke', async (event, command: unknown, args: unknown = {}, rawContext: unknown = {}) => {
       if (
         event.sender !== win.webContents ||
         event.senderFrame !== win.webContents.mainFrame ||
-        !commands.includes(command)
+        !isCommand(command)
       )
         throw new Error('未授权的调用');
-      return handle(command, z.record(z.string(), z.unknown()).parse(args));
+      let waitId: string | undefined;
+      try {
+        await reconnect.catch(() => {});
+        const context = rendererContextSchema.parse(rawContext);
+        waitId = context.waitId;
+        const controller = new AbortController();
+        if (waitId) {
+          if (waiting.has(waitId)) throw new ApplicationError('VALIDATION_ERROR', '重复等待编号');
+          waiting.set(waitId, controller);
+        }
+        if (commandContracts[command].scope === 'project' && context.projectSessionId && context.projectSessionId !== projectSessionId)
+          throw new ApplicationError('PROJECT_SESSION_STALE', '作品会话已改变，请刷新后操作', ['refresh']);
+        if (context.workerGeneration !== undefined && context.workerGeneration !== supervisor.generation && commandContracts[command].scope === 'project')
+          throw new ApplicationError('PROJECT_SESSION_STALE', '执行内核已恢复，请刷新后操作', ['refresh']);
+        const input = parseInput(command, args);
+        const result = parseOutput(command, await requestContext.run({ ...context, signal: controller.signal }, () => handle(command, input)));
+        return { ok: true, result, projectSessionId, workerGeneration: supervisor.generation };
+      } catch (error) {
+        return { ok: false, error: errorPayload(error), projectSessionId, workerGeneration: supervisor.generation };
+      } finally { if (waitId) waiting.delete(waitId); }
     });
     if (!app.isPackaged && process.env.VITE_DEV_SERVER_URL) void win.loadURL(process.env.VITE_DEV_SERVER_URL);
     else void win.loadFile(path.join(__dirname, '../dist/index.html'));
     win.on('close', (e) => {
       if (!quitting) {
         e.preventDefault();
-        void dialog
-          .showMessageBox(win, {
-            type: 'question',
-            buttons: ['继续写作', '退出'],
-            defaultId: 0,
-            cancelId: 0,
-            message: '退出文序？',
-            detail: '未提交的编辑草稿会保留；运行中的请求将中断，费用状态可能未知。'
-          })
-          .then((r) => {
-            if (r.response === 1) {
-              quitting = true;
-              worker.postMessage({ type: 'shutdown' });
-              setTimeout(() => app.quit(), 500);
-            }
-          });
+        requestClose();
       }
     });
   });
   app.on('window-all-closed', () => app.quit());
-  app.on('before-quit', () => {
+  app.on('will-quit', () => { managementJournal?.close(); managementJournal = undefined; });
+  app.on('before-quit', (event) => {
+    if (!quitting && win && !win.isDestroyed()) {
+      event.preventDefault();
+      requestClose();
+      return;
+    }
     quitting = true;
-    worker?.postMessage({ type: 'shutdown' });
+    if (!shutdownComplete) {
+      event.preventDefault();
+      void stopWorker().finally(() => app.quit());
+      return;
+    }
+    try {
+      windowAppearance?.flush();
+    } catch {
+      // A read-only/full disk must not strand the writer in an unclosable window.
+      console.warn('主题偏好保存失败，下次启动可能恢复为上次已保存的主题。');
+    }
   });
 }

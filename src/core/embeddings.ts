@@ -5,10 +5,14 @@ import { hash } from './domain';
 import { boundedBody, endpoint, RequestError } from './provider';
 import { retrieveMemory, scopeSnapshot, visibleFact, sourceValid, conflictingFacts } from './memory-studio';
 import { primaryPath } from './memory';
+import { pendingSource } from './memory-source';
 import type { Usage } from '../shared/types';
+import { callExternal, estimatedUnits, type AttemptOwner } from './runtime/model-gateway';
 export interface RetrievalBudget {
   remaining: number | null;
   currency: string;
+  owner?: AttemptOwner;
+  signal?: AbortSignal;
 }
 
 export interface EmbeddingAdapter {
@@ -46,7 +50,7 @@ export class CompatibleEmbeddings implements EmbeddingAdapter {
     } catch {
       throw new RequestError('语义检索请求结果未知，未自动重试', true);
     }
-    if (!response.ok) throw new RequestError(`语义检索服务返回 ${response.status}`, response.status >= 500);
+    if (!response.ok) throw new RequestError(`语义检索服务返回 ${response.status}`, true);
     try {
       const raw = JSON.parse((await boundedBody(response.body, 16_000_000)).toString('utf8'));
       const parsed = z
@@ -78,23 +82,26 @@ export class CompatibleEmbeddings implements EmbeddingAdapter {
 export interface VectorAdapter {
   rank(
     query: number[],
-    rows: { id: string; vector: number[] }[],
+    rows: Iterable<{ id: string; vector: number[] }>,
     limit: number
   ): { id: string; score: number }[];
 }
 export class LocalCosine implements VectorAdapter {
-  rank(query: number[], rows: { id: string; vector: number[] }[], limit: number) {
+  rank(query: number[], rows: Iterable<{ id: string; vector: number[] }>, limit: number) {
     const norm = Math.sqrt(query.reduce((s, v) => s + v * v, 0));
-    return rows
-      .filter((r) => r.vector.length === query.length)
-      .map((r) => ({
-        id: r.id,
-        score:
-          r.vector.reduce((s, v, i) => s + v * query[i], 0) /
-          (norm * Math.sqrt(r.vector.reduce((s, v) => s + v * v, 0)) || 1)
-      }))
-      .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id))
-      .slice(0, limit);
+    const ranked: { id: string; score: number }[] = [];
+    if (!Number.isFinite(norm) || limit <= 0) return ranked;
+    const compare = (a: (typeof ranked)[number], b: (typeof ranked)[number]) => b.score - a.score || a.id.localeCompare(b.id);
+    for (const row of rows) {
+      if (row.vector.length !== query.length || row.vector.some(v => !Number.isFinite(v))) continue;
+      const score = row.vector.reduce((s, v, i) => s + v * query[i], 0) / (norm * Math.sqrt(row.vector.reduce((s, v) => s + v * v, 0)) || 1);
+      if (!Number.isFinite(score)) continue;
+      const item = { id: row.id, score };
+      if (ranked.length >= limit && compare(item, ranked[ranked.length - 1]) >= 0) continue;
+      ranked.push(item); ranked.sort(compare);
+      if (ranked.length > limit) ranked.pop();
+    }
+    return ranked;
   }
 }
 export function proseChunks(text: string, maxPoints = 600) {
@@ -139,11 +146,24 @@ export class SemanticIndex {
   stop() {
     this.controller?.abort();
   }
+  private embed(input: string[], signal: AbortSignal, owner: AttemptOwner, purpose: string) {
+    const { settings, generation, adapter } = this.configuration();
+    return callExternal(this.store, owner, purpose, {
+      provider: 'embeddings', model: settings.model, version: 1, identity: generation,
+      pricing: { price: settings.price, currency: settings.currency }, currency: settings.currency
+    }, input, settings.price === null ? null : estimatedUnits(Buffer.byteLength(JSON.stringify(input)), 0, settings.price, 0),
+    signal, () => adapter.embed(input, signal), (result) => ({
+      input: result.tokens, output: 0,
+      cost: result.tokens === null || settings.price === null ? null : result.tokens * settings.price / 1e6,
+      currency: settings.currency
+    }));
+  }
   async rebuild() {
     if (this.controller) throw new Error('语义索引正在更新');
     const { settings, generation, adapter } = this.configuration();
     this.store.db.set('vectorQueryBlocked', false);
     if (!settings.enabled) throw new Error('请先启用语义检索');
+    const owner: AttemptOwner = { id: crypto.randomUUID(), usage: { input: 0, output: 0, cost: 0, currency: settings.currency } };
     const snapshot = this.store.db.head()!,
       controller = new AbortController();
     this.controller = controller;
@@ -164,12 +184,12 @@ export class SemanticIndex {
       for (const [file, version] of Object.entries(snapshot.documents)) {
         if (controller.signal.aborted) throw new Error('索引更新已停止');
         const chapter = Number(file.match(/第(\d+)章/)?.[1] ?? 0);
-        if (!(file.startsWith('07_') && snapshot.project.chapters[chapter])) continue;
+        if (!(file.startsWith('07_') && snapshot.project.chapters[chapter]) || pendingSource(snapshot.project, file)) continue;
         const maxPoints = Math.max(16, Math.min(600, Math.floor((settings.inputBudget - 32) / 6)));
         for (const chunk of proseChunks(this.store.object(version).toString('utf8'), maxPoints)) {
           const key = hash(`${generation}:${file}:${version}:${chunk.start}:${chunk.end}`);
           if (this.store.db.sql.prepare('SELECT 1 FROM vector_chunks WHERE id=?').get(key)) continue;
-          const result = await adapter.embed([chunk.text], controller.signal);
+          const result = await this.embed([chunk.text], controller.signal, owner, 'index-rebuild');
           if (controller.signal.aborted) throw new Error('索引更新已停止');
           const vector = result.vectors[0];
           if (state.observedDimensions && vector.length !== state.observedDimensions)
@@ -198,15 +218,18 @@ export class SemanticIndex {
       }
       if (settings.dataScope === 'prose-and-memory')
         for (const fact of snapshot.facts.filter(
-          (f) => f.reviewStatus === 'accepted' && f.state !== 'disputed'
+          (f) => f.reviewStatus === 'accepted' && f.state !== 'disputed' && f.evidence.every(e => sourceValid(this.store, e, snapshot.documents, Number.MAX_SAFE_INTEGER, snapshot.project))
         )) {
           if (controller.signal.aborted) throw new Error('索引更新已停止');
           const version = hash(JSON.stringify(fact)),
             key = 'fact:' + hash(`${generation}:${fact.id}:${version}`);
           if (this.store.db.sql.prepare('SELECT 1 FROM vector_chunks WHERE id=?').get(key)) continue;
           const text = `${fact.subject} ${fact.predicate} ${fact.value}\n${fact.evidence.map((e) => e.quote).join('\n')}`;
-          const result = await adapter.embed([text], controller.signal),
+          const result = await this.embed([text], controller.signal, owner, 'index-rebuild'),
             vector = result.vectors[0];
+          if (controller.signal.aborted || this.configuration().generation !== generation) throw new Error('索引更新已停止或配置已改变');
+          const current = this.store.db.head()?.facts.find((entry) => entry.id === fact.id);
+          if (!current || hash(JSON.stringify(current)) !== version) continue;
           if (state.observedDimensions && vector.length !== state.observedDimensions)
             throw new Error('服务模型维度改变，请新建索引');
           state.observedDimensions = vector.length;
@@ -278,7 +301,10 @@ export class SemanticIndex {
       return { ...exact, semantic: 'budget-limited' };
     let usage: Usage | undefined;
     try {
-      const result = await adapter.embed([query], new AbortController().signal);
+      const signal = budget?.signal ?? new AbortController().signal;
+      const owner = budget?.owner ?? { id: crypto.randomUUID(), usage: { input: 0, output: 0, cost: 0, currency: settings.currency } };
+      const sourceSnapshot = this.store.db.get<string>('headSnapshot');
+      const result = await this.embed([query], signal, owner, 'semantic-retrieval');
       usage = {
         input: result.tokens,
         output: 0,
@@ -286,6 +312,8 @@ export class SemanticIndex {
           result.tokens !== null && settings.price !== null ? (result.tokens * settings.price) / 1e6 : null,
         currency: settings.currency
       };
+      if (signal.aborted || this.configuration().generation !== generation || this.store.db.get<string>('headSnapshot') !== sourceSnapshot)
+        return { ...exact, semantic: 'stale', usage };
       if (result.vectors[0].length !== index.observedDimensions) throw new Error('查询向量维度不一致');
       const snapshot = scopeSnapshot(this.store, scope);
       const conflicts = conflictingFacts(snapshot.facts.filter((f) => visibleFact(f, scope)));
@@ -295,16 +323,11 @@ export class SemanticIndex {
             (f) =>
               visibleFact(f, scope) &&
               !conflicts.has(f.id) &&
-              f.evidence.every((e) => sourceValid(this.store, e, snapshot.documents, scope.chapter))
+              f.evidence.every((e) => sourceValid(this.store, e, snapshot.documents, scope.chapter, snapshot.project))
           )
           .map((f) => ['fact:' + hash(`${generation}:${f.id}:${hash(JSON.stringify(f))}`), f])
       );
-      const rows = (
-        this.store.db.sql
-          .prepare(
-            'SELECT id,path,hash,chapter,start,end,text,vector FROM vector_chunks WHERE generation=? AND chapter<=?'
-          )
-          .all(generation, scope.chapter) as {
+      type VectorRow = {
           id: string;
           path: string;
           hash: string;
@@ -313,24 +336,31 @@ export class SemanticIndex {
           end: number;
           text: string;
           vector: string;
-        }[]
-      ).filter((r) =>
-        r.id.startsWith('fact:')
-          ? factMap.has(r.id)
-          : snapshot.documents[r.path] === r.hash &&
-            r.path.startsWith('07_') &&
-            !!snapshot.project.chapters[r.chapter]
-      );
-      const ranks = new LocalCosine().rank(
-        result.vectors[0],
-        rows.map((r) => ({ id: r.id, vector: JSON.parse(r.vector) })),
-        limit
-      );
+        };
+      let ranks: { id: string; score: number }[] = [];
+      let batch: { id: string; vector: number[] }[] = [], visited = 0;
+      const rankBatch = () => {
+        ranks = [...ranks, ...new LocalCosine().rank(result.vectors[0], batch, limit)]
+          .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, limit);
+        batch = [];
+      };
+      for (const value of this.store.db.sql.prepare('SELECT id,path,hash,chapter,vector FROM vector_chunks WHERE generation=? AND chapter<=?').iterate(generation, scope.chapter)) {
+        const row = value as VectorRow;
+        const eligible = row.id.startsWith('fact:') ? factMap.has(row.id) : snapshot.documents[row.path] === row.hash && !pendingSource(snapshot.project, row.path) && row.path.startsWith('07_') && !!snapshot.project.chapters[row.chapter];
+        if (eligible) batch.push({ id: row.id, vector: JSON.parse(row.vector) });
+        if (++visited % 256 === 0) {
+          rankBatch();
+          await new Promise<void>(resolve => setImmediate(resolve));
+          if (signal.aborted) return { ...exact, semantic: 'stale', usage };
+        }
+      }
+      rankBatch();
+      if (signal.aborted || this.configuration().generation !== generation || this.store.db.get<string>('headSnapshot') !== sourceSnapshot) return { ...exact, semantic: 'stale', usage };
       const scores = new Map<string, { score: number; doc: (typeof exact.documents)[number] }>();
       exact.documents.forEach((doc, i) => scores.set(doc.path, { score: 1 / (60 + i + 1), doc }));
       const facts = new Map(exact.facts.map((f, i) => [f.fact.id, { ...f, score: 1 / (60 + i + 1) }]));
       ranks.forEach((rank, i) => {
-        const row = rows.find((r) => r.id === rank.id)!;
+        const row = this.store.db.sql.prepare('SELECT id,path,hash,chapter,start,end,text FROM vector_chunks WHERE id=?').get(rank.id) as VectorRow;
         const fact = factMap.get(row.id);
         if (fact) {
           const old = facts.get(fact.id);
@@ -342,6 +372,7 @@ export class SemanticIndex {
           );
           return;
         }
+        if (Array.from(this.store.object(row.hash).toString('utf8')).slice(row.start, row.end).join('') !== row.text) throw new Error('语义索引与正式原文不一致');
         const old = scores.get(row.path);
         scores.set(row.path, {
           score: (old?.score ?? 0) + 1 / (60 + i + 1),

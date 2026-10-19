@@ -43,8 +43,9 @@ metadata:
 
 遵循shared-contract统一信封。目标产物：
 
-- 07_正文章节/第{chapter}章.md（候选目标）
-- 候选prose blob及hash
+- 07_正文章节/第{chapter}章.md
+
+正文子调用仅返回正文，客户端保存草稿并计算内容哈希，再安排独立审阅。不生成内部存储文件或手填哈希。
 
 路径是changeset目标，实际写入候选区。{chapter}/{start}/{end}由宿主用最少三位章号格式生成，四位及以上不截断。
 

@@ -1,0 +1,69 @@
+{
+  "at": "2026-10-10T11:42:06.224Z",
+  "packagedBefore": {
+    "before": {
+      "projectId": "49c7c28c-7b34-4bd4-b937-e77e1324d987",
+      "generation": 1,
+      "session": "cb817261-1ed1-4909-8a63-5e86bd5f4995",
+      "invalid": {
+        "ok": false,
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "参数或返回结果不符合命令契约",
+          "traceId": "5ae61d83-42de-4224-9d20-1cbfc20f62eb",
+          "actions": [
+            "refresh"
+          ]
+        }
+      },
+      "unsupported": {
+        "ok": false,
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "不支持此操作",
+          "traceId": "023cb010-c588-4d8a-93c0-64830faf38b8",
+          "actions": []
+        }
+      },
+      "sameChat": true
+    },
+    "editor": "打包版未保存编辑𠮷",
+    "state": "- banner:\n  - text: 星月书台 · 创作工作台\n  - navigation \"应用菜单\":\n    - button \"星月书台\"\n    - button \"编辑\"\n    - button \"视图\"\n- complementary \"作品与功能导航\":\n  - img \"星月书台\"\n  - button \"收起侧栏\" [expanded]\n  - button \"新建作品\"\n  - button \"打开作品目录\"\n  - text: 创作空间\n  - navigation:\n    - button \"写作工作台\"\n    - button \"记忆与连续性\"\n    - button \"封面设计\"\n  - text: 当前作品\n  - button \"作品设置\"\n  - text: 隔离验收作品 0 章完整完成 · 本地作品\n  - button \"删除作品 隔离验收作品\"\n  - status\n  - textbox \"筛选作品文件\":\n    - /placeholder: 查找章节与资料\n  - button \"原始设定 外部修改待确认\": 原始设定\n  - button \"设定拆解\"\n  - button \"文风样本与规则\"\n  - button \"项目配置\"\n  - button \"世界规则与卖点\"\n  - button \"伏笔台账\"\n  - button \"规则术语表\"\n  - button \"时间线\"\n  - button \"物品与伤势\"\n  - button \"知情边界\"\n  - button \"角色卡\"\n  - button \"批次人物摘要\"\n  - button \"情绪与行为记忆\"\n  - button \"人物关系\"\n  - button \"第001-030章节奏\"\n  - button \"分卷大纲\"\n  - button \"章节总纲\"\n  - button \"第001-030章细纲\"\n  - button \"第001章任务清单\"\n  - button \"第001章细纲\"\n  - button \"第001章\"\n  - button \"第001章记忆更新\"\n  - button \"当前进度\"\n  - button \"改动影响记录\"\n  - button \"阶段索引\"\n  - button \"智能体与联网设置\"\n  - button \"作品回收站\": 回收站\n  - button \"导入旧 Skill 档案\"\n  - button \"导入、导出与备份\"\n  - button \"模型与连接设置\"\n  - text: 本地创作空间\n- main:\n  - text: 创作空间 隔离验收作品\n  - button \"切换到日间模式\": 夜间\n  - text: 文稿保存在本机\n  - button \"打开作品文件夹\"\n  - button \"切换编辑面板\" [pressed]: 文稿面板\n  - button \"创作工具\"\n  - button \"创作讨论\"\n  - button \"创作任务\"\n  - button \"标签与策划\"\n  - complementary:\n    - text: 主题聊天\n    - button \"新建主题聊天\"\n    - button \"创作讨论\"\n    - button \"分页验收主题\"\n    - button \"查看已归档聊天\"\n    - button \"历史任务与阶段执行\"\n    - button \"自由草稿\"\n    - button \"智能体角色与联网\"\n  - heading \"创作讨论\" [level=2]\n  - text: 第 1 章\n  - button \"重命名聊天\": 重命名\n  - button \"归档聊天\"\n  - heading \"从你的故事聊起\" [level=2]\n  - textbox \"聊天消息\":\n    - /placeholder: 聊聊你的故事，或提出创作问题…\n  - button \"创作工具与引用其他聊天\"\n  - button \"聊天模型\": 选择模型\n  - button \"按需联网\" [pressed]\n  - button \"发送消息\" [disabled]\n  - text: Ctrl + Enter 发送\n  - button \"叙事节奏 展开 ⌃\"\n  - complementary:\n    - navigation \"作品面板\":\n      - button \"文稿\"\n      - button \"人物\"\n      - button \"详情\"\n      - button \"专注\"\n    - text: 原始设定.md\n    - button \"关闭编辑面板\"\n    - button \"编辑\"\n    - button \"预览\"\n    - button \"基础差异\"\n    - button \"磁盘差异\"\n    - button \"历史\"\n    - text: 文稿 发现外部改稿\n    - button \"建立待审候选\"\n    - textbox\n    - text: 9 字符 · UTF-8\n    - button \"保存候选\""
+  },
+  "packagedRecovery": {
+    "generation": 2,
+    "session": "edbcd272-ed21-4d23-8b08-79c148547dc9",
+    "projectId": "49c7c28c-7b34-4bd4-b937-e77e1324d987",
+    "attempts": [],
+    "editor": "打包版未保存编辑𠮷"
+  },
+  "packagedOffline": {
+    "offline": true,
+    "memory": "on \"记忆与连续性\"\n    - button \"封面设计\"\n  - text: 当前作品\n  - button \"作品设置\"\n  - text: 隔离验收作品 0 章完整完成 · 本地作品\n  - button \"删除作品 隔离验收作品\"\n  - status\n  - textbox \"筛选作品文件\":\n    - /placeholder: 查找章节与资料\n  - button \"原始设定 外部修改待确认\": 原始设定\n  - button \"设定拆解\"\n  - button \"文风样本与规则\"\n  - button \"项目配置\"\n  - button \"世界规则与卖点\"\n  - button \"伏笔台账\"\n  - button \"规则术语表\"\n  - button \"时间线\"\n  - button \"物品与伤势\"\n  - button \"知情边界\"\n  - button \"角色卡\"\n  - button \"批次人物摘要\"\n  - button \"情绪与行为记忆\"\n  - button \"人物关系\"\n  - button \"第001-030章节奏\"\n  - button \"分卷大纲\"\n  - button \"章节总纲\"\n  - button \"第001-030章细纲\"\n  - button \"第001章任务清单\"\n  - button \"第001章细纲\"\n  - button \"第001章\"\n  - button \"第001章记忆更新\"\n  - button \"当前进度\"\n  - button \"改动影响记录\"\n  - button \"阶段索引\"\n  - button \"智能体与联网设置\"\n  - button \"作品回收站\": 回收站\n  - button \"导入旧 Skill 档案\"\n  - button \"导入、导出与备份\"\n  - button \"模型与连接设置\"\n  - text: 本地创作空间\n- main:\n  - text: 创作空间 隔离验收作品\n  - button \"切换到夜间模式\": 日间\n  - text: 文稿保存在本机\n  - button \"打开作品文件夹\"\n  - button \"切换编辑面板\" [disabled] [pressed]: 文稿面板\n  - alert:\n    - text: 执行内核正在恢复连接；不会自动重新调用模型。\n    - button \"关闭错误\"\n  - text: MEMORY\n  - heading \"故事记忆\" [level=1]\n  - text: 0 条记录\n  - textbox \"检索故事记忆\":\n    - /placeholder: 搜索人物、伏笔、物品…\n  - button \"检索\"\n  - text: 截至\n  - spinbutton \"记忆章节\": \"1\"\n  - text: 章\n  - combobox \"回看方式\":\n    - option \"当前版本\" [selected]\n    - option \"历史快照\"\n  - combobox \"记忆视角\":\n    - option \"作者视角\" [selected]\n    - option \"读者视角\"\n    - option \"人物视角\"\n  - navigation \"记忆分类\":\n    - button \"全部\" [pressed]\n    - button \"人物\"\n    - button \"伤势\"\n    - button \"物品\"\n    - button \"伏笔\"\n    - button \"知情\"\n    - button \"待兑现\"\n  - text: ◇\n  - paragraph: 暂无可用记忆\n  - group: 检索详情\n  - group: 提出修正",
+    "cover": "体与联网设置\"\n  - button \"作品回收站\": 回收站\n  - button \"导入旧 Skill 档案\"\n  - button \"导入、导出与备份\"\n  - button \"模型与连接设置\"\n  - text: 本地创作空间\n- main:\n  - text: 创作空间 隔离验收作品\n  - button \"切换到夜间模式\": 日间\n  - text: 文稿保存在本机\n  - button \"打开作品文件夹\"\n  - button \"切换编辑面板\" [disabled] [pressed]: 文稿面板\n  - alert:\n    - text: 执行内核正在恢复连接；不会自动重新调用模型。\n    - button \"关闭错误\"\n  - text: COVER STUDIO\n  - heading \"先有画面，再写书名。\" [level=1]\n  - paragraph: AI 生成背景，中文文字在本机叠加。每次保存使用独立文件名。\n  - button \"打开已保存的可编辑封面\"\n  - text: 图像模型\n  - combobox \"图像模型\":\n    - option \"选择图像模型\" [selected]\n  - text: 画面描述\n  - textbox \"画面描述\":\n    - /placeholder: 主体、场景、色调、氛围；无需让 AI 写文字\n  - button \"确认生成画面（调用 API）\" [disabled]\n  - text: 书名\n  - textbox \"书名\": 隔离验收作品\n  - text: 作者名\n  - textbox \"作者名\"\n  - text: 字体\n  - combobox \"字体\":\n    - option \"Microsoft YaHei\" [selected]\n    - option \"SimSun\"\n    - option \"SimHei\"\n    - option \"KaiTi\"\n    - option \"FangSong\"\n  - text: 文字颜色\n  - textbox \"文字颜色\": \"#ffffff\"\n  - text: 书名字号 100\n  - slider \"书名字号 100\": \"100\"\n  - text: 书名纵向位置\n  - slider \"书名纵向位置\": \"320\"\n  - text: 书名横向位置\n  - slider \"书名横向位置\": \"512\"\n  - text: 作者名横向位置\n  - slider \"作者名横向位置\": \"512\"\n  - text: 作者名纵向位置\n  - slider \"作者名纵向位置\": \"1300\"\n  - button \"保存 PNG 与可编辑配置\"\n  - text: 预览 · 1024 × 1536",
+    "state": "- banner:\n  - text: 星月书台 · 创作工作台\n  - navigation \"应用菜单\":\n    - button \"星月书台\"\n    - button \"编辑\"\n    - button \"视图\"\n- complementary \"作品与功能导航\":\n  - img \"星月书台\"\n  - button \"收起侧栏\" [expanded]\n  - button \"新建作品\"\n  - button \"打开作品目录\"\n  - text: 创作空间\n  - navigation:\n    - button \"写作工作台\"\n    - button \"记忆与连续性\"\n    - button \"封面设计\"\n  - text: 当前作品\n  - button \"作品设置\"\n  - text: 隔离验收作品 0 章完整完成 · 本地作品\n  - button \"删除作品 隔离验收作品\"\n  - status\n  - textbox \"筛选作品文件\":\n    - /placeholder: 查找章节与资料\n  - button \"原始设定 外部修改待确认\": 原始设定\n  - button \"设定拆解\"\n  - button \"文风样本与规则\"\n  - button \"项目配置\"\n  - button \"世界规则与卖点\"\n  - button \"伏笔台账\"\n  - button \"规则术语表\"\n  - button \"时间线\"\n  - button \"物品与伤势\"\n  - button \"知情边界\"\n  - button \"角色卡\"\n  - button \"批次人物摘要\"\n  - button \"情绪与行为记忆\"\n  - button \"人物关系\"\n  - button \"第001-030章节奏\"\n  - button \"分卷大纲\"\n  - button \"章节总纲\"\n  - button \"第001-030章细纲\"\n  - button \"第001章任务清单\"\n  - button \"第001章细纲\"\n  - button \"第001章\"\n  - button \"第001章记忆更新\"\n  - button \"当前进度\"\n  - button \"改动影响记录\"\n  - button \"阶段索引\"\n  - button \"智能体与联网设置\"\n  - button \"作品回收站\": 回收站\n  - button \"导入旧 Skill 档案\"\n  - button \"导入、导出与备份\"\n  - button \"模型与连接设置\"\n  - text: 本地创作空间\n- main:\n  - text: 创作空间 隔离验收作品\n  - button \"切换到夜间模式\": 日间\n  - text: 文稿保存在本机\n  - button \"打开作品文件夹\"\n  - button \"切换编辑面板\" [disabled] [pressed]: 文稿面板\n  - alert:\n    - text: 执行内核正在恢复连接；不会自动重新调用模型。\n    - button \"关闭错误\"\n  - text: COVER STUDIO\n  - heading \"先有画面，再写书名。\" [level=1]\n  - paragraph: AI 生成背景，中文文字在本机叠加。每次保存使用独立文件名。\n  - button \"打开已保存的可编辑封面\"\n  - text: 图像模型\n  - combobox \"图像模型\":\n    - option \"选择图像模型\" [selected]\n  - text: 画面描述\n  - textbox \"画面描述\":\n    - /placeholder: 主体、场景、色调、氛围；无需让 AI 写文字\n  - button \"确认生成画面（调用 API）\" [disabled]\n  - text: 书名\n  - textbox \"书名\": 隔离验收作品\n  - text: 作者名\n  - textbox \"作者名\"\n  - text: 字体\n  - combobox \"字体\":\n    - option \"Microsoft YaHei\" [selected]\n    - option \"SimSun\"\n    - option \"SimHei\"\n    - option \"KaiTi\"\n    - option \"FangSong\"\n  - text: 文字颜色\n  - textbox \"文字颜色\": \"#ffffff\"\n  - text: 书名字号 100\n  - slider \"书名字号 100\": \"100\"\n  - text: 书名纵向位置\n  - slider \"书名纵向位置\": \"320\"\n  - text: 书名横向位置\n  - slider \"书名横向位置\": \"512\"\n  - text: 作者名横向位置\n  - slider \"作者名横向位置\": \"512\"\n  - text: 作者名纵向位置\n  - slider \"作者名纵向位置\": \"1300\"\n  - button \"保存 PNG 与可编辑配置\"\n  - text: 预览 · 1024 × 1536\n- dialog \"模型与连接\":\n  - banner:\n    - heading \"模型与连接\" [level=2]\n    - paragraph: 一个供应商可启用多个模型，写作时再选择本次使用哪一个。\n    - button \"关闭\"\n  - complementary \"供应商连接\":\n    - text: 供应商 0 新供应商 尚未保存\n    - button \"添加供应商\"\n    - paragraph: 每个供应商共用连接和密钥；模型参数与能力测试分别保存。\n  - group:\n    - text: \"01\"\n    - heading \"供应商连接\" [level=3]\n    - text: 未保存 供应商名称\n    - textbox \"供应商名称\":\n      - /placeholder: 例如：本机 Sub2API\n      - text: 新供应商\n    - text: 接口协议\n    - combobox \"接口协议\":\n      - option \"OpenAI Responses\" [selected]\n      - option \"OpenAI Chat Completions\"\n      - option \"Anthropic Messages\"\n      - option \"Gemini 原生\"\n      - option \"Images · 封面\"\n    - text: API 根地址\n    - textbox \"API 根地址 填写接口根地址，不是管理后台网址，也不需要填写 /models。\":\n      - /placeholder: http://127.0.0.1:8080/v1\n    - text: 填写接口根地址，不是管理后台网址，也不需要填写 /models。 API Key\n    - textbox \"API Key 密钥由 Windows 加密保存在本机。\":\n      - /placeholder: 填写供应商密钥；无认证的本地服务可留空\n    - text: 密钥由 Windows 加密保存在本机。 02\n    - heading \"选择模型\" [level=3]\n    - text: 已选 0 个\n    - checkbox \"自动获取模型列表\" [checked]\n    - text: 自动获取模型列表\n    - button \"获取 / 刷新\" [disabled]\n    - textbox \"搜索模型\":\n      - /placeholder: 搜索模型名称或供应商\n    - group \"供应商模型列表\":\n      - paragraph: 填好地址和密钥后自动读取，也可点击“获取 / 刷新”。\n    - button \"全选当前结果\" [disabled]\n    - button \"取消当前结果\" [disabled]\n    - text: 请至少选择一个模型后保存。 手动添加模型 ID\n    - textbox \"手动添加模型 ID\":\n      - /placeholder: 未列出的模型也可以手动添加\n    - button \"添加\" [disabled]\n    - text: 刷新或搜索不会清空已选项。取消勾选只停用模型并保留其配置；原任务需重新启用该模型或改选后继续。\n    - group: 高级连接设置（所有已选模型共用）\n    - text: \"03\"\n    - heading \"单个模型参数与测试\" [level=3]\n    - text: 正在配置的模型\n    - combobox \"正在配置的模型 新选模型默认跟随官方上限，参数独立保存；价格仍按你的实际服务填写。\" [disabled]:\n      - option \"先选择模型\" [selected]\n    - text: 新选模型默认跟随官方上限，参数独立保存；价格仍按你的实际服务填写。\n    - group:\n      - checkbox \"跟随官方上限（默认）\" [disabled]\n      - text: 跟随官方上限（默认）\n      - status:\n        - strong: 手动参数 · 未核实官方上限\n        - text: 请刷新模型列表。若仍未匹配，请关闭跟随并填写供应商确认的参数；客户端不会将通用初始值标作官方规格。\n      - text: 上下文容量（tokens）\n      - spinbutton \"上下文容量（tokens）\" [disabled]: \"128000\"\n      - text: 每次输出上限\n      - spinbutton \"每次输出上限\" [disabled]: \"8192\"\n      - text: 最大输入（tokens）\n      - spinbutton \"最大输入（tokens）\" [disabled]\n      - checkbox \"流式输出\" [checked] [disabled]\n      - text: 流式输出\n      - checkbox \"工具调用\" [checked] [disabled]\n      - text: 工具调用\n      - group: 费用与超时\n    - button \"保存配置\" [disabled]\n    - button \"测试文字\" [disabled]\n    - button \"测试工具续轮\" [disabled]\n    - text: 测试会调用 API，可能产生费用。修改配置后请先保存再测试。"
+  },
+  "activeGracefulClose": {
+    "active": true,
+    "windowClosedMs": 16
+  },
+  "forcedBefore": {
+    "previous": [
+      {
+        "id": "3b3d29e6-71d2-48cc-8e6b-8be1e293c55f",
+        "runId": "7f9626da-f8df-428d-892c-6f505780ab70",
+        "status": "unknown",
+        "purpose": "discussion",
+        "usageState": "unknown",
+        "requestHash": "7710f11041cd49dd891d290e08ab9a075e29288608315bfe5cf338c6555f0fb4"
+      }
+    ],
+    "started": {
+      "ok": true,
+      "result": "ee36bcb2-45a0-4446-b1cf-8a3f78fa9923"
+    }
+  },
+  "forcedClose": {
+    "closeStartedAt": "2026-10-10T11:41:13.526Z"
+  }
+}

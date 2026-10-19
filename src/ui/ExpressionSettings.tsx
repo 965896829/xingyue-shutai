@@ -1,3 +1,4 @@
+import { invokeCommand } from '../shared/client';
 import { useEffect, useState } from 'react';
 import type { ProjectConfig } from '../shared/types';
 import type { ExpressionCatalog } from '../shared/expression';
@@ -23,8 +24,7 @@ export function ExpressionSettings({
   const [error, setError] = useState('');
   useEffect(() => {
     let active = true;
-    void window
-      .wenxu!.invoke<ExpressionCatalog>('expression.catalog')
+    void invokeCommand('expression.catalog')
       .then((data) => {
         if (active) setCatalog(data);
       })

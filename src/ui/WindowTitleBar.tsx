@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Feather } from 'lucide-react';
 import type { DesktopMenu } from '../shared/desktop';
+import { brand } from '../shared/brand';
+import { brandAssets } from './BrandLogo';
 
 const menus: { id: DesktopMenu; label: string; key: string }[] = [
-  { id: 'app', label: '文序', key: 'w' },
+  { id: 'app', label: brand.name, key: 'w' },
   { id: 'edit', label: '编辑', key: 'e' },
   { id: 'view', label: '视图', key: 'v' }
 ];
@@ -50,8 +51,8 @@ export function WindowTitleBar() {
     <header className="window-titlebar">
       <div className="window-titlebar-safe">
         <div className="window-title">
-          <Feather size={15} aria-hidden="true" />
-          <span>文序 · 创作工作台</span>
+          <img className="window-brand-icon" src={brandAssets.app} width={18} height={18} alt="" />
+          <span>{brand.windowTitle}</span>
         </div>
         <nav className="window-menus" aria-label="应用菜单">
           {menus.map((menu, index) => (

@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-10T13:33:57.641Z",
+  "docs": 26,
+  "brokenLinks": [],
+  "requirementIds": 180,
+  "skillFilesByteExact": 152,
+  "skills": {
+    "source": "resources/skill",
+    "packaged": "release\\optimization\\win-unpacked\\resources\\skill",
+    "runtimeLockedFiles": 128,
+    "registeredSkills": 26,
+    "runtimeLockSha256": "51a46a39340fc0fcb40ffc1ceb320740864673663f7e76ecc057e1230b5b8104",
+    "expressionLockedFiles": 2,
+    "expressionRules": 905,
+    "expressionModules": 145,
+    "tagOptions": 482,
+    "taxonomyVersion": "fanqie-user-snapshot-v1",
+    "tagLockedFiles": 10,
+    "tagLockSha256": "de7d22a471f27f416ff2d56d0cc7e4fea1719e2561afb4a0b0b4626ffdaa9229",
+    "expressionManifestSha256": "f62aae7ab86ef7608eb91241a96dae03d4521ccedf92f9118fe087cd13e98fb9"
+  },
+  "testLog": {
+    "path": ".test-output/optimization-20261010/tests.log",
+    "sha256": "696ebf2c35980acdac1c8851e9439538ac3fd571dbe5027e1b2e394532080d76"
+  },
+  "tests": 197,
+  "failures": 0,
+  "installer": {
+    "path": "release\\optimization\\星月书台 Setup 0.4.2.exe",
+    "bytes": 126579818,
+    "sha256": "553125e07bb1bae703ea301fca2246c53a998327650caea381ba5ed363128d44"
+  },
+  "buildInputs": {
+    "lockfile": "0a68d03a7a2be21d9ec8e37b961d599bc2ed47e54ecab48050b48ab8f53ad89d",
+    "main": "54e8d34e2079e4823b2b322554e48d713a02ff2b2044e0275cf37eec5b877a9a",
+    "worker": "d6589bc1edaeefe3dd37481b576fbe6ce62ee585b7c33cbac04eb5589c53a61e"
+  },
+  "note": "文档和构建完整性检查，不能替代未完成的真实端点、文学效果与操作系统矩阵验收"
+}

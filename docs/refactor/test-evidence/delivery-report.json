@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-10T12:16:53.312Z",
+  "docs": 26,
+  "brokenLinks": [],
+  "requirementIds": 180,
+  "skillFilesByteExact": 152,
+  "skills": {
+    "source": "resources/skill",
+    "packaged": "release\\refactor\\win-unpacked\\resources\\skill",
+    "runtimeLockedFiles": 128,
+    "registeredSkills": 26,
+    "runtimeLockSha256": "51a46a39340fc0fcb40ffc1ceb320740864673663f7e76ecc057e1230b5b8104",
+    "expressionLockedFiles": 2,
+    "expressionRules": 905,
+    "expressionModules": 145,
+    "tagOptions": 482,
+    "taxonomyVersion": "fanqie-user-snapshot-v1",
+    "tagLockedFiles": 10,
+    "tagLockSha256": "de7d22a471f27f416ff2d56d0cc7e4fea1719e2561afb4a0b0b4626ffdaa9229",
+    "expressionManifestSha256": "f62aae7ab86ef7608eb91241a96dae03d4521ccedf92f9118fe087cd13e98fb9"
+  },
+  "testLog": {
+    "path": ".test-output/refactor/test-final.log",
+    "sha256": "10aa6ae056352dea935e799426c9c4765900e986e10743873facab646a59c3cf"
+  },
+  "tests": 190,
+  "failures": 0,
+  "installer": {
+    "path": "release\\refactor\\星月书台 Setup 0.4.1.exe",
+    "bytes": 126590845,
+    "sha256": "858b82d0893d8d3a9009437d458be18506032a8abf24b2deec4d0c118f40734b"
+  },
+  "buildInputs": {
+    "lockfile": "309ba51e4fa49bcbb14cdca12a1c5764e0c096e95409c04585deb0e511dceb83",
+    "main": "f4af970785ade70c6a3cb4937c4c1a360a64493f9a98a88077a5c673589f8981",
+    "worker": "6a423d4ed01433047a9c5f23519a9f7e07d4c629f47f8c9c617d9a64a41dab33"
+  },
+  "note": "文档和构建完整性检查，不能替代未完成的真实端点、文学效果与操作系统矩阵验收"
+}

@@ -61,6 +61,84 @@ test('trash moves the complete book, restores manuscripts, candidates and revisi
   }
 });
 
+test('a recreated book at the same path can be trashed and both versions restored independently', async () => {
+  const f = await fixture();
+  try {
+    await f.service.invoke('project.trash', { root: f.root });
+    const oldEntry = f.bin.list()[0];
+    const created = await f.service.invoke('project.create', {
+      parent: f.parent,
+      title: oldEntry.title,
+      premise: '同名新作品，内容需要独立保留。'
+    });
+    const newId = created.project!.id;
+    const newContent = fs.readFileSync(path.join(f.root, paths.seed), 'utf8');
+    assert.notEqual(newId, oldEntry.projectId);
+    assert.deepEqual(created.recent, [{ root: f.root, title: oldEntry.title }]);
+    const removed = await f.service.invoke('project.trash', { root: f.root });
+    assert.equal(removed.project, null);
+    assert.deepEqual(removed.recent, []);
+    assert.equal(fs.existsSync(f.root), false);
+    const entries = f.bin.list();
+    assert.equal(entries.length, 2);
+    const newEntry = entries.find((entry) => entry.projectId === newId)!;
+    assert.notEqual(newEntry.id, oldEntry.id);
+    assert.equal(fs.readFileSync(path.join(f.payload(oldEntry.id), paths.seed), 'utf8'), f.original);
+    assert.equal(fs.readFileSync(path.join(f.payload(newEntry.id), paths.seed), 'utf8'), newContent);
+    assert.throws(() => f.bin.trash(f.root, oldEntry.title), /已在回收站/);
+    f.service.recycleBin = new ProjectRecycleBin(f.data, () => f.time.now);
+    assert.deepEqual(f.service.snapshot().recent, []);
+    await f.service.invoke('project.restoreTrash', { id: newEntry.id });
+    const restoredNew = await f.service.invoke('project.open', { root: f.root });
+    assert.equal(restoredNew.project!.id, newId);
+    assert.equal(fs.readFileSync(path.join(f.root, paths.seed), 'utf8'), newContent);
+    await assert.rejects(f.service.invoke('project.restoreTrash', { id: oldEntry.id }), /同名目录/);
+    const alternate = path.join(f.parent, '旧作品恢复位置');
+    fs.mkdirSync(alternate);
+    await f.service.invoke('project.restoreTrash', { id: oldEntry.id, parent: alternate });
+    const restoredRoot = path.join(alternate, path.basename(f.root));
+    const restoredOld = await f.service.invoke('project.open', { root: restoredRoot });
+    assert.equal(restoredOld.project!.id, oldEntry.projectId);
+    assert.equal(fs.readFileSync(path.join(restoredRoot, paths.seed), 'utf8'), f.original);
+    assert.equal(restoredOld.runs[0].changes[0].content, f.candidate.changes[0].content);
+    assert.equal(f.service.recycleBin.list().length, 0);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test('expiry of an older same-path book preserves the later deleted book and its retention period', async () => {
+  const f = await fixture();
+  try {
+    await f.service.invoke('project.trash', { root: f.root });
+    const oldEntry = f.bin.list()[0];
+    f.time.now += 24 * 60 * 60 * 1000;
+    const created = await f.service.invoke('project.create', {
+      parent: f.parent,
+      title: oldEntry.title,
+      premise: '旧作品过期时仍应保留的新作品。'
+    });
+    const newId = created.project!.id;
+    const newContent = fs.readFileSync(path.join(f.root, paths.seed), 'utf8');
+    await f.service.invoke('project.trash', { root: f.root });
+    const newEntry = f.bin.list().find((entry) => entry.projectId === newId)!;
+    assert.equal(newEntry.expiresAt - newEntry.deletedAt, RETENTION_MS);
+    f.time.now = oldEntry.expiresAt;
+    const reopened = new ProjectRecycleBin(f.data, () => f.time.now);
+    reopened.sweep();
+    assert.equal(fs.existsSync(f.payload(oldEntry.id)), false);
+    assert.deepEqual(reopened.list().map((entry) => entry.id), [newEntry.id]);
+    assert.equal(fs.readFileSync(path.join(f.payload(newEntry.id), paths.seed), 'utf8'), newContent);
+    f.service.recycleBin = reopened;
+    await f.service.invoke('project.restoreTrash', { id: newEntry.id });
+    const restored = await f.service.invoke('project.open', { root: f.root });
+    assert.equal(restored.project!.id, newId);
+    assert.equal(fs.readFileSync(path.join(f.root, paths.seed), 'utf8'), newContent);
+  } finally {
+    f.cleanup();
+  }
+});
+
 test('never purges before seven days; a fresh startup purges at expiry and preserves unrelated files', async () => {
   const f = await fixture();
   try {

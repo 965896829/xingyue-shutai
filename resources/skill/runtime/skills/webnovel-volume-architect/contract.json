@@ -1,18 +1,15 @@
 {
-  "contract_version": "1.0",
+  "contract_version": "2.0",
   "stage": "S5",
   "optional": false,
   "tools": [
-    "project.read_snapshot",
-    "artifact.read",
-    "memory.query",
-    "memory.trace_source",
-    "skill.load",
-    "candidate.write",
-    "candidate.diff",
-    "changeset.propose",
-    "validate.run",
-    "review.request"
+    "read_naming_rules",
+    "read_document",
+    "search_memory",
+    "propose_changes",
+    "propose_memory",
+    "validate",
+    "ask_author"
   ],
   "write_scope": "candidate-only",
   "can_approve": false,

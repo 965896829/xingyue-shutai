@@ -43,6 +43,18 @@ const hostSkills = new Set([
   'webnovel-batch-close',
   'webnovel-memory-audit'
 ]);
+function guidanceFor(skillId: string, content: string) {
+  const sections = new Set(
+    /project-config/.test(skillId) ? [3, 5] :
+    /memory|context-retriever|character|batch-close/.test(skillId) ? [6, 10, 12] :
+    /revision/.test(skillId) ? [6, 9] :
+    /chapter-drafter/.test(skillId) ? [7, 8, 9] :
+    /review|polish/.test(skillId) ? [7, 9] :
+    /voice|name-governance/.test(skillId) ? [7] :
+    /narrative/.test(skillId) ? [8, 12] : [8, 11]
+  );
+  return content.split(/(?=^## \d+\.)/m).filter(section => sections.has(Number(section.match(/^## (\d+)\./)?.[1]))).join('\n');
+}
 export class SkillRegistry {
   readonly root: string;
   readonly entries: SkillEntry[];
@@ -57,8 +69,15 @@ export class SkillRegistry {
   }
   read(relative: string) {
     const raw = fs.readFileSync(safePath(this.root, relative));
-    if (this.lock[relative] !== hash(raw)) throw new Error(`内置规则完整性检查失败：${relative}`);
+    if (relative === 'agent.md') {
+      if (!raw.toString('utf8').trim() || raw.includes(0) || raw.length > 96_000)
+        throw new Error('总控规则 agent.md 为空、格式无效或超过 96 KB，请修正规则后继续');
+    } else if (this.lock[relative] !== hash(raw)) throw new Error(`内置规则完整性检查失败：${relative}`);
     return raw.toString('utf8');
+  }
+  controller() {
+    const content = this.read('agent.md');
+    return { content, hash: hash(content) };
   }
   get(skillId: string) {
     const entry = this.entries.find((s) => s.id === skillId);
@@ -76,17 +95,18 @@ export class SkillRegistry {
   }
   load(skillId: string) {
     const entry = this.get(skillId),
-      content = this.read(entry.path);
+      content = this.read(entry.path),
+      controller = this.controller();
     if (hash(content) !== entry.sha256) throw new Error('技能版本与注册表不一致');
-    const files = new Set<string>(['references/shared-contract.md']);
+    const files = new Set<string>(['references/shared-contract.md', 'references/agent-guidance.md']);
     for (const match of content.matchAll(/`(\.\.\/\.\.\/references\/[^`]+\.md)`/g)) {
       const relative = path.posix.normalize(path.posix.join(path.posix.dirname(entry.path), match[1]));
       if (!relative.includes('/naming/')) files.add(relative);
     }
     return {
       entry,
-      content: [content, ...[...files].map((f) => `\n--- ${f} ---\n${this.read(f)}`)].join('\n'),
-      hash: hash(JSON.stringify([entry, ...[...files].map((f) => this.lock[f])]))
+      content: [controller.content, `\n--- 当前专项技能：${entry.title} ---\n${content}`, ...[...files].map((f) => `\n--- ${f} ---\n${f === 'references/agent-guidance.md' ? guidanceFor(skillId, this.read(f)) : this.read(f)}`)].join('\n'),
+      hash: hash(JSON.stringify(['agent-guide-selection-1', controller.hash, entry, ...[...files].map((f) => this.lock[f])]))
     };
   }
 }

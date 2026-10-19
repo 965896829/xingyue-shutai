@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "file": "tests/planning-language.test.ts",
+      "addedComments": 0
+    },
+    {
+      "file": "tests/tags.test.ts",
+      "addedComments": 0
+    }
+  ],
+  "lockfileOnlyVersionChanged": true,
+  "unchanged": [
+    "src/core/tags.ts",
+    "src/shared/tags.ts"
+  ],
+  "noExternalModelCalls": true
+}

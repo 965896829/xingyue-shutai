@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { databaseVersion } from '../src/core/compatibility';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -15,7 +16,8 @@ import { hash, paths } from '../src/core/domain';
 import { profileSchema, type ModelResult, type SecretProfile } from '../src/shared/types';
 import { searchSettingsSchema, type ActionProposal } from '../src/shared/assistant';
 import { PublicSearch } from '../src/core/search';
-import { RequestError } from '../src/core/provider';
+import { RequestError, normalize, requestBody } from '../src/core/provider';
+import { nativeResponse, nativeCall, nativeAnnotation, nativeText, nativeSource } from './fixtures/native-search';
 import { searchMemory, rebuildMemory } from '../src/core/memory';
 import type { Caller } from '../src/core/runner';
 const skill = path.resolve('resources/skill');
@@ -67,6 +69,125 @@ const proposalInput = {
   request: '试写渡河场景',
   outputs: ['聊天草稿']
 };
+test('Responses 聊天无第三方 Key 直接搜索，来源持久化、续轮保留原生块且不超搜索上限', async () => {
+  let calls = 0;
+  const { service, chatId } = await setup(async (p, system, messages, tools, _signal, _delta, options) => {
+    calls++;
+    assert.match(system, /原生 web_search/);
+    assert.equal(tools.some(tool => ['public_search', 'extract_pages'].includes(tool.name)), false);
+    if (calls === 1) {
+      assert.equal(options?.webSearch?.maxCalls, 1);
+      options?.onWebSearch?.({ id: nativeCall.id, status: 'searching', sources: [] });
+      const result = normalize(p, { ...nativeResponse, output: [...nativeResponse.output,
+        { type: 'function_call', call_id: 'read-after-search', name: 'read_rule', arguments: JSON.stringify({ name: 'workflow', lines: 3 }) }] });
+      return result;
+    }
+    assert.equal(options?.webSearch, undefined);
+    assert.ok(requestBody(p, system, messages, tools).body.input.some((item: any) => item.type === 'web_search_call'));
+    return response('已结合本书资料核对。');
+  });
+  try {
+    service.profiles[0].protocol = 'responses';
+    service.assistant.search = searchSettingsSchema.parse({ maxSearches: 1 });
+    assert.equal(service.assistant.searchKey, '');
+    await service.invoke('chat.send', { conversationId: chatId, profileId: 'test', text: '联网核对官方说明' });
+    await done(service);
+    const data = await service.invoke('chat.read', { id: chatId });
+    assert.equal(data.turns[0].status, 'complete');
+    assert.equal(calls, 2);
+    assert.equal(data.turns[0].webSearch!.calls.length, 1);
+    assert.equal(data.messages.at(-1)!.webSearch!.citations.length, 1);
+    assert.ok(data.messages.at(-1)!.citations.some(citation => citation.url === nativeSource.url));
+    assert.equal(data.turns[0].usage.cost, null);
+    const root = service.store!.root;
+    service.close(); await service.open(root);
+    const restored = await service.invoke('chat.read', { id: chatId });
+    assert.equal(restored.messages.at(-1)!.webSearch!.calls[0].id, nativeCall.id);
+  } finally { service.close(); }
+});
+test('原生搜索遵守全局及聊天开关，第三方模式不注入原生工具', async () => {
+  for (const mode of ['chat-off', 'global-off', 'tavily'] as const) {
+    const { service, chatId } = await setup(async (_p, _s, _m, tools, _signal, _delta, options) => {
+      assert.equal(options?.webSearch, undefined);
+      assert.equal(tools.some(tool => tool.name === 'public_search'), mode === 'tavily');
+      return response('本轮未联网。');
+    });
+    try {
+      service.profiles[0].protocol = 'responses';
+      service.assistant.search = searchSettingsSchema.parse({ provider: mode === 'tavily' ? 'tavily' : 'auto', enabled: mode !== 'global-off' });
+      if (mode === 'chat-off') await service.invoke('chat.update', { id: chatId, online: false });
+      await service.invoke('chat.send', { conversationId: chatId, profileId: 'test', text: '解释当前规则' });
+      await done(service);
+      assert.equal((await service.invoke('chat.read', { id: chatId })).turns[0].status, 'complete');
+    } finally { service.close(); }
+  }
+});
+test('原生搜索后断流保留进度及引用，重开不自动重搜且重试需要明确选择', async () => {
+  let calls = 0;
+  const { service, chatId } = await setup(async (_p, _s, _m, _t, _signal, delta, options) => {
+    calls++;
+    options?.onWebSearch?.({ id: nativeCall.id, status: 'completed', sources: [nativeSource] });
+    options?.onWebCitation?.({ url: nativeAnnotation.url, title: nativeAnnotation.title });
+    delta?.(nativeText);
+    throw new RequestError('模拟原生搜索后断流', true);
+  });
+  try {
+    service.profiles[0].protocol = 'responses';
+    await service.invoke('chat.send', { conversationId: chatId, profileId: 'test', text: '查官方文档' }); await done(service);
+    const root = service.store!.root;
+    service.close(); await service.open(root);
+    const data = await service.invoke('chat.read', { id: chatId });
+    assert.equal(data.turns[0].status, 'unknown');
+    assert.equal(data.messages.at(-1)!.content, nativeText);
+    assert.equal(data.messages.at(-1)!.webSearch!.calls.length, 1);
+    assert.equal(data.messages.at(-1)!.webSearch!.citations.length, 1);
+    await assert.rejects(service.invoke('chat.retry', { id: data.turns[0].id }), /明确确认/);
+    assert.equal(calls, 1);
+  } finally { service.close(); }
+});
+test('原生搜索连接测试必须返回真实搜索项和来源；普通阶段不获得搜索权限', async () => {
+  let nativeOptions = false;
+  const { service } = await setup(async (p, _s, _m, _t, _signal, _delta, options) => {
+    nativeOptions = !!options?.webSearch?.required;
+    return normalize(p, nativeResponse);
+  });
+  try {
+    service.profiles[0].protocol = 'responses';
+    const result = await service.invoke('search.test', { profileId: 'test' });
+    assert.equal(nativeOptions, true);
+    assert.equal(result.results[0].url, nativeSource.url);
+    const run = service.makeRun('stage', '完成设定拆解', 'test');
+    assert.equal(service.runner!.toolsFor(run).some(tool => tool.name === 'public_search'), false);
+    service.profiles[0].protocol = 'chat';
+    service.assistant.search = searchSettingsSchema.parse({ provider: 'openai' });
+    await assert.rejects(service.invoke('search.test', { profileId: 'test' }), /Responses/);
+  } finally { service.close(); }
+});
+test('市场研究走原生搜索，保持作者审阅与正式文件边界', async () => {
+  const { service } = await setup(async (p, _s, messages, tools, _signal, _delta, options) => {
+    assert.equal(tools.some(tool => tool.name === 'public_search'), false);
+    if (messages.at(-1)?.role === 'tool') return response('已保存研究候选，等待作者核对。');
+    assert.equal(options?.webSearch?.maxCalls, 3);
+    const result = normalize(p, nativeResponse);
+    const call = { id: 'research-files', name: 'propose_changes', arguments: JSON.stringify({ changes:
+      ['11_创作研究/市场证据.md', '11_创作研究/题材机会假设.md'].map(file => ({ path: file,
+        baseHash: service.store!.db.document(file)?.hash ?? null,
+        content: `# 公开研究\n\n观察期：2026-10-16。来源：[官方文档](${nativeSource.url})。\n\n样本范围：一次官方说明查询，不代表市场全貌。\n\n假设：标签有助于定位；尚无数据验证流量因果。\n` })) }) };
+    return { ...result, calls: [call], native: [...(result.native as unknown[]), { type: 'function_call', call_id: call.id, name: call.name, arguments: call.arguments }], stop: 'tools' };
+  });
+  try {
+    service.profiles[0].protocol = 'responses';
+    const revision = service.store!.db.project().revision;
+    const runId = await service.invoke('skill.run', { skillId: 'webnovel-market-research', profileId: 'test', request: '核对公开标签说明' });
+    await done(service);
+    const run = service.store!.db.run(runId as string);
+    assert.equal(run.webSearch!.calls[0].id, nativeCall.id);
+    assert.equal(run.toolCount, 2);
+    assert.equal(run.status, 'awaiting_review');
+    assert.equal(run.accepted, false);
+    assert.equal(service.store!.db.project().revision, revision);
+  } finally { service.close(); }
+});
 
 test('字段解析支持续行、嵌套和粗体；下一字段、标题、代码不补空值', () => {
   const good =
@@ -127,11 +248,11 @@ test('SQLite v1 事务升级前有完整备份；旧记录保留且不会伪造�
   before.sql.exec('PRAGMA user_version=1');
   before.close();
   const after = new Database(file);
-  assert.equal(after.sql.prepare('PRAGMA user_version').get()!.user_version, 3);
+  assert.equal(after.sql.prepare('PRAGMA user_version').get()!.user_version, databaseVersion);
   assert.deepEqual(after.get('marker'), { old: true });
   assert.equal(after.sql.prepare('SELECT count(*) AS n FROM conversations').get()!.n, 0);
   after.close();
-  const backup = fs.readdirSync(path.dirname(file)).find((f) => f.includes('before-v3'))!;
+  const backup = fs.readdirSync(path.dirname(file)).find((f) => f.includes(`before-v${databaseVersion}`))!;
   assert.ok(backup);
   const saved = new DatabaseSync(path.join(path.dirname(file), backup), { readOnly: true });
   assert.equal(saved.prepare('PRAGMA user_version').get()!.user_version, 1);
@@ -219,7 +340,7 @@ test('任务卡必须确认且重复确认只执行一次；保存草稿不使�
       title: '渡河',
       content: '独特草稿关键词木舟',
       conversationId: chatId,
-      messageId: message.id
+      messageId: message!.id
     });
     assert.equal(service.store!.db.project().revision, revision);
     assert.ok(!service.snapshot().documents.some((d) => d.path === draft.path));
@@ -350,12 +471,44 @@ test('同书并发被阻止；停止后保留消息和状态，未知请求不�
     await service.invoke('chat.stop');
     await done(service);
     const data = await service.invoke('chat.read', { id: chatId });
-    assert.equal(data.messages.at(-1).content, '已接收片段');
-    assert.equal(data.messages.at(-1).status, 'stopped');
+    assert.equal(data.messages.at(-1)!.content, '已接收片段');
+    assert.equal(data.messages.at(-1)!.status, 'stopped');
+    assert.deepEqual(data.turns[0].usage, { input: null, output: null, cost: null, currency: 'USD' });
     assert.equal(calls, 1);
     await assert.rejects(service.invoke('chat.retry', { id: data.turns[0].id }), /明确确认/);
   } finally {
     service.close();
+  }
+});
+
+test('聊天断流后的用量为未知，不能把零值或已完成轮次当作总费用', async () => {
+  for (const completedRound of [false, true]) {
+    let calls = 0;
+    const { service, chatId } = await setup(async (_p, _s, _m, _t, _signal, delta) => {
+      calls++;
+      if (completedRound && calls === 1)
+        return response('', [{ name: 'read_book', args: { path: paths.style, reason: '核对文风' } }]);
+      delta?.('已收到的讨论片段');
+      throw new RequestError('模型连接中断，已保留收到的内容。', true);
+    });
+    try {
+      const id = await service.invoke('chat.send', {
+        conversationId: chatId,
+        profileId: 'test',
+        text: '讨论'
+      });
+      await done(service);
+      const data = await service.invoke('chat.read', { id: chatId });
+      const turn = data.turns.find((item: { id: string }) => item.id === id);
+      assert.ok(turn);
+      assert.equal(turn.status, 'unknown');
+      assert.deepEqual(turn.usage, { input: null, output: null, cost: null, currency: 'USD' });
+      assert.match(data.messages.at(-1)!.content, /已收到的讨论片段/);
+      assert.equal(calls, completedRound ? 2 : 1);
+      await assert.rejects(service.invoke('chat.retry', { id }), /明确确认/);
+    } finally {
+      service.close();
+    }
   }
 });
 
@@ -391,7 +544,7 @@ test('草稿历史与外部冲突保护；转正式任务卡绑定草稿版本',
       title: '片段',
       content: '草稿初版，未采纳',
       conversationId: chatId,
-      messageId: source.id
+      messageId: source!.id
     });
     const card = await service.invoke('draft.promote', {
       id: draft.id,
@@ -460,6 +613,7 @@ test('长聊天摘要可回查，助手建议不变成作者决定，保留原�
     await done(service);
     const data = await service.invoke('chat.read', { id: chatId });
     assert.equal(data.messages.length, 32);
+    assert.ok(data.conversation.summary);
     assert.match(data.conversation.summary.text, /备选意见（未采纳）/);
     assert.ok(data.conversation.summary.messageIds.includes('old-1'));
     assert.match(system, /old-1/);
@@ -482,6 +636,7 @@ test('请求上下文超限时暂停，不静默删除硬约定继续调用模�
     await done(service);
     const data = await service.invoke('chat.read', { id: chatId });
     assert.equal(calls, 0);
+    assert.ok(data.turns[0].error);
     assert.match(data.turns[0].error, /容量不足/);
     assert.equal(data.turns[0].budgets.length, 1);
   } finally {
@@ -556,7 +711,8 @@ test('进程重开时未完成聊天标记 unknown，不自动请求；已执行
   try {
     const data = await service.invoke('chat.read', { id: chatId });
     assert.equal(data.turns[0].status, 'unknown');
-    assert.equal(data.messages.at(-1).status, 'unknown');
+    assert.deepEqual(data.turns[0].usage, { input: null, output: null, cost: null, currency: 'USD' });
+    assert.equal(data.messages.at(-1)!.status, 'unknown');
     assert.equal(data.turns[0].id, turn.id);
     assert.equal(service.chat!.controller, null);
   } finally {

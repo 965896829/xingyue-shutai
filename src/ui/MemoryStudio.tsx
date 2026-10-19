@@ -1,8 +1,11 @@
+import { invokeCommand } from '../shared/client';
 import { useEffect, useRef, useState } from 'react';
 import type { Fact, Snapshot } from '../shared/types';
 import type { EntityState, SourceRef, MemoryScope } from '../shared/studio';
 import { Editor } from './Editor';
 import { useDialog } from './useDialog';
+import { commandContracts } from '../shared/contracts';
+import type { CommandOutput } from '../shared/contracts';
 
 const kinds: Record<Fact['kind'], string> = {
   event: '事件',
@@ -37,8 +40,7 @@ export function SourceDialog({ source, onClose }: { source: SourceRef; onClose: 
     [error, setError] = useState('');
   useEffect(() => {
     let active = true;
-    void window
-      .wenxu!.invoke<SourceRef & { content: string }>('memory.trace', { ...source })
+    void invokeCommand('memory.trace', { ...source })
       .then((v) => {
         if (active) setData(v);
       })
@@ -152,10 +154,9 @@ export function CharacterInspector({
       setState(undefined);
       return;
     }
-    void window
-      .wenxu!.invoke<EntityState>('state.getCharacter', {
+    void invokeCommand('state.getCharacter', {
         entityId: entity,
-        scope: { chapter: snapshot.project?.chapter }
+        scope: { chapter: snapshot.project?.chapter ?? 0 }
       })
       .then((v) => {
         if (active) {
@@ -216,11 +217,15 @@ export function CharacterInspector({
 export function MemoryStudio({
   snapshot,
   onSource,
-  onRefresh
+  onRefresh,
+  onRun,
+  profileId
 }: {
   snapshot: Snapshot;
   onSource: (v: SourceRef) => void;
   onRefresh: () => void;
+  onRun: (id: string) => void;
+  profileId?: string;
 }) {
   const p = snapshot.project!,
     [query, setQuery] = useState(''),
@@ -234,8 +239,26 @@ export function MemoryStudio({
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
     [correction, setCorrection] = useState(''),
-    [correctionKind, setCorrectionKind] = useState('extraction');
+    [correctionKind, setCorrectionKind] = useState('plan'),
+    [fromChapter, setFromChapter] = useState(Math.max(p.chapter, 1, ...Object.keys(p.chapters).map(n => Number(n) + 1)));
+  const firstUnwritten = Math.max(p.chapter, 1, ...Object.keys(p.chapters).map(n => Number(n) + 1));
+  useEffect(() => { setFromChapter(value => Math.max(value, firstUnwritten)); }, [firstUnwritten]);
   const seq = useRef(0);
+  const [snapshotHistory, setSnapshotHistory] = useState<CommandOutput<'snapshot.list'>>([]);
+  const snapshotSequence = useRef(0);
+  useEffect(() => { setSnapshotHistory([]); return () => { snapshotSequence.current++; }; }, [snapshot.projectSessionId]);
+  async function loadSnapshotHistory() {
+    const sequence = ++snapshotSequence.current;
+    try {
+      let result = await invokeCommand('snapshot.page');
+      const rows = [...result.items];
+      while (result.nextBefore !== null && sequence === snapshotSequence.current) {
+        result = await invokeCommand('snapshot.page', { before: result.nextBefore, watermark: result.watermark });
+        rows.push(...result.items);
+      }
+      if (sequence === snapshotSequence.current) setSnapshotHistory(rows);
+    } catch (error) { if (sequence === snapshotSequence.current) setError((error as Error).message); }
+  }
   const scope = {
     chapter,
     mode,
@@ -248,12 +271,11 @@ export function MemoryStudio({
     setBusy(true);
     setError('');
     try {
-      const v: any = await window.wenxu!.invoke(query.trim() ? 'memory.retrieve' : 'memory.list', {
-        query,
-        scope,
-        category: filter,
-        offset: append ? (result?.facts?.length ?? 0) : 0
-      });
+      const v = query.trim()
+        ? await invokeCommand('memory.retrieve', { query, scope })
+        : await invokeCommand('memory.list', commandContracts['memory.list'].input.parse({
+            scope, category: filter, offset: append ? (result?.facts?.length ?? 0) : 0
+          }));
       if (n === seq.current) setResult(append ? { ...v, facts: [...(result?.facts ?? []), ...v.facts] } : v);
     } catch (e) {
       if (n === seq.current) setError((e as Error).message);
@@ -269,6 +291,17 @@ export function MemoryStudio({
     .filter(
       (f: Fact) => filter === 'all' || f.category === filter || (filter === 'obligations' && f.mandatory)
     );
+  async function synchronize() {
+    setBusy(true);
+    setError('');
+    try {
+      const result = await invokeCommand('memory.rebuild', { profileId });
+      onRefresh();
+      if (result.runId) onRun(result.runId);
+      else void search();
+    } catch (error) { setError((error as Error).message); }
+    finally { setBusy(false); }
+  }
   return (
     <div className="memory-studio">
       <header className="studio-heading">
@@ -278,6 +311,28 @@ export function MemoryStudio({
         </div>
         <span className="studio-count">{result?.total ?? facts.length} 条记录</span>
       </header>
+      {!!p.storyImpacts?.length && (
+        <section className="story-impact-panel" aria-label="故事变化与后续计划">
+          <h2>先同步变化，再继续创作</h2>
+          <p>以下资料仍需核对。同步会生成修订候选，你确认后才会保存。</p>
+          {p.storyImpacts.map(impact => (
+            <details key={impact.id} open>
+              <summary>{impact.scope.mode === 'forward' ? `第 ${impact.scope.fromChapter} 章起的后续计划` : '已有故事的关联修订'} · {impact.targets.length} 项</summary>
+              {impact.scope.mode === 'forward' && <p>保留已有正文及生效章节之前的章节设计。</p>}
+              <p>{impact.reason}</p>
+              {impact.stateChanges.map(state => <p key={state.factId}><strong>{state.subject} · {state.predicate}</strong>：{state.before ?? '尚无记录'} → {state.after}</p>)}
+              <ul>{impact.targets.map(target => <li key={target.path}><strong>{target.path.split('/').at(-1)}</strong><span>{target.reason}</span>
+                {!!target.via.length && <small>依赖路径：{target.via.map(file => file.split('/').at(-1)).join(' → ')}</small>}</li>)}</ul>
+              <details><summary>查看变更来源 · {impact.sources.length}</summary>
+                {impact.sources.map(source => <button key={source.path} onClick={() => void invokeCommand('document.read', { path: source.path, hash: source.hash })
+                  .then(document => onSource({ ...source, quote: document.content.slice(0, 160) }))
+                  .catch(error => setError(error.message))}>{source.path.split('/').at(-1)}</button>)}
+              </details>
+            </details>
+          ))}
+          <button className="primary" disabled={busy} onClick={() => void synchronize()}>核对并同步后续计划</button>
+        </section>
+      )}
       <form
         className="studio-search"
         onSubmit={(e) => {
@@ -319,8 +374,8 @@ export function MemoryStudio({
           <option value="historical">历史快照</option>
         </select>
         {mode === 'historical' && (
-          <select aria-label="历史快照" value={version} onChange={(e) => setVersion(e.target.value)}>
-            {snapshot.studio?.snapshots.map((s) => (
+          <select aria-label="历史快照" value={version} onFocus={() => void loadSnapshotHistory()} onChange={(e) => setVersion(e.target.value)}>
+            {(snapshotHistory.length ? snapshotHistory : snapshot.studio?.snapshots)?.map((s) => (
               <option key={s.id} value={s.id}>
                 {new Date(s.createdAt).toLocaleString()} · {s.revision}
               </option>
@@ -427,8 +482,7 @@ export function MemoryStudio({
         <div className="button-row">
           <button
             onClick={() =>
-              void window
-                .wenxu!.invoke('embedding.reindex')
+              void invokeCommand('embedding.reindex')
                 .then(onRefresh)
                 .catch((e) => setError(e.message))
             }
@@ -436,22 +490,15 @@ export function MemoryStudio({
             更新语义索引
           </button>
           <button
-            onClick={() => void window.wenxu!.invoke('embedding.cancel').catch((e) => setError(e.message))}
+            onClick={() => void invokeCommand('embedding.cancel').catch((e) => setError(e.message))}
           >
             停止更新
           </button>
           <button
-            onClick={() =>
-              void window
-                .wenxu!.invoke('memory.rebuild')
-                .then(() => {
-                  onRefresh();
-                  void search();
-                })
-                .catch((e) => setError(e.message))
-            }
+            disabled={busy}
+            onClick={() => void synchronize()}
           >
-            核对记忆
+            核对并同步记忆
           </button>
         </div>
         {snapshot.studio?.index && (
@@ -474,11 +521,12 @@ export function MemoryStudio({
           onSubmit={(e) => {
             e.preventDefault();
             setBusy(true);
-            void window
-              .wenxu!.invoke('state.proposeCorrection', { kind: correctionKind, request: correction })
-              .then(() => {
+            void invokeCommand('state.proposeCorrection', commandContracts['state.proposeCorrection'].input.parse({ kind: correctionKind, request: correction,
+              ...(correctionKind === 'plan' ? { fromChapter } : {}) }))
+              .then(id => {
                 setCorrection('');
                 onRefresh();
+                onRun(id);
               })
               .catch((e) => setError(e.message))
               .finally(() => setBusy(false));
@@ -489,18 +537,23 @@ export function MemoryStudio({
             value={correctionKind}
             onChange={(e) => setCorrectionKind(e.target.value)}
           >
-            <option value="extraction">记忆提取</option>
-            <option value="plan">后续计划</option>
-            <option value="story">故事修订</option>
+            <option value="plan">调整后续，保留已有正文</option>
+            <option value="story">故事修订，可追溯已有剧情</option>
+            <option value="extraction">纠正记忆提取，保留原文</option>
             <option value="assessment">评估判断</option>
           </select>
+          {correctionKind === 'plan' && <label>从第几章生效
+            <input aria-label="修订生效章节" type="number" min={firstUnwritten} value={fromChapter}
+              onChange={event => setFromChapter(Number(event.target.value))} />
+            <small>已确认正文保留；大纲、细纲与后续生成按新的约束核对。</small>
+          </label>}
           <textarea
             aria-label="修正内容"
             value={correction}
             onChange={(e) => setCorrection(e.target.value)}
-            placeholder="需要修正的记录与依据"
+            placeholder="例如：从第 12 章起，阿宁右手受伤无法握剑。请调整后续战斗安排，保留已确认正文。"
           />
-          <button disabled={busy || !correction.trim()}>生成修正候选</button>
+          <button disabled={busy || !correction.trim() || correctionKind === 'plan' && (!Number.isInteger(fromChapter) || fromChapter < firstUnwritten)}>生成修正候选</button>
         </form>
       </details>
       {!!p.stale.length && (
@@ -513,8 +566,7 @@ export function MemoryStudio({
                 onClick={() => {
                   const reason = prompt('核对结果');
                   if (reason)
-                    void window
-                      .wenxu!.invoke('impact.review', { path: file, reason })
+                    void invokeCommand('impact.review', { path: file, reason })
                       .then(onRefresh)
                       .catch((e) => setError(e.message));
                 }}

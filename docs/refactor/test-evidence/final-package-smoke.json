@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-10T12:17:22.345Z",
+  "result": {
+    "project": "隔离验收作品",
+    "generation": 1,
+    "chatBusy": false,
+    "version": "0.4.1",
+    "diagnosticKeys": [
+      "version",
+      "project",
+      "runs",
+      "events",
+      "issues",
+      "schemaVersion",
+      "projectSessionId",
+      "scheduler",
+      "operations",
+      "attempts",
+      "commits",
+      "outbox"
+    ],
+    "attempts": [
+      {
+        "id": "1d13d73b-c53f-4bb0-8747-fc11978304fc",
+        "runId": "ee36bcb2-45a0-4446-b1cf-8a3f78fa9923",
+        "status": "unknown",
+        "purpose": "discussion",
+        "usageState": "unknown",
+        "requestHash": "8543f8b84535362632191ccc568b8d21a66e61d1d286dedb287515af3cd46cae"
+      },
+      {
+        "id": "3b3d29e6-71d2-48cc-8e6b-8be1e293c55f",
+        "runId": "7f9626da-f8df-428d-892c-6f505780ab70",
+        "status": "unknown",
+        "purpose": "discussion",
+        "usageState": "unknown",
+        "requestHash": "7710f11041cd49dd891d290e08ab9a075e29288608315bfe5cf338c6555f0fb4"
+      }
+    ],
+    "editor": "打包版未保存编辑𠮷"
+  },
+  "snapshot": "- banner:\n  - text: 星月书台 · 创作工作台\n  - navigation \"应用菜单\":\n    - button \"星月书台\"\n    - button \"编辑\"\n    - button \"视图\"\n- complementary \"作品与功能导航\":\n  - img \"星月书台\"\n  - button \"收起侧栏\" [expanded]\n  - button \"新建作品\"\n  - button \"打开作品目录\"\n  - text: 创作空间\n  - navigation:\n    - button \"写作工作台\"\n    - button \"记忆与连续性\"\n    - button \"封面设计\"\n  - text: 当前作品\n  - button \"作品设置\"\n  - text: 隔离验收作品 0 章完整完成 · 本地作品\n  - button \"删除作品 隔离验收作品\"\n  - status\n  - textbox \"筛选作品文件\":\n    - /placeholder: 查找章节与资料\n  - button \"原始设定 外部修改待确认\": 原始设定\n  - button \"设定拆解\"\n  - button \"文风样本与规则\"\n  - button \"项目配置\"\n  - button \"世界规则与卖点\"\n  - button \"伏笔台账\"\n  - button \"规则术语表\"\n  - button \"时间线\"\n  - button \"物品与伤势\"\n  - button \"知情边界\"\n  - button \"角色卡\"\n  - button \"批次人物摘要\"\n  - button \"情绪与行为记忆\"\n  - button \"人物关系\"\n  - button \"第001-030章节奏\"\n  - button \"分卷大纲\"\n  - button \"章节总纲\"\n  - button \"第001-030章细纲\"\n  - button \"第001章任务清单\"\n  - button \"第001章细纲\"\n  - button \"第001章\"\n  - button \"第001章记忆更新\"\n  - button \"当前进度\"\n  - button \"改动影响记录\"\n  - button \"阶段索引\"\n  - button \"智能体与联网设置\"\n  - button \"作品回收站\": 回收站\n  - button \"导入旧 Skill 档案\"\n  - button \"导入、导出与备份\"\n  - button \"模型与连接设置\"\n  - text: 本地创作空间\n- main:\n  - text: 创作空间 隔离验收作品\n  - button \"切换到夜间模式\": 日间\n  - text: 文稿保存在本机\n  - button \"打开作品文件夹\"\n  - button \"切换编辑面板\" [pressed]: 文稿面板\n  - button \"创作工具\"\n  - button \"创作讨论\"\n  - button \"创作任务\"\n  - button \"标签与策划\"\n  - complementary:\n    - text: 主题聊天\n    - button \"新建主题聊天\"\n    - button \"创作讨论\"\n    - button \"分页验收主题\"\n    - button \"打包幂等主题\"\n    - button \"查看已归档聊天\"\n    - button \"历史任务与阶段执行\"\n    - button \"自由草稿\"\n    - button \"智能体角色与联网\"\n  - heading \"创作讨论\" [level=2]\n  - text: 第 1 章\n  - button \"重命名聊天\": 重命名\n  - button \"归档聊天\"\n  - navigation \"对话内容导航\":\n    - button \"跳转到你的消息：仅本机合成验收，等待中断\"\n    - button \"跳转到星月书台回答：合成未完成片段\"\n  - article:\n    - text: 你 · 19:40:14\n    - paragraph: 仅本机合成验收，等待中断\n  - article:\n    - text: 星月书台 · 19:40:14 已停止\n    - paragraph: 合成未完成片段\n    - paragraph: 已停止；服务端是否继续计费未知，恢复前需明确选择\n    - group: 资料与来源 · 1\n    - group: 调用、规则与上下文记录 · 0 次工具\n    - button \"保存到自由草稿\"\n    - button \"确认重新发送\"\n  - textbox \"聊天消息\":\n    - /placeholder: 聊聊你的故事，或提出创作问题…\n  - button \"创作工具与引用其他聊天\"\n  - button \"聊天模型\": synthetic\n  - button \"按需联网\" [pressed]\n  - button \"发送消息\" [disabled]\n  - text: Ctrl + Enter 发送\n  - button \"叙事节奏 展开 ⌃\"\n  - complementary:\n    - navigation \"作品面板\":\n      - button \"文稿\"\n      - button \"人物\"\n      - button \"详情\"\n      - button \"专注\"\n    - text: 原始设定.md\n    - button \"关闭编辑面板\"\n    - button \"编辑\"\n    - button \"预览\"\n    - button \"基础差异\"\n    - button \"磁盘差异\"\n    - button \"历史\"\n    - text: 文稿 发现外部改稿\n    - button \"建立待审候选\"\n    - textbox\n    - text: 9 字符 · UTF-8\n    - button \"保存候选\""
+}

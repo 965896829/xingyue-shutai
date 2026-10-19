@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { profileSchema, type Protocol, type SecretProfile } from '../src/shared/types';
 import { invokeModel, requestBody, normalize, sse, RequestError } from '../src/core/provider';
+import { renderNativeCitations, nativeServerLimit } from '../src/shared/web-search';
+import { nativeResponse, nativeSource, nativeText } from './fixtures/native-search';
 const profile = (protocol: Protocol): SecretProfile => ({
   ...profileSchema.parse({
     id: 'test',
@@ -19,6 +21,35 @@ const tool = {
   description: 'query',
   parameters: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] }
 };
+test('Responses 原生搜索按请求启用，与自定义工具共存且关闭后不发送', () => {
+  const p = profile('responses');
+  const enabled = requestBody(p, 'system', [], [tool], { webSearch: { maxCalls: 2 } }).body;
+  assert.deepEqual(enabled.tools.map((t: any) => t.type), ['function', 'web_search']);
+  assert.equal(enabled.max_tool_calls, 2);
+  assert.ok(enabled.include.includes('web_search_call.action.sources'));
+  assert.equal(enabled.tools[1].external_web_access, true);
+  assert.equal(requestBody(p, '', [], [], { webSearch: { maxCalls: 1, serverLimit: false, required: true } }).body.max_tool_calls, undefined);
+  assert.equal(requestBody(p, '', [], [], { webSearch: { maxCalls: 1, required: true } }).body.tool_choice, 'required');
+  assert.equal(nativeServerLimit({ baseUrl: 'https://api.openai.com/v1' }, { nativeToolLimit: 'auto' }), true);
+  assert.equal(nativeServerLimit({ baseUrl: 'http://127.0.0.1:8080/v1' }, { nativeToolLimit: 'auto' }), false);
+  assert.equal(requestBody(p, 'system', [], [tool]).body.tools.some((t: any) => t.type === 'web_search'), false);
+  assert.throws(() => requestBody(profile('chat'), '', [], [], { webSearch: { maxCalls: 1 } }), /Responses/);
+  assert.throws(() => requestBody({ ...p, tools: false }, '', [], [], { webSearch: { maxCalls: 1 } }), /工具调用/);
+});
+test('原生搜索来源、引用和不透明状态完整保留，额外工具费用不伪记为已知', () => {
+  const p = { ...profile('responses'), inputPrice: 1, outputPrice: 2 };
+  const result = normalize(p, nativeResponse);
+  assert.equal(result.text, nativeText);
+  assert.equal(result.calls.length, 0);
+  assert.equal(result.webSearch!.calls[0].action!.queries![0], 'OpenAI web_search official documentation');
+  assert.equal(result.webSearch!.citations[0].url, nativeSource.url);
+  assert.equal(result.usage.cost, null);
+  const next = requestBody(p, 'system', [{ role: 'assistant', content: result.text, native: result.native }, { role: 'user', content: '继续' }], []);
+  assert.deepEqual(next.body.input.slice(0, 3), nativeResponse.output);
+  assert.match(renderNativeCitations(result.text, result.webSearch!.citations), /𠮷：已查阅官方文档。 \[来源1\]\(<https:/);
+  assert.equal(renderNativeCitations('回答', [{ url: 'javascript:alert(1)', title: '伪来源' }]), '回答');
+  assert.equal(renderNativeCitations('回答', [{ url: 'http://127.0.0.1/private', title: '内网' }]), '回答');
+});
 const responses: Record<string, any> = {
   chat: {
     choices: [

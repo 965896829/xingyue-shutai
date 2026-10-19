@@ -1,6 +1,18 @@
 import fs from 'node:fs';
+import { contractPath, renderContract, tagHash } from './tags';
+import { approvedCreation } from '../shared/creation';
+import { titlePath, renderTitle } from './title-naming';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { checkDatabaseCompatibility, databaseVersion } from './compatibility';
+import { decodeSnapshot, encodeSnapshot, type StoredSnapshot } from './snapshot-codec';
+import { indexProse } from './prose-index';
+import { assertRunTransition } from './runtime/run-state';
+import { ApplicationError } from '../shared/errors';
+import { fingerprint } from './runtime/canonical';
+import { MaterializationConflict, preserveAndMaterialize } from './materialization';
+import { pendingSource } from './memory-source';
+import { contextDependencies } from './context-dependencies';
 import { hash, id, now } from './domain';
 import {
   factSchema,
@@ -13,19 +25,27 @@ import {
 } from '../shared/types';
 import type { CanonicalSnapshot, ChangeSet, SnapshotRef } from '../shared/studio';
 
-export const proposalHash = (run: Run) =>
-  hash(
-    JSON.stringify({
+export const proposalHash = (run: Run) => {
+  const payload = {
       project: run.baseSnapshotId ?? run.baseRevision,
       stage: run.stage,
       chapter: run.chapter,
       changes: run.changes,
       facts: run.facts,
+      ...(run.memoryReview ? { memoryReview: run.memoryReview } : {}),
+      ...(run.factRetractions?.length ? { factRetractions: run.factRetractions } : {}),
+      ...(run.memoryRepair ? { memoryRepair: run.memoryRepair } : {}),
+      ...(run.continuity ? { continuity: run.continuity } : {}),
       dependencies: run.manifest?.sources.map((s) => [s.path, s.hash]),
+      ...(run.manifest?.selectedBy === 'context-compiler-v1' ? { compiledContext: fingerprint(run.manifest) } : {}),
       pipeline: run.pipeline,
+      planning: run.planning,
+      ...(run.naming ? { naming: run.naming } : {}),
+      tagBinding: run.tagBinding,
       skill: run.skillHash
-    })
-  );
+    };
+  return run.candidateFormat === 2 ? fingerprint({ format: 2, runId: run.id, projectId: run.projectId, ...payload }) : hash(JSON.stringify(payload));
+};
 
 export function safePath(root: string, relative: string, internal = false): string {
   if (!relative || path.isAbsolute(relative) || relative.includes('\0') || relative.includes(':'))
@@ -52,21 +72,24 @@ export function safePath(root: string, relative: string, internal = false): stri
   let cursor = path.resolve(root);
   for (const segment of ['', ...normalized.split('/')]) {
     if (segment) cursor = path.join(cursor, segment);
-    if (fs.existsSync(cursor) && fs.lstatSync(cursor).isSymbolicLink())
+    if (fs.lstatSync(cursor, { throwIfNoEntry: false })?.isSymbolicLink())
       throw new Error(`禁止通过符号链接或目录联接访问：${relative}`);
   }
   return target;
 }
-export function atomicWrite(file: string, data: string | Buffer) {
+export function durableCreate(file: string, data: string | Buffer) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  const tmp = `${file}.${id()}.tmp`,
-    fd = fs.openSync(tmp, 'wx');
+  const fd = fs.openSync(file, 'wx');
   try {
     fs.writeFileSync(fd, data);
     fs.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
   }
+}
+export function atomicWrite(file: string, data: string | Buffer) {
+  const tmp = `${file}.${id()}.tmp`;
+  durableCreate(tmp, data);
   try {
     fs.renameSync(tmp, file);
   } catch (e) {
@@ -83,20 +106,22 @@ export function readUtf8(file: string): string {
 }
 export class Database {
   readonly sql: DatabaseSync;
+  private snapshotCache?: { id: string; raw: string; value: CanonicalSnapshot };
   constructor(readonly filename: string) {
     this.sql = new DatabaseSync(filename);
     const schema = (this.sql.prepare('PRAGMA user_version').get() as { user_version: number }).user_version;
-    if (schema > 3) {
+    if (schema > databaseVersion) {
       this.sql.close();
       throw new Error(`数据库版本 ${schema} 高于本客户端支持版本，已停止打开且未修改原数据库`);
     }
     try {
+      checkDatabaseCompatibility(this.sql);
       // VACUUM INTO captures WAL contents too; never copy a live SQLite main file alone.
-      if (schema > 0 && schema < 3) {
-        const backup = `${filename}.before-v3-${id()}.bak`;
+      if (schema > 0 && schema < databaseVersion) {
+        const backup = `${filename}.before-v${databaseVersion}-${id()}.bak`;
         this.sql.prepare('VACUUM INTO ?').run(backup);
         const control = path.dirname(filename),
-          destination = `${control}.before-v3-${id()}`;
+          destination = `${control}.before-v${databaseVersion}-${id()}`;
         fs.mkdirSync(destination);
         const savedControl = path.join(destination, '.novelclient');
         fs.mkdirSync(savedControl);
@@ -148,6 +173,9 @@ export class Database {
       CREATE TABLE IF NOT EXISTS facts(id TEXT PRIMARY KEY,data TEXT NOT NULL,source_hash TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS applied_transactions(id TEXT PRIMARY KEY,applied_at TEXT NOT NULL);
       CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(path UNINDEXED,content,tokenize='trigram');
+      CREATE TABLE IF NOT EXISTS document_fts_rows(path TEXT PRIMARY KEY,hash TEXT NOT NULL,fts_rowid INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS prose_search_versions(id INTEGER PRIMARY KEY,path TEXT NOT NULL,hash TEXT NOT NULL,content TEXT NOT NULL,UNIQUE(path,hash));
+      CREATE VIRTUAL TABLE IF NOT EXISTS prose_search_terms USING fts5(terms,tokenize='unicode61');
       CREATE TABLE IF NOT EXISTS conversations(id TEXT PRIMARY KEY,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS conversation_messages(id TEXT PRIMARY KEY,conversation_id TEXT NOT NULL,data TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS message_conversation ON conversation_messages(conversation_id);
@@ -164,7 +192,16 @@ export class Database {
       CREATE TABLE IF NOT EXISTS vector_chunks(id TEXT PRIMARY KEY,generation TEXT NOT NULL,path TEXT NOT NULL,hash TEXT NOT NULL,chapter INTEGER NOT NULL,start INTEGER NOT NULL,end INTEGER NOT NULL,text TEXT NOT NULL,vector TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS vector_generation ON vector_chunks(generation,path,hash);
       CREATE TABLE IF NOT EXISTS assessments(id TEXT PRIMARY KEY,data TEXT NOT NULL);
-      PRAGMA user_version=3; COMMIT;`);
+      CREATE TABLE IF NOT EXISTS operation_receipts(id TEXT PRIMARY KEY,kind TEXT NOT NULL,input_hash TEXT NOT NULL,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS model_attempts(id TEXT PRIMARY KEY,run_id TEXT NOT NULL,status TEXT NOT NULL,data TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS attempt_run ON model_attempts(run_id);
+      CREATE TABLE IF NOT EXISTS tool_executions(id TEXT PRIMARY KEY,run_id TEXT NOT NULL,args_hash TEXT NOT NULL,status TEXT NOT NULL,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS candidate_versions(run_id TEXT NOT NULL,fingerprint TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(run_id,fingerprint));
+      CREATE TABLE IF NOT EXISTS approvals(id TEXT PRIMARY KEY,run_id TEXT NOT NULL,fingerprint TEXT NOT NULL,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS candidate_commits(run_id TEXT PRIMARY KEY,fingerprint TEXT NOT NULL,transaction_id TEXT UNIQUE NOT NULL,approval_id TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS execution_checkpoints(run_id TEXT NOT NULL,sequence INTEGER NOT NULL,data TEXT NOT NULL,PRIMARY KEY(run_id,sequence));
+      CREATE TABLE IF NOT EXISTS execution_records(id TEXT PRIMARY KEY,run_id TEXT NOT NULL,data TEXT NOT NULL);
+      PRAGMA user_version=${databaseVersion}; COMMIT;`);
     } catch (error) {
       try {
         this.sql.exec('ROLLBACK');
@@ -185,21 +222,67 @@ export class Database {
   project() {
     return this.get<ProjectState>('project')!;
   }
+  private withUsage(run: Run) {
+    const ledger = this.get<Pick<Run, 'usage' | 'steps'>>(`chapterUsage:${run.id}`);
+    if (ledger) {
+      run.usage = ledger.usage;
+      run.steps = ledger.steps;
+    }
+    return run;
+  }
   saveRun(run: Run) {
-    run.proposalHash = proposalHash(run);
-    this.sql
-      .prepare('INSERT INTO runs VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data')
-      .run(run.id, JSON.stringify(run));
+    this.withUsage(run);
+    const candidateHash = proposalHash(run);
+    let version = run.stateVersion ?? 0;
+    this.transaction(() => {
+      const row = this.sql.prepare('SELECT data FROM runs WHERE id=?').get(run.id);
+      const previous = row ? JSON.parse(String(row.data)) as Run : undefined;
+      if (previous && (run.stateVersion ?? 0) !== (previous.stateVersion ?? 0))
+        throw new ApplicationError('VERSION_CONFLICT', '任务状态已改变，请重新读取', ['refresh']);
+      if (previous) assertRunTransition(previous.status, run.status);
+      const changed = !previous || previous.status !== run.status;
+      version = (previous?.stateVersion ?? 0) + 1;
+      const data = JSON.stringify({ ...run, stateVersion: version, proposalHash: candidateHash });
+      this.sql.prepare('INSERT INTO runs VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').run(run.id, data);
+      if (['awaiting_review', 'needs_repair'].includes(run.status) && run.changes.length)
+        this.sql.prepare('INSERT OR IGNORE INTO candidate_versions VALUES(?,?,?)').run(run.id, candidateHash, data);
+      if (changed) {
+        this.event(run.id, 'state-transition', `${previous?.status ?? 'new'} → ${run.status}`, { stateVersion: version });
+        this.sql.prepare('INSERT INTO execution_checkpoints VALUES(?,?,?)').run(run.id, version, JSON.stringify({ version: 1, status: run.status, proposalHash: candidateHash, at: now() }));
+      }
+    });
+    run.stateVersion = version;
+    run.proposalHash = candidateHash;
+  }
+  transaction<T>(action: () => T): T {
+    const savepoint = 'p' + id().replaceAll('-', '');
+    this.sql.exec(`SAVEPOINT ${savepoint}`);
+    try { const result = action(); this.sql.exec(`RELEASE ${savepoint}`); return result; }
+    catch (error) { this.sql.exec(`ROLLBACK TO ${savepoint}; RELEASE ${savepoint}`); throw error; }
   }
   run(runId: string): Run {
     const r = this.sql.prepare('SELECT data FROM runs WHERE id=?').get(runId) as { data: string } | undefined;
     if (!r) throw new Error('运行记录不存在');
-    return JSON.parse(r.data);
+    return this.withUsage(JSON.parse(r.data));
   }
   runs(): Run[] {
     return (
       this.sql.prepare('SELECT data FROM runs ORDER BY rowid DESC LIMIT 100').all() as { data: string }[]
-    ).map((r) => JSON.parse(r.data));
+    ).map((r) => this.withUsage(JSON.parse(r.data)));
+  }
+  runPage(before?: number, watermark?: number, limit = 100) {
+    const boundary = watermark ?? Number(this.sql.prepare('SELECT COALESCE(MAX(rowid),0) AS n FROM runs').get()!.n);
+    const rows = this.sql.prepare('SELECT rowid AS cursor,data FROM runs WHERE rowid<=? AND rowid<? ORDER BY rowid DESC LIMIT ?').all(boundary, before ?? boundary + 1, limit + 1);
+    return { items: rows.slice(0, limit).map(row => ({ ...this.withUsage(JSON.parse(String(row.data))), messages: [], toolResults: {} })), watermark: boundary, nextBefore: rows.length > limit ? Number(rows[limit - 1].cursor) : null };
+  }
+  *allRuns(): Generator<Run> {
+    let before = Number.MAX_SAFE_INTEGER;
+    while (true) {
+      const rows = this.sql.prepare('SELECT rowid AS cursor,data FROM runs WHERE rowid<? ORDER BY rowid DESC LIMIT 100').all(before);
+      if (!rows.length) return;
+      for (const row of rows) yield this.withUsage(JSON.parse(String(row.data)));
+      before = Number(rows.at(-1)!.cursor);
+    }
   }
   event(runId: string, kind: string, text: string, data?: unknown): RunEvent {
     const at = now();
@@ -217,6 +300,16 @@ export class Database {
       .reverse()
       .map((r) => ({ ...r, data: r.data ? JSON.parse(r.data) : undefined }));
   }
+  runEvents(runId: string, afterSeq: number, limit: number): RunEvent[] {
+    this.run(runId);
+    return (
+      this.sql
+        .prepare(
+          'SELECT seq,run_id AS runId,kind,text,at,data FROM events WHERE run_id=? AND seq>? ORDER BY seq LIMIT ?'
+        )
+        .all(runId, afterSeq, limit) as unknown as (RunEvent & { data: string | null })[]
+    ).map((r) => ({ ...r, data: r.data ? JSON.parse(r.data) : undefined }));
+  }
   acceptedDocuments(): { id: string; path: string; hash: string | null; bytes: number }[] {
     return this.sql.prepare('SELECT * FROM documents ORDER BY path').all() as never;
   }
@@ -230,6 +323,11 @@ export class Database {
         'SELECT r.hash,r.created_at AS createdAt,r.tx FROM revisions r JOIN documents d ON d.id=r.document_id WHERE d.path=? ORDER BY r.created_at DESC'
       )
       .all(relative);
+  }
+  historyPage(relative: string, before?: number, watermark?: number, limit = 100) {
+    const boundary = watermark ?? Number(this.sql.prepare('SELECT COALESCE(MAX(rowid),0) AS n FROM revisions').get()!.n);
+    const rows = this.sql.prepare('SELECT r.rowid AS cursor,r.hash,r.created_at AS createdAt,r.tx FROM revisions r JOIN documents d ON d.id=r.document_id WHERE d.path=? AND r.rowid<=? AND r.rowid<? ORDER BY r.rowid DESC LIMIT ?').all(relative, boundary, before ?? boundary + 1, limit + 1);
+    return { items: rows.slice(0, limit).map(row => ({ hash: String(row.hash), createdAt: String(row.createdAt), tx: String(row.tx) })), watermark: boundary, nextBefore: rows.length > limit ? Number(rows[limit - 1].cursor) : null };
   }
   replaceFacts(facts: Fact[], revision: number) {
     this.sql.exec('DELETE FROM facts');
@@ -247,12 +345,28 @@ export class Database {
     return key ? this.snapshot(key) : null;
   }
   snapshot(key: string): CanonicalSnapshot {
+    return structuredClone(this.cachedSnapshot(key));
+  }
+  snapshotDocument(key: string, relative: string) {
+    return this.cachedSnapshot(key).documents[relative];
+  }
+  headRef(): SnapshotRef | null {
+    const key = this.get<string>('headSnapshot');
+    return key ? this.sql.prepare('SELECT id,project_id AS projectId,revision,created_at AS createdAt FROM snapshots WHERE id=?').get(key) as unknown as SnapshotRef : null;
+  }
+  private cachedSnapshot(key: string): CanonicalSnapshot {
     const row = this.sql.prepare('SELECT data FROM snapshots WHERE id=?').get(key) as
       { data: string } | undefined;
     if (!row) throw new Error('此历史快照不可用');
-    const value = JSON.parse(row.data) as CanonicalSnapshot;
+    if (this.snapshotCache?.id === key && this.snapshotCache.raw === row.data) return this.snapshotCache.value;
+    const value = decodeSnapshot(JSON.parse(row.data) as StoredSnapshot, parent => {
+      const source = this.sql.prepare('SELECT data FROM snapshots WHERE id=?').get(parent);
+      if (!source) throw new Error('历史快照的基础版本缺失');
+      return JSON.parse(String(source.data));
+    });
     value.facts = value.facts.map((f) => factSchema.parse(f));
     if (value.projectId !== this.project()?.id) throw new Error('快照不属于当前作品');
+    this.snapshotCache = { id: key, raw: row.data, value };
     return value;
   }
   snapshots(): SnapshotRef[] {
@@ -261,6 +375,11 @@ export class Database {
         'SELECT id, project_id AS projectId, revision, created_at AS createdAt FROM snapshots ORDER BY rowid DESC LIMIT 1000'
       )
       .all() as unknown as SnapshotRef[];
+  }
+  snapshotPage(before?: number, watermark?: number, limit = 100) {
+    const boundary = watermark ?? Number(this.sql.prepare('SELECT COALESCE(MAX(rowid),0) AS n FROM snapshots').get()!.n);
+    const rows = this.sql.prepare('SELECT rowid AS cursor,id,project_id AS projectId,revision,created_at AS createdAt FROM snapshots WHERE rowid<=? AND rowid<? ORDER BY rowid DESC LIMIT ?').all(boundary, before ?? boundary + 1, limit + 1);
+    return { items: rows.slice(0, limit).map(row => ({ id: String(row.id), projectId: String(row.projectId), revision: Number(row.revision), createdAt: String(row.createdAt) })), watermark: boundary, nextBefore: rows.length > limit ? Number(rows[limit - 1].cursor) : null };
   }
   captureSnapshot(snapshotId: string = id()) {
     const project = this.project();
@@ -279,9 +398,14 @@ export class Database {
       ),
       facts: this.facts()
     };
+    const previous = snapshot.parentId ? this.cachedSnapshot(snapshot.parentId) : null;
+    const previousRaw = snapshot.parentId ? this.sql.prepare('SELECT data FROM snapshots WHERE id=?').get(snapshot.parentId) : undefined;
+    const depth = previousRaw ? Number(JSON.parse(String(previousRaw.data)).depth ?? 0) : 0;
+    const raw = JSON.stringify(encodeSnapshot(snapshot, previous, depth));
     this.sql
       .prepare('INSERT INTO snapshots VALUES(?,?,?,?,?)')
-      .run(snapshotId, project.id, project.revision, snapshot.createdAt, JSON.stringify(snapshot));
+      .run(snapshotId, project.id, project.revision, snapshot.createdAt, raw);
+    this.snapshotCache = { id: snapshot.id, raw, value: snapshot };
     this.set('headSnapshot', snapshotId);
   }
   close() {
@@ -289,6 +413,7 @@ export class Database {
   }
 }
 interface Journal {
+  approvalId?: string;
   id: string;
   state: 'prepared' | 'committed';
   createdAt: string;
@@ -299,12 +424,19 @@ interface Journal {
   payloadHash?: string;
   facts?: Fact[];
 }
+function completedJournal(journal: Journal) {
+  const { project, run, facts, ...record } = journal;
+  return JSON.stringify({ ...record, state: 'committed' }, null, 2);
+}
 export class FileStore {
   readonly root: string;
   readonly control: string;
   readonly db: Database;
   private lockOwned = false;
+  private readonly lockNonce = id();
   private fingerprints = new Map<string, { signature: string; hash: string; bytes: number }>();
+  private readonly pathOrder = new Intl.Collator('zh-CN', { numeric: true });
+  private listing?: DocumentInfo[];
   constructor(root: string) {
     this.root = path.resolve(root);
     if (!fs.existsSync(this.root) || fs.lstatSync(this.root).isSymbolicLink())
@@ -323,6 +455,7 @@ export class FileStore {
     const lock = path.join(this.control, 'write-lock.json');
     if (fs.existsSync(lock)) {
       const old = JSON.parse(readUtf8(lock)) as { pid: number };
+      if (!Number.isSafeInteger(old.pid) || old.pid <= 0) throw new Error('作品锁身份无效，已停止自动接管');
       let alive = true;
       try {
         process.kill(old.pid, 0);
@@ -332,13 +465,13 @@ export class FileStore {
       if (alive) throw new Error('这部作品正在另一个窗口或进程中打开，请先关闭它');
       fs.unlinkSync(lock);
     }
-    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, createdAt: now() }), { flag: 'wx' });
+    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, nonce: this.lockNonce, startedAt: performance.timeOrigin, createdAt: now() }), { flag: 'wx' });
     this.lockOwned = true;
   }
   private releaseLock() {
     if (this.lockOwned) {
       const f = path.join(this.control, 'write-lock.json');
-      if (fs.existsSync(f)) fs.unlinkSync(f);
+      if (fs.existsSync(f) && JSON.parse(readUtf8(f)).nonce === this.lockNonce) fs.unlinkSync(f);
       this.lockOwned = false;
     }
   }
@@ -387,7 +520,7 @@ export class FileStore {
   readAccepted(relative: string, snapshotId?: string) {
     safePath(this.root, relative);
     const version = snapshotId
-      ? this.db.snapshot(snapshotId).documents[relative]
+      ? this.db.snapshotDocument(snapshotId, relative)
       : this.db.document(relative)?.hash;
     if (!version) throw new Error(`没有已接受版本：${relative}`);
     return {
@@ -396,8 +529,29 @@ export class FileStore {
       content: new TextDecoder('utf-8', { fatal: true }).decode(this.object(version))
     };
   }
+  inspect(relative: string): DocumentInfo | undefined {
+    const file = safePath(this.root, relative), accepted = this.db.document(relative);
+    const stat = fs.statSync(file, { bigint: true, throwIfNoEntry: false });
+    if (!stat) { this.invalidateListing(); return accepted ? { ...accepted, acceptedHash: accepted.hash, hash: null, status: 'missing' } : undefined; }
+    if (!stat.isFile()) return undefined;
+    const signature = `${stat.mtimeNs}:${stat.ctimeNs}:${stat.size}`;
+    let cached = this.fingerprints.get(relative);
+    if (!cached || cached.signature !== signature) {
+      this.invalidateListing();
+      const raw = fs.readFileSync(file);
+      cached = { signature, hash: hash(raw), bytes: raw.length };
+      this.fingerprints.set(relative, cached);
+    }
+    return { id: accepted?.id ?? relative, path: relative, hash: cached.hash, acceptedHash: accepted?.hash ?? null, status: accepted ? accepted.hash === cached.hash ? 'accepted' : 'external' : 'new', bytes: cached.bytes };
+  }
+  invalidateListing() { this.listing = undefined; }
+  documentListing() { return (this.listing ?? this.scan()).map(document => ({ ...document })); }
   scan(): DocumentInfo[] {
     const found = new Map<string, DocumentInfo>();
+    const accepted = new Map(this.db.acceptedDocuments().map(d => [d.path, d]));
+    if (fs.lstatSync(this.root).isSymbolicLink()) throw new Error('作品目录不能是目录联接');
+    const canonicalRoot = fs.realpathSync.native(this.root);
+    const pathKey = (value: string) => process.platform === 'win32' ? value.toLowerCase() : value;
     const walk = (dir: string, prefix = '') => {
       for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
         if (
@@ -411,8 +565,9 @@ export class FileStore {
         if (rel === '00_作者输入/自由草稿') continue;
         if (ent.isDirectory()) walk(path.join(dir, ent.name), rel + '/');
         else if (/\.md$/i.test(ent.name)) {
-          const file = safePath(this.root, rel),
-            stat = fs.statSync(file, { bigint: true }),
+          const file = path.join(dir, ent.name);
+          if (pathKey(fs.realpathSync.native(file)) !== pathKey(path.join(canonicalRoot, rel))) throw new Error(`禁止通过符号链接或目录联接访问：${rel}`);
+          const stat = fs.statSync(file, { bigint: true }),
             signature = `${stat.mtimeNs}:${stat.ctimeNs}:${stat.size}`;
           let cached = this.fingerprints.get(rel);
           if (!cached || cached.signature !== signature) {
@@ -421,7 +576,7 @@ export class FileStore {
             this.fingerprints.set(rel, cached);
           }
           const h = cached.hash,
-            old = this.db.document(rel);
+            old = accepted.get(rel);
           found.set(rel, {
             id: old?.id ?? rel,
             path: rel,
@@ -434,12 +589,33 @@ export class FileStore {
       }
     };
     walk(this.root);
-    for (const d of this.db.acceptedDocuments())
+    for (const d of accepted.values())
       if (!found.has(d.path))
         found.set(d.path, { ...d, acceptedHash: d.hash, hash: null, status: 'missing' });
-    return [...found.values()].sort((a, b) => a.path.localeCompare(b.path, 'zh-CN', { numeric: true }));
+    for (const key of this.fingerprints.keys()) if (!found.has(key)) this.fingerprints.delete(key);
+    this.listing = [...found.values()].sort((a, b) => this.pathOrder.compare(a.path, b.path));
+    return this.listing.map(document => ({ ...document }));
   }
-  commit(changes: Change[], project: ProjectState, run?: Run, fault?: (point: string) => void): string {
+  commit(changes: Change[], project: ProjectState, run?: Run, fault?: (point: string) => void, approvalId?: string): string {
+    this.invalidateListing();
+    if (run) {
+      const previous = this.db.sql.prepare('SELECT fingerprint,transaction_id FROM candidate_commits WHERE run_id=?').get(run.id);
+      if (previous) {
+        if (previous.fingerprint !== proposalHash(run)) throw new ApplicationError('APPROVAL_STALE', '此候选已经以另一版本提交');
+        this.materialize(String(previous.transaction_id), fault);
+        return String(previous.transaction_id);
+      }
+      if (!approvalId) throw new ApplicationError('PERMISSION_DENIED', '正式候选必须通过作者审批入口提交');
+    }
+    for (const c of changes)
+      if (
+        c.path === contractPath &&
+        (!approvedCreation(project) || c.content !== renderContract(approvedCreation(project)!.spec, approvedCreation(project)!.contract))
+      )
+        throw new Error('标签契约展示只能由已批准的结构化记录生成');
+    for (const c of changes)
+      if (c.path === titlePath && (!project.titleBinding || c.content !== renderTitle(project.titleBinding)))
+        throw new Error('书名展示只能由已批准的命名记录生成');
     if (changes.some((c) => c.path.replaceAll('\\', '/').toLowerCase().startsWith('00_作者输入/自由草稿/')))
       throw new Error('自由草稿不能通过正式提交保存，请使用草稿版本接口');
     if (!changes.length) throw new Error('提交没有文件内容');
@@ -479,6 +655,7 @@ export class FileStore {
       .prepare('INSERT INTO changesets VALUES(?,?,?)')
       .run(tx, payloadHash, JSON.stringify(changeset));
     const journal: Journal = {
+      approvalId,
       id: tx,
       state: 'prepared',
       createdAt: now(),
@@ -492,8 +669,7 @@ export class FileStore {
     atomicWrite(jp, JSON.stringify(journal, null, 2));
     fault?.('prepared');
     this.applyJournal(journal, fault);
-    journal.state = 'committed';
-    atomicWrite(jp, JSON.stringify(journal, null, 2));
+    atomicWrite(jp, completedJournal(journal));
     fault?.('committed');
     return tx;
   }
@@ -519,6 +695,18 @@ export class FileStore {
       this.materialize(j.id, fault);
       return;
     }
+    if (j.run && !j.approvalId) {
+      const row = this.db.sql.prepare('SELECT data FROM changesets WHERE id=?').get(j.id);
+      const prior = row ? JSON.parse(String(row.data)) as ChangeSet : undefined;
+      if (!prior || prior.actor !== 'local-author' || prior.runId !== j.run.id || !j.run.accepted || prior.payloadHash !== j.payloadHash ||
+        fingerprint(prior.scope) !== fingerprint(j.changes.map((change) => change.path)))
+        throw new ApplicationError('APPROVAL_STALE', '旧提交缺少可验证的作者确认依据，保留记录，未自动提交');
+      j.approvalId = `legacy:${j.id}`;
+      const approval = { version: 1, id: j.approvalId, runId: j.run.id, fingerprint: proposalHash(j.run), projectId: j.project.id,
+        baseSnapshotId: j.baseSnapshotId ?? null, scope: prior.scope, commitHash: fingerprint({ project: j.project, changes: j.changes }),
+        actor: prior.actor, issuedAt: prior.createdAt, revokedAt: null, consumedByCommit: null, source: 'legacy-change-set', sourceId: prior.id };
+      this.db.sql.prepare('INSERT OR IGNORE INTO approvals VALUES(?,?,?,?)').run(j.approvalId, j.run.id, proposalHash(j.run), JSON.stringify(approval));
+    }
     if (j.baseSnapshotId !== undefined && j.baseSnapshotId !== (this.db.get('headSnapshot') ?? null))
       throw new Error('提交基于旧快照，未写入正式版本');
     for (const c of j.changes) {
@@ -529,6 +717,19 @@ export class FileStore {
     fault?.('before-database');
     this.db.sql.exec('BEGIN IMMEDIATE');
     try {
+      if (j.run) {
+        const approvalRow = this.db.sql.prepare('SELECT data FROM approvals WHERE id=?').get(j.approvalId ?? '');
+        if (!approvalRow) throw new ApplicationError('APPROVAL_STALE', '提交缺少可信审批记录');
+        const approval = JSON.parse(String(approvalRow.data));
+        if (approval.fingerprint !== proposalHash(j.run) || approval.projectId !== j.project.id || approval.revokedAt || approval.consumedByCommit ||
+          approval.baseSnapshotId !== j.baseSnapshotId || approval.commitHash !== fingerprint({ project: j.project, changes: j.changes }) ||
+          fingerprint(approval.scope) !== fingerprint(j.changes.map((change) => change.path)))
+          throw new ApplicationError('APPROVAL_STALE', '审批已失效或已经使用');
+        if (proposalHash(this.db.run(j.run.id)) !== approval.fingerprint) throw new ApplicationError('APPROVAL_STALE', '候选版本已改变');
+        approval.consumedByCommit = j.id;
+        this.db.sql.prepare('UPDATE approvals SET data=? WHERE id=?').run(JSON.stringify(approval), j.approvalId!);
+        this.db.sql.prepare('INSERT INTO candidate_commits VALUES(?,?,?,?)').run(j.run.id, proposalHash(j.run), j.id, j.approvalId!);
+      }
       for (const c of j.changes) {
         const old = this.db.document(c.path),
           docId = old?.id ?? id(),
@@ -541,13 +742,29 @@ export class FileStore {
         this.db.sql
           .prepare('INSERT OR IGNORE INTO revisions VALUES(?,?,?,?)')
           .run(docId, c.newHash, j.createdAt, j.id);
-        this.db.sql.prepare('DELETE FROM documents_fts WHERE path=?').run(c.path);
-        this.db.sql
+        const indexed = this.db.sql.prepare('SELECT hash,fts_rowid FROM document_fts_rows WHERE path=?').get(c.path);
+        if (old) {
+          if (indexed?.hash === old.hash) this.db.sql.prepare('DELETE FROM documents_fts WHERE rowid=?').run(indexed.fts_rowid);
+          else this.db.sql.prepare('DELETE FROM documents_fts WHERE path=?').run(c.path);
+        }
+        const indexedRow = this.db.sql
           .prepare('INSERT INTO documents_fts(path,content) VALUES(?,?)')
           .run(c.path, new TextDecoder().decode(raw));
+        this.db.sql.prepare('INSERT INTO document_fts_rows VALUES(?,?,?) ON CONFLICT(path) DO UPDATE SET hash=excluded.hash,fts_rowid=excluded.fts_rowid').run(c.path, c.newHash, indexedRow.lastInsertRowid);
+        indexProse(this.db.sql, c.path, c.newHash, raw.toString('utf8'));
       }
       this.db.set('project', j.project);
       if (j.run) this.db.saveRun(j.run);
+      const titleSelection = j.run?.planning?.titleSelection;
+      if (titleSelection) {
+        const child = this.db.run(titleSelection.batchRunId);
+        if (child.naming?.sourceRunId !== j.run!.id || titleSelection.batchHash !== tagHash(child.naming.batch) ||
+            child.naming.review?.hash !== titleSelection.batchHash || child.naming.review.result.decisions.find(v => v.candidateId === titleSelection.candidate.id)?.verdict !== 'keep')
+          throw new ApplicationError('APPROVAL_STALE', '关联书名审核记录已改变，未提交作品方案');
+        assertRunTransition(child.status, 'complete');
+        child.status = 'complete'; child.accepted = true; child.updatedAt = now();
+        this.db.saveRun(child);
+      }
       const facts: Fact[] = [];
       for (const doc of this.db.acceptedDocuments()) {
         if (!doc.path.startsWith('04_') || !doc.hash) continue;
@@ -557,7 +774,7 @@ export class FileStore {
         if (match) facts.push(...JSON.parse(match[1]).map((f: unknown) => factSchema.parse(f)));
       }
       for (const f of facts) {
-        if (f.evidence.some((e) => this.db.document(e.path)?.hash !== e.hash)) {
+        if (f.reviewStatus === 'accepted' && f.state !== 'superseded' && f.evidence.some((e) => this.db.document(e.path)?.hash !== e.hash)) {
           f.state = 'disputed';
           f.reviewStatus = 'disputed';
         }
@@ -579,12 +796,29 @@ export class FileStore {
           .prepare("DELETE FROM vector_chunks WHERE path=? AND hash<>? AND id NOT LIKE 'fact:%'")
           .run(c.path, c.newHash);
       }
-      if (j.run?.manifest)
-        for (const source of j.run.manifest.sources)
-          for (const c of j.changes.filter((c) => c.path.startsWith('07_')))
+      if (j.run) {
+        const sources = [...(j.run.manifest ? contextDependencies(j.run.manifest) : []),
+          ...[...(j.run.manifest?.hardConstraints ?? []), ...(j.run.manifest?.retrievedFacts ?? [])].map(fact => ({ path: fact.id, hash: hash(JSON.stringify(fact)) })),
+          ...Object.entries(j.run.memoryRepair?.sourceHashes ?? {}).map(([path, hash]) => ({ path, hash }))];
+        for (const source of sources)
+          for (const c of j.changes.filter(c => /^(05_|06_|07_)/.test(c.path) && c.path !== source.path))
             this.db.sql
               .prepare('INSERT OR IGNORE INTO dependencies VALUES(?,?,?,?)')
-              .run(source.path, source.hash, c.path, 'prose');
+              .run(source.path, source.hash, c.path, c.path.startsWith('07_') ? 'prose' : 'plan');
+        const reviewed = j.run.memoryRepair?.completed ?? [];
+        for (let i = 0; i < reviewed.length; i++)
+          for (const earlier of reviewed.slice(0, i).filter(item => /^(05_|06_)/.test(item.path)))
+            if (/^(05_|06_)/.test(reviewed[i].path)) this.db.sql.prepare('INSERT OR IGNORE INTO dependencies VALUES(?,?,?,?)')
+              .run(earlier.path, this.db.document(earlier.path)!.hash, reviewed[i].path, 'plan');
+      }
+      for (const row of this.db.sql.prepare("SELECT id,dependent FROM review_queue WHERE status='pending'").all()) {
+        const dependent = String(row.dependent);
+        const fact = facts.find(fact => fact.id === dependent);
+        const resolved = fact
+          ? fact.reviewStatus === 'retracted' || fact.state === 'superseded' || fact.reviewStatus === 'accepted' && fact.evidence.every(e => this.db.document(e.path)?.hash === e.hash && !pendingSource(j.project, e.path))
+          : !!this.db.document(dependent) && !pendingSource(j.project, dependent);
+        if (resolved) this.db.sql.prepare("UPDATE review_queue SET status='complete' WHERE id=?").run(row.id);
+      }
       this.db.captureSnapshot(j.id);
       this.db.sql
         .prepare('INSERT INTO materialization_outbox VALUES(?,?,?,NULL)')
@@ -604,10 +838,12 @@ export class FileStore {
         `SELECT id,data FROM materialization_outbox WHERE status<>'complete' ${tx ? 'AND id=?' : ''} ORDER BY rowid`
       )
       .all(...(tx ? [tx] : [])) as { id: string; data: string }[];
+    if (rows.length) this.invalidateListing();
     for (const row of rows) {
       const changes = JSON.parse(row.data) as Journal['changes'];
       const conflict = changes.find((c) => {
         const current = fileHash(safePath(this.root, c.path));
+        if (current === null && c.baseHash !== null && fileHash(safePath(this.root, `.novelclient/preserved/${row.id}-${hash(c.path)}.previous`, true)) === c.baseHash) return false;
         return current !== c.baseHash && current !== c.newHash;
       });
       if (conflict) {
@@ -617,8 +853,11 @@ export class FileStore {
         continue;
       }
       for (const c of changes) {
-        const file = safePath(this.root, c.path);
-        if (fileHash(file) !== c.newHash) atomicWrite(file, this.object(c.newHash));
+        try { preserveAndMaterialize(this, row.id, c, fault); }
+        catch (error) {
+          this.db.sql.prepare('UPDATE materialization_outbox SET status=?,error=? WHERE id=?').run(error instanceof MaterializationConflict ? 'conflict' : 'pending', error instanceof Error ? error.message : '文件同步失败', row.id);
+          return;
+        }
         fault?.('file:' + c.path);
       }
       this.db.sql
@@ -629,17 +868,17 @@ export class FileStore {
   recover(): string[] {
     const dir = safePath(this.root, '.novelclient/transactions', true);
     const messages: string[] = [];
-    const journals = fs
-      .readdirSync(fs.existsSync(dir) ? dir : this.control)
-      .filter((f) => f.endsWith('.json'))
-      .filter((f) => fs.existsSync(path.join(dir, f)))
-      .map((f) => ({ p: path.join(dir, f), j: JSON.parse(readUtf8(path.join(dir, f))) as Journal }))
-      .sort((a, b) => a.j.createdAt.localeCompare(b.j.createdAt));
+    const journals: { p: string; j: Journal }[] = [];
+    for (const file of fs.existsSync(dir) ? fs.readdirSync(dir) : []) {
+      if (!file.endsWith('.json')) continue;
+      const p = path.join(dir, file), j = JSON.parse(readUtf8(p)) as Journal;
+      if (j.state === 'prepared') journals.push({ p, j });
+    }
+    journals.sort((a, b) => a.j.createdAt.localeCompare(b.j.createdAt));
     for (const { p, j } of journals)
       if (j.state === 'prepared') {
         this.applyJournal(j);
-        j.state = 'committed';
-        atomicWrite(p, JSON.stringify(j, null, 2));
+        atomicWrite(p, completedJournal(j));
         messages.push(`已恢复提交 ${j.id}`);
       }
     this.materialize();

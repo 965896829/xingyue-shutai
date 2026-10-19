@@ -1,0 +1,5 @@
+{
+  "creationSurvivesModelCapabilityFailure": true,
+  "pausedBeforeModelCall": true,
+  "changeModelAndContinueWithoutRecreating": true
+}

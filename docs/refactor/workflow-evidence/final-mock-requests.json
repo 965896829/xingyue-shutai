@@ -1,0 +1,52 @@
+[
+  {
+    "name": "submit_planning_report",
+    "stage": "S01",
+    "at": "2026-10-10T17:16:06.351Z",
+    "resolutions": {}
+  },
+  {
+    "name": "submit_planning_review",
+    "stage": "S01",
+    "at": "2026-10-10T17:16:06.528Z",
+    "resolutions": {}
+  },
+  {
+    "name": "submit_creation_contract",
+    "stage": "S01",
+    "at": "2026-10-10T17:16:21.960Z",
+    "resolutions": {
+      "A_WORLD": "作者已确认采用此设定",
+      "A_HERO": "作者已确认采用此设定"
+    }
+  },
+  {
+    "name": "submit_planning_review",
+    "stage": "S01",
+    "at": "2026-10-10T17:16:22.100Z",
+    "resolutions": {
+      "A_WORLD": "作者已确认采用此设定",
+      "A_HERO": "作者已确认采用此设定"
+    }
+  },
+  {
+    "name": "read_naming_rules",
+    "stage": "S02",
+    "at": "2026-10-10T17:16:23.489Z"
+  },
+  {
+    "name": "read_naming_rules",
+    "stage": "S02",
+    "at": "2026-10-10T17:16:23.638Z"
+  },
+  {
+    "name": "read_naming_rules",
+    "stage": "S03",
+    "at": "2026-10-10T17:16:48.332Z"
+  },
+  {
+    "name": "read_naming_rules",
+    "stage": "S03",
+    "at": "2026-10-10T17:16:48.486Z"
+  }
+]

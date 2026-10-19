@@ -1,0 +1,9 @@
+{
+  "optionalTagPath": true,
+  "createAutomaticallyStartsPlanning": true,
+  "extraTagsCollapsed": true,
+  "assumptionEditsCollapsed": true,
+  "noRepeatedInput": true,
+  "batchDirectionConfirmation": true,
+  "acceptedS01WithoutStartingS02": true
+}

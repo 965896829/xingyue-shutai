@@ -1,19 +1,17 @@
 {
-  "contract_version": "1.0",
+  "contract_version": "2.0",
   "stage": "optional",
   "optional": true,
   "tools": [
-    "project.read_snapshot",
-    "artifact.read",
-    "memory.query",
-    "memory.trace_source",
-    "skill.load",
-    "candidate.write",
-    "candidate.diff",
-    "changeset.propose",
-    "validate.run",
-    "review.request",
-    "research.search"
+    "read_naming_rules",
+    "read_document",
+    "search_memory",
+    "propose_changes",
+    "propose_memory",
+    "validate",
+    "ask_author",
+    "public_search",
+    "extract_pages"
   ],
   "write_scope": "candidate-only",
   "can_approve": false,
@@ -23,8 +21,8 @@
   "max_repairs": 2,
   "inputs": "平台与目标读者、题材范围、时间窗口、联网/材料权限、可用数据源；研究预算。",
   "outputs": [
-    "10_市场与读者/市场证据.md",
-    "10_市场与读者/题材机会假设.md"
+    "11_创作研究/市场证据.md",
+    "11_创作研究/题材机会假设.md"
   ],
   "acceptance_criteria": [
     "来源与观察期齐全",

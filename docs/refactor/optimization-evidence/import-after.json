@@ -1,0 +1,45 @@
+{
+  "fixture": {
+    "paragraphs": 50000,
+    "xmlBytes": 5400151,
+    "fileBytes": 18755
+  },
+  "samples": [
+    {
+      "parseMs": 1848.0054,
+      "heartbeatMs": 9.869100000000003,
+      "maxGap": 24.746599999999944,
+      "ticks": 118,
+      "characters": 1349998,
+      "hash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98",
+      "contentHash": "ae849e6b77e4c003b9fcff84e01472b1ada404df3ec06b8c7eb360982cd08bf2"
+    },
+    {
+      "parseMs": 1784.4364,
+      "heartbeatMs": 23.384300000000167,
+      "maxGap": 23.434999999999945,
+      "ticks": 113,
+      "characters": 1349998,
+      "hash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98",
+      "contentHash": "ae849e6b77e4c003b9fcff84e01472b1ada404df3ec06b8c7eb360982cd08bf2"
+    },
+    {
+      "parseMs": 1762.5325000000003,
+      "heartbeatMs": 14.71389999999974,
+      "maxGap": 16.301900000000387,
+      "ticks": 113,
+      "characters": 1349998,
+      "hash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98",
+      "contentHash": "ae849e6b77e4c003b9fcff84e01472b1ada404df3ec06b8c7eb360982cd08bf2"
+    },
+    {
+      "parseMs": 1758.3850000000002,
+      "heartbeatMs": 10.557099999999991,
+      "maxGap": 17.23619999999937,
+      "ticks": 113,
+      "characters": 1349998,
+      "hash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98",
+      "contentHash": "ae849e6b77e4c003b9fcff84e01472b1ada404df3ec06b8c7eb360982cd08bf2"
+    }
+  ]
+}

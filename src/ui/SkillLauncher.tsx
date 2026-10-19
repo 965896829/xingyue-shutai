@@ -1,3 +1,4 @@
+import { invokeCommand } from '../shared/client';
 import { useEffect, useRef, useState } from 'react';
 import { useDialog } from './useDialog';
 function resultText(value: any): string {
@@ -24,8 +25,7 @@ export function SkillLauncher({ profileId, onRun }: { profileId: string; onRun: 
   const dialog = useRef<HTMLElement | null>(null);
   useDialog(dialog, open, () => setOpen(false));
   useEffect(() => {
-    void window
-      .wenxu!.invoke<typeof skills>('skills.list')
+    void invokeCommand('skills.list')
       .then(setSkills)
       .catch((e) => setError(e.message));
   }, []);
@@ -47,8 +47,7 @@ export function SkillLauncher({ profileId, onRun }: { profileId: string; onRun: 
                 e.preventDefault();
                 setBusy(true);
                 setError('');
-                void window
-                  .wenxu!.invoke<any>('skill.run', {
+                void invokeCommand('skill.run', {
                     skillId: selected,
                     request: request || skills.find((s) => s.id === selected)?.title,
                     profileId,

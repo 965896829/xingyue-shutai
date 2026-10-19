@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const sample = process.argv[2];
+if (!/^[a-z-]+$/.test(sample)) throw new Error('Invalid sample');
+const base = path.resolve('.test-output/newbook-20261011');
+const directory = path.join(base, sample + '-books');
+fs.mkdirSync(directory, { recursive: true });
+const targets = await fetch('http://127.0.0.1:9230/json').then(r => r.json());
+const socket = new WebSocket(targets[0].webSocketDebuggerUrl);
+await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror = reject; });
+const expression = `(() => { const e = process.getBuiltinModule('module').createRequire(process.execPath)('electron'); if (e.app.getPath('userData') !== ${JSON.stringify(path.join(base, sample + '-profile'))}) throw new Error('Wrong profile'); e.dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [${JSON.stringify(directory)}] }); return e.app.getPath('userData'); })()`;
+const response = new Promise((resolve, reject) => { socket.onmessage = event => { const message = JSON.parse(event.data); if (message.id === 1) { if (message.error || message.result.exceptionDetails) reject(new Error(JSON.stringify(message))); else resolve(message.result.result.value); } }; });
+socket.send(JSON.stringify({ id: 1, method: 'Runtime.evaluate', params: { expression, returnByValue: true } }));
+console.log(await response);
+socket.close();

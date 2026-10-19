@@ -1,7 +1,13 @@
-import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { invokeCommand } from '../shared/client';
+import type { Invoke } from '../shared/contracts';
+import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
+import { resumeArguments, runCapabilities } from '../shared/run-capabilities';
+import { taskErrorId, taskFileId, taskHelpLink, taskIssueId, taskSectionId } from '../shared/task-links';
+import { sendOnEnter } from './composer-keyboard';
+import { jumpToChatTarget } from './chat-navigation';
+import { ProjectFiles } from './ProjectFiles';
 import {
   BookOpen,
-  Feather,
   Plus,
   FolderOpen,
   Settings,
@@ -48,15 +54,23 @@ import { LegacyDialog } from './LegacyDialog';
 import { ProviderSettings as ModelSettings } from './ProviderSettings';
 import { modelLabel } from './model-label';
 import { ThemeToggle } from './ThemeToggle';
+import { BrandLogo } from './BrandLogo';
+import { brand } from '../shared/brand';
 import { DeleteButton } from './DeleteButton';
 import { ProximitySidebar, type ProximitySection } from './ProximitySidebar';
 import { RecycleBin } from './RecycleBin';
 import { ChatWorkspace } from './ChatWorkspace';
+import { TaskDiscussion } from './TaskDiscussion';
 import { AssistantSettings } from './AssistantSettings';
 import { MemoryStudio, CharacterInspector, SourceDialog } from './MemoryStudio';
 import { NarrativePanel } from './NarrativePanel';
 import { SkillLauncher } from './SkillLauncher';
 import { ExpressionSettings } from './ExpressionSettings';
+import { TagForm, TagWorkspace, cleanTagInput } from './TagWorkspace';
+import { emptyTagInput } from '../shared/tags';
+import { requestErrorText, retryNeedsConfirmation, taskReplyText, documentPreviewText } from '../shared/run-presentation';
+import { renderNativeCitations } from '../shared/web-search';
+import { WebSearchEvidence } from './WebSearchEvidence';
 import type { SourceRef } from '../shared/studio';
 import { gateEvent, syncEventCursor, type EventCursor } from '../shared/event-gate';
 import './studio.css';
@@ -105,9 +119,9 @@ const btn = (icon: ReactNode, text: string) => (
     <span>{text}</span>
   </>
 );
-const invoke = <T,>(command: Command, args: Record<string, unknown> = {}) => {
+const invoke: Invoke = (command, args) => {
   if (!window.wenxu) throw new Error('请使用桌面客户端，浏览器预览不具备本地文件权限');
-  return window.wenxu.invoke<T>(command, args);
+  return invokeCommand(command, args);
 };
 function Modal({
   title,
@@ -150,8 +164,9 @@ export function App() {
   const [focus, setFocus] = useState(false);
   const refreshSeq = useRef(0),
     eventCursor = useRef<EventCursor>({ seq: 0, waiting: false });
-  const [workView, setWorkView] = useState<'chat' | 'tasks'>('chat');
+  const [workView, setWorkView] = useState<'chat' | 'tasks' | 'tags'>('chat');
   const [agentSettings, setAgentSettings] = useState(false);
+  const [titleConfirmation, setTitleConfirmation] = useState<{ projectId: string; candidate: Run; startNext: boolean; warningReason: string } | null>(null);
   const [snapshot, setSnapshot] = useState(empty),
     [page, setPage] = useState<'work' | 'memory' | 'cover'>('work'),
     [modal, setModal] = useState<'new' | 'settings' | 'project' | 'transfer' | 'legacy' | 'trash' | null>(
@@ -182,7 +197,41 @@ export function App() {
     [histories, setHistories] = useState<{ hash: string; createdAt: string }[]>([]),
     [manifest, setManifest] = useState<ContextManifest | null>(null);
   const [reviewReason, setReviewReason] = useState('');
+  const historyRequest = useRef(0);
+  useEffect(() => { historyRequest.current++; setHistories([]); }, [doc?.path, doc?.runId, snapshot.projectSessionId]);
+  async function loadDocumentHistory(path: string) {
+    const request = ++historyRequest.current, session = snapshot.projectSessionId;
+    let result = await invoke('document.historyPage', { path });
+    const rows = [...result.items];
+    if (request === historyRequest.current && session === eventCursor.current.projectSessionId) setHistories([...rows]);
+    while (result.nextBefore !== null && request === historyRequest.current && session === eventCursor.current.projectSessionId) {
+      result = await invoke('document.historyPage', { path, before: result.nextBefore, watermark: result.watermark });
+      rows.push(...result.items);
+      if (request === historyRequest.current && session === eventCursor.current.projectSessionId) setHistories([...rows]);
+    }
+  }
   const chatScroll = useRef<HTMLDivElement>(null);
+  const [settingFocus, setSettingFocus] = useState('');
+  const actionPending = useRef(false);
+  const [olderRuns, setOlderRuns] = useState<Run[]>([]);
+  const historyLoading = useRef(false);
+  const visibleRuns = [...snapshot.runs, ...olderRuns.filter(row => !snapshot.runs.some(current => current.id === row.id))];
+  useEffect(() => { setOlderRuns([]); }, [snapshot.projectSessionId]);
+  async function loadRunHistory() {
+    if (historyLoading.current) return;
+    historyLoading.current = true;
+    const session = snapshot.projectSessionId;
+    try {
+      let result = await invoke('run.page');
+      const rows = [...result.items];
+      while (result.nextBefore !== null && eventCursor.current.projectSessionId === session) {
+        result = await invoke('run.page', { before: result.nextBefore, watermark: result.watermark });
+        rows.push(...result.items);
+      }
+      if (eventCursor.current.projectSessionId === session) setOlderRuns(rows);
+    } catch (error) { setError((error as Error).message); }
+    finally { historyLoading.current = false; }
+  }
   const [answer, setAnswer] = useState(''),
     [memory, setMemory] = useState<any>(null),
     [memoryChapter, setMemoryChapter] = useState(''),
@@ -191,15 +240,18 @@ export function App() {
   const refresh = useCallback(async () => {
     const requestId = ++refreshSeq.current;
     try {
-      const s = await invoke<Snapshot>('app.snapshot');
+      const s = await invoke('app.snapshot');
       if (requestId !== refreshSeq.current) return;
       syncEventCursor(eventCursor.current, s);
       setSnapshot(s);
+      setError(current => /执行内核.*(?:恢复|尚未就绪)|作品会话已改变/.test(current) ? '' : current);
     } catch (e) {
       setError((e as Error).message);
     }
   }, []);
   const act = async <T,>(action: () => Promise<T>, success?: string): Promise<T | undefined> => {
+    if (actionPending.current) return undefined;
+    actionPending.current = true;
     setError('');
     setBusy(true);
     try {
@@ -211,12 +263,50 @@ export function App() {
       setError((e as Error).message);
       return undefined;
     } finally {
+      actionPending.current = false;
       setBusy(false);
     }
   };
+  async function acceptRun(candidate: Run, startNext: boolean, warningReason = reviewReason, title?: string) {
+    if (candidate.planning?.workflowVersion === 2 && (!candidate.planning.planApproval || snapshot.project?.titlePending && !candidate.planning.titleSelection)) {
+      setWorkView('tags');
+      setNotice('请先确认作品方案，再在独立命名中核对并选择书名。');
+      return;
+    }
+    if (snapshot.project?.titlePending && candidate.mode === 'stage' && candidate.stage === 'S01' && !candidate.planning?.workflowVersion && title === undefined) {
+      setError('');
+      setTitleConfirmation({ projectId: snapshot.project.id, candidate, startNext, warningReason });
+      return;
+    }
+    const result = await act(() => invoke('run.accept', {
+      proposalHash: candidate.proposalHash,
+      id: candidate.id,
+      startNext,
+      warningReason,
+      ...(title !== undefined ? { title } : {})
+    }));
+    if (!result) return;
+    setTitleConfirmation(null);
+    setReviewReason('');
+    setSelectedRun(result.nextRun ?? candidate.id);
+    setWorkView('tasks');
+    setNotice(result.nextRun ? '本阶段已保存，正在开始下一阶段' : '结果已保存');
+    if (result.nextError) setError(result.nextError);
+  }
+  async function openStartedRun(id?: string) {
+    await act(async () => {
+      const current = await invoke('app.snapshot');
+      const started = current.runs.find(item => item.id === id);
+      if (id) setSelectedRun(id);
+      setPage('work');
+      setWorkView(started?.planning || started?.naming ? 'tags' : 'tasks');
+    });
+  }
   useEffect(() => {
     void refresh();
     let timeout: ReturnType<typeof setTimeout>;
+    let fullRefresh = false;
+    const resources = new Set<'runs' | 'chat' | 'documents' | 'studio'>();
     const unsub = window.wenxu?.onEvent((event) => {
       const decision = gateEvent(eventCursor.current, event);
       if (decision === 'ignore') return;
@@ -229,10 +319,19 @@ export function App() {
         setDeltas((d) => ({ ...d, [event.runId!]: ((d[event.runId!] ?? '') + event.text).slice(-20000) }));
       else if (event.type === 'error') setError(event.text ?? '执行错误');
       else {
+        if (event.resource) resources.add(event.resource);
+        else fullRefresh = true;
         if (!timeout)
           timeout = setTimeout(() => {
             timeout = undefined as any;
-            void refresh();
+            const selected = [...resources];
+            resources.clear();
+            if (fullRefresh || !selected.length) { fullRefresh = false; void refresh(); return; }
+            const sequence = refreshSeq.current;
+            void invoke('resource.read', { resources: selected }).then((patch) => {
+              if (sequence !== refreshSeq.current) return;
+              setSnapshot((current) => current.projectSessionId === patch.projectSessionId ? { ...current, ...patch, eventSeq: Math.max(current.eventSeq ?? 0, patch.eventSeq) } : current);
+            }).catch(() => void refresh());
           }, 350);
       }
     });
@@ -261,13 +360,74 @@ export function App() {
     }
   }, [snapshot.purgedDrafts]);
   const p = snapshot.project,
-    run = snapshot.runs.find((r) => r.id === selectedRun) ?? snapshot.runs[0],
-    running = snapshot.runs.find((r) => r.status === 'running'),
+    pendingStage = visibleRuns.find((r) => r.mode === 'stage' && !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status)),
+    run = visibleRuns.find((r) => r.id === selectedRun) ?? visibleRuns[0],
+    running = visibleRuns.find((r) => r.status === 'running'),
+    feedbackRun = run?.mode === 'stage' && !run.accepted && !run.planning && ['awaiting_review', 'needs_repair'].includes(run.status) ? run : undefined,
+    discussionRun = run && (mode === 'stage' || run.mode === 'revision') ? run : undefined,
     dirty = doc && text !== doc.content;
+  const taskBusy = busy || !!running || !!snapshot.chatBusy;
   useEffect(() => {
-    const active = snapshot.runs.find((r) => r.status === 'running' && r.pipeline);
+    if (titleConfirmation && titleConfirmation.projectId !== p?.id) setTitleConfirmation(null);
+  }, [p?.id, titleConfirmation?.projectId]);
+  const documentAccepted = !!(doc?.runId && visibleRuns.find(item => item.id === doc.runId)?.accepted);
+  useEffect(() => {
+    if (!doc?.runId || !documentAccepted) return;
+    let cancelled = false;
+    const previous = doc;
+    void invoke('document.read', { path: previous.path }).then(saved => {
+      if (cancelled) return;
+      setDoc(current => current && current.runId === previous.runId && current.path === previous.path
+        ? { ...current, runId: undefined, hash: saved.hash, content: saved.content, before: saved.content, disk: saved.content }
+        : current);
+      setText(value => value === previous.content ? saved.content : value);
+    }).catch(error => { if (!cancelled) setError(`读取已保存文稿失败：${String(error)}`); });
+    return () => { cancelled = true; };
+  }, [doc?.runId, doc?.path, documentAccepted, snapshot.projectSessionId]);
+  useEffect(() => {
+    if (modal !== 'project' || !settingFocus) return;
+    const frame = requestAnimationFrame(() => {
+      const target = document.getElementById(`project-setting-${settingFocus}`);
+      target?.focus();
+      target?.scrollIntoView({ block: 'center' });
+      setSettingFocus('');
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [modal, settingFocus]);
+  function navigateTask(href: string) {
+    if (run) {
+      for (const field of ['maxRounds', 'maxTools', 'stageBudget']) {
+        if (href !== `#${taskSectionId(run.id, `setting-${field}`)}`) continue;
+        setSettingFocus(field);
+        setModal('project');
+        return;
+      }
+      if (href === `#${taskSectionId(run.id, 'model-settings')}`) { setModal('settings'); return; }
+    }
+    const target = href.startsWith('#') ? href.slice(1) : '';
+    if (target && jumpToChatTarget(chatScroll.current, target)) return;
+    setNotice('这处问题已更新或解决，已定位到当前任务。');
+    jumpToChatTarget(chatScroll.current, run ? taskSectionId(run.id, 'recovery') : 'chat-execution') || jumpToChatTarget(chatScroll.current, 'chat-execution');
+  }
+  async function continueTask(rebuild = false) {
+    if (!run || taskBusy) return;
+    if (rebuild && !profileId) { setError('请先在输入框右下方选择模型'); return; }
+    if (retryNeedsConfirmation(run) && !confirm('上次请求结果与费用未知，继续会产生新请求，可能重复计费。确认继续？')) return;
+    const instruction = request.trim();
+    const result = await act(() => rebuild
+      ? invoke('run.handoff', { id: run.id, profileId, instruction, retryUnknown: retryNeedsConfirmation(run) })
+      : invoke('run.resume', resumeArguments(run, instruction || '请继续任务，修复校验问题并完成全部候选。')),
+    '已提交继续请求');
+    if (result) {
+      setSelectedRun(result);
+      setRequest(value => value === request ? '' : value);
+      requestAnimationFrame(() => jumpToChatTarget(chatScroll.current, 'chat-execution'));
+    }
+  }
+  useEffect(() => {
+    const active = visibleRuns.find((r) => r.status === 'running' && r.pipeline);
     const prose = active?.changes.find((c) => c.path.startsWith('07_'));
-    if (!active || !prose || (dirty && doc?.runId !== active.id)) return;
+    if (!active || !prose || dirty) return;
     setDoc({
       path: prose.path,
       content: prose.content,
@@ -279,16 +439,20 @@ export function App() {
     setEditorOpen(true);
     setInspector('manuscript');
     setEditorTab('edit');
-  }, [snapshot.runs.find((r) => r.status === 'running' && r.pipeline)?.pipeline?.version]);
+  }, [visibleRuns.find((r) => r.status === 'running' && r.pipeline)?.pipeline?.version]);
   useEffect(() => {
-    if (!doc?.runId || !dirty || running || !doc.path.startsWith('07_')) return;
+    if (!doc?.runId || !dirty || running || documentAccepted || !doc.path.startsWith('07_')) return;
     const timer = setTimeout(() => {
-      void invoke('draft.checkpoint', { id: doc.runId, content: text }).catch(() => {});
+      void invoke('draft.checkpoint', { id: doc.runId!, content: text }).catch(() => {});
     }, 1200);
     return () => clearTimeout(timer);
-  }, [text, doc?.runId]);
+  }, [text, doc?.runId, documentAccepted, !!running]);
   useEffect(() => {
-    setWorkView('chat');
+    const pending = snapshot.runs.find((r) => !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status));
+    setSelectedRun(pending?.id ?? '');
+    setMode('stage');
+    setRequest('');
+    setWorkView(pending?.planning || pending?.naming || ((p?.tagEnabled || p?.creationWorkflow === 2) && p.stage === 'S01') ? 'tags' : pending || p?.stage === 'S01' || snapshot.runs.some(r => r.mode === 'stage') ? 'tasks' : 'chat');
   }, [p?.id]);
   useEffect(() => {
     if (!profileId || !snapshot.profiles.some((p) => p.id === profileId))
@@ -305,11 +469,12 @@ export function App() {
       try {
         localStorage.setItem(`draft:${p?.id}:${doc.runId ?? ''}:${doc.path}`, text);
       } catch {
-        setError('本地草稿缓存空间不足，请立即保存候选');
+        setError('本地草稿缓存空间不足，请立即保存草稿');
       }
     }
-  }, [text]);
+  }, [text, doc?.runId, doc?.path]);
   async function openDoc(relative: string, r?: Run) {
+    if (r?.accepted) r = undefined;
     if (dirty && !confirm('编辑内容已保存在本机草稿缓存中。切换文档？')) return;
     await act(async () => {
       let old = { content: '', hash: null as string | null };
@@ -325,7 +490,7 @@ export function App() {
       if (candidate?.baseHash) {
         try {
           baseline = (
-            await invoke<{ content: string }>('document.read', { path: relative, hash: candidate.baseHash })
+            await invoke('document.read', { path: relative, hash: candidate.baseHash })
           ).content;
         } catch {
           /* external changes may have no accepted revision yet */
@@ -347,16 +512,16 @@ export function App() {
   }
   async function saveDraft() {
     if (!doc) return;
-    if (doc.runId && snapshot.runs.find((r) => r.id === doc.runId)?.accepted) {
-      setError('该候选已经接受。请从左侧重新打开正式文件后创建新的修订。');
+    if (doc.runId && visibleRuns.find((r) => r.id === doc.runId)?.accepted) {
+      setError('正在载入已保存版本，请稍后再保存。');
       return;
     }
     const r = await act<Run | string>(
       () =>
         doc.runId
-          ? invoke<Run>('run.update', { id: doc.runId, path: doc.path, content: text })
-          : invoke<string>('document.save', { path: doc.path, baseHash: doc.hash, content: text }),
-      '已保存为候选，请在结果区审阅并接受'
+          ? invoke('run.update', { id: doc.runId, path: doc.path, content: text })
+          : invoke('document.save', { path: doc.path, baseHash: doc.hash, content: text }),
+      '草稿已保存，确认采纳后会更新正式文稿'
     );
     if (r) {
       setWorkView('tasks');
@@ -364,13 +529,19 @@ export function App() {
       setDoc({ ...doc, content: text, runId: typeof r === 'string' ? r : r.id });
     }
   }
-  async function start() {
-    if (!p || !request.trim()) return;
+  async function start(taskMode = mode) {
+    if (!p || ((taskMode === 'revision' || feedbackRun) && !request.trim())) return;
+    if (taskMode === 'stage' && feedbackRun) {
+      if (retryNeedsConfirmation(feedbackRun) && !confirm('上次请求结果未知，重新请求可能重复计费。确认重新请求？')) return;
+      const resumed = await act(() => invoke('run.resume', resumeArguments(feedbackRun, request.trim())));
+      if (resumed !== undefined) setRequest('');
+      return;
+    }
     const id = await act(() =>
-      invoke<string>('run.start', {
-        request: request.trim(),
+      invoke('run.start', {
+        request: request.trim() || `请根据已有想法与已确认的内容，完成${names[p.stage]}，展示结果供我确认。`,
         profileId,
-        mode
+        mode: taskMode === 'revision' ? 'revision' : 'stage'
       })
     );
     if (id) {
@@ -378,14 +549,60 @@ export function App() {
       setRequest('');
     }
   }
+  async function sendTaskMessage() {
+    if (taskBusy) return;
+    if (!profileId) { setError('请先选择模型'); return; }
+    if (!discussionRun) { await start(); return; }
+    if (!request.trim() || busy || running || snapshot.chatBusy) return;
+    const result = await act(() => invoke('run.discuss', { id: discussionRun.id, text: request.trim(), profileId, displayedError: error.slice(0, 4000) }));
+    if (result) {
+      setRequest('');
+      chatScroll.current?.scrollTo({ top: chatScroll.current.scrollHeight });
+    }
+  }
   function openProjectDirectory() {
     void act(async () => {
-      const root = await invoke<string | null>('app.chooseDirectory');
+      const root = await invoke('app.chooseDirectory');
       if (root) {
         setDoc(null);
         setSelectedRun('');
         return invoke('project.open', { root });
       }
+    });
+  }
+  async function returnHome() {
+    if (!p || busy) return;
+    await act(async () => {
+      if (running || snapshot.chatBusy)
+        throw new Error('任务正在运行，请先停止或等待完成后返回首页。');
+      if (dirty && doc) {
+        try {
+          localStorage.setItem(`draft:${p.id}:${doc.runId ?? ''}:${doc.path}`, text);
+        } catch {
+          throw new Error('本地草稿缓存空间不足，请先保存编辑内容再返回首页。');
+        }
+      }
+      const reminders = [
+        ...(dirty ? ['编辑内容已保存在本机草稿缓存中，尚未保存为正式内容。'] : []),
+        ...(request.trim() ? ['当前任务输入尚未发送，返回首页后将清空。'] : [])
+      ];
+      if (reminders.length && !confirm(`${reminders.join('\n')}\n确认返回首页？`)) return;
+      await invoke('project.close');
+      setDoc(null);
+      setText('');
+      setSelectedRun('');
+      setEditorOpen(false);
+      setSource(null);
+      setMemory(null);
+      setManifest(null);
+      setRequest('');
+      setReviewReason('');
+      setAnswer('');
+      setDeltas({});
+      setQuery('');
+      setFocus(false);
+      setNotice('');
+      setPage('work');
     });
   }
   async function trashProject(root: string) {
@@ -406,14 +623,13 @@ export function App() {
       }, '作品已移入回收站，七天内可恢复，到期自动永久删除本地文件')) === true
     );
   }
-  const filteredDocs = snapshot.documents.filter((d) => !query || d.path.includes(query));
+  const filteredDocs = useMemo(() => snapshot.documents.filter((d) => !query || d.path.includes(query)), [snapshot.documents, query]);
+  const taskReply = run ? taskReplyText(renderNativeCitations(run.responseText || deltas[run.id] || '', run.webSearch?.citations)) : '';
   const chatSections: ProximitySection[] = run
     ? [
         { id: 'chat-request', label: '你的任务', kind: 'title' },
         { id: 'chat-execution', label: '执行与上下文', kind: 'subtitle' },
-        ...(run.responseText || deltas[run.id]
-          ? [{ id: 'chat-response', label: '模型回复', kind: 'section' as const }]
-          : []),
+        ...(taskReply ? [{ id: 'chat-response', label: '模型回复', kind: 'section' as const }] : []),
         ...(run.changes.length
           ? [{ id: 'chat-candidates', label: '候选改动', kind: 'section' as const }]
           : []),
@@ -434,12 +650,16 @@ export function App() {
     >
       <aside className="sidebar" aria-label="作品与功能导航">
         <div className="brand">
-          <div className="brand-mark" aria-hidden="true">
-            <Feather size={24} strokeWidth={1.7} />
-          </div>
-          <div>
-            <b>文序</b>
-          </div>
+          <button
+            type="button"
+            className="brand-home"
+            aria-label="返回首页"
+            title="返回首页"
+            disabled={busy}
+            onClick={() => void returnHome()}
+          >
+            <BrandLogo compact={sidebarCollapsed} />
+          </button>
           <button
             className="icon sidebar-toggle"
             aria-label={sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
@@ -517,20 +737,7 @@ export function App() {
                 placeholder="查找章节与资料"
               />
             </div>
-            <div className="files">
-              {filteredDocs.map((d) => (
-                <button
-                  key={d.path}
-                  title={d.path}
-                  className={doc?.path === d.path ? 'selected' : ''}
-                  onClick={() => void openDoc(d.path)}
-                >
-                  <FileText size={14} />
-                  <span>{d.path.split('/').at(-1)?.replace('.md', '')}</span>
-                  {d.status !== 'accepted' && <i title="外部修改待确认" />}
-                </button>
-              ))}
-            </div>
+            <ProjectFiles documents={filteredDocs} selected={doc?.path} onOpen={path => void openDoc(path)} resetKey={`${p.id}:${query}`} />
           </>
         ) : (
           <div className="sidebar-empty">
@@ -636,7 +843,7 @@ export function App() {
         {!p ? (
           <div className="welcome">
             <div className="welcome-symbol">
-              <Feather size={32} strokeWidth={1.7} />
+              <BrandLogo symbolOnly />
             </div>
             <h1>今天，写下哪一段故事？</h1>
             <div className="welcome-actions">
@@ -654,6 +861,8 @@ export function App() {
             snapshot={snapshot}
             onSource={setSource}
             onRefresh={() => void refresh()}
+            onRun={id => void openStartedRun(id)}
+            profileId={profileId}
           />
         ) : page === 'cover' ? (
           <Cover key={p.id} profiles={snapshot.profiles} title={p.title} act={act} />
@@ -663,11 +872,7 @@ export function App() {
               <div className="work-tabs">
                 <SkillLauncher
                   profileId={profileId}
-                  onRun={(id) => {
-                    if (id) setSelectedRun(id);
-                    setWorkView('tasks');
-                    void refresh();
-                  }}
+                  onRun={(id) => void openStartedRun(id)}
                 />
                 <button className={workView === 'chat' ? 'active' : ''} onClick={() => setWorkView('chat')}>
                   创作讨论
@@ -675,18 +880,31 @@ export function App() {
                 <button className={workView === 'tasks' ? 'active' : ''} onClick={() => setWorkView('tasks')}>
                   创作任务
                 </button>
+                <button className={workView === 'tags' ? 'active' : ''} onClick={() => setWorkView('tags')}>
+                  作品方案与书名
+                </button>
               </div>
-              {workView === 'chat' ? (
+              {workView === 'tags' ? (
+                <TagWorkspace
+                  key={p.id}
+                  snapshot={snapshot}
+                  profileId={profileId}
+                  setProfileId={setProfileId}
+                  refresh={refresh}
+                  onAccept={acceptRun}
+                  onReview={(id) => {
+                    setSelectedRun(id);
+                    setWorkView('tasks');
+                  }}
+                />
+              ) : workView === 'chat' ? (
                 <ChatWorkspace
                   key={p.id}
                   snapshot={snapshot}
                   profileId={profileId}
                   setProfileId={setProfileId}
                   refresh={refresh}
-                  onRun={(id) => {
-                    if (id) setSelectedRun(id);
-                    setWorkView('tasks');
-                  }}
+                  onRun={(id) => void openStartedRun(id)}
                   onDocument={(relative) => void openDoc(relative)}
                   onSettings={() => setAgentSettings(true)}
                 />
@@ -743,7 +961,7 @@ export function App() {
                   </div>
                   {p.stale.length > 0 && (
                     <div className="inline-warning">
-                      {p.stale.length} 项修订影响尚未闭环。
+                      {p.stale.length} 项资料需随故事变化核对，完成后再继续正文。
                       <button onClick={() => setPage('memory')}>
                         前往核对 <ArrowRight size={13} />
                       </button>
@@ -756,22 +974,29 @@ export function App() {
                       scrollRef={chatScroll}
                     />
                     <div className="chat-scroll" ref={chatScroll}>
-                      {!run ? (
+                      {(!run || (run.accepted && !pendingStage)) && (
                         <div className="start-card">
                           <div className="assistant-mark">
                             <Sparkles size={20} />
                           </div>
-                          <h2>开始这一段创作</h2>
+                          <h2>下一步：{names[p.stage]}</h2>
+                          <p>已有想法和确认过的内容会自动带入，有补充要求可以写在下方。</p>
+                          <button className="primary" disabled={busy || !!running || snapshot.chatBusy || !profileId} onClick={() => void start('stage')}>
+                            开始{names[p.stage]}
+                          </button>
+                          {!profileId && <button onClick={() => setModal('settings')}>先设置模型连接</button>}
                         </div>
-                      ) : (
+                      )}
+                      {run && (
                         <>
                           <div className="run-selector">
                             <select
                               aria-label="选择历史任务"
+                              onFocus={() => void loadRunHistory()}
                               value={run.id}
                               onChange={(e) => setSelectedRun(e.target.value)}
                             >
-                              {snapshot.runs.map((r) => (
+                              {visibleRuns.map((r) => (
                                 <option key={r.id} value={r.id}>
                                   {r.stage} · 第 {r.chapter} 章 · {status[r.status]} ·{' '}
                                   {new Date(r.createdAt).toLocaleTimeString()}
@@ -796,10 +1021,12 @@ export function App() {
                                 <div className="assistant-mark">
                                   <Sparkles size={16} />
                                 </div>
-                                <b>文序</b>
+                                <b>{brand.name}</b>
                                 <span className={`status ${run.status}`}>{status[run.status]}</span>
                               </div>
                               {run.manifest && (
+                                <details>
+                                  <summary>参考资料</summary>
                                 <button className="context-card" onClick={() => setManifest(run.manifest)}>
                                   <Layers size={16} />
                                   <div>
@@ -811,32 +1038,60 @@ export function App() {
                                   </div>
                                   <ChevronRight size={16} />
                                 </button>
+                                </details>
                               )}
                             </div>
-                            {(run.responseText || deltas[run.id]) && (
-                              <div className="model-text" id="chat-response">
-                                {run.responseText || deltas[run.id]}
-                              </div>
+                            {taskReply && (
+                              run.webSearch?.calls.length
+                                ? <div className="markdown-body" id="chat-response" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(taskReply, { async: false }) as string, { FORBID_TAGS: ['img', 'style', 'iframe'] }) }} />
+                                : <div className="model-text" id="chat-response">{taskReply}</div>
                             )}
-                            {run.error && <p className="inline-warning">{run.error}</p>}
+                            <WebSearchEvidence state={run.webSearch} running={run.status === 'running'} />
+                            {run.error && <p className="inline-warning" role="alert" id={taskErrorId(run)}>{requestErrorText(run.error)}{' '}<a href={taskHelpLink(run).href} onClick={event => { event.preventDefault(); navigateTask(event.currentTarget.getAttribute('href')!); }}>{taskHelpLink(run).label}</a></p>}
                             {!run.accepted && run.changes.length > 0 && (
+                              <details open={['unknown', 'paused', 'needs_repair'].includes(run.status)}>
+                                <summary>检查结果详情</summary>
                               <button
                                 disabled={busy || !!running || snapshot.chatBusy}
                                 onClick={() =>
                                   void act(
-                                    () => invoke('run.revalidate', { id: run.id }),
-                                    '已重新检查候选；未发起模型调用，也未自动接受'
+                                    () =>
+                                      invoke('run.revalidate', {
+                                        id: run.id,
+                                        reviewSaved: ['unknown', 'paused'].includes(run.status)
+                                      }),
+                                    '候选已检查'
                                   )
                                 }
                               >
-                                重新检查候选
+                                {['unknown', 'paused'].includes(run.status)
+                                  ? '审阅已保存候选'
+                                  : '重新检查候选'}
                               </button>
+                              </details>
                             )}
                             {run.changes.length > 0 && (
                               <div className="candidate-list" id="chat-candidates">
-                                <div className="section-label">候选改动 · {run.changes.length} 个文件</div>
-                                {run.changes.map((c) => (
-                                  <button key={c.path} onClick={() => void openDoc(c.path, run)}>
+                                <div className="section-label">本次生成的文稿 · {run.changes.length} 个文件</div>
+                                {run.changes.map((c, index) => run.mode === 'stage' && !run.pipeline ? (
+                                  <details key={c.path} id={taskFileId(run.id, c.path)} open={index === 0}>
+                                    <summary>{c.path.split('/').at(-1)?.replace(/\.md$/, '')}</summary>
+                                    <div
+                                      className="markdown-preview"
+                                      onClick={event => {
+                                        const anchor = (event.target as HTMLElement).closest('a');
+                                        if (anchor) {
+                                          event.preventDefault();
+                                          const url = anchor.getAttribute('href') ?? '';
+                                          if (/^https?:\/\//i.test(url)) void act(() => invoke('app.openUrl', { url }));
+                                        }
+                                      }}
+                                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(documentPreviewText(c.content), { async: false }) as string, { FORBID_TAGS: ['img', 'style', 'iframe'] }) }}
+                                    />
+                                    <button onClick={() => void openDoc(c.path, run)}>查看差异或编辑</button>
+                                  </details>
+                                ) : (
+                                  <button key={c.path} id={taskFileId(run.id, c.path)} onClick={() => void openDoc(c.path, run)}>
                                     <FileText size={15} />
                                     <span title={c.path}>{c.path.split('/').at(-1)}</span>
                                     <span className="diff-count">
@@ -866,10 +1121,16 @@ export function App() {
                                 {run.issues.map((i, n) => (
                                   <p
                                     key={n}
+                                    id={taskIssueId(run.id, i)}
                                     className={`issue ${i.severity === 'error' ? 'error-text' : ''}`}
                                   >
                                     {i.path && <small>{i.path}</small>}
                                     {i.message}
+                                    {i.path && (run.changes.some(change => change.path === i.path) || snapshot.documents.some(document => document.path === i.path)) && <>{' '}<a href={`#${taskFileId(run.id, i.path)}`} onClick={event => {
+                                      event.preventDefault();
+                                      if (run.changes.some(change => change.path === i.path)) navigateTask(event.currentTarget.getAttribute('href')!);
+                                      else void openDoc(i.path!);
+                                    }}>查看对应文稿</a></>}
                                   </p>
                                 ))}
                               </details>
@@ -886,7 +1147,12 @@ export function App() {
                                   ))}
                               </div>
                             )}
-                            {run.status === 'awaiting_input' && (
+                            {(run.naming || run.planning && !run.accepted && run.planning.phase !== 'ready') && (
+                              <button className="primary" onClick={() => setWorkView('tags')}>
+                                {run.naming ? '返回独立命名' : '继续当前策划'}
+                              </button>
+                            )}
+                            {run.status === 'awaiting_input' && !run.planning && (
                               <div className="approval-box" id="chat-decision">
                                 <b>{run.input?.question}</b>
                                 <textarea
@@ -896,6 +1162,7 @@ export function App() {
                                 />
                                 <button
                                   className="primary"
+                                  disabled={taskBusy || !answer.trim()}
                                   onClick={() => void act(() => invoke('run.answer', { id: run.id, answer }))}
                                 >
                                   提交回答并继续
@@ -914,6 +1181,7 @@ export function App() {
                                 <div className="button-row">
                                   <button
                                     className="primary"
+                                    disabled={taskBusy}
                                     onClick={() =>
                                       void act(() => invoke('run.permission', { id: run.id, approved: true }))
                                     }
@@ -921,6 +1189,7 @@ export function App() {
                                     允许这一次
                                   </button>
                                   <button
+                                    disabled={taskBusy}
                                     onClick={() =>
                                       void act(() =>
                                         invoke('run.permission', { id: run.id, approved: false })
@@ -934,7 +1203,8 @@ export function App() {
                             )}
                             {!run.accepted && ['awaiting_review', 'needs_repair'].includes(run.status) && (
                               <div className="approval-box" id="chat-decision">
-                                <h3>{run.pipeline ? '正文与记忆待验收' : '候选待验收'}</h3>
+                                <h3>{run.issues.some(issue => issue.severity === 'error') ? '本阶段还有问题需要处理' : run.memoryRepair ? '关联修订已准备好' : run.pipeline ? '本章正文与记忆已准备好' : '本阶段结果已准备好'}</h3>
+                                {feedbackRun && <p>有疑问就直接在下方问，也可以告诉我怎么修改；结果满意后再确认继续。</p>}
                                 {run.issues.some((i) => i.severity === 'warning') && (
                                   <label>
                                     保留警告的审阅理由
@@ -948,89 +1218,41 @@ export function App() {
                                 <div className="button-row">
                                   <button
                                     className="primary"
-                                    disabled={busy || run.issues.some((i) => i.severity === 'error')}
-                                    onClick={() =>
-                                      void act(
-                                        () =>
-                                          invoke('run.accept', {
-                                            proposalHash: run.proposalHash,
-                                            id: run.id,
-                                            startNext: run.mode === 'stage',
-                                            warningReason: reviewReason
-                                          }),
-                                        run.mode === 'stage' ? '已接受结果，并授权下一阶段' : '已接受修订'
-                                      )
-                                    }
+                                    disabled={taskBusy || run.issues.some((i) => i.severity === 'error')}
+                                    onClick={() => void acceptRun(run, run.mode === 'stage' || !!run.memoryRepair)}
                                   >
-                                    {run.mode === 'stage' ? '接受并继续' : '接受修改'}
+                                    {p?.titlePending && run.mode === 'stage' && run.stage === 'S01' ? '确认方向，确定书名' : run.memoryRepair ? '采纳同步并继续创作' : run.mode === 'stage' ? '确认并继续' : '确认保存修改'}
                                   </button>
-                                  {run.mode === 'stage' && (
+                                  {(run.mode === 'stage' || run.memoryRepair) && (
                                     <button
-                                      disabled={busy || run.issues.some((i) => i.severity === 'error')}
-                                      onClick={() =>
-                                        void act(
-                                          () =>
-                                            invoke('run.accept', {
-                                              proposalHash: run.proposalHash,
-                                              id: run.id,
-                                              startNext: false,
-                                              warningReason: reviewReason
-                                            }),
-                                          '已接受并暂停'
-                                        )
-                                      }
+                                      disabled={taskBusy || run.issues.some((i) => i.severity === 'error')}
+                                      onClick={() => void acceptRun(run, false)}
                                     >
-                                      接受并暂停
+                                      保存，暂不继续
                                     </button>
                                   )}
                                 </div>
                               </div>
                             )}
                             {!run.accepted && !['running', 'discarded'].includes(run.status) && (
+                              <details id={taskSectionId(run.id, 'recovery')} open={run.status !== 'awaiting_review'}>
+                                <summary>需要修改或恢复任务</summary>
                               <div className="button-row subdued">
                                 <button
-                                  onClick={() => {
-                                    if (!profileId) return;
-                                    if (
-                                      run.status === 'unknown' &&
-                                      !confirm('原请求状态未知，换模型继续可能产生新的费用。确认？')
-                                    )
-                                      return;
-                                    void act(async () =>
-                                      setSelectedRun(
-                                        await invoke('run.handoff', {
-                                          id: run.id,
-                                          profileId,
-                                          retryUnknown: run.status === 'unknown'
-                                        })
-                                      )
-                                    );
-                                  }}
+                                  disabled={taskBusy || !profileId}
+                                  title={!profileId ? '请先选择模型' : undefined}
+                                  onClick={() => void continueTask(true)}
                                 >
-                                  重建上下文 / 用所选模型继续
+                                  用所选模型继续
                                 </button>
-                                {['paused', 'unknown', 'needs_repair', 'awaiting_review'].includes(
-                                  run.status
-                                ) && (
+                                {runCapabilities(run).canResume && (
                                   <button
-                                    onClick={() => {
-                                      if (
-                                        run.status === 'unknown' &&
-                                        !confirm('上次请求结果未知，重新请求可能重复计费。确认重新请求？')
-                                      )
-                                        return;
-                                      void act(() =>
-                                        invoke('run.resume', {
-                                          id: run.id,
-                                          retryUnknown: run.status === 'unknown',
-                                          instruction: request || '请继续任务，修复校验问题并完成全部候选。'
-                                        })
-                                      );
-                                    }}
+                                    disabled={taskBusy}
+                                    onClick={() => void continueTask()}
                                   >
                                     {btn(
                                       <RotateCcw size={14} />,
-                                      run.status === 'unknown' ? '确认重新请求' : '继续修改 / 恢复'
+                                      run.status === 'unknown' ? '确认重新请求' : '继续处理'
                                     )}
                                   </button>
                                 )}
@@ -1038,7 +1260,7 @@ export function App() {
                                   <DeleteButton
                                     key={run.id}
                                     label="放弃候选"
-                                    disabled={busy}
+                                    disabled={taskBusy}
                                     description="放弃此任务的候选，保留正式文件与任务记录。"
                                     onConfirm={async () =>
                                       (await act(async () => {
@@ -1050,6 +1272,7 @@ export function App() {
                                   <span>放弃候选</span>
                                 </div>
                               </div>
+                              </details>
                             )}
                             <div className="usage" id="chat-usage">
                               {run.rounds} 轮调用 · {run.toolCount} 次工具 ·{' '}
@@ -1059,6 +1282,8 @@ export function App() {
                               · 输入 {run.usage.input ?? '未知'} / 输出 {run.usage.output ?? '未知'}
                             </div>
                           </article>
+                          {error && <p className="inline-warning" role="alert">{requestErrorText(error)}</p>}
+                          <TaskDiscussion key={`${p.id}:${run.id}`} conversationId={snapshot.conversations?.find(conversation => conversation.runId === run.id && !conversation.archived)?.id} projectSessionId={snapshot.projectSessionId} run={run} profileId={profileId} busy={taskBusy} scroll={chatScroll} refresh={refresh} onRun={setSelectedRun} onNavigate={navigateTask} />
                         </>
                       )}
                     </div>
@@ -1066,11 +1291,9 @@ export function App() {
                   <div className="composer">
                     <textarea
                       aria-label="写作任务"
-                      placeholder={
-                        mode === 'stage' ? '描述本阶段的写作要求…' : '说明要修订的文件、范围与希望保留的内容…'
-                      }
                       value={request}
                       onChange={(e) => setRequest(e.target.value)}
+                      onKeyDown={event => sendOnEnter(event, !!request.trim() && !!profileId && !taskBusy, () => void sendTaskMessage())}
                     />
                     <div className="composer-toolbar">
                       <div className="composer-tools">
@@ -1130,29 +1353,31 @@ export function App() {
                           </select>
                           <ChevronDown size={12} aria-hidden="true" />
                         </label>
-                        {running ? (
+                        {running || snapshot.chatBusy ? (
                           <button
                             className="stop composer-send"
                             aria-label="停止执行"
                             title="停止执行"
-                            onClick={() => void act(() => invoke('run.cancel'))}
+                            onClick={() => void act(() => running ? invoke('run.cancel') : invoke('chat.stop'))}
                           >
                             <Square size={13} fill="currentColor" aria-hidden="true" />
                           </button>
                         ) : (
                           <button
                             className="primary composer-send"
-                            disabled={busy || !profileId || !request.trim() || snapshot.chatBusy}
-                            aria-label={mode === 'stage' ? '确认开始本阶段' : '确认开始修订'}
+                            disabled={busy || !profileId || snapshot.chatBusy || (discussionRun ? !request.trim() : mode === 'stage' ? !!pendingStage : !request.trim())}
+                            aria-label={discussionRun ? '发送消息' : mode === 'stage' ? '确认开始本阶段' : '确认开始修订'}
                             title={
                               !profileId
                                 ? '请先选择模型'
+                                : discussionRun
+                                  ? '发送消息'
                                 : mode === 'stage'
                                   ? '确认开始本阶段'
                                   : '确认开始修订'
                             }
                             aria-describedby="composer-confirmation"
-                            onClick={() => void start()}
+                            onClick={() => void sendTaskMessage()}
                           >
                             <ArrowUp size={18} aria-hidden="true" />
                           </button>
@@ -1163,10 +1388,11 @@ export function App() {
                   <div className="sr-only" id="composer-confirmation">
                     {running
                       ? '正在执行，可点击 ■ 停止。'
+                      : discussionRun
+                        ? 'Enter 发送消息，Shift+Enter 换行。'
                       : mode === 'stage'
                         ? '点击 ↑ 确认开始本阶段。'
                         : '点击 ↑ 确认开始修订。'}
-                    AI 提交候选，由你确认采纳。
                   </div>
                 </section>
               )}
@@ -1255,14 +1481,14 @@ export function App() {
                                 setEditorTab(key);
                                 if (key === 'history')
                                   void act(async () =>
-                                    setHistories(await invoke('document.history', { path: doc.path }))
+                                    loadDocumentHistory(doc.path)
                                   );
                               }}
                             >
                               {label}
                             </button>
                           ))}
-                          <span>{doc.runId ? '候选' : '文稿'}</span>
+                          <span>{doc.runId ? '待采纳草稿' : '文稿'}</span>
                         </div>
                         {snapshot.documents.find((d) => d.path === doc.path)?.status === 'external' && (
                           <div className="inline-warning">
@@ -1284,9 +1510,11 @@ export function App() {
                             onChange={setText}
                             onSelection={setSelection}
                             readOnly={
+                              doc.path === '02_项目配置/标签创作契约.md' ||
                               !!(
                                 doc.runId &&
-                                snapshot.runs.find((r) => r.id === doc.runId)?.status === 'running'
+                                (visibleRuns.find((r) => r.id === doc.runId)?.planning ||
+                                  visibleRuns.find((r) => r.id === doc.runId)?.status === 'running')
                               )
                             }
                           />
@@ -1312,7 +1540,7 @@ export function App() {
                               }
                             }}
                             dangerouslySetInnerHTML={{
-                              __html: DOMPurify.sanitize(marked.parse(text, { async: false }) as string)
+                              __html: DOMPurify.sanitize(marked.parse(documentPreviewText(text), { async: false }) as string)
                             }}
                           />
                         ) : (
@@ -1324,7 +1552,7 @@ export function App() {
                                 <button
                                   onClick={() =>
                                     void act(async () => {
-                                      const old = await invoke<{ content: string }>('document.read', {
+                                      const old = await invoke('document.read', {
                                         path: doc.path,
                                         hash: h.hash
                                       });
@@ -1376,11 +1604,11 @@ export function App() {
                               disabled={
                                 busy ||
                                 !dirty ||
-                                !!(doc.runId && snapshot.runs.find((r) => r.id === doc.runId)?.accepted)
+                                !!(doc.runId && visibleRuns.find((r) => r.id === doc.runId)?.accepted)
                               }
                               onClick={() => void saveDraft()}
                             >
-                              保存候选
+                              保存草稿
                             </button>
                           </div>
                         </footer>
@@ -1406,6 +1634,15 @@ export function App() {
         )}
       </main>
       {source && <SourceDialog source={source} onClose={() => setSource(null)} />}
+      {titleConfirmation && titleConfirmation.projectId === p?.id && (
+        <ConfirmBookTitle
+          busy={busy}
+          error={error}
+          startNext={titleConfirmation.startNext}
+          onClose={() => { if (!busy) setTitleConfirmation(null); }}
+          onConfirm={title => void acceptRun(titleConfirmation.candidate, titleConfirmation.startNext, titleConfirmation.warningReason, title)}
+        />
+      )}
       {modal === 'legacy' && (
         <LegacyDialog
           onClose={() => setModal(null)}
@@ -1421,6 +1658,12 @@ export function App() {
         <NewProject
           onClose={() => setModal(null)}
           act={act}
+          profiles={snapshot.profiles}
+          initialProfileId={profileId}
+          onStarted={(id, tagged) => {
+            setSelectedRun(id);
+            setWorkView(tagged ? 'tags' : 'tasks');
+          }}
           onCreated={() => {
             setModal(null);
             setDoc(null);
@@ -1436,7 +1679,7 @@ export function App() {
           act={act}
         />
       )}
-      {agentSettings && <AssistantSettings onClose={() => setAgentSettings(false)} />}
+      {agentSettings && <AssistantSettings profiles={snapshot.profiles} onClose={() => setAgentSettings(false)} />}
       {modal === 'project' && p && (
         <ProjectSettings
           config={p.config}
@@ -1453,7 +1696,7 @@ export function App() {
           onClose={() => setModal(null)}
           onImport={async (file, content) => {
             const r = await act(() =>
-              invoke<string>('document.save', { path: file, content, baseHash: null })
+              invoke('document.save', { path: file, content, baseHash: null })
             );
             if (r) {
               setSelectedRun(r);
@@ -1495,33 +1738,71 @@ function activeBatchText(p: Snapshot['project']) {
   return b ? `${b.start}—${b.end} 章` : '—';
 }
 type Act = <T>(fn: () => Promise<T>, success?: string) => Promise<T | undefined>;
-function NewProject({ onClose, onCreated, act }: { onClose: () => void; onCreated: () => void; act: Act }) {
-  const [title, setTitle] = useState(''),
-    [parent, setParent] = useState(''),
+function ConfirmBookTitle({ busy, error, startNext, onClose, onConfirm }: {
+  busy: boolean;
+  error: string;
+  startNext: boolean;
+  onClose: () => void;
+  onConfirm: (title: string) => void;
+}) {
+  const [title, setTitle] = useState('');
+  return (
+    <Modal title="确认书名" subtitle="故事方向已选好，现在为这部作品确定书名。" onClose={onClose}>
+      <form className="modal-body form" onSubmit={event => { event.preventDefault(); if (!busy && title.trim()) onConfirm(title.trim()); }}>
+        <label>
+          书名
+          <input autoFocus required maxLength={80} value={title} disabled={busy} onChange={event => setTitle(event.target.value)} placeholder="根据刚确认的故事方向填写书名" />
+        </label>
+        {error && <p role="alert" className="inline-warning">{error}</p>}
+        <div className="modal-footer">
+          <button type="button" disabled={busy} onClick={onClose}>返回查看方向</button>
+          <button className="primary" disabled={busy || !title.trim()}>{busy ? '正在保存…' : startNext ? '确认书名并继续' : '确认书名并保存'}</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId, act }: {
+  onClose: () => void;
+  onCreated: () => void;
+  onStarted: (id: string, tagged: boolean) => void;
+  profiles: Profile[];
+  initialProfileId: string;
+  act: Act;
+}) {
+  const [tagged, setTagged] = useState(false),
+    [tagInput, setTagInput] = useState(emptyTagInput);
+  const [parent, setParent] = useState(''),
     [premise, setPremise] = useState(''),
+    [submitting, setSubmitting] = useState(false),
+    [profileId, setProfileId] = useState(initialProfileId || profiles.find(p => p.protocol !== 'images')?.id || ''),
     [previewList, setPreviewList] = useState<string[]>([]);
   return (
-    <Modal title="新建作品" subtitle="先保存你的想法，再逐步完成创作规划。" onClose={onClose}>
+    <Modal title="新建作品" subtitle="先写下想法，确认故事方向后再确定书名。" onClose={() => { if (!submitting) onClose(); }} wide={tagged}>
       <form
         className="modal-body form"
         onSubmit={(e) => {
           e.preventDefault();
+          if (submitting) return;
+          setSubmitting(true);
           void act(async () => {
-            await invoke('project.create', { title, parent, premise });
+            const created = await invoke('project.create', {
+              parent,
+              premise,
+              ...(profileId ? { config: { defaultProfileId: profileId } } : {}),
+              creationInput: cleanTagInput({ ...tagInput, premise, selection: tagged ? tagInput.selection : emptyTagInput().selection })
+            });
             onCreated();
-          });
+            if (!profileId) return;
+            try {
+              const id = await invoke('creation.start', { inputHash: created.tagDraft!.inputHash, profileId, requestId: crypto.randomUUID() });
+              onStarted(id, true);
+            } catch (error) {
+              throw new Error(`作品已创建，暂未开始生成：${(error as Error).message}。可以在当前作品中继续，无需重新创建。`);
+            }
+          }).finally(() => setSubmitting(false));
         }}
       >
-        <label>
-          作品名称
-          <input
-            required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="可以先用暂定名"
-            maxLength={80}
-          />
-        </label>
         <label>
           保存位置
           <div className="input-action">
@@ -1530,7 +1811,7 @@ function NewProject({ onClose, onCreated, act }: { onClose: () => void; onCreate
               type="button"
               onClick={() =>
                 void act(async () => {
-                  const v = await invoke<string | null>('app.chooseDirectory');
+                  const v = await invoke('app.chooseDirectory');
                   if (v) setParent(v);
                 })
               }
@@ -1540,19 +1821,37 @@ function NewProject({ onClose, onCreated, act }: { onClose: () => void; onCreate
           </div>
         </label>
         <label>
-          原始设定
-          <textarea
-            required
-            value={premise}
-            onChange={(e) => setPremise(e.target.value)}
-            rows={6}
-            placeholder="主角是谁？遇到了什么困境？你最想写的场面是什么？"
-          />
+            创作想法
+            <textarea
+              required={!tagged}
+              value={premise}
+              onChange={(e) => setPremise(e.target.value)}
+              rows={4}
+              placeholder="一句话也可以。例如：夜班检修员在电梯故障中发现异常规则。"
+            />
         </label>
+        <details>
+          <summary>更多开书选项：题材标签、模型与初始文件</summary>
+          <label className="check">
+            <input type="checkbox" checked={tagged} disabled={submitting} onChange={e => setTagged(e.target.checked)} />
+            添加平台题材标签（也可只按创意策划）
+          </label>
+          {tagged && <TagForm value={{ ...tagInput, premise }} onChange={value => { setTagInput(value); setPremise(value.premise); }} disabled={submitting} showPremise={false} />}
+          {!tagged && <>
+            <label>必须保留（每行一项，选填）<textarea rows={2} value={tagInput.mustKeep.join('\n')} onChange={e => setTagInput({ ...tagInput, mustKeep: e.target.value.split('\n') })} /></label>
+            <label>不能出现（每行一项，选填）<textarea rows={2} value={tagInput.mustAvoid.join('\n')} onChange={e => setTagInput({ ...tagInput, mustAvoid: e.target.value.split('\n') })} /></label>
+          </>}
+          <label>
+            创作模型
+            <select aria-label="创作模型" value={profileId} disabled={submitting} onChange={e => setProfileId(e.target.value)}>
+              <option value="">稍后设置模型</option>
+              {profiles.filter(p => p.protocol !== 'images').map(p => <option key={p.id} value={p.id}>{modelLabel(p, profiles)}</option>)}
+            </select>
+          </label>
         <button
           type="button"
           onClick={() =>
-            void act(async () => setPreviewList(await invoke('project.preview', { title, premise })))
+            void act(async () => setPreviewList(await invoke('project.preview', { premise })))
           }
         >
           查看初始文件
@@ -1563,12 +1862,14 @@ function NewProject({ onClose, onCreated, act }: { onClose: () => void; onCreate
             <pre>{previewList.join('\n')}</pre>
           </details>
         )}
+        </details>
+        <p className="muted">{profileId ? `使用 ${modelLabel(profiles.find(p => p.id === profileId)!, profiles)} 生成方案；你确认后才会保存为正式设定。` : '先保存作品，设置模型连接后即可开始。'}</p>
         <div className="modal-footer">
-          <button type="button" onClick={onClose}>
+          <button type="button" disabled={submitting} onClick={onClose}>
             取消
           </button>
-          <button className="primary" disabled={!parent}>
-            创建作品
+          <button className="primary" disabled={submitting || !parent || (tagged ? !tagInput.selection.reading.main : !premise.trim())}>
+            {submitting ? '正在创建…' : profileId ? '创建并开始' : '创建作品'}
           </button>
         </div>
       </form>
@@ -1668,6 +1969,7 @@ function ProjectSettings({
                 type="number"
                 min={1}
                 value={c[key as keyof ProjectConfig] as number}
+                id={`project-setting-${key}`}
                 onChange={(e) => field(key as any, Number(e.target.value))}
               />
             </label>
@@ -1711,6 +2013,7 @@ function ProjectSettings({
               min={0}
               step="any"
               value={c.stageBudget ?? ''}
+              id="project-setting-stageBudget"
               onChange={(e) => field('stageBudget', e.target.value === '' ? null : Number(e.target.value))}
             />
           </label>
@@ -1723,7 +2026,7 @@ function ProjectSettings({
               type="button"
               onClick={() =>
                 void act(async () => {
-                  const value = await invoke<string | null>('app.chooseDirectory');
+                  const value = await invoke('app.chooseDirectory');
                   if (value) field('backupDirectory', value);
                 })
               }
@@ -1803,11 +2106,11 @@ function Transfer({
             <button
               onClick={() =>
                 void act(async () => {
-                  const source = await invoke<string | null>('app.chooseDirectory', {
-                    title: '选择文序备份目录'
+                  const source = await invoke('app.chooseDirectory', {
+                    title: `选择${brand.name}备份目录`
                   });
                   if (!source) return;
-                  const parent = await invoke<string | null>('app.chooseDirectory', {
+                  const parent = await invoke('app.chooseDirectory', {
                     title: '选择恢复位置'
                   });
                   if (parent) {
@@ -1827,9 +2130,9 @@ function Transfer({
               <button
                 onClick={() =>
                   void act(async () => {
-                    const source = await invoke<string | null>('app.chooseFile');
+                    const source = await invoke('app.chooseFile');
                     if (source) {
-                      const p = await invoke<any>('project.importDocument', { file: source });
+                      const p = await invoke('project.importDocument', { file: source });
                       setPreview(p);
                       setFile(`00_导入资料/${p.name}.md`);
                       setChecked(false);
@@ -1891,7 +2194,7 @@ function Transfer({
                 disabled={!selection.length}
                 onClick={() =>
                   void act(async () => {
-                    const target = await invoke<string | null>('app.chooseFile', {
+                    const target = await invoke('app.chooseFile', {
                       save: true,
                       name: `${snapshot.project!.title}.docx`
                     });
@@ -1908,8 +2211,8 @@ function Transfer({
                 <button
                   onClick={() =>
                     void act(async () => {
-                      const files = await invoke<string[]>('project.repair', { preview: true });
-                      if (confirm('以下文件将作为修复候选，已有文稿不会覆盖：\n' + files.join('\n')))
+                      const files = await invoke('project.repair', { preview: true });
+                      if (Array.isArray(files) && confirm('以下文件将作为修复候选，已有文稿不会覆盖：\n' + files.join('\n')))
                         await invoke('project.repair');
                     }, '修复候选已建立，请回工作台审阅')
                   }
@@ -1919,12 +2222,12 @@ function Transfer({
                 <button
                   onClick={() =>
                     void act(async () => {
-                      const report = await invoke<string>('diagnostics.export');
+                      const report = await invoke('diagnostics.export');
                       const blob = new Blob([report], { type: 'application/json' });
                       const url = URL.createObjectURL(blob),
                         a = document.createElement('a');
                       a.href = url;
-                      a.download = '文序诊断.json';
+                      a.download = `${brand.name}诊断.json`;
                       a.click();
                       URL.revokeObjectURL(url);
                     })
@@ -1940,7 +2243,7 @@ function Transfer({
                 <button
                   onClick={() =>
                     void act(async () => {
-                      const directory = await invoke<string | null>('app.chooseDirectory', {
+                      const directory = await invoke('app.chooseDirectory', {
                         title: '选择备份目录'
                       });
                       if (directory) {
@@ -1955,11 +2258,11 @@ function Transfer({
                 <button
                   onClick={() =>
                     void act(async () => {
-                      const source = await invoke<string | null>('app.chooseDirectory', {
-                        title: '选择文序备份目录'
+                      const source = await invoke('app.chooseDirectory', {
+                        title: `选择${brand.name}备份目录`
                       });
                       if (!source) return;
-                      const parent = await invoke<string | null>('app.chooseDirectory', {
+                      const parent = await invoke('app.chooseDirectory', {
                         title: '选择恢复位置（创建新目录）'
                       });
                       if (parent) {
@@ -2047,11 +2350,11 @@ function Cover({ profiles, title, act }: { profiles: Profile[]; title: string; a
           <button
             onClick={() =>
               void act(async () => {
-                const files = await invoke<string[]>('cover.list');
+                const files = await invoke('cover.list');
                 if (!files.length) throw new Error('尚无已保存封面');
                 const name = window.prompt('输入要打开的配置路径：\n' + files.join('\n'), files.at(-1));
                 if (name) {
-                  const m = await invoke<any>('cover.load', { path: name });
+                  const m = await invoke('cover.load', { path: name });
                   setBook(m.book ?? '');
                   setAuthor(m.author ?? '');
                   setFont(m.font ?? 'Microsoft YaHei');
@@ -2097,7 +2400,7 @@ function Cover({ profiles, title, act }: { profiles: Profile[]; title: string; a
             onClick={() => {
               setGenerating(true);
               void act(async () => {
-                const r = await invoke<any>('cover.generate', { profileId: profile, prompt });
+                const r = await invoke('cover.generate', { profileId: profile, prompt });
                 setPicture(r.dataUrl);
               }).finally(() => setGenerating(false));
             }}

@@ -140,6 +140,7 @@ test('长对话压缩后每轮和工具续轮仍携带规则，自由试写使�
       assert.match(system, /较早消息已转为可回查摘要/);
     }
     const chat = await service.invoke('chat.read', { id: chatId });
+    assert.ok(chat.turns[0].expressionRules);
     assert.equal(chat.turns[0].expressionRules.ruleIds.length, 48);
     assert.equal(service.snapshot().runs.length, 0);
     const card = await service.invoke('proposal.create', {
@@ -158,7 +159,9 @@ test('长对话压缩后每轮和工具续轮仍携带规则，自由试写使�
     assert.match(requests.at(-1)!, /mode="draft"/);
     assert.match(requests.at(-1)!, /\[META-001\]/);
     const updated = await service.invoke('chat.read', { id: chatId });
-    assert.equal(updated.turns.find((t: any) => t.kind === 'draft').expressionRules.ruleIds.length, 192);
+    const draftTurn = updated.turns.find((t) => t.kind === 'draft');
+    assert.ok(draftTurn?.expressionRules);
+    assert.equal(draftTurn.expressionRules.ruleIds.length, 192);
     assert.equal(service.snapshot().runs.length, 0);
   } finally {
     service.close();
@@ -225,6 +228,7 @@ test('工具续轮前规则改变会停下，不混用版本；预算不足不�
     await idle(service);
     assert.equal(calls, 1);
     let chat = await service.invoke('chat.read', { id: context.chatId });
+    assert.ok(chat.turns[0].error);
     assert.match(chat.turns[0].error, /依据.*变化|规则.*改变/);
     const p = service.store!.db.project();
     p.config.expressionRules.enabled = true;
@@ -267,7 +271,7 @@ test('正式修订在工具续轮与恢复时保留表达约束和防过度改�
     assert.equal(service.store!.db.run(runId).status, 'awaiting_input');
     await service.invoke('run.answer', { id: runId, answer: '只处理第一段的套话' });
     await idle(service);
-    assert.equal(requests.length, 2);
+    assert.equal(requests.length, 2, service.store!.db.run(runId).error ?? '');
     for (const system of requests) {
       assert.match(system, /mode="revision"/);
       assert.match(system, /\[EDIT-001\]/);

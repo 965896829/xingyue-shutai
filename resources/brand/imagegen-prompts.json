@@ -1,0 +1,21 @@
+{
+  "source": "用户提供三张 JPG；保留 originals 原件。仅对品牌素材制作透明版与独立字标。",
+  "records": [
+    {
+      "id": "app-icon",
+      "prompt": "Edit the supplied image ONLY to prepare a faithful transparent app icon. Preserve this exact navy and gold illustrated open book, large golden crescent, starry circular sky, luminous orbit and tiny castle. Remove only the exterior white background and excessive blank margin. Keep all actual white/cream book pages, clouds, highlights and glow INSIDE the illustration; do not make pale interior elements transparent. Do not redesign, add typography, simplify, or change the composition. Produce a single centered complete icon on a true transparent square canvas with 5 percent transparent safe padding; all book tips and star tips fully visible. Clean antialiased alpha edges without a white halo. No labels, no checkerboard painted into the image."
+    },
+    {
+      "id": "night-symbol",
+      "prompt": "Edit this logo for a desktop UI. Extract ONLY the upper illustrated symbol: the original open navy book, crescent moon, navy starry disc, orbit, castle and small gold stars. Remove the Chinese lettering and decorative swoosh below the symbol, and remove exterior white background. Preserve the exact illustrated character, original rich blue/purple and champagne gold, cream pages and clouds. No new design, no lettering. A complete centered transparent square symbol, book bottom visual anchor at 90% canvas height, widest book tips within x5% to95%, celestial circle centered, 5% safe padding around all tips. This will crossfade with the daytime star version: keep centered book-base composition stable. True transparent alpha, clean anti-aliased edges, no white matte and no fake checkerboard."
+    },
+    {
+      "id": "day-symbol",
+      "prompt": "Edit this logo for a desktop UI. Extract ONLY the upper illustrated symbol: the original open navy book, large golden four-point star, bright blue starry disc, orbit, castle, clouds and small gold stars. Remove the Chinese lettering and decorative swoosh below the symbol, and remove exterior white background. Preserve the exact illustrated character, original blue and champagne gold, cream pages and clouds. No new design, no lettering. A complete centered transparent square symbol, book bottom visual anchor at 90% canvas height, widest book tips within x5% to95%, celestial circle centered, 5% safe padding around all tips. This will crossfade with a crescent night version: keep centered book-base composition stable. True transparent alpha, clean anti-aliased edges, no white matte and no fake checkerboard."
+    },
+    {
+      "id": "wordmark",
+      "prompt": "Extract only the exact four large Chinese logo characters 星月书台 from the bottom of this supplied image. Preserve the original elegant sculpted Chinese serif glyph shapes precisely, including correct strokes and the little four-point star inside the 星 character if present. Remove the entire book/sky illustration above, remove every decorative swoosh and all separate sparkles around or below the characters, remove all white background. Arrange the original four characters on one unchanged horizontal baseline, with even original spacing. This is an alpha-mask wordmark for a professional desktop sidebar, so use solid opaque dark navy for the characters (including the thin original letter outlines) with clean anti-aliased transparent edges, no shadows outside the characters and NO semi-transparent fill. Output only these four characters on a tightly framed wide true-transparent canvas, roughly 4:1 aspect ratio and small 3% margin. Do not add English, captions, alternate text, new symbols or background. Exact text: 星月书台"
+    }
+  ]
+}

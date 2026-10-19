@@ -1,0 +1,33 @@
+{
+  "fixture": {
+    "paragraphs": 50000,
+    "xmlBytes": 5400151,
+    "fileBytes": 18755
+  },
+  "samples": [
+    {
+      "parseMs": 1763.0829000000003,
+      "heartbeatMs": 1765.8264000000004,
+      "characters": 1349998,
+      "hash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98"
+    },
+    {
+      "parseMs": 1763.9663000000005,
+      "heartbeatMs": 1764.9024000000004,
+      "characters": 1349998,
+      "hash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98"
+    },
+    {
+      "parseMs": 1696.1837000000005,
+      "heartbeatMs": 1696.4655000000002,
+      "characters": 1349998,
+      "hash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98"
+    },
+    {
+      "parseMs": 1634.8399,
+      "heartbeatMs": 1634.9242000000004,
+      "characters": 1349998,
+      "hash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98"
+    }
+  ]
+}

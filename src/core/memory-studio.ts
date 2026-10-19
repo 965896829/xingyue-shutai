@@ -8,6 +8,10 @@ import {
 import type { Fact, ProjectState } from '../shared/types';
 import { FileStore, safePath } from './storage';
 import { hash, paths } from './domain';
+import { pendingSource } from './memory-source';
+import { queryTerms as tokensOf } from './text-search';
+import { proseCandidates, repairProse } from './prose-index';
+export { tokensOf };
 
 export function writingScope(p: ProjectState): MemoryScope {
   return memoryScopeSchema.parse({
@@ -19,18 +23,25 @@ export function writingScope(p: ProjectState): MemoryScope {
 export function scopeSnapshot(store: FileStore, scope: MemoryScope) {
   if (scope.projectId && scope.projectId !== store.db.project().id) throw new Error('读取范围不属于当前作品');
   if (scope.mode === 'historical' && !scope.snapshotId) throw new Error('请选择可用的历史快照');
-  return scope.snapshotId ? store.db.snapshot(scope.snapshotId) : store.db.head()!;
+  const snapshot = scope.snapshotId ? store.db.snapshot(scope.snapshotId) : store.db.head()!;
+  if (scope.mode !== 'historical' && scope.snapshotId && scope.snapshotId !== store.db.head()?.id)
+    throw new Error('旧快照只能在历史回看中读取，不能作为当前事实');
+  return snapshot;
 }
-export function visibleFact(f: Fact, scope: MemoryScope) {
+export function applicableFact(f: Fact, scope: MemoryScope) {
   if (
     f.worldId !== scope.worldId ||
     f.timelineId !== scope.timelineId ||
     f.reviewStatus !== 'accepted' ||
-    f.state === 'disputed' ||
+    (f.state === 'disputed' || f.state === 'superseded') ||
     f.fromChapter > scope.chapter ||
     (f.toChapter !== null && f.toChapter < scope.chapter)
   )
     return false;
+  return true;
+}
+export function visibleFact(f: Fact, scope: MemoryScope) {
+  if (!applicableFact(f, scope)) return false;
   if (scope.viewpoint === 'author') return true;
   if (f.revealedAt > scope.chapter || f.kind === 'plan' || f.kind === 'author_constraint') return false;
   if (scope.viewpoint === 'reader') return true;
@@ -42,8 +53,10 @@ export function sourceValid(
   store: FileStore,
   e: SourceRef,
   documents: Record<string, string>,
-  chapter: number
+  chapter: number,
+  project?: ProjectState
 ) {
+  if (pendingSource(project ?? store.db.project(), e.path)) return false;
   if (documents[e.path] !== e.hash) return false;
   const n = e.path.match(/^07_.*第(\d+)章/);
   if (n && Number(n[1]) > chapter) return false;
@@ -55,19 +68,6 @@ export function sourceValid(
   } catch {
     return false;
   }
-}
-export function tokensOf(query: string) {
-  const matches = query.toLowerCase().match(/[\p{Script=Han}]+|[a-z0-9_-]+/gu) ?? [];
-  return [
-    ...new Set(
-      matches.flatMap((s) => {
-        const p = Array.from(s);
-        return p.length > 2 && /\p{Script=Han}/u.test(s)
-          ? [s, ...p.slice(0, -1).map((x, i) => x + p[i + 1])]
-          : [s];
-      })
-    )
-  ].slice(0, 100);
 }
 export function conflictingFacts(facts: Fact[]) {
   const conflicts = new Set<string>();
@@ -106,17 +106,19 @@ export function retrieveMemory(
   const scope = memoryScopeSchema.parse(input),
     snapshot = scopeSnapshot(store, scope);
   if (!snapshot) throw new Error('作品尚无正式快照');
-  const terms = tokensOf(query),
-    all = scope.mode === 'current' && !scope.snapshotId ? store.db.facts() : snapshot.facts;
+  const all = scope.mode === 'current' && !scope.snapshotId ? store.db.facts() : snapshot.facts;
   const visible = all.filter((f) => visibleFact(f, scope));
   const conflicts = conflictingFacts(visible);
+  const invalidSources = new Set(visible.filter(f => conflicts.has(f.id) || f.evidence.some(e => !sourceValid(store, e, snapshot.documents, scope.chapter, snapshot.project))).map(f => f.id));
+  const eligible = visible.filter(f => !invalidSources.has(f.id));
+  const names = [...new Set(eligible.filter(f => [f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))).flatMap(f => [f.subject, ...f.aliases]))];
+  const terms = [...new Set([...names, ...tokensOf(query)])];
   const exact = new Set(
-    visible
+    eligible
       .filter((f) => [f.id, f.subject, ...f.aliases, ...f.entityIds].some((n) => n && query.includes(n)))
       .flatMap((f) => [f.id, ...f.entityIds])
   );
-  const candidates = visible
-    .map((fact) => {
+  const scoreFact = (fact: Fact) => {
       const isExact = exact.has(fact.id),
         linked = fact.entityIds.some((x) => exact.has(x)) || fact.relatedIds.some((x) => exact.has(x));
       const score =
@@ -134,15 +136,10 @@ export function retrieveMemory(
         required,
         reason: required ? '持续约束' : isExact ? '实体匹配' : linked ? '关联实体' : '文本匹配'
       };
-    })
-    .filter((x) => query === '' || x.required || x.score > 0)
-    .sort((a, b) => b.score - a.score || a.fact.id.localeCompare(b.fact.id));
-  const invalid = candidates.filter(
-    (x) =>
-      conflicts.has(x.fact.id) ||
-      x.fact.evidence.some((e) => !sourceValid(store, e, snapshot.documents, scope.chapter))
-  );
-  const valid = candidates.filter((x) => !invalid.includes(x));
+    };
+  const relevant = (x: ReturnType<typeof scoreFact>) => query === '' || x.required || x.score > 0;
+  const invalid = visible.filter(f => invalidSources.has(f.id)).map(scoreFact).filter(relevant);
+  const valid = eligible.map(scoreFact).filter(relevant).sort((a, b) => b.score - a.score || a.fact.id.localeCompare(b.fact.id));
   const listed = browse
     ? valid.filter(
         (x) =>
@@ -165,15 +162,18 @@ export function retrieveMemory(
     start: number;
     end: number;
   }[] = [];
-  if (scope.viewpoint === 'author' || scope.viewpoint === 'reader') {
-    for (const [file, version] of Object.entries(snapshot.documents)) {
-      if (!file.startsWith('07_')) continue;
-      const n = Number(file.match(/第(\d+)章/)?.[1]);
-      if (!n || n > scope.chapter || !snapshot.project.chapters[n]) continue;
-      const text = store.object(version).toString('utf8');
-      const score = terms.filter((t) => text.toLowerCase().includes(t)).length;
+  let fallback = false;
+  if (!browse && terms.length && (scope.viewpoint === 'author' || scope.viewpoint === 'reader')) {
+    const candidates = proseCandidates(store, snapshot, scope.chapter, terms, query, limit);
+    fallback = candidates.fallback;
+    function* texts() {
+      yield* candidates.ranked;
+      for (const source of candidates.missing) yield { ...source, content: store.object(source.hash).toString('utf8') };
+    }
+    for (const { path: file, hash: version, content: text } of texts()) {
+      const score = terms.filter((t) => text.toLowerCase().includes(t.toLowerCase())).length + (query.trim() && text.toLowerCase().includes(query.toLowerCase()) ? 100 : 0);
       if (!score) continue;
-      const offset = text.toLowerCase().indexOf(terms.find((t) => text.toLowerCase().includes(t))!);
+      const offset = text.toLowerCase().indexOf(terms.find((t) => text.toLowerCase().includes(t.toLowerCase()))!.toLowerCase());
       const start = Math.max(0, Array.from(text.slice(0, offset)).length - 150),
         end = Math.min(Array.from(text).length, start + 1000);
       documents.push({
@@ -184,10 +184,22 @@ export function retrieveMemory(
         start,
         end
       });
+      if (documents.length > Math.max(50, limit * 2)) {
+        documents.sort((a, b) => Number(b.reason) - Number(a.reason) || a.path.localeCompare(b.path));
+        documents.splice(limit);
+      }
     }
     documents.sort((a, b) => Number(b.reason) - Number(a.reason) || a.path.localeCompare(b.path));
     documents.splice(limit);
-    for (const d of documents) d.reason = '已接受原文';
+    for (const d of documents) {
+      const original = store.object(d.hash).toString('utf8');
+      const accepted = Array.from(original).slice(d.start, d.end).join('');
+      if (accepted !== d.excerpt) {
+        repairProse(store, d.path, d.hash, original);
+        throw new Error(`${d.path}：检索缓存与正式版本不一致，已修复缓存，请重新查询`);
+      }
+      d.reason = '已接受原文';
+    }
   }
   const definitions = [
     ['timeline', paths.timeline, ['timeline']],
@@ -200,10 +212,15 @@ export function retrieveMemory(
     const count = facts.filter((x) => (categories as readonly string[]).includes(x.fact.category)).length;
     const missing =
       !snapshot.documents[file] ||
+      pendingSource(snapshot.project, file) ||
       invalid.some((x) => x.required && (categories as readonly string[]).includes(x.fact.category));
     return { ledger, status: missing ? 'missing' : count ? 'covered' : 'irrelevant', count };
   });
+  const pendingIssues = [...new Set(all.filter(fact => fact.evidence.some(e => pendingSource(snapshot.project, e.path)) &&
+    (query === '' || [fact.subject, ...fact.aliases, ...fact.entityIds].some(name => name && query.includes(name))))
+    .flatMap(fact => fact.evidence.filter(e => pendingSource(snapshot.project, e.path)).map(e => `${e.path}：前文修订影响尚未核对`)))];
   return {
+    ...(fallback ? { note: '部分原文索引尚未建立，本次逐篇核对缺失部分，未省略读取范围。' } : {}),
     ...(browse
       ? {
           total: listed.length,
@@ -216,18 +233,19 @@ export function retrieveMemory(
     facts,
     documents,
     coverage,
-    issues: invalid.map((x) => `${x.fact.id}：${conflicts.has(x.fact.id) ? '存在冲突状态' : '来源已变更'}`),
-    status: invalid.length ? 'conflict' : facts.length || documents.length ? 'found' : 'not_found'
+    issues: [...pendingIssues, ...invalid.map((x) => `${x.fact.id}：${conflicts.has(x.fact.id) ? '存在冲突状态' : '来源已变更'}`)],
+    status: invalid.length || pendingIssues.length ? 'conflict' : facts.length || documents.length ? 'found' : 'not_found'
   };
 }
 export function scopedRead(store: FileStore, file: string, scope: MemoryScope) {
   safePath(store.root, file);
   const snapshot = scopeSnapshot(store, scope);
+  if (pendingSource(snapshot.project, file)) throw new Error(`${file} 因前文修订待核对，不可作为当前事实`);
   const n = file.match(/^07_.*第(\d+)章/);
   if (n && Number(n[1]) > scope.chapter) throw new Error('此章节超出当前读取范围');
   if (scope.viewpoint === 'author') return store.readAccepted(file, snapshot.id);
   if (
-    [paths.config, paths.style].includes(file as any) ||
+    [paths.config, paths.style, '02_项目配置/标签创作契约.md'].includes(file as any) ||
     new RegExp(`^06_章节设计/第0*${scope.chapter}章(?:任务清单|细纲)\\.md$`).test(file)
   )
     return { ...store.readAccepted(file, snapshot.id), kind: 'author-instruction' };
@@ -235,12 +253,18 @@ export function scopedRead(store: FileStore, file: string, scope: MemoryScope) {
   const facts = snapshot.facts.filter((f) => visibleFact(f, scope));
   const evidence = facts
     .flatMap((f) => f.evidence)
-    .filter((e) => e.path === file && sourceValid(store, e, snapshot.documents, scope.chapter));
+    .filter((e) => e.path === file && sourceValid(store, e, snapshot.documents, scope.chapter, snapshot.project));
   if (!evidence.length) throw new Error('当前视角没有可读取的证据');
+  const text = store.object(snapshot.documents[file]).toString('utf8');
+  const unique = [...new Map(evidence.map(e => [JSON.stringify([e.start, e.end, e.quote]), e])).values()];
   return {
     path: file,
     hash: snapshot.documents[file],
-    content: [...new Set(evidence.map((e) => e.quote))].join('\n'),
+    content: unique.map(e => e.quote).join('\n\n'),
+    ranges: unique.map(e => {
+      const start = e.start ?? Array.from(text.slice(0, text.indexOf(e.quote))).length;
+      return { start, end: e.end ?? start + Array.from(e.quote).length };
+    }),
     restricted: true
   };
 }
@@ -301,7 +325,7 @@ export function characterState(store: FileStore, entity: string, input: unknown)
     (f) =>
       visibleFact(f, scope) &&
       !conflicts.has(f.id) &&
-      f.evidence.every((e) => sourceValid(store, e, snapshot.documents, scope.chapter))
+      f.evidence.every((e) => sourceValid(store, e, snapshot.documents, scope.chapter, snapshot.project))
   );
   return {
     id: entity,

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "S1",
+    "title": "Unrolling the Codex agent loop",
+    "publisher": "OpenAI",
+    "url": "https://openai.com/index/unrolling-the-codex-agent-loop/",
+    "accessedAt": "2026-10-10"
+  },
+  {
+    "id": "S2",
+    "title": "Unlocking the Codex harness: how we built the App Server",
+    "publisher": "OpenAI",
+    "url": "https://openai.com/index/unlocking-the-codex-harness/",
+    "accessedAt": "2026-10-10"
+  },
+  {
+    "id": "S3",
+    "title": "Custom instructions with AGENTS.md",
+    "publisher": "OpenAI",
+    "url": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+    "accessedAt": "2026-10-10"
+  },
+  {
+    "id": "S4",
+    "title": "Build skills",
+    "publisher": "OpenAI",
+    "url": "https://learn.chatgpt.com/docs/build-skills",
+    "accessedAt": "2026-10-10"
+  },
+  {
+    "id": "S5",
+    "title": "Sandbox",
+    "publisher": "OpenAI",
+    "url": "https://learn.chatgpt.com/docs/sandboxing",
+    "accessedAt": "2026-10-10"
+  }
+]

@@ -14,9 +14,25 @@ import {
   updatePath,
   qualityPath,
   renderConfig,
-  countWords
+  countWords,
+  hash
 } from '../../src/core/domain';
+import { reviewAspects } from '../../src/core/manuscript-check';
 const root = path.resolve('resources/skill');
+export function sampleProse(words = 2500) {
+  const paragraphs = [
+    '阿宁推开诊室的门，把记录本递到灯下。医生没有接，先指了指他袖口的血。他才发觉右手一直在抖，走廊里的脚步声已经到了门外。',
+    '窗边那人合上报纸，问他从哪条路过来。阿宁说是旧桥，话出口却看见桌角那双湿鞋。桥已经封了三天，鞋底还嵌着桥上才有的红砂。',
+    '医生把药箱放到门口，压低声音让他们从后院走。阿宁拦住他，从记录本里抽出那张收据。收据上的时间，比诊所开门早了整整一小时。',
+    '门外的钥匙转了半圈，忽然停住。有人隔着门叫医生的名字。阿宁退到窗下，把收据折好塞进口袋，左手握住了门边的木凳。',
+    '后院传来水桶落地的声音。医生脸色变了，伸手去拿柜顶的手电。阿宁先拉灭了灯，贴着墙听清第二串脚步，才示意他把门闩抬起。'
+  ];
+  let body = '', index = 0;
+  while (Array.from(body).length < words) {
+    body += `${paragraphs[index % paragraphs.length]}墙上的钟又走过${++index}格。`;
+  }
+  return '# 本章正文\n\n' + Array.from(body).slice(0, words).join('');
+}
 const filled = (text: string) =>
   text
     .replace(/：\s*$/gm, '：具体事件与原因')
@@ -125,13 +141,18 @@ export function fixture(p: ProjectState, file: string, service: Service) {
     );
   if (file === taskPath(p.chapter)) return filled(t['第XXX章任务清单']);
   if (file === detailPath(p.chapter)) return filled(t['第XXX章细纲']);
-  if (file === prosePath(p.chapter)) return '# 本章正文\n\n' + '宁'.repeat(p.config.chapterWords);
-  if (file === qualityPath(p.chapter))
+  if (file === prosePath(p.chapter)) return sampleProse(p.config.chapterWords);
+  if (file === qualityPath(p.chapter)) {
+    const prose = service.store!.db.runs().find(run => run.pipeline && run.status === 'running')?.changes.find(change => change.path === prosePath(p.chapter))?.content ?? sampleProse(p.config.chapterWords);
     return filled(t['章节质量评分'])
       .replace(/信息落地：.*/, '信息落地：是')
       .replace(/AI句式扫描：.*/, 'AI句式扫描：通过')
       .replace(/字数合规：.*/, '字数合规：是')
-      .replace(/是否需要重写：.*/, '是否需要重写：否');
+      .replace(/是否需要重写：.*/, '是否需要重写：否') + '\n\n```json wenxu-review\n' + JSON.stringify({
+        proseHash: hash(prose),
+        checks: reviewAspects.map((aspect, index) => ({ aspect, verdict: 'pass', quote: Array.from(prose).slice(10 + index * 12, 26 + index * 12).join(''), reason: '此处通过具体行动推进求医事件，合成夹具仅用于流程验收。' }))
+      }) + '\n```\n';
+  }
   if (file === updatePath(p.chapter))
     return filled(t['第XXX章记忆更新']).replace(
       /正文实际字数：.*/,

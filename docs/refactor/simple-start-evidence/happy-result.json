@@ -1,0 +1,13 @@
+{
+  "form": "新建作品\n\n写下想法，AI 会整理成方案。之后每阶段看结果、确认继续即可。\n\n作品名称\n保存位置\n选择目录\n创作想法\n更多开书选项：题材标签、模型与初始文件\n\n使用 fixture 生成方案；你确认后才会保存为正式设定。\n\n取消\n创建并开始",
+  "requiredEntries": [
+    "作品名称",
+    "保存位置",
+    "创作想法"
+  ],
+  "automaticS01": true,
+  "inlineResult": true,
+  "oneConfirmationStartedS02": true,
+  "closedWithS02AwaitingReview": true,
+  "projectRoot": "D:\\AIkehuduan\\.test-output\\newbook-20261011\\final-books\\《简单开书验收》创作档案"
+}

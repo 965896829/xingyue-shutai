@@ -1,0 +1,26 @@
+[
+  {
+    "file": "src/core/documents.ts",
+    "sha256": "2063cc84dc5b59b18d9a7aa3ad0c27fbf9393b9b7e6bc3b27a44b5f540ca522a"
+  },
+  {
+    "file": "src/core/service.ts",
+    "sha256": "77d79a0722a1d731b65d1624c7bfdedd9003465ffd97505ec8ac456a198b1f6f"
+  },
+  {
+    "file": "electron/worker.ts",
+    "sha256": "5e15e412ee3ff32a38a3d44c7ff7bbcc0b34ac185e22b244c2b039bf0b211215"
+  },
+  {
+    "file": "scripts/build-main.mjs",
+    "sha256": "1e087c608f3023ff402f09a486e3241c7e8731c8204f8c0fb31efe37edc35f0d"
+  },
+  {
+    "file": "src/core/runtime/scheduler.ts",
+    "sha256": "b3a22cd200bde23dec7793ca8461f258487b3502fa8ae82ea41c4114663616b7"
+  },
+  {
+    "file": "src/core/storage.ts",
+    "sha256": "42af6348cb66b0c0b3e9d18120b92b638ddad08598fc3121459dc251cd2a2b87"
+  }
+]

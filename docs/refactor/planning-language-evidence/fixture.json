@@ -1,0 +1,11 @@
+{
+  "project": {
+    "title": "策划中文说明验收",
+    "root": "D:\\AIkehuduan\\.test-output\\planning-language-20261011\\《策划中文说明验收》创作档案"
+  },
+  "runId": "3a7c44d3-275d-4a61-ad11-e462740a94e1",
+  "candidateHash": "89fb83efbcb1556e235875440b2e16be1487a16c67aa59fee462b67ce7a06806",
+  "reportHash": "2a256b7e696cbdf500f0d7a43aa96a69a9dcae9a3501a1e297e0c2e4fd925d2b",
+  "changesHash": "119dbf60e5d52e616597a4323862d25eca201cc3af1d89fd277dd09c20ce2ca5",
+  "kind": "synthetic legacy candidate; no external model requests"
+}

@@ -1,0 +1,113 @@
+{
+  "version": "rules-v1-draft",
+  "semantics": "allOfConceptIds为精确的全包含匹配；语义规则是创作建议，不是平台禁止组合清单。",
+  "rules": [
+    {
+      "id": "relation.single-vs-multi",
+      "allOfConceptIds": [
+        "concept.3e133240a3a7",
+        "concept.reading.role.001"
+      ],
+      "severity": "needs_scope_confirmation",
+      "message": "先确认两者是否约束同一主角、同一阶段的恋爱/角色结构；相同范围不能同时作为数量硬约束。",
+      "options": [
+        "保留单女主",
+        "保留多女主",
+        "明确一个指中心角色、另一个指配对范围；经作者确认后保存作用域"
+      ]
+    },
+    {
+      "id": "relation.nocp-vs-onevone",
+      "allOfConceptIds": [
+        "concept.content.emotion.029",
+        "concept.4918cd225d05"
+      ],
+      "severity": "needs_scope_confirmation",
+      "message": "无CP与1v1若作用于同一主角同一阶段则需调整；若分别约束主角与配角需明示。",
+      "options": [
+        "选择一项作为主角结构",
+        "为两项分别标注角色与时段"
+      ]
+    },
+    {
+      "id": "relation.nofemale-vs-single",
+      "allOfConceptIds": [
+        "concept.5adfd7c5d9db",
+        "concept.3e133240a3a7"
+      ],
+      "severity": "needs_scope_confirmation",
+      "message": "无女主与单女主先澄清具体语义和作用对象，不得擅自合并或删除。",
+      "options": [
+        "明确无女主的含义后保留一项",
+        "为角色层级或叙述范围作明确区分"
+      ]
+    },
+    {
+      "id": "power.invincible-upgrade",
+      "allOfConceptIds": [
+        "concept.reading.plot.043",
+        "concept.reading.plot.027"
+      ],
+      "severity": "design_condition",
+      "message": "不是硬冲突；需界定无敌范围，以及升级的能力、权限或组织维度。",
+      "options": [
+        "局部无敌但整体成长",
+        "战力无敌但治理/知识成长"
+      ]
+    },
+    {
+      "id": "identity.native-rebirth",
+      "allOfConceptIds": [
+        "concept.content.persona.027",
+        "concept.reading.plot.073"
+      ],
+      "severity": "needs_scope_confirmation",
+      "message": "否定身份与重生若作用于同一主角则冲突；先明确对象再选择。",
+      "options": [
+        "主角为原生身份",
+        "主角重生并移除否定标签",
+        "明确不同角色范围"
+      ]
+    },
+    {
+      "id": "space-stockpile",
+      "allOfConceptIds": [
+        "concept.reading.plot.078",
+        "concept.9666bc2237c2"
+      ],
+      "severity": "design_condition",
+      "message": "明确空间限制、物资来源与知识来源；囤物资不自动代表重生或灾前预知。",
+      "options": [
+        "储物型空间＋资源决策",
+        "生产型空间＋能源/时间约束"
+      ]
+    },
+    {
+      "id": "base-operation",
+      "allOfConceptIds": [
+        "concept.content.plot.098",
+        "concept.content.plot.041"
+      ],
+      "severity": "synergy",
+      "message": "把建设、产出、分配、维护、扩张写成完整循环，避免只有建筑等级。",
+      "options": [
+        "社区治理型",
+        "流动据点型",
+        "贸易节点型"
+      ]
+    },
+    {
+      "id": "rules-invincible",
+      "allOfConceptIds": [
+        "concept.df9d3e9874d3",
+        "concept.reading.plot.043"
+      ],
+      "severity": "design_condition",
+      "message": "应说明无敌是否能免疫规则；若所有后果消失，悬念需由解谜、责任或其他目标承担。",
+      "options": [
+        "战力无敌但信息有限",
+        "自身安全但承担救援/解谜目标"
+      ]
+    }
+  ]
+}

@@ -24,6 +24,7 @@ export const modelFields = (p: Profile) => ({
   inputLimit: p.inputLimit,
   limitMode: p.limitMode,
   modelLimits: p.modelLimits,
+  ...(p.contextPolicy ? { contextPolicy: p.contextPolicy } : {}),
   stream: p.stream,
   tools: p.tools,
   temperature: p.temperature,

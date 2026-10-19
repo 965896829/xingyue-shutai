@@ -1,0 +1,23 @@
+{
+  "actualProcessRestart": true,
+  "oneClickReopensPendingS02": true,
+  "oneConfirmationStartedS03": true,
+  "pausePreservesS04WithoutGenerating": true,
+  "stages": [
+    {
+      "stage": "S03",
+      "status": "complete",
+      "accepted": true
+    },
+    {
+      "stage": "S02",
+      "status": "complete",
+      "accepted": true
+    },
+    {
+      "stage": "S01",
+      "status": "complete",
+      "accepted": true
+    }
+  ]
+}

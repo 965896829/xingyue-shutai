@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { id, now, hash } from './domain';
 import { atomicWrite, fileHash, FileStore, safePath } from './storage';
+import { preserveAndMaterialize } from './materialization';
 import type {
   Conversation,
   ConversationMessage,
@@ -18,6 +19,18 @@ type Rows = {
 };
 export class Conversations {
   constructor(readonly store: FileStore) {}
+  page(conversationId: string, before?: number, watermark?: number, limit = 100) {
+    const conversation = this.get('conversations', conversationId);
+    const boundary = watermark ?? Number(this.store.db.sql.prepare('SELECT COALESCE(MAX(rowid),0) AS n FROM conversation_messages WHERE conversation_id=?').get(conversationId)!.n);
+    const rows = this.store.db.sql.prepare('SELECT rowid AS cursor,data FROM conversation_messages WHERE conversation_id=? AND rowid<=? AND rowid<? ORDER BY rowid DESC LIMIT ?')
+      .all(conversationId, boundary, before ?? boundary + 1, limit + 1);
+    const messages: ConversationMessage[] = rows.slice(0, limit).reverse().map((row) => JSON.parse(String(row.data)));
+    const turnIds = [...new Set(messages.map((message) => message.turnId).filter(Boolean))];
+    return { conversation, messages, watermark: boundary, nextBefore: rows.length > limit ? Number(rows[limit - 1].cursor) : null,
+      turns: turnIds.map((key) => ({ ...this.get('conversation_turns', key), messages: [] })),
+      proposals: this.store.db.sql.prepare(`SELECT data FROM action_proposals WHERE conversation_id=? AND (json_extract(data,'$.turnId') IN (${turnIds.map(() => '?').join(',') || "''"}) OR json_extract(data,'$.turnId')='') ORDER BY rowid`)
+        .all(conversationId, ...turnIds).map((row) => JSON.parse(String(row.data)) as ActionProposal) };
+  }
   all<K extends keyof Rows>(table: K, conversationId?: string): Rows[K][] {
     return (
       this.store.db.sql
@@ -47,19 +60,12 @@ export class Conversations {
     return row;
   }
   transaction<T>(fn: () => T): T {
-    this.store.db.sql.exec('BEGIN IMMEDIATE');
-    try {
-      const result = fn();
-      this.store.db.sql.exec('COMMIT');
-      return result;
-    } catch (e) {
-      this.store.db.sql.exec('ROLLBACK');
-      throw e;
-    }
+    return this.store.db.transaction(fn);
   }
-  create(title = '创作讨论', online = true) {
+  create(title = '创作讨论', online = true, runId?: string) {
     return this.save('conversations', {
       id: id(),
+      ...(runId ? { runId } : {}),
       title: title.trim().slice(0, 80) || '创作讨论',
       archived: false,
       online,
@@ -68,15 +74,16 @@ export class Conversations {
     });
   }
   recover() {
-    for (const turn of this.all('conversation_turns'))
-      if (turn.status === 'running') {
+    for (const row of this.store.db.sql.prepare("SELECT data FROM conversation_turns WHERE json_extract(data,'$.status')='running'").iterate()) {
+        const turn = JSON.parse(String(row.data)) as ConversationTurn;
         turn.status = 'unknown';
+        turn.usage = { ...turn.usage, input: null, output: null, cost: null };
         turn.error = '上次运行中断，请先核对服务商请求和费用，再决定是否重新发送。';
         this.save('conversation_turns', turn);
         const message = this.get('conversation_messages', turn.messageId);
         message.status = 'unknown';
         this.save('conversation_messages', message);
-      }
+    }
     const pending = this.store.db.get<{ draft: DraftArtifact; baseHash: string | null } | null>(
       'pendingDraft'
     );
@@ -85,9 +92,7 @@ export class Conversations {
   private finishDraft(draft: DraftArtifact, baseHash: string | null) {
     const target = safePath(this.store.root, draft.path),
       actual = fileHash(target);
-    if (actual !== baseHash && actual !== draft.hash)
-      throw new Error('草稿恢复遇到外部修改，请保留文件并核对历史版本');
-    if (actual !== draft.hash) atomicWrite(target, this.store.object(draft.hash));
+    if (actual !== draft.hash) preserveAndMaterialize(this.store, `draft-${draft.id}-${draft.hash}`, { path: draft.path, baseHash, newHash: draft.hash });
     this.transaction(() => {
       this.save('draft_artifacts', draft);
       this.store.db.set('pendingDraft', null);

@@ -76,6 +76,15 @@ export const modelLimitsSchema = z
   })
   .refine((v) => v.outputLimit < v.contextLimit && (v.inputLimit === null || v.inputLimit <= v.contextLimit));
 export type ModelLimits = z.infer<typeof modelLimitsSchema>;
+export const contextPolicySchema = z.object({
+  tokenizer: z.enum(['auto', 'o200k_base', 'cl100k_base', 'conservative']).default('auto'),
+  effectiveInputLimit: z.number().int().min(1024).max(10_000_000).nullable().default(null),
+  providerOverhead: z.number().int().min(0).max(65536).default(256),
+  safetyRatio: z.number().min(0.01).max(0.3).default(0.03),
+  safetyTokens: z.number().int().min(64).max(65536).default(256),
+  toolResultReserve: z.number().int().min(0).max(65536).default(2048)
+});
+export type ContextPolicy = z.infer<typeof contextPolicySchema>;
 export const profileSchema = z
   .object({
     id: z.string().min(1),
@@ -103,7 +112,8 @@ export const profileSchema = z
     hasKey: z.boolean().default(false),
     capabilities: z.record(z.string(), z.enum(['unknown', 'verified', 'failed'])).default({}),
     imageSize: z.string().default('1024x1536'),
-    imageQuality: z.string().default('auto')
+    imageQuality: z.string().default('auto'),
+    contextPolicy: contextPolicySchema.optional()
   })
   .refine((v) => v.outputLimit < v.contextLimit, '输出上限必须小于上下文容量')
   .refine((v) => v.inputLimit === null || v.inputLimit <= v.contextLimit, '输入上限不能大于上下文容量');
@@ -128,8 +138,15 @@ export interface Batch {
 export interface ProjectState {
   id: string;
   title: string;
+  titlePending?: boolean;
   root: string;
-  schemaVersion: 1;
+  schemaVersion: 1 | 2 | 3;
+  creationWorkflow?: 2;
+  creation?: import('./tags').ApprovedTags;
+  titleBinding?: import('./creation').AcceptedTitle;
+  titleReviewRequired?: boolean;
+  tagEnabled?: boolean;
+  tags?: import('./tags').ApprovedTags;
   revision: number;
   createdAt: string;
   config: ProjectConfig;
@@ -140,6 +157,7 @@ export interface ProjectState {
   chapters: Record<string, 'prose_accepted_pending_aftermath' | 'complete' | 'stale'>;
   finished: boolean;
   stale: string[];
+  storyImpacts?: import('./continuity').StoryImpact[];
   chapterStatesBeforeReview?: Record<string, 'prose_accepted_pending_aftermath' | 'complete'>;
   acceptedImport: boolean;
 }
@@ -215,11 +233,28 @@ export const factSchema = z
     relatedIds: z.array(z.string()).default([]),
     replacementReason: z.string().default(''),
     acceptedAt: z.string().optional(),
-    acceptedRunId: z.string().optional()
+    acceptedRunId: z.string().optional(),
+    planRefs: z.object({
+      inputHash: z.string().regex(/^[a-f0-9]{64}$/), contractRevision: z.number().int().positive(),
+      planHash: z.string().regex(/^[a-f0-9]{64}$/), claimIds: z.array(z.string().min(1)).min(1).max(60)
+    }).strict().optional(),
+    tagRefs: z
+      .object({
+        inputHash: z.string().regex(/^[a-f0-9]{64}$/),
+        contractRevision: z.number().int().positive(),
+        optionIds: z.array(z.string().min(1)).min(1).max(30),
+        constraintIds: z.array(z.string().min(1)).max(100)
+      })
+      .strict()
+      .optional()
   })
   .refine((v) => v.toChapter === null || v.toChapter >= v.fromChapter, '记忆有效范围不能倒置');
 export type Fact = z.infer<typeof factSchema>;
 export interface ContextSource {
+  layer?: 'author_rules' | 'chapter_plan' | 'character_knowledge' | 'prose' | 'summary';
+  ranges?: { start: number; end: number }[];
+  category?: 'author_instruction' | 'plan' | 'formal_fact' | 'accepted_prose' | 'derived_summary' | 'external_reference';
+  sourceSnapshotId?: string;
   path: string;
   hash: string;
   reason: string;
@@ -228,6 +263,31 @@ export interface ContextSource {
   mode: 'full' | 'excerpt';
 }
 export interface ContextManifest {
+  projectId?: string;
+  inputHash?: string;
+  selectedBy?: 'legacy-context-v4' | 'context-compiler-v1';
+  purpose?: 'stage' | 'revision' | 'draft' | 'discussion';
+  scope?: import('./studio').MemoryScope;
+  entityIds?: string[];
+  hardConstraints?: Fact[];
+  requiredFactIds?: string[];
+  revelation?: {
+    allowed: string[];
+    withheld: { id: string; subject: string; predicate: string; value: string; revealedAt: number; reason: string; evidence: import('./studio').SourceRef[] }[];
+    characterUnknown: string[];
+  };
+  budget?: {
+    method: 'o200k_base' | 'cl100k_base' | 'utf8_upper_bound';
+    inputBytes: number;
+    modelInputLimit: number;
+    effectiveInputLimit: number;
+    outputReserve: number;
+    providerReserve: number;
+    safetyReserve: number;
+    toolReserve: number;
+    residentTokens: number;
+    effectiveLimitSource: 'model' | 'configured';
+  };
   snapshotId?: string;
   coverage?: import('./studio').LedgerCoverage[];
   retrievedFacts?: Fact[];
@@ -258,12 +318,42 @@ export type RunStatus =
   | 'awaiting_input'
   | 'awaiting_permission';
 export interface Run {
+  webSearch?: import('./web-search').NativeWebSearchState;
+  stateVersion?: number;
+  projectId?: string;
+  operationId?: string;
+  executorId?: string;
+  executorVersion?: string;
+  executionId?: string;
+  checkpointVersion?: number;
+  cancelRequestedAt?: string;
+  parentRunId?: string;
+  agentRulesHash?: string;
+  repairAttempts?: Record<string, number>;
+  memoryReview?: { fingerprint: string; issues: string[] };
+  factRetractions?: { id: string; reason: string }[];
+  continuity?: import('./continuity').ContinuityScope;
+  memoryRepair?: {
+    paths: string[];
+    sources: string[];
+    completed: { path: string; hash: string; reason: string }[];
+    cursor: number;
+    impacts?: import('./continuity').StoryImpact[];
+    sourceHashes?: Record<string, string>;
+    readonlySources?: string[];
+  };
+  planning?: import('./tags').TagPlanning;
+  naming?: import('./creation').TitlePlanning;
+  tagBinding?: { inputHash: string; contractRevision: number; knowledgeVersion: string };
+  conversationId?: string;
+  savedCandidateReview?: { at: string; requestUnknown: boolean; error?: string };
   expressionRules?: Partial<
     Record<import('./expression').ExpressionMode, import('./expression').ExpressionBinding>
   >;
   candidateWrites?: Record<string, number>;
   modelBindings?: Record<string, { id: string; version: number }>;
   proposalHash?: string;
+  candidateFormat?: 2;
   baseSnapshotId?: string;
   skillId?: string;
   pipeline?: {
@@ -340,6 +430,7 @@ export interface ModelMessage {
   native?: unknown;
 }
 export interface ModelResult {
+  webSearch?: import('./web-search').NativeWebSearchState;
   text: string;
   calls: ToolCall[];
   native: unknown;
@@ -347,6 +438,9 @@ export interface ModelResult {
   stop: 'complete' | 'tools' | 'length' | 'filtered';
 }
 export interface Snapshot {
+  projectSessionId?: string;
+  workerGeneration?: number;
+  tagDraft?: import('./tags').BookSpec;
   studio?: import('./studio').StudioState;
   eventSeq?: number;
   epoch?: string;
@@ -363,100 +457,13 @@ export interface Snapshot {
   facts: Fact[];
   issues: Issue[];
 }
-export const commands = [
-  'studio.read',
-  'snapshot.list',
-  'memory.retrieve',
-  'memory.list',
-  'memory.trace',
-  'state.getCharacter',
-  'state.proposeCorrection',
-  'embedding.settings.save',
-  'embedding.test',
-  'embedding.reindex',
-  'embedding.cancel',
-  'assessment.refresh',
-  'draft.checkpoint',
-  'skills.list',
-  'expression.catalog',
-  'skill.run',
-  'outbox.retry',
-  'chat.list',
-  'chat.create',
-  'chat.update',
-  'chat.read',
-  'chat.send',
-  'chat.stop',
-  'chat.retry',
-  'proposal.confirm',
-  'proposal.refresh',
-  'proposal.cancel',
-  'proposal.create',
-  'draft.list',
-  'draft.save',
-  'draft.read',
-  'draft.promote',
-  'assistant.settings',
-  'assistant.role.save',
-  'assistant.role.reset',
-  'assistant.role.rollback',
-  'search.settings.save',
-  'search.test',
-  'run.revalidate',
-  'app.snapshot',
-  'project.create',
-  'project.preview',
-  'project.repair',
-  'project.importLegacy',
-  'project.open',
-  'project.close',
-  'project.trash',
-  'project.listTrash',
-  'project.restoreTrash',
-  'project.configure',
-  'project.scan',
-  'project.importAccept',
-  'document.read',
-  'document.save',
-  'document.history',
-  'document.restore',
-  'run.start',
-  'run.resume',
-  'run.cancel',
-  'run.accept',
-  'run.discard',
-  'run.update',
-  'run.answer',
-  'run.permission',
-  'run.handoff',
-  'memory.search',
-  'memory.rebuild',
-  'context.preview',
-  'project.backup',
-  'project.restoreBackup',
-  'project.export',
-  'project.importDocument',
-  'profiles.save',
-  'profiles.saveGroup',
-  'profiles.deleteGroup',
-  'profiles.delete',
-  'profiles.test',
-  'profiles.models',
-  'cover.generate',
-  'cover.cancel',
-  'cover.save',
-  'cover.list',
-  'cover.load',
-  'terminal.cancel',
-  'impact.review',
-  'app.chooseDirectory',
-  'app.chooseFile',
-  'app.reveal',
-  'app.openUrl',
-  'diagnostics.export'
-] as const;
-export type Command = (typeof commands)[number];
+export type { Command } from './contracts';
 export interface AppEvent {
+  resource?: 'runs' | 'chat' | 'documents' | 'studio';
+  projectSessionId?: string;
+  workerGeneration?: number;
+  resourceId?: string;
+  resourceVersion?: number;
   type: 'snapshot' | 'run-event' | 'delta' | 'error' | 'prose-delta' | 'assessment';
   projectId?: string;
   snapshotId?: string;
@@ -470,7 +477,8 @@ export interface AppEvent {
 }
 export interface ClientApi {
   desktop?: import('./desktop').DesktopApi;
-  invoke<T = unknown>(command: Command, args?: Record<string, unknown>): Promise<T>;
+  invoke: import('./contracts').BridgeInvoke;
+  cancelWait(waitId: string): void;
   onEvent(listener: (event: AppEvent) => void): () => void;
 }
 declare global {

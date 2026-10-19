@@ -1,6 +1,8 @@
+import { invokeCommand } from '../shared/client';
 import { useCallback, useEffect, useState } from 'react';
 import { ArchiveRestore, FolderOpen, RefreshCw, Trash2, X } from 'lucide-react';
-import type { TrashRecord } from '../core/recycle-bin';
+import type { CommandOutput } from '../shared/contracts';
+type TrashRecord = CommandOutput<'project.listTrash'>[number];
 const displayError = (e: unknown) =>
   (e instanceof Error ? e.message : String(e)).replace(
     /^Error invoking remote method '[^']+': (Error: )?/,
@@ -20,7 +22,7 @@ export function RecycleBin({
   const [now, setNow] = useState(Date.now());
   const refresh = useCallback(async () => {
     try {
-      setEntries(await window.wenxu!.invoke<TrashRecord[]>('project.listTrash'));
+      setEntries(await invokeCommand('project.listTrash'));
       setNow(Date.now());
       setError('');
     } catch (e) {
@@ -40,12 +42,12 @@ export function RecycleBin({
       const restored = await act(async () => {
         try {
           const parent = elsewhere
-            ? await window.wenxu!.invoke<string | null>('app.chooseDirectory', {
+            ? await invokeCommand('app.chooseDirectory', {
                 title: '选择原作品所在磁盘的其他目录恢复'
               })
             : undefined;
           if (elsewhere && !parent) return false;
-          await window.wenxu!.invoke('project.restoreTrash', { id: entry.id, ...(parent ? { parent } : {}) });
+          await invokeCommand('project.restoreTrash', { id: entry.id, ...(parent ? { parent } : {}) });
           return true;
         } catch (e) {
           setError(displayError(e));

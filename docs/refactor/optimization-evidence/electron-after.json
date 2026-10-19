@@ -1,0 +1,39 @@
+{
+  "file": "D:\\AIkehuduan\\.test-output\\optimization-20261010\\large.docx",
+  "project": "文档导入隔离验收",
+  "samples": [
+    {
+      "importMs": 1038.9000000059605,
+      "queryMs": 7.700000002980232,
+      "importPendingAtQuery": true,
+      "characters": 1349998,
+      "sourceHash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98",
+      "contentHash": "ae849e6b77e4c003b9fcff84e01472b1ada404df3ec06b8c7eb360982cd08bf2",
+      "warnings": [],
+      "runCount": 0
+    },
+    {
+      "importMs": 934.3000000119209,
+      "queryMs": 4.700000002980232,
+      "importPendingAtQuery": true,
+      "characters": 1349998,
+      "sourceHash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98",
+      "contentHash": "ae849e6b77e4c003b9fcff84e01472b1ada404df3ec06b8c7eb360982cd08bf2",
+      "warnings": [],
+      "runCount": 0
+    },
+    {
+      "importMs": 1063.5,
+      "queryMs": 3.4000000059604645,
+      "importPendingAtQuery": true,
+      "characters": 1349998,
+      "sourceHash": "6680d6181cfdf3c67272ed5f8eb5fd8160fe56a3222118de8d38fa74bcb96b98",
+      "contentHash": "ae849e6b77e4c003b9fcff84e01472b1ada404df3ec06b8c7eb360982cd08bf2",
+      "warnings": [],
+      "runCount": 0
+    }
+  ],
+  "documentsUnchanged": true,
+  "runsUnchanged": true,
+  "documents": 25
+}

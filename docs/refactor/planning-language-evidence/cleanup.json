@@ -1,0 +1,14 @@
+{
+  "candidateHash": "89fb83efbcb1556e235875440b2e16be1487a16c67aa59fee462b67ce7a06806",
+  "reportHash": "2a256b7e696cbdf500f0d7a43aa96a69a9dcae9a3501a1e297e0c2e4fd925d2b",
+  "changesHash": "119dbf60e5d52e616597a4323862d25eca201cc3af1d89fd277dd09c20ce2ca5",
+  "recordsUnchanged": true,
+  "originalLockReleased": true,
+  "runStatus": "awaiting_review",
+  "phase": "ready",
+  "isolatedProject": "D:\\AIkehuduan\\.test-output\\planning-language-20261011\\《策划中文说明验收》创作档案",
+  "kind": "synthetic legacy candidate; no external model requests",
+  "verificationLockReleased": true,
+  "electronPid": 47228,
+  "electronExitVerified": true
+}

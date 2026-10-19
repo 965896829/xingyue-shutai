@@ -1,18 +1,15 @@
 {
-  "contract_version": "1.0",
+  "contract_version": "2.0",
   "stage": "S10/guard",
   "optional": false,
   "tools": [
-    "project.read_snapshot",
-    "artifact.read",
-    "memory.query",
-    "memory.trace_source",
-    "skill.load",
-    "candidate.write",
-    "candidate.diff",
-    "changeset.propose",
-    "validate.run",
-    "review.request"
+    "read_naming_rules",
+    "read_document",
+    "search_memory",
+    "propose_changes",
+    "propose_memory",
+    "validate",
+    "ask_author"
   ],
   "write_scope": "candidate-only",
   "can_approve": false,
@@ -22,7 +19,7 @@
   "max_repairs": 2,
   "inputs": "保存后的候选正文hash、单章任务/细纲、配置、前两章与相关事实、确定性检查结果。",
   "outputs": [
-    "章节质量评分与证据清单",
+    "08_章后更新/第{chapter}章质量评分.md",
     "限定范围修复提案"
   ],
   "acceptance_criteria": [

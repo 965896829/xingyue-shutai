@@ -1,0 +1,28 @@
+{
+  "workflowFinalState": {
+    "text": "项目与文风S02\n\n第 001 章 · 2,500 字 / 章 · 当前批次 1—30 章\n\n创作流程 2 / 11\nS02 · 第 1 章 · 等待审阅 · 01:16:23\nS01 · 第 1 章 · 已接受 · 01:16:06\n你的任务\n\n完成 项目配置与文风。沿用已接受要求，开始前复核全部必读资料。\n\n星月书台\n等待审阅\n资料详情\n6 份资料 · 0 条关联事实 · 项目版本 2\n本地模拟结果已准备好本阶段方案已完成。请审阅结果，确认后继续下一阶段。\n检查结果详情\n本次生成的文稿 · 2 个文件\n项目配置.md\n1,125 字符\n文风样本与规则.md\n32 字符\n本阶段结果已准备好\n确认并继续\n保存，暂不继续\n需要修改或恢复任务\n2 轮调用 · 1 次工具 · 费用未知 · 输入 40 / 输出 40\n项目与文风\n修订资料\n选择模型\nfixture\n请审阅上方结果，确认后继续。需要改动可展开“需要修改或恢复任务”。AI 提交候选，由你确认采纳。",
+    "advancedVisible": false,
+    "heading": "本阶段结果已准备好"
+  },
+  "workflowFinalPause": {
+    "stage": "S04",
+    "runs": [
+      {
+        "stage": "S03",
+        "status": "complete",
+        "accepted": true
+      },
+      {
+        "stage": "S02",
+        "status": "complete",
+        "accepted": true
+      },
+      {
+        "stage": "S01",
+        "status": "complete",
+        "accepted": true
+      }
+    ],
+    "finalBuildRetested": true
+  }
+}

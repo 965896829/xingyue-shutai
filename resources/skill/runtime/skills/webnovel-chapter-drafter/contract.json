@@ -1,18 +1,15 @@
 {
-  "contract_version": "1.0",
+  "contract_version": "2.0",
   "stage": "S10",
   "optional": false,
   "tools": [
-    "project.read_snapshot",
-    "artifact.read",
-    "memory.query",
-    "memory.trace_source",
-    "skill.load",
-    "candidate.write",
-    "candidate.diff",
-    "changeset.propose",
-    "validate.run",
-    "review.request"
+    "read_naming_rules",
+    "read_document",
+    "search_memory",
+    "propose_changes",
+    "propose_memory",
+    "validate",
+    "ask_author"
   ],
   "write_scope": "candidate-only",
   "can_approve": false,
@@ -22,9 +19,9 @@
   "max_repairs": 2,
   "inputs": "当前snapshot、完整依赖manifest、已确认任务/细纲、启用文风、字数范围、知识/名称守卫。",
   "outputs": [
-    "07_正文章节/第{chapter}章.md（候选目标）",
-    "候选prose blob及hash"
+    "07_正文章节/第{chapter}章.md"
   ],
+  "host_outputs": ["正文版本与内容哈希"],
   "acceptance_criteria": [
     "正文保存后复读计数",
     "2300—2700或项目指定区间",

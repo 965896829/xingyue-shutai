@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { z } from 'zod';
 import { atomicWrite, FileStore } from './storage';
+import { checkDatabaseCompatibility } from './compatibility';
 
 export const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const BIN = '.文序回收站';
@@ -49,10 +50,7 @@ function projectId(root: string) {
   if (!fs.existsSync(file)) throw new Error('作品数据库不存在，已停止操作');
   const db = new DatabaseSync(file, { readOnly: true });
   try {
-    const row = db.prepare("SELECT value FROM kv WHERE key='project'").get() as { value: string } | undefined;
-    const value = row && JSON.parse(row.value);
-    if (!value?.id || value.schemaVersion !== 1) throw new Error('无法确认作品身份，已停止操作');
-    return String(value.id);
+    return checkDatabaseCompatibility(db, true).project!.id;
   } finally {
     db.close();
   }
@@ -177,12 +175,13 @@ export class ProjectRecycleBin {
   }
   trash(root: string, title: string): TrashRecord {
     root = checked(path.resolve(root));
-    if (
-      isRecyclePath(root) ||
-      this.records.some((r) => !['restored', 'purged'].includes(r.state) && samePath(r.originalRoot, root))
-    )
+    const previous = this.records.filter(
+      (r) => !['restored', 'purged'].includes(r.state) && samePath(r.originalRoot, root)
+    );
+    if (isRecyclePath(root) || (previous.length > 0 && !fs.existsSync(root)))
       throw new Error('这部作品已在回收站中');
     const identity = projectId(root);
+    if (previous.some((r) => r.projectId === identity)) throw new Error('这部作品已在回收站中');
     const store = new FileStore(root); // Checks the existing project write lock before moving.
     store.close();
     const deletedAt = this.clock();

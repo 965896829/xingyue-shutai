@@ -1,0 +1,26 @@
+{
+  "gitHead": "781152fc24841dc54b22284514604048ebe5e2c9",
+  "repository": {
+    "url": "git+https://github.com/badlogic/pi-mono.git",
+    "type": "git",
+    "directory": "packages/agent"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "deprecated": "please use @earendil-works/pi-agent-core instead going forward",
+  "dist": {
+    "shasum": "332224f2f2370f40b36aa3553e154078c257ff67",
+    "tarball": "https://registry.npmjs.org/@mariozechner/pi-agent-core/-/pi-agent-core-0.73.1.tgz",
+    "fileCount": 22,
+    "integrity": "sha512-Y/KVOhuKSgRQgYBlwmRtO2gPkUcoavOSqGF9bpQIINvNZvc19k6Z1H3bFDTce3Vp5ApMmTsfLH3+tNvOg75fAQ==",
+    "signatures": [
+      {
+        "sig": "MEUCIQD107BSnGda0grcaFNez1/M1n3wzNQyPXJy7F/CENoVTgIgYuQgtShMPoQv89Yc9qRplOsSNPVJLekhbMgdk5iFFL0=",
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+      }
+    ],
+    "unpackedSize": 268566
+  }
+}

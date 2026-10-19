@@ -1,0 +1,492 @@
+[
+  {
+    "id": "T-001",
+    "scenario": "原 BASE-01：结构版本 2 项目回收站操作",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-compatibility.test.ts",
+    "detail": "复现修复、版本2回收/备份、恢复参数、真实构建号"
+  },
+  {
+    "id": "T-002",
+    "scenario": "原 BASE-02：不接受补充指令的任务恢复",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-compatibility.test.ts",
+    "detail": "复现修复、版本2回收/备份、恢复参数、真实构建号"
+  },
+  {
+    "id": "T-003",
+    "scenario": "原 BASE-03：诊断版本",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-compatibility.test.ts",
+    "detail": "复现修复、版本2回收/备份、恢复参数、真实构建号"
+  },
+  {
+    "id": "T-004",
+    "scenario": "命令参数／结果类型错误",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-boundaries.test.ts",
+    "detail": "四种静态反例与运行时schema拒绝"
+  },
+  {
+    "id": "T-005",
+    "scenario": "未知命令、非可信来源 frame",
+    "status": "部分验证：未知命令与输入已测，非可信frame以实包能力隔离和守卫为界",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "未知命令/伪造字段拒绝；可信frame守卫；实包隔离frame另列"
+  },
+  {
+    "id": "T-006",
+    "scenario": "主进程与 worker 协议不兼容",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "协议握手、pending回收和迟到；renderer AbortSignal不跨桥"
+  },
+  {
+    "id": "T-007",
+    "scenario": "普通 IPC 超时及迟到响应",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "协议握手、pending回收和迟到；renderer AbortSignal不跨桥"
+  },
+  {
+    "id": "T-008",
+    "scenario": "启动任务响应丢失后重复相同 operationId",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "持久收据、相同意图返回原结果、输入hash冲突"
+  },
+  {
+    "id": "T-009",
+    "scenario": "相同 operationId 携带不同输入",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "持久收据、相同意图返回原结果、输入hash冲突"
+  },
+  {
+    "id": "T-010",
+    "scenario": "旧项目会话命令与事件迟到",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-boundaries.test.ts",
+    "detail": "会话/代次/资源版本、CAS、终结Execution不可复活"
+  },
+  {
+    "id": "T-011",
+    "scenario": "非法 Run 状态转换",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-boundaries.test.ts",
+    "detail": "会话/代次/资源版本、CAS、终结Execution不可复活"
+  },
+  {
+    "id": "T-012",
+    "scenario": "同版本 Run 被两个控制动作竞争更新",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-boundaries.test.ts",
+    "detail": "会话/代次/资源版本、CAS、终结Execution不可复活"
+  },
+  {
+    "id": "T-013",
+    "scenario": "worker 崩溃并重启",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "desktop-smoke.json",
+    "detail": "真实worker终止恢复；活动请求正常退出；挂起worker后15秒强制收尾"
+  },
+  {
+    "id": "T-014",
+    "scenario": "worker 连续启动失败",
+    "status": "单元门禁通过；连续启动失败的硬件/外部环境矩阵未穷尽",
+    "evidence": "desktop-smoke.json",
+    "detail": "真实worker终止恢复；活动请求正常退出；挂起worker后15秒强制收尾"
+  },
+  {
+    "id": "T-015",
+    "scenario": "正常退出有活动任务",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "desktop-smoke.json",
+    "detail": "真实worker终止恢复；活动请求正常退出；挂起worker后15秒强制收尾"
+  },
+  {
+    "id": "T-016",
+    "scenario": "退出到达上限被强制结束",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "desktop-smoke.json",
+    "detail": "真实worker终止恢复；活动请求正常退出；挂起worker后15秒强制收尾"
+  },
+  {
+    "id": "T-017",
+    "scenario": "任务运行中切换项目",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-boundaries.test.ts",
+    "detail": "活动聊天期间拒绝跨项目切换，原项目不变，drain释放锁"
+  },
+  {
+    "id": "T-018",
+    "scenario": "PID 重用／心跳失联",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "nonce锁、发送前落盘、未知费用、并发预算；独立进程kill补充"
+  },
+  {
+    "id": "T-019",
+    "scenario": "模型请求前持久化失败",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "nonce锁、发送前落盘、未知费用、并发预算；独立进程kill补充"
+  },
+  {
+    "id": "T-020",
+    "scenario": "发送意图之后硬终止",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "nonce锁、发送前落盘、未知费用、并发预算；独立进程kill补充"
+  },
+  {
+    "id": "T-021",
+    "scenario": "流中途断开",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "nonce锁、发送前落盘、未知费用、并发预算；独立进程kill补充"
+  },
+  {
+    "id": "T-022",
+    "scenario": "本地取消后远端仍可能执行",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "nonce锁、发送前落盘、未知费用、并发预算；独立进程kill补充"
+  },
+  {
+    "id": "T-023",
+    "scenario": "用量缺失或价格缺失",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "nonce锁、发送前落盘、未知费用、并发预算；独立进程kill补充"
+  },
+  {
+    "id": "T-024",
+    "scenario": "辅助摘要／评估／压缩请求",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "nonce锁、发送前落盘、未知费用、并发预算；独立进程kill补充"
+  },
+  {
+    "id": "T-025",
+    "scenario": "多子任务并发预留预算",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "nonce锁、发送前落盘、未知费用、并发预算；独立进程kill补充"
+  },
+  {
+    "id": "T-026",
+    "scenario": "HTTP／SDK／执行器隐藏重试",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-boundaries.test.ts",
+    "detail": "未知辅助调用停止续轮；实包重启接收次数不增加；旧重试回归"
+  },
+  {
+    "id": "T-027",
+    "scenario": "用户明确重新请求未知结果",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-boundaries.test.ts",
+    "detail": "未知辅助调用停止续轮；实包重启接收次数不增加；旧重试回归"
+  },
+  {
+    "id": "T-028",
+    "scenario": "四类协议正常流式与续轮",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "protocol.test.ts",
+    "detail": "四协议流式/非流式/续轮/原生字段；截断工具不调用handler"
+  },
+  {
+    "id": "T-029",
+    "scenario": "分片／截断工具参数",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "protocol.test.ts",
+    "detail": "四协议流式/非流式/续轮/原生字段；截断工具不调用handler"
+  },
+  {
+    "id": "T-030",
+    "scenario": "重复工具调用重放",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "工具去重、参数冲突、伪造批准/正式工具拒绝"
+  },
+  {
+    "id": "T-031",
+    "scenario": "同工具调用键出现不同参数",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "工具去重、参数冲突、伪造批准/正式工具拒绝"
+  },
+  {
+    "id": "T-032",
+    "scenario": "模型伪造 approved／commit 工具",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "工具去重、参数冲突、伪造批准/正式工具拒绝"
+  },
+  {
+    "id": "T-033",
+    "scenario": "路径穿越、链接与控制目录访问",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "core.test.ts",
+    "detail": "越界/链接/控制目录，工具权限不能从资料或输出提权"
+  },
+  {
+    "id": "T-034",
+    "scenario": "外部资料包含注入指令",
+    "status": "权限边界通过；未宣称覆盖所有提示注入攻击语料",
+    "evidence": "core.test.ts",
+    "detail": "越界/链接/控制目录，工具权限不能从资料或输出提权"
+  },
+  {
+    "id": "T-035",
+    "scenario": "日志、UI、诊断、错误与打包资源",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "脱敏、不可变候选指纹、审批失效与唯一提交"
+  },
+  {
+    "id": "T-036",
+    "scenario": "候选产生后内容被修改",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "脱敏、不可变候选指纹、审批失效与唯一提交"
+  },
+  {
+    "id": "T-037",
+    "scenario": "审批后依赖、项目或范围变化",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "脱敏、不可变候选指纹、审批失效与唯一提交"
+  },
+  {
+    "id": "T-038",
+    "scenario": "同一候选重复点击采纳，包括不同 operationId",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "脱敏、不可变候选指纹、审批失效与唯一提交"
+  },
+  {
+    "id": "T-039",
+    "scenario": "生成成功但尚未批准",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "脱敏、不可变候选指纹、审批失效与唯一提交"
+  },
+  {
+    "id": "T-040",
+    "scenario": "对象保存后、DB 提交前崩溃",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-crash.test.ts",
+    "detail": "四个独立进程硬终止边界，重复recover不重复提交"
+  },
+  {
+    "id": "T-041",
+    "scenario": "DB 提交后、文件同步前崩溃",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-crash.test.ts",
+    "detail": "四个独立进程硬终止边界，重复recover不重复提交"
+  },
+  {
+    "id": "T-042",
+    "scenario": "文件已替换、完成标记前崩溃",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-crash.test.ts",
+    "detail": "四个独立进程硬终止边界，重复recover不重复提交"
+  },
+  {
+    "id": "T-043",
+    "scenario": "同步期间外部文件变化",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "Windows TOCTOU精确插入外部字节并保留"
+  },
+  {
+    "id": "T-044",
+    "scenario": "检查和替换之间插入外部写入",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "Windows TOCTOU精确插入外部字节并保留"
+  },
+  {
+    "id": "T-045",
+    "scenario": "文件被占用／无权限／磁盘满",
+    "status": "占用真实验证、I/O失败注入通过；真实磁盘满/掉电未演练",
+    "evidence": "refactor-crash.test.ts",
+    "detail": "真实Windows FileShare.None占用；DB已提交/outbox待处理，解除后仅补物化"
+  },
+  {
+    "id": "T-046",
+    "scenario": "代理事件订阅持久化被阻塞",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-pi.test.ts",
+    "detail": "阻塞/失败checkpoint前工具计数0；显示订阅抛错不回滚"
+  },
+  {
+    "id": "T-047",
+    "scenario": "UI 订阅者抛错",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-pi.test.ts",
+    "detail": "阻塞/失败checkpoint前工具计数0；显示订阅抛错不回滚"
+  },
+  {
+    "id": "T-048",
+    "scenario": "必需上下文超容量",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "studio.test.ts",
+    "detail": "容量、正式来源、派生记忆和索引/评估代次；gateway超容量不发包"
+  },
+  {
+    "id": "T-049",
+    "scenario": "摘要过期／模型设想与正式事实混合",
+    "status": "既有来源/正式事实回归通过；新增付费摘要关闭",
+    "evidence": "studio.test.ts",
+    "detail": "容量、正式来源、派生记忆和索引/评估代次；gateway超容量不发包"
+  },
+  {
+    "id": "T-050",
+    "scenario": "旧索引／评估完成时来源已改变",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "studio.test.ts",
+    "detail": "容量、正式来源、派生记忆和索引/评估代次；gateway超容量不发包"
+  },
+  {
+    "id": "T-051",
+    "scenario": "用户未保存编辑遇到后台刷新",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "desktop-smoke.json",
+    "detail": "实际编辑文本在资源刷新、worker死亡和完整应用重开后保留"
+  },
+  {
+    "id": "T-052",
+    "scenario": "UI 事件缺口、重复、乱序与新代次",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-boundaries.test.ts",
+    "detail": "事件乱序/代次，450条新增跨页不丢；运行资源查询不扫文件/读聊天"
+  },
+  {
+    "id": "T-053",
+    "scenario": "长会话游标分页时新增消息",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-boundaries.test.ts",
+    "detail": "事件乱序/代次，450条新增跨页不丢；运行资源查询不扫文件/读聊天"
+  },
+  {
+    "id": "T-054",
+    "scenario": "不相关资源频繁更新",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-boundaries.test.ts",
+    "detail": "事件乱序/代次，450条新增跨页不丢；运行资源查询不扫文件/读聊天"
+  },
+  {
+    "id": "T-055",
+    "scenario": "所有支持的旧项目升级",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-crash.test.ts",
+    "detail": "schema迁移事务内kill回滚后重开；旧批准journal可验证来源"
+  },
+  {
+    "id": "T-056",
+    "scenario": "迁移中断并再次打开",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-crash.test.ts",
+    "detail": "schema迁移事务内kill回滚后重开；旧批准journal可验证来源"
+  },
+  {
+    "id": "T-057",
+    "scenario": "未知未来项目／数据库版本",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-compatibility.test.ts",
+    "detail": "未知版本拒写、WAL备份/缺对象/哈希校验、dry-run保留"
+  },
+  {
+    "id": "T-058",
+    "scenario": "备份恢复及 WAL 中有数据",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-compatibility.test.ts",
+    "detail": "未知版本拒写、WAL备份/缺对象/哈希校验、dry-run保留"
+  },
+  {
+    "id": "T-059",
+    "scenario": "备份缺对象／hash 错／复制中断",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-runtime.test.ts / refactor-compatibility.test.ts",
+    "detail": "缺引用对象/hash失败拒绝；32文件检查点取消后仅保留partial；重试新目录恢复，同名作者文件完整保留"
+  },
+  {
+    "id": "T-060",
+    "scenario": "垃圾回收 dry-run",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-compatibility.test.ts",
+    "detail": "未知版本拒写、WAL备份/缺对象/哈希校验、dry-run保留"
+  },
+  {
+    "id": "T-061",
+    "scenario": "清理与备份／活跃任务竞争",
+    "status": "本轮全对象保留、无删除；未来细粒度pin/GC删除不在启用范围",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "维护资源互斥、GC默认无删除；损坏JSON保留原字节"
+  },
+  {
+    "id": "T-062",
+    "scenario": "损坏全局 JSON／密钥解密失败",
+    "status": "损坏JSON已验证；跨Windows账号解密失败未实机演练",
+    "evidence": "refactor-runtime.test.ts",
+    "detail": "维护资源互斥、GC默认无删除；损坏JSON保留原字节"
+  },
+  {
+    "id": "T-063",
+    "scenario": "关闭新执行器开关",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-pi.test.ts",
+    "detail": "Legacy默认、未知checkpoint只读；Pi真实循环的离线桥接实验"
+  },
+  {
+    "id": "T-064",
+    "scenario": "未知 executor checkpoint 版本",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "refactor-pi.test.ts",
+    "detail": "Legacy默认、未知checkpoint只读；Pi真实循环的离线桥接实验"
+  },
+  {
+    "id": "T-065",
+    "scenario": "Pi 假 provider 只读／草稿／候选链",
+    "status": "离线实验通过，不代表Pi正式准入",
+    "evidence": "refactor-pi.test.ts",
+    "detail": "Legacy默认、未知checkpoint只读；Pi真实循环的离线桥接实验"
+  },
+  {
+    "id": "T-066",
+    "scenario": "实际授权模型烟测（条件项）",
+    "status": "条件未执行",
+    "evidence": "executor-capability-matrix.md",
+    "detail": "缺真实端点/数据/费用明确授权；未调用实际收费模型"
+  },
+  {
+    "id": "T-067",
+    "scenario": "Windows 打包运行（目标平台项）",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "desktop-smoke.json",
+    "detail": "实际Windows10 x64 ASAR/非ASCII路径、版本、离线页面与关闭恢复"
+  },
+  {
+    "id": "T-068",
+    "scenario": "覆盖安装和功能回退演练",
+    "status": "未验证：需要隔离Windows升级环境",
+    "evidence": "rollback-runbook.md",
+    "detail": "保持appId/GUID/userData并交付安装包；未覆盖本机正在使用的安装"
+  },
+  {
+    "id": "T-069",
+    "scenario": "性能同条件对比",
+    "status": "通过（本次隔离/合成验证范围）",
+    "evidence": "performance/comparison.md",
+    "detail": "同机同夹具p50/p95、内存、event-loop、payload与首次退化/优化复测；争用样本不用于阈值判定"
+  },
+  {
+    "id": "T-070",
+    "scenario": "既有核心业务端到端回归",
+    "status": "核心离线端到端与页面通过；实际供应商/图像服务未测",
+    "evidence": "feature-inventory.md",
+    "detail": "原143项+新增回归，完整S01—S11、标签、草稿和备份；实包页面抽测"
+  }
+]

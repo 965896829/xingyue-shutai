@@ -38,14 +38,14 @@ export function resolveCatalogConnection(
 
 class CatalogError extends Error {}
 const clean = (v: unknown) => (typeof v === 'string' ? v.trim().slice(0, 512) : '');
-export async function fetchModelCatalog(c: CatalogConnection): Promise<ModelCatalog> {
+export async function fetchModelCatalog(c: CatalogConnection, parentSignal?: AbortSignal): Promise<ModelCatalog> {
   const headers: Record<string, string> = { ...c.headers, Accept: 'application/json' };
   if (c.protocol === 'anthropic') {
     headers['x-api-key'] = c.apiKey;
     headers['anthropic-version'] = '2023-06-01';
   } else if (c.protocol === 'gemini') headers['x-goog-api-key'] = c.apiKey;
   else if (c.apiKey) headers.Authorization = `Bearer ${c.apiKey}`;
-  const signal = AbortSignal.timeout(30_000);
+  const signal = parentSignal ? AbortSignal.any([parentSignal, AbortSignal.timeout(30_000)]) : AbortSignal.timeout(30_000);
   let dispatcher: ProxyAgent | undefined;
   const entries = new Map<string, ModelCatalogEntry>();
   const cursors = new Set<string>();

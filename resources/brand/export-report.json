@@ -1,0 +1,303 @@
+{
+  "sources": {
+    "app-icon": {
+      "width": 1254,
+      "height": 1254,
+      "alphaBounds": {
+        "x": 0,
+        "y": 25,
+        "width": 1244,
+        "height": 1157
+      },
+      "transparent": 825895,
+      "translucent": 746346,
+      "opaque": 275,
+      "edgePixels": 4,
+      "sha256": "c11cd7a8bc3f89fb3befd44de1b8b0fa2d0d8ed523f5a7e92d84e54ef4c73d75"
+    },
+    "night-symbol": {
+      "width": 1254,
+      "height": 1254,
+      "alphaBounds": {
+        "x": 0,
+        "y": 21,
+        "width": 1254,
+        "height": 1209
+      },
+      "transparent": 742155,
+      "translucent": 829964,
+      "opaque": 397,
+      "edgePixels": 64,
+      "sha256": "1575a93f12b3bed283b9b6daa78bcf7d0fc4f9a6fcb5acd27f62545c92107a52"
+    },
+    "day-symbol": {
+      "width": 1254,
+      "height": 1254,
+      "alphaBounds": {
+        "x": 0,
+        "y": 5,
+        "width": 1254,
+        "height": 1217
+      },
+      "transparent": 649704,
+      "translucent": 922158,
+      "opaque": 654,
+      "edgePixels": 66,
+      "sha256": "360f13475b870de213e6ac6cfbd0c27bb6b5e165a90683aa327678e12f8aef81"
+    },
+    "wordmark": {
+      "width": 2172,
+      "height": 724,
+      "alphaBounds": {
+        "x": 41,
+        "y": 39,
+        "width": 2085,
+        "height": 647
+      },
+      "transparent": 1168744,
+      "translucent": 397003,
+      "opaque": 6781,
+      "edgePixels": 0,
+      "sha256": "f62289a66eb3ae4b1ef1c5e972d55b2888f0616a46e2f3e529ef17b0c254069f"
+    }
+  },
+  "outputs": [
+    {
+      "file": "public/brand/app-icon.png",
+      "width": 512,
+      "height": 512,
+      "alphaBounds": {
+        "x": 25,
+        "y": 82,
+        "width": 461,
+        "height": 398
+      },
+      "transparent": 158906,
+      "translucent": 100536,
+      "opaque": 2702,
+      "edgePixels": 0,
+      "sha256": "f7634481f20245b822ccc2e5c442b1974245ee87eea762c1671cece90f500442"
+    },
+    {
+      "file": "public/brand/night-symbol.png",
+      "width": 512,
+      "height": 512,
+      "alphaBounds": {
+        "x": 24,
+        "y": 83,
+        "width": 464,
+        "height": 397
+      },
+      "transparent": 149107,
+      "translucent": 110100,
+      "opaque": 2937,
+      "edgePixels": 0,
+      "sha256": "1aaa36b78caec581cfebfdd33baac4acaf8ac63e1cfe29a56daedac3ce52c1e9"
+    },
+    {
+      "file": "public/brand/day-symbol.png",
+      "width": 512,
+      "height": 512,
+      "alphaBounds": {
+        "x": 24,
+        "y": 48,
+        "width": 464,
+        "height": 432
+      },
+      "transparent": 136810,
+      "translucent": 121213,
+      "opaque": 4121,
+      "edgePixels": 0,
+      "sha256": "ca96cf9da7b897a02647dfa449714e787fa709d2fe05ab2acb2948dfdb0ec29f"
+    },
+    {
+      "file": "public/brand/wordmark-night.png",
+      "width": 1019,
+      "height": 281,
+      "alphaBounds": {
+        "x": 8,
+        "y": 8,
+        "width": 1003,
+        "height": 265
+      },
+      "transparent": 186238,
+      "translucent": 94972,
+      "opaque": 5129,
+      "edgePixels": 0,
+      "sha256": "a9202a009b2f68711fee9f59b011122f0060576ed4afb4cf520ed9bf815bd0d5"
+    },
+    {
+      "file": "public/brand/wordmark-day.png",
+      "width": 1019,
+      "height": 281,
+      "alphaBounds": {
+        "x": 8,
+        "y": 8,
+        "width": 1003,
+        "height": 265
+      },
+      "transparent": 186238,
+      "translucent": 94972,
+      "opaque": 5129,
+      "edgePixels": 0,
+      "sha256": "a9202a009b2f68711fee9f59b011122f0060576ed4afb4cf520ed9bf815bd0d5"
+    },
+    {
+      "file": "public/icon.png",
+      "width": 512,
+      "height": 512,
+      "alphaBounds": {
+        "x": 25,
+        "y": 82,
+        "width": 461,
+        "height": 398
+      },
+      "transparent": 158906,
+      "translucent": 100536,
+      "opaque": 2702,
+      "edgePixels": 0,
+      "sha256": "f7634481f20245b822ccc2e5c442b1974245ee87eea762c1671cece90f500442"
+    },
+    {
+      "file": "resources/icon.png",
+      "width": 512,
+      "height": 512,
+      "alphaBounds": {
+        "x": 25,
+        "y": 82,
+        "width": 461,
+        "height": 398
+      },
+      "transparent": 158906,
+      "translucent": 100536,
+      "opaque": 2702,
+      "edgePixels": 0,
+      "sha256": "f7634481f20245b822ccc2e5c442b1974245ee87eea762c1671cece90f500442"
+    },
+    {
+      "file": "resources/brand/icons/app-icon-16.png",
+      "width": 16,
+      "height": 16,
+      "alphaBounds": {
+        "x": 1,
+        "y": 1,
+        "width": 14,
+        "height": 14
+      },
+      "transparent": 123,
+      "translucent": 118,
+      "opaque": 15,
+      "edgePixels": 0,
+      "sha256": "6b772eb82e835b14df8d76fba4e8333c6f6e8a4c8764de5a4fef7028e981dd5c"
+    },
+    {
+      "file": "resources/brand/icons/app-icon-24.png",
+      "width": 24,
+      "height": 24,
+      "alphaBounds": {
+        "x": 1,
+        "y": 3,
+        "width": 22,
+        "height": 19
+      },
+      "transparent": 299,
+      "translucent": 247,
+      "opaque": 30,
+      "edgePixels": 0,
+      "sha256": "0b0b64338608d93053f01a43ee19bef13596a52a8a91eb2d1caeffdd30208e7f"
+    },
+    {
+      "file": "resources/brand/icons/app-icon-32.png",
+      "width": 32,
+      "height": 32,
+      "alphaBounds": {
+        "x": 1,
+        "y": 4,
+        "width": 30,
+        "height": 25
+      },
+      "transparent": 549,
+      "translucent": 412,
+      "opaque": 63,
+      "edgePixels": 0,
+      "sha256": "29200a827bf508735976cd725048a7aeda03b3411f380be9035ffebc3d3429bb"
+    },
+    {
+      "file": "resources/brand/icons/app-icon-48.png",
+      "width": 48,
+      "height": 48,
+      "alphaBounds": {
+        "x": 1,
+        "y": 8,
+        "width": 46,
+        "height": 36
+      },
+      "transparent": 1289,
+      "translucent": 899,
+      "opaque": 116,
+      "edgePixels": 0,
+      "sha256": "0e9d4a91192c4060a1f4af7e41c9c8184eaaddf126a040d74ab0ba2bcac59b21"
+    },
+    {
+      "file": "resources/brand/icons/app-icon-64.png",
+      "width": 64,
+      "height": 64,
+      "alphaBounds": {
+        "x": 2,
+        "y": 11,
+        "width": 60,
+        "height": 48
+      },
+      "transparent": 2330,
+      "translucent": 1602,
+      "opaque": 164,
+      "edgePixels": 0,
+      "sha256": "ab0a7240b4be70b20156f27356b0cdcba7c85ae90fb89ed25f9909bea193edcc"
+    },
+    {
+      "file": "resources/brand/icons/app-icon-128.png",
+      "width": 128,
+      "height": 128,
+      "alphaBounds": {
+        "x": 5,
+        "y": 23,
+        "width": 116,
+        "height": 96
+      },
+      "transparent": 9630,
+      "translucent": 6343,
+      "opaque": 411,
+      "edgePixels": 0,
+      "sha256": "31ca46ed1574abbb6cd2f42464129e143c6d228cba7d583f4651deebaa3f91d1"
+    },
+    {
+      "file": "resources/brand/icons/app-icon-256.png",
+      "width": 256,
+      "height": 256,
+      "alphaBounds": {
+        "x": 12,
+        "y": 48,
+        "width": 232,
+        "height": 191
+      },
+      "transparent": 39459,
+      "translucent": 24887,
+      "opaque": 1190,
+      "edgePixels": 0,
+      "sha256": "77c7c5f32cddb1892629ec1bc5a70ab2a1f706047508b9f468cc359d5d4c85fa"
+    }
+  ],
+  "ico": {
+    "file": "resources/icon.ico",
+    "sizes": [
+      16,
+      24,
+      32,
+      48,
+      64,
+      128,
+      256
+    ],
+    "sha256": "840fbc2de26d66568a18585c1a56fc27ccace623a8cc2e2e54ae0c9d8b29f50e"
+  }
+}

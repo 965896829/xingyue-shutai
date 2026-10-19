@@ -15,6 +15,7 @@ import {
   estimatedChapters
 } from './domain';
 import type { Change, Issue, ProjectState, StageId } from '../shared/types';
+import { checkProse, checkReviewEvidence } from './manuscript-check';
 
 const blank =
   /^(?:待填写[。.]?|待生成[。.]?|待补充[。.]?|TBD|TODO|\/(?:5|10|100)|是\/否(?:\/无变化|\/未到批次边界)?|未启用\/已启用|用户样本\/用户描述\/项目默认|硬悬念\/软牵引|[-—]*)$/i;
@@ -246,6 +247,8 @@ export function validateCandidate(
         )
       );
     if (c.path === qualityPath(p.chapter)) {
+      const prose = changes.find(change => change.path === prosePath(p.chapter));
+      if (prose) issues.push(...checkReviewEvidence(c.path, c.content, prose.content));
       const score = computedScore(c.content);
       if (score === null)
         issues.push({
@@ -491,14 +494,7 @@ export function validateCandidate(
           message: `不支持的章节类型：${m[1]}`
         });
     if (c.path.startsWith('07_正文章节/')) {
-      const count = countWords(c.content);
-      if (count < p.config.minWords || count > p.config.maxWords)
-        issues.push({
-          code: 'word_count',
-          severity: 'error',
-          path: c.path,
-          message: `正文 ${count} 字，允许范围 ${p.config.minWords}—${p.config.maxWords}（排除首行一级标题、空白）`
-        });
+      issues.push(...checkProse(c.path, c.content, p.config));
       const patterns = [
         /不是[^。！？\n]{0,40}而是/gu,
         /并非[^。！？\n]{0,40}只是/gu,

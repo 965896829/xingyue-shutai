@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { jumpToChatTarget } from './chat-navigation';
 import {
   motion,
   useMotionValue,
@@ -131,14 +132,7 @@ export function ProximitySidebar({
     };
   }, [key, find, scrollRef]);
   function select(id: string) {
-    const root = scrollRef.current,
-      element = find(id);
-    if (!root || !element) return;
-    root.scrollTo({
-      top: root.scrollTop + element.getBoundingClientRect().top - root.getBoundingClientRect().top - 8,
-      behavior: reduced ? 'instant' : 'smooth'
-    });
-    setActiveId(id);
+    if (jumpToChatTarget(scrollRef.current, id)) setActiveId(id);
   }
   if (!sections.length) return null;
   return (

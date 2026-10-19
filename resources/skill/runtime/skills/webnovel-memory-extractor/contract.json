@@ -1,18 +1,15 @@
 {
-  "contract_version": "1.0",
+  "contract_version": "2.0",
   "stage": "S11",
   "optional": false,
   "tools": [
-    "project.read_snapshot",
-    "artifact.read",
-    "memory.query",
-    "memory.trace_source",
-    "skill.load",
-    "candidate.write",
-    "candidate.diff",
-    "changeset.propose",
-    "validate.run",
-    "review.request"
+    "read_naming_rules",
+    "read_document",
+    "search_memory",
+    "propose_changes",
+    "propose_memory",
+    "validate",
+    "ask_author"
   ],
   "write_scope": "candidate-only",
   "can_approve": false,
@@ -22,10 +19,10 @@
   "max_repairs": 2,
   "inputs": "复读后的正文候选或已接受版本及hash；旧快照；提取范围；实体及五类台账。",
   "outputs": [
-    "08_章后更新/第{chapter}章记忆更新.md候选",
-    "memory delta",
-    "09_续写状态/当前进度.md与索引候选"
+    "08_章后更新/第{chapter}章记忆更新.md",
+    "memory delta"
   ],
+  "host_outputs": ["09_续写状态/当前进度.md", "阶段索引.md", "行为历史归档"],
   "acceptance_criteria": [
     "每个关键事实有原文出处",
     "无计划污染",

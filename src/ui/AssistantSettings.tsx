@@ -1,10 +1,12 @@
+import { invokeCommand } from '../shared/client';
 import { useEffect, useState } from 'react';
 import type { RoleRule, SearchSettings } from '../shared/assistant';
-import type { Command } from '../shared/types';
+import type { Command, Profile } from '../shared/types';
+import { parseOutput } from '../shared/contracts';
 import type { EmbeddingSettings } from '../shared/studio';
 
 type Settings = { roles: RoleRule[]; search: SearchSettings; hasKey: boolean; embedding: EmbeddingSettings };
-export function AssistantSettings({ onClose }: { onClose: () => void }) {
+export function AssistantSettings({ onClose, profiles = [] }: { onClose: () => void; profiles?: Profile[] }) {
   const [data, setData] = useState<Settings>(),
     [selected, select] = useState('editor'),
     [text, setText] = useState(''),
@@ -12,19 +14,20 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(false),
-    [version, setVersion] = useState('');
+    [version, setVersion] = useState(''),
+    [testProfile, setTestProfile] = useState(profiles.find(profile => profile.protocol === 'responses' && profile.tools)?.id ?? '');
   const role = data?.roles.find((r) => r.id === selected);
   async function call(command: Command, args: Record<string, unknown> = {}) {
     setBusy(true);
     setError('');
     setNotice('');
     try {
-      const result = await window.wenxu!.invoke<any>(command, args);
-      if (command === 'embedding.test') setNotice(`连接成功 · ${result.dimensions} 维`);
-      else if (command !== 'search.test') setData(result);
+      const result = await invokeCommand(command, args);
+      if (command === 'embedding.test') setNotice(`连接成功 · ${parseOutput('embedding.test', result).dimensions} 维`);
+      else if (command !== 'search.test') setData(parseOutput('assistant.settings', result));
       else
         setNotice(
-          `连接成功：取得 ${result.results.length} 条公开结果${result.results.length ? '' : '，服务可达但本次无可用结果'}。`
+          `连接成功：取得 ${parseOutput('search.test', result).results.length} 条公开结果${parseOutput('search.test', result).results.length ? '' : '，服务可达但本次无可用结果'}。`
         );
       return result;
     } catch (e) {
@@ -289,6 +292,34 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
         ) : data && selected === 'search' ? (
           <div className="assistant-settings-body">
             <label>
+              搜索方式
+              <select aria-label="搜索方式" value={data.search.provider}
+                onChange={event => setData({ ...data, search: { ...data.search, provider: event.target.value as SearchSettings['provider'] } })}>
+                <option value="auto">自动：Responses 模型使用 OpenAI 原生搜索</option>
+                <option value="openai">OpenAI 原生搜索</option>
+                <option value="tavily">第三方搜索服务</option>
+              </select>
+            </label>
+            {data.search.provider !== 'tavily' && <>
+              <p>OpenAI 原生搜索使用所选模型的连接与 Key，无需额外搜索 Key。模型和中转须支持 web_search；响应等待时间沿用模型设置。</p>
+              <label>原生搜索兼容性
+                <select aria-label="原生搜索兼容性" value={data.search.nativeToolLimit} onChange={event => setData({ ...data, search: { ...data.search, nativeToolLimit: event.target.value as SearchSettings['nativeToolLimit'] } })}>
+                  <option value="auto">自动：官方接口强制限次，中转使用兼容请求</option>
+                  <option value="server">完整参数：服务端限制搜索次数</option>
+                  <option value="compatible">中转兼容：实际次数以服务端为准</option>
+                </select>
+              </label>
+              <p>中转兼容模式以次数作为客户端参考限制；超出时停止接收，远端可能继续执行。启用严格费用上限时暂不发送原生搜索请求。</p>
+              <label>测试模型
+                <select aria-label="原生搜索测试模型" value={testProfile} onChange={event => setTestProfile(event.target.value)}>
+                  <option value="">请选择 Responses 模型</option>
+                  {profiles.filter(profile => profile.protocol === 'responses' && profile.tools).map(profile => <option key={profile.id} value={profile.id}>{profile.model}</option>)}
+                </select>
+              </label>
+            </>}
+            {data.search.provider !== 'openai' && <details open={data.search.provider === 'tavily'}>
+              <summary>第三方搜索配置（其他协议模型使用）</summary>
+            <label>
               接口根地址
               <input
                 aria-label="搜索接口根地址"
@@ -307,6 +338,7 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setKey(e.target.value)}
               />
             </label>
+            </details>}
             <label className="check">
               <input
                 type="checkbox"
@@ -323,9 +355,9 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
                   ['maxExtracts', '每轮最多提取网页'],
                   ['timeoutSeconds', '超时秒数']
                 ] as const
-              ).map(([name, label]) => (
+              ).filter(([name]) => data.search.provider !== 'openai' || name === 'maxSearches').map(([name, label]) => (
                 <label key={name}>
-                  {label}
+                    {name === 'maxSearches' && data.search.provider !== 'tavily' && data.search.nativeToolLimit !== 'server' ? '每轮搜索参考次数' : label}
                   <input
                     type="number"
                     aria-label={label}
@@ -351,15 +383,15 @@ export function AssistantSettings({ onClose }: { onClose: () => void }) {
               >
                 保存联网设置
               </button>
-              <button disabled={busy || !data.hasKey} onClick={() => void call('search.test')}>
+              <button disabled={busy || (data.search.provider === 'tavily' ? !data.hasKey : !testProfile && !data.hasKey)} onClick={() => void call('search.test', { ...(data.search.provider !== 'tavily' && testProfile ? { profileId: testProfile } : {}) })}>
                 测试已保存的连接
               </button>
-              <button
+              {data.search.provider !== 'openai' && <button
                 disabled={busy || !data.hasKey}
                 onClick={() => void call('search.settings.save', { search: data.search, clearKey: true })}
               >
                 清除 Key
-              </button>
+              </button>}
             </div>
           </div>
         ) : (

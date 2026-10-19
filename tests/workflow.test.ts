@@ -40,6 +40,10 @@ test('S01—S11 全流程、正文记忆一次批准与批次归档', async () =
       assert.match(_s, /对比论辩、角色口癖或强节奏段落/);
       if (_s.includes('rubric narrative-1')) assert.equal(mode, 'record');
       const current = service.store!.db.project();
+      if (current.titlePending) {
+        assert.match(JSON.stringify(messages), /书名尚未确定/);
+        assert.match(JSON.stringify(messages), /不追问书名/);
+      }
       if (!tools.length) {
         const prose = fixture(current, prosePath(current.chapter), service);
         const text = _s.includes('rubric narrative-1')
@@ -110,7 +114,6 @@ test('S01—S11 全流程、正文记忆一次批准与批次归档', async () =
   try {
     await service.invoke('project.create', {
       parent,
-      title: '全流程',
       premise: '一位伤员求医',
       config: {
         targetWords: 400,
@@ -121,6 +124,11 @@ test('S01—S11 全流程、正文记忆一次批准与批次归档', async () =
         modelRouting: { writing: 'mock', extraction: 'extractor', review: 'reviewer' }
       }
     });
+    const unnamed = service.snapshot().project!;
+    assert.equal(unnamed.titlePending, true);
+    service.close();
+    await service.open(unnamed.root);
+    assert.equal(service.snapshot().project!.titlePending, true);
     assert.equal(service.store!.scan().length, 25);
     let stages = 0;
     while (!service.store!.db.project().finished) {
@@ -137,12 +145,35 @@ test('S01—S11 全流程、正文记忆一次批准与批次归档', async () =
         assert.ok(r.steps?.some((s) => s.phase === 'review' && s.profileId === 'reviewer'));
         assert.ok(r.steps?.some((s) => s.phase === 'memory' && s.profileId === 'extractor'));
       }
-      await service.invoke('run.accept', {
+      const acceptance = {
         id,
         proposalHash: r.proposalHash,
         startNext: false,
         warningReason: '测试夹具：仅验证结构与状态，不代表文学质量'
-      });
+      };
+      if (p.stage === 'S01') {
+        const before = service.store!.db.get('headSnapshot');
+        await assert.rejects(service.invoke('run.accept', acceptance), /填写书名/);
+        await assert.rejects(service.invoke('run.accept', { ...acceptance, title: '无效/书名' }), /无效字符/);
+        assert.equal(service.store!.db.get('headSnapshot'), before);
+        assert.equal(service.store!.db.run(id).accepted, false);
+        await service.invoke('run.accept', { ...acceptance, title: '全流程' });
+        const named = service.snapshot().project!;
+        assert.equal(named.titlePending, false);
+        assert.equal(named.title, '全流程');
+        assert.equal(named.id, unnamed.id);
+        assert.equal(named.root, unnamed.root);
+        assert.equal(named.stage, 'S02');
+        assert.equal(service.snapshot().recent[0].title, '全流程');
+        assert.match(service.store!.readAccepted(paths.config).content, /- 项目：全流程/);
+        assert.match(service.store!.readAccepted(paths.index).content, /# 全流程 · 阶段索引/);
+        assert.equal(service.store!.db.head()!.project.title, '全流程');
+        assert.equal((await service.invoke('run.accept', { ...acceptance, title: '全流程' })).alreadyAccepted, true);
+        await assert.rejects(service.invoke('run.accept', { ...acceptance, title: '另一个书名' }), /已经确认书名/);
+        service.close();
+        await service.open(named.root);
+        assert.equal(service.snapshot().project!.title, '全流程');
+      } else await service.invoke('run.accept', acceptance);
       stages++;
       if (p.stage === 'S10') {
         assert.equal(service.store!.db.project().chapters[p.chapter], 'complete');
@@ -160,6 +191,24 @@ test('S01—S11 全流程、正文记忆一次批准与批次归档', async () =
   } finally {
     service.close();
   }
+});
+
+test('未定名项目可在同一目录重复创建，空书名不妨碍保存，旧命名创建保持兼容', async () => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-untitled-'));
+  const service = new Service(root, () => {});
+  try {
+    const first = (await service.invoke('project.create', { parent, premise: '第一个故事想法' })).project!;
+    const second = (await service.invoke('project.create', { parent, title: ' ', premise: '第二个故事想法' })).project!;
+    assert.notEqual(first.root, second.root);
+    assert.notEqual(first.id, second.id);
+    assert.equal(second.titlePending, true);
+    const named = (await service.invoke('project.create', { parent, title: '已有书名', premise: '沿用命名创建' })).project!;
+    assert.equal(named.title, '已有书名');
+    assert.notEqual(named.titlePending, true);
+    assert.equal(path.basename(named.root), '《已有书名》创作档案');
+    await service.open(first.root);
+    assert.equal(service.snapshot().project!.titlePending, true);
+  } finally { service.close(); }
 });
 test('旧档案复制保持原始 UTF-8 BOM、CRLF、备注和九列表格字节', () => {
   const source = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-legacy-')),

@@ -1,0 +1,346 @@
+/* Brand geometry stays fixed during theme changes; only opacity, transform and colors animate. */
+.brand {
+  gap: 4px;
+  margin: 0 0 18px;
+  min-height: 56px;
+}
+.brand-home {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.brand-home .brand-logo {
+  pointer-events: none;
+}
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 8px;
+  width: 180px;
+  height: 56px;
+  position: relative;
+}
+.brand-symbol {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+.brand-symbol img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  transform-origin: 50% 60%;
+}
+.brand-symbol-night {
+  opacity: 1;
+  transform: scale(1);
+}
+.brand-symbol-day {
+  opacity: 0;
+  transform: scale(0.98);
+}
+:root[data-color-mode='light'] .brand-symbol-night {
+  opacity: 0;
+  transform: scale(0.98);
+}
+:root[data-color-mode='light'] .brand-symbol-day {
+  opacity: 1;
+  transform: scale(1);
+}
+.brand-wordmark {
+  width: 116px;
+  height: 42px;
+  flex-shrink: 0;
+  background-color: var(--brand-wordmark);
+  mask-image: var(--brand-wordmark-image);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+.brand-logo[data-ready='false'] .brand-symbol,
+.brand-logo[data-ready='false'] .brand-wordmark {
+  visibility: hidden;
+}
+.brand-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--brand-wordmark);
+  font-weight: 650;
+}
+.brand-logo-compact {
+  width: 32px;
+  height: 32px;
+}
+.brand-logo-compact .brand-symbol {
+  width: 32px;
+  height: 32px;
+}
+.brand-logo-compact .brand-wordmark {
+  display: none;
+}
+.brand-logo-symbol {
+  width: 56px;
+}
+.brand-logo-symbol .brand-wordmark {
+  display: none;
+}
+.welcome-symbol .brand-logo-symbol,
+.welcome-symbol .brand-symbol {
+  width: 58px;
+  height: 58px;
+}
+.exit-dialog {
+  width: min(440px, calc(100vw - 48px));
+  padding: 24px 28px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 24px 80px var(--shadow);
+  margin: auto;
+}
+.exit-dialog:not([open]) {
+  display: none;
+}
+.exit-dialog::backdrop {
+  background: var(--scrim);
+  backdrop-filter: blur(3px);
+}
+.exit-dialog > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.exit-dialog h2 {
+  color: var(--ink);
+  font-size: 21px;
+  font-weight: 600;
+  margin: 16px 0 10px;
+}
+.exit-dialog p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+  margin: 0;
+}
+.exit-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+.exit-dialog footer button {
+  min-width: 88px;
+}
+.exit-dialog .exit-error {
+  color: var(--danger);
+  margin-top: 10px;
+}
+.sidebar-collapsed .brand {
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.brand .sidebar-toggle {
+  width: 28px;
+  height: 28px;
+}
+.window-brand-icon {
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.welcome-symbol {
+  background: transparent;
+}
+.welcome-symbol img {
+  object-fit: contain;
+}
+
+/* Foreground animation belongs to small text blocks. Animating an inherited color
+   on html/sidebar/editor invalidates large subtrees every frame; keep those roots
+   static and let the actual text owners interpolate once, without nested tweens. */
+:root[data-theme-transition='active'] {
+  --theme-paint-duration: 320ms;
+  transition-property: background-color;
+  transition-duration: var(--theme-paint-duration);
+  transition-timing-function: cubic-bezier(0, 0, 0.58, 1);
+}
+
+/* Only surfaces own background/border animations; ordinary text and SVG descendants
+   inherit the already-interpolated foreground without starting another transition. */
+:root[data-theme-transition='active']
+  :is(
+    .app-shell,
+    .app-shell > main,
+    .topbar,
+    .sidebar,
+    .window-titlebar,
+    .topic-list,
+    .work-tabs,
+    .file-search,
+    .user-message,
+    .conversation-message.user,
+    .context-card,
+    .approval-box,
+    .action-proposal,
+    .issue,
+    .banner,
+    .composer,
+    .editor-panel,
+    .editor-panel > header,
+    .editor-panel footer,
+    .editor-tabs,
+    .cm-editor,
+    .cm-gutters,
+    .cm-panels,
+    .cm-tooltip,
+    .cm-activeLine,
+    .cm-activeLineGutter,
+    .cm-selectionBackground,
+    .cm-changedLine,
+    .cm-changedText,
+    .scrim,
+    .modal,
+    .modal > header,
+    .modal-footer,
+    .chat-composer-popover,
+    .exit-dialog,
+    .free-drafts,
+    .memory-fact,
+    .memory-filters,
+    .inspector-tabs,
+    .narrative-panel,
+    .source-dialog,
+    .welcome-cards > div,
+    .history-list > div,
+    .provider-model-picker,
+    .provider-layout > aside,
+    .provider-result,
+    .brand-wordmark,
+    .delete-control,
+    .delete-panel,
+    .delete-description
+  ) {
+  transition-property: background-color, border-color, box-shadow;
+  transition-duration: var(--theme-paint-duration);
+  transition-timing-function: cubic-bezier(0, 0, 0.58, 1);
+}
+
+/* Explicit foreground ownership makes body text blend without transitioning its
+   entire containing panel. Existing semantic colors on descendants remain intact. */
+:is(
+  .markdown-body,
+  .cm-line,
+  .assistant-heading,
+  .topic-heading,
+  .model-text,
+  .user-message > p,
+  .assistant-label > b,
+  .workflow-heading h1,
+  .start-card h2,
+  .welcome h1,
+  .memory-fact-title strong,
+  .memory-fact > p,
+  .studio-heading h1,
+  .character-heading h2,
+  .modal header h2,
+  .chat-input-dialog h3,
+  .free-drafts header h3,
+  .action-proposal > h3,
+  .action-proposal > p,
+  .approval-box > h3,
+  .approval-box > p,
+  .markdown-preview > :is(h1, h2, h3, h4, p, ul, ol, table, pre)
+) {
+  color: var(--ink);
+}
+.window-title,
+.cm-gutterElement {
+  color: var(--muted);
+}
+
+/* Controls already own explicit colors. Children inherit their one interpolation;
+   no wildcard p/span/div rule, and no color tween on root/sidebar/editor containers. */
+:root[data-theme-transition='active']
+  :is(
+    .banner,
+    .issue,
+    button,
+    input,
+    select,
+    textarea,
+    .breadcrumb,
+    .save-state,
+    .composer-note,
+    .section-label,
+    .current-book small,
+    .sidebar .local,
+    .assistant-heading small,
+    .conversation-message > small,
+    .editor-tabs > span,
+    .editor-panel footer small,
+    .window-title,
+    .cm-gutterElement,
+    .exit-dialog h2,
+    .exit-dialog p,
+    .markdown-body,
+    .cm-line,
+    .assistant-heading,
+    .topic-heading,
+    .model-text,
+    .user-message > p,
+    .assistant-label > b,
+    .workflow-heading h1,
+    .start-card h2,
+    .welcome h1,
+    .memory-fact-title strong,
+    .memory-fact > p,
+    .studio-heading h1,
+    .character-heading h2,
+    .modal header h2,
+    .chat-input-dialog h3,
+    .free-drafts header h3,
+    .action-proposal > h3,
+    .action-proposal > p,
+    .approval-box > h3,
+    .approval-box > p,
+    .markdown-preview > :is(h1, h2, h3, h4, p, ul, ol, table, pre)
+  ) {
+  transition-property: background-color, border-color, color;
+  transition-duration: var(--theme-paint-duration);
+  transition-timing-function: cubic-bezier(0, 0, 0.58, 1);
+}
+:root[data-theme-transition='active'] .brand-logo[data-ready='true'] .brand-symbol img {
+  will-change: opacity, transform;
+  transition-property: opacity, transform;
+  transition-duration: 480ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.58, 1);
+}
+:root[data-theme-transition='active'] ::-webkit-scrollbar-thumb,
+:root[data-theme-transition='active'] input::placeholder,
+:root[data-theme-transition='active'] textarea::placeholder {
+  transition:
+    background-color var(--theme-paint-duration) cubic-bezier(0, 0, 0.58, 1),
+    color var(--theme-paint-duration) cubic-bezier(0, 0, 0.58, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme-transition='active'] {
+    --theme-paint-duration: 50ms;
+  }
+  :root[data-theme-transition='active'] .brand-logo[data-ready='true'] .brand-symbol img {
+    transition-duration: 50ms;
+  }
+  .brand-symbol img {
+    transform: none !important;
+  }
+}

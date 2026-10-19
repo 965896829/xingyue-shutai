@@ -1,5 +1,8 @@
+import { invokeCommand } from '../shared/client';
 import { useState } from 'react';
 import { configSchema, stageIds, type Command } from '../shared/types';
+import type { Invoke } from '../shared/contracts';
+import { commandContracts } from '../shared/contracts';
 export function LegacyDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const [source, setSource] = useState(''),
     [parent, setParent] = useState(''),
@@ -10,7 +13,7 @@ export function LegacyDialog({ onClose, onDone }: { onClose: () => void; onDone:
     [error, setError] = useState(''),
     [agreed, setAgreed] = useState(false),
     [busy, setBusy] = useState(false);
-  const call = (c: Command, a: Record<string, unknown> = {}) => window.wenxu!.invoke<any>(c, a);
+  const call: Invoke = (c, a) => invokeCommand(c, a);
   async function choose() {
     try {
       const root = await call('app.chooseDirectory', { title: '选择原 Skill 创作档案目录' });
@@ -18,7 +21,7 @@ export function LegacyDialog({ onClose, onDone }: { onClose: () => void; onDone:
         const result = await call('project.importLegacy', { preview: true, source: root });
         setSource(root);
         setPreview(result);
-        setChapter(result.suggestedChapter);
+        if ('suggestedChapter' in result) setChapter(result.suggestedChapter);
       }
     } catch (e) {
       setError((e as Error).message);
@@ -99,14 +102,14 @@ export function LegacyDialog({ onClose, onDone }: { onClose: () => void; onDone:
                 onClick={() => {
                   setBusy(true);
                   setError('');
-                  void call('project.importLegacy', {
+                  void call('project.importLegacy', commandContracts['project.importLegacy'].input.parse({
                     source,
                     parent,
                     title,
                     chapter,
                     stage,
                     config: configSchema.parse({})
-                  })
+                  }))
                     .then(onDone)
                     .catch((e) => setError(e.message))
                     .finally(() => setBusy(false));

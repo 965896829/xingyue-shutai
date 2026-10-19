@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "kind": "custom-client-registry",
-  "notice": "本客户端拟实现契约；不是Codex官方配置。只读metadata发现，按需读取SKILL.md。工具权限必须由宿主执行。",
+  "notice": "星月书台实际技能注册表；总控为 agent.md，工具权限由宿主验证，正式提交只能由作者确认。",
   "skills": [
     {
       "id": "webnovel-project-bootstrap",
@@ -14,16 +14,13 @@
       "version": "3.0.0-proposal",
       "sha256": "203b68769e69cc08435de281d2e64e627b1508371849ca8f1a7913abddab675b",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -35,19 +32,17 @@
       "path": "skills/webnovel-market-research/SKILL.md",
       "contract": "skills/webnovel-market-research/contract.json",
       "version": "3.0.0-proposal",
-      "sha256": "6f95610f57ed6a547f638f2fb59f87f852af7845c94481256704d16f83afb1d7",
+      "sha256": "77d1ea27a46b0a6d83d64883812b173c1711a1865823be89bbcb041dc2b2fd09",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request",
-        "research.search"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author",
+        "public_search",
+        "extract_pages"
       ]
     },
     {
@@ -59,18 +54,15 @@
       "path": "skills/webnovel-premise-lab/SKILL.md",
       "contract": "skills/webnovel-premise-lab/contract.json",
       "version": "3.0.0-proposal",
-      "sha256": "25ba9376deeb54fea11f37786554c51103008dd59dc4eb29aa8fcfa8b14158f2",
+      "sha256": "a45d6c528358ae1a9bc0eb2e3e6ace04a5c7586a2f2fe1877c7d34c9887e0bc0",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -82,18 +74,15 @@
       "path": "skills/webnovel-project-config/SKILL.md",
       "contract": "skills/webnovel-project-config/contract.json",
       "version": "3.0.0-proposal",
-      "sha256": "7561b6d00e15255780fa9c4ab6f0c73a68aec6f2daea6a9d8270037ed818a778",
+      "sha256": "afadbc960e601dd65088e9813dc793a76eab9ffee8fae57ac9cc9e2f79872950",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -107,16 +96,13 @@
       "version": "3.0.0-proposal",
       "sha256": "4c57e7eafe581d527106e0847c565215fce78cb5b1126ef322bf9f8e213185f8",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -130,16 +116,13 @@
       "version": "3.0.0-proposal",
       "sha256": "bc273a2b65906913b7e66d33eeb29c23dc9f407fa23799a87c9d21b8258d5888",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -153,16 +136,13 @@
       "version": "3.0.0-proposal",
       "sha256": "f7c6e52b1748ce6f65f782853d531b45ba10493737255f6bf02ff10809fd14c9",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -176,16 +156,13 @@
       "version": "3.0.0-proposal",
       "sha256": "0750a4d6a99e92a8606c0b789b75eaf6f1903b4e4e6f734e55f66b5244661566",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -199,16 +176,13 @@
       "version": "3.0.0-proposal",
       "sha256": "9b6fcbe7ad54232532196a222e53cd3726c7cc7ab72ec27958b4ad5f64da5028",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -222,16 +196,13 @@
       "version": "3.0.0-proposal",
       "sha256": "012fcaf7c3983888c1a17f1dc1faeba509b4f286b38d3443881808a565bab7ec",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -245,16 +216,13 @@
       "version": "3.1.0-proposal",
       "sha256": "5985650978167d360a7b2d023edc555064475232252e8aeeabd0df520abbd7f7",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -268,16 +236,13 @@
       "version": "3.0.0-proposal",
       "sha256": "a3fc965ac9c38e65d293a12b36a72c4f014337f24974fd7a0af2eb6bf9085b17",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -291,16 +256,13 @@
       "version": "3.0.0-proposal",
       "sha256": "29badf826f5bff6ee099b95797615ddfe1f7aab90bf471f40d6b0f89eed30d10",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -312,18 +274,15 @@
       "path": "skills/webnovel-chapter-drafter/SKILL.md",
       "contract": "skills/webnovel-chapter-drafter/contract.json",
       "version": "3.0.0-proposal",
-      "sha256": "3a6fee7f16fcb2f5a6b3ef00273d392c0a23cc031479c58f887d3d824be88686",
+      "sha256": "9ef1644c4ce0eab92e940a24062d38681cbd90b9a949e0cdcf4466b8f1e4c025",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -335,18 +294,15 @@
       "path": "skills/webnovel-chapter-reviewer/SKILL.md",
       "contract": "skills/webnovel-chapter-reviewer/contract.json",
       "version": "3.0.0-proposal",
-      "sha256": "40b404ea0e4581a358ed505dedac50f37dd6133b9a408690b790756688def62e",
+      "sha256": "454737cdc58027cbc7a89f8e21476dea333c9c31e31cb034b1708e25946b9251",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -360,16 +316,13 @@
       "version": "3.0.0-proposal",
       "sha256": "ba4e37273d5dae3aefd8deb35accf6f12573f8fb37b072e4c466a91062bc87c6",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -383,16 +336,13 @@
       "version": "3.1.0-proposal",
       "sha256": "eef23dae185e2e6dd500aa682786303ef9e3180f78ff2ddb50aebf6e1fc5830a",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -404,18 +354,15 @@
       "path": "skills/webnovel-memory-extractor/SKILL.md",
       "contract": "skills/webnovel-memory-extractor/contract.json",
       "version": "3.1.0-proposal",
-      "sha256": "84b8d0b41891c8d3554f6487b5dad76a830b397825c7f5bd5a804a22e83f4168",
+      "sha256": "c48b487c86d449568d6a50b8fde9633de000b35fb61c17ad76ab28c1e8be9956",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -429,16 +376,13 @@
       "version": "3.1.0-proposal",
       "sha256": "1e63c794884e70d6d0c3e9cb7e15a6b3f2af133a0b08f55d8cf4a1d5a0158529",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -452,16 +396,13 @@
       "version": "3.1.0-proposal",
       "sha256": "344fce3d74fdaf36b2ef802483685ec9dac8865e98cd293b70f50f1a6aed422f",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -475,11 +416,13 @@
       "version": "3.1.0-proposal",
       "sha256": "f96aceb089b42c77bf0a7f1a5bcc518ccd2f22e4f32af57090e02e3478ef8538",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -491,18 +434,15 @@
       "path": "skills/webnovel-packaging/SKILL.md",
       "contract": "skills/webnovel-packaging/contract.json",
       "version": "3.0.0-proposal",
-      "sha256": "f74ca574ff599ea5b4ef31e81b1e0384f21ef66de987c88303d265350b05f9b1",
+      "sha256": "39aa87f26d0dc32560e343ce2fefd7772b7cccdd45bb9eebfc00069ce416e2e2",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -514,19 +454,15 @@
       "path": "skills/webnovel-reader-feedback/SKILL.md",
       "contract": "skills/webnovel-reader-feedback/contract.json",
       "version": "3.0.0-proposal",
-      "sha256": "50a33639028314b0428f942e13f09d143ca2e3726e756ae8909cd7e497f0d051",
+      "sha256": "d84140959216bc84c6652a2ebadc1d1ae81000f7fb1ef6f42d282143a3620d58",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "candidate.diff",
-        "changeset.propose",
-        "validate.run",
-        "review.request",
-        "metrics.read"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -540,12 +476,13 @@
       "version": "3.0.0-proposal",
       "sha256": "16c9e720c68f5caa89d7c81fcd20c2ab978f8d2168350bbdb1c0fd18d98346cf",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "validate.run"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -559,14 +496,13 @@
       "version": "3.1.0-proposal",
       "sha256": "0f27dce5423edb71fc88aa4d4c0ed8535e035710ef761e35210e831c8945522f",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     },
     {
@@ -580,14 +516,13 @@
       "version": "3.1.0-proposal",
       "sha256": "5521647ff95049f864e696242c84910bbc9d04dfaba223d186407a9035328aef",
       "tools": [
-        "project.read_snapshot",
-        "artifact.read",
-        "memory.query",
-        "memory.trace_source",
-        "skill.load",
-        "candidate.write",
-        "validate.run",
-        "review.request"
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
       ]
     }
   ]

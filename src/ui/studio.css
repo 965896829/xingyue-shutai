@@ -377,7 +377,7 @@
   color: var(--accent);
 }
 .narrative-content [data-track='candidate'] {
-  color: #c39359;
+  color: var(--brand-gold);
 }
 .narrative-content circle {
   fill: currentColor;
@@ -428,6 +428,19 @@
   margin-top: 10px;
   gap: 15px;
 }
+.story-impact-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  margin: 12px 0 20px;
+}
+.story-impact-panel h2 { font-size: 17px; margin: 0 0 10px; }
+.story-impact-panel > details { border-top: 1px solid var(--border); padding: 12px 0; }
+.story-impact-panel p { font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.story-impact-panel ul { padding-left: 20px; }
+.story-impact-panel li { margin: 10px 0; font-size: 13px; overflow-wrap: anywhere; }
+.story-impact-panel li span, .story-impact-panel li small { display: block; color: var(--muted); line-height: 1.6; }
+.story-impact-panel details button { font-size: 12px; margin: 6px 6px 0 0; }
 .studio-focus .sidebar,
 .studio-focus .work-area {
   display: none;

@@ -17,6 +17,7 @@ import {
 import type { Profile } from '../shared/types';
 import type { Conversation } from '../shared/assistant';
 import { modelLabel } from './model-label';
+import { sendOnEnter } from './composer-keyboard';
 
 interface Props {
   conversationId: string;
@@ -185,16 +186,10 @@ export function ChatComposer(props: Props) {
           ref={textarea}
           aria-label="聊天消息"
           aria-describedby={`${uid}-hint`}
-          placeholder="聊聊你的故事，或提出创作问题…"
           rows={2}
           value={props.value}
           onChange={(event) => props.onChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (!event.nativeEvent.isComposing && (event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-              event.preventDefault();
-              if (props.canSend) props.onSend();
-            }
-          }}
+          onKeyDown={event => sendOnEnter(event, props.canSend, props.onSend)}
         />
         <div className="chat-composer-toolbar">
           <div className="chat-composer-controls">
@@ -249,7 +244,7 @@ export function ChatComposer(props: Props) {
             <button
               className="chat-composer-submit"
               aria-label="发送消息"
-              title="发送消息 · Ctrl + Enter"
+              title="发送消息 · Enter"
               disabled={!props.canSend}
               onClick={props.onSend}
             >
@@ -259,7 +254,7 @@ export function ChatComposer(props: Props) {
         </div>
       </div>
       <div className="sr-only" id={`${uid}-hint`}>
-        Ctrl + Enter 发送
+        Enter 发送，Shift+Enter 换行
       </div>
       {menu &&
         createPortal(

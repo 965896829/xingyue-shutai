@@ -1,0 +1,78 @@
+{
+  "at": "2026-10-10T17:40:35.879Z",
+  "version": "0.4.5",
+  "changedUI": [
+    "src/ui/App.tsx",
+    "src/ui/TagWorkspace.tsx"
+  ],
+  "unchangedUI": 18,
+  "unchangedAssets": 26,
+  "sourceCommentsAdded": 0,
+  "dependenciesUnchanged": true,
+  "renderer": [
+    {
+      "file": "dist\\assets\\index-BcVQ_Te_.css",
+      "matches": true
+    },
+    {
+      "file": "dist\\assets\\index-DoiIc9Du.js",
+      "matches": true
+    },
+    {
+      "file": "dist\\assets\\index-DoiIc9Du.js.map",
+      "matches": true
+    },
+    {
+      "file": "dist\\brand\\app-icon.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\brand\\day-symbol.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\brand\\night-symbol.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\brand\\wordmark-day.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\brand\\wordmark-night.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\icon.png",
+      "matches": true
+    },
+    {
+      "file": "dist\\index.html",
+      "matches": true
+    }
+  ],
+  "skillFilesMatched": 152,
+  "bundles": [
+    {
+      "file": "main",
+      "matches": true
+    },
+    {
+      "file": "preload",
+      "matches": true
+    },
+    {
+      "file": "worker",
+      "matches": true
+    },
+    {
+      "file": "document-worker",
+      "matches": true
+    }
+  ],
+  "installer": {
+    "path": "release/simple-start/星月书台 Setup 0.4.5.exe",
+    "bytes": 126593681,
+    "sha256": "3ef9819274576b1c474e8e18f2d75759a6b2fb29cb9adc0f8c729fd7b9f6555c"
+  }
+}

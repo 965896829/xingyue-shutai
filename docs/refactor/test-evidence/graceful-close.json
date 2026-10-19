@@ -1,0 +1,11 @@
+{
+  "projectLockReleased": true,
+  "journalLockCount": 0,
+  "appStopped": true,
+  "provider": {
+    "requests": 1,
+    "pid": 53152,
+    "url": "/v1/chat/completions",
+    "dispatchedAt": "2026-10-10T11:40:15.136Z"
+  }
+}

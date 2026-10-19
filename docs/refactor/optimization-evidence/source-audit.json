@@ -1,0 +1,613 @@
+{
+  "at": "2026-10-10T13:29:04.765Z",
+  "ui": [
+    {
+      "file": "src\\main.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 4
+    },
+    {
+      "file": "src\\ui\\App.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 555
+    },
+    {
+      "file": "src\\ui\\AssistantSettings.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 103
+    },
+    {
+      "file": "src\\ui\\BrandLogo.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 6
+    },
+    {
+      "file": "src\\ui\\ChatComposer.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 62
+    },
+    {
+      "file": "src\\ui\\ChatWorkspace.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 159
+    },
+    {
+      "file": "src\\ui\\DeleteButton.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 19
+    },
+    {
+      "file": "src\\ui\\Editor.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 2
+    },
+    {
+      "file": "src\\ui\\ExitConfirmation.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 15
+    },
+    {
+      "file": "src\\ui\\ExpressionSettings.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 18
+    },
+    {
+      "file": "src\\ui\\LegacyDialog.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 49
+    },
+    {
+      "file": "src\\ui\\MemoryStudio.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 154
+    },
+    {
+      "file": "src\\ui\\NarrativePanel.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 42
+    },
+    {
+      "file": "src\\ui\\ProviderSettings.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 213
+    },
+    {
+      "file": "src\\ui\\ProximitySidebar.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 5
+    },
+    {
+      "file": "src\\ui\\RecycleBin.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 42
+    },
+    {
+      "file": "src\\ui\\SkillLauncher.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 39
+    },
+    {
+      "file": "src\\ui\\TagWorkspace.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 166
+    },
+    {
+      "file": "src\\ui\\ThemeToggle.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 4
+    },
+    {
+      "file": "src\\ui\\WindowTitleBar.tsx",
+      "elementsAndLabelsUnchanged": true,
+      "elements": 7
+    }
+  ],
+  "comments": [
+    {
+      "file": "src\\core\\assistant-settings.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\compatibility.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\conversation-runner.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\conversations.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\cover.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\document-import.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\documents.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\domain.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\embeddings.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\expression-rules.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\integrity.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\materialization.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\memory-studio.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\memory.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\migration.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\model-catalog.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\model-limits.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\naming.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\project-watcher.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\provider-groups.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\provider.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\recycle-bin.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runner.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\canonical.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\commit-kernel.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\document-importer.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\execution-records.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\executor.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\model-gateway.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\operations.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\pi-executor.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\run-state.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\scheduler.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\runtime\\tool-gateway.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\search.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\service.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\settings-recovery.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\skill-registry.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\skill.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\storage.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\tag-planning.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\tags.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\telemetry.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\core\\validation.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\main.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\assistant.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\brand.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\build.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\chat-history.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\client.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\contract-schemas.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\contracts.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\errors.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\event-gate.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\ipc.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\model-limits.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\provider-groups.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\run-capabilities.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\run-presentation.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\studio.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\tags.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\types.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\shared\\wait-for-response.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\App.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\AssistantSettings.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\BrandLogo.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\ChatComposer.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\ChatWorkspace.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\color-mode.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\DeleteButton.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\Editor.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\ExitConfirmation.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\ExpressionSettings.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\LegacyDialog.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\MemoryStudio.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\model-label.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\NarrativePanel.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\ProviderSettings.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\ProximitySidebar.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\RecycleBin.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\SkillLauncher.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\TagWorkspace.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\ThemeToggle.tsx",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\useDialog.ts",
+      "added": 0
+    },
+    {
+      "file": "src\\ui\\WindowTitleBar.tsx",
+      "added": 0
+    },
+    {
+      "file": "electron\\close-confirmation.ts",
+      "added": 0
+    },
+    {
+      "file": "electron\\document-worker.ts",
+      "added": 0
+    },
+    {
+      "file": "electron\\main.ts",
+      "added": 0
+    },
+    {
+      "file": "electron\\pending-requests.ts",
+      "added": 0
+    },
+    {
+      "file": "electron\\preload.ts",
+      "added": 0
+    },
+    {
+      "file": "electron\\supervisor.ts",
+      "added": 0
+    },
+    {
+      "file": "electron\\window-appearance.ts",
+      "added": 0
+    },
+    {
+      "file": "electron\\worker.ts",
+      "added": 0
+    }
+  ],
+  "assets": [
+    {
+      "file": "src\\ui\\assistant.css",
+      "unchanged": true
+    },
+    {
+      "file": "src\\ui\\brand.css",
+      "unchanged": true
+    },
+    {
+      "file": "src\\ui\\interaction-controls.css",
+      "unchanged": true
+    },
+    {
+      "file": "src\\ui\\studio.css",
+      "unchanged": true
+    },
+    {
+      "file": "src\\ui\\styles.css",
+      "unchanged": true
+    },
+    {
+      "file": "src\\ui\\tags.css",
+      "unchanged": true
+    },
+    {
+      "file": "src\\ui\\themes.css",
+      "unchanged": true
+    },
+    {
+      "file": "public\\icon.png",
+      "unchanged": true
+    },
+    {
+      "file": "public\\brand\\app-icon.png",
+      "unchanged": true
+    },
+    {
+      "file": "public\\brand\\day-symbol.png",
+      "unchanged": true
+    },
+    {
+      "file": "public\\brand\\night-symbol.png",
+      "unchanged": true
+    },
+    {
+      "file": "public\\brand\\wordmark-day.png",
+      "unchanged": true
+    },
+    {
+      "file": "public\\brand\\wordmark-night.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\icon.ico",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\icon.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\generated\\app-icon.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\generated\\day-symbol.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\generated\\night-symbol.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\generated\\wordmark.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\icons\\app-icon-128.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\icons\\app-icon-16.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\icons\\app-icon-24.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\icons\\app-icon-256.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\icons\\app-icon-32.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\icons\\app-icon-48.png",
+      "unchanged": true
+    },
+    {
+      "file": "resources\\brand\\icons\\app-icon-64.png",
+      "unchanged": true
+    }
+  ],
+  "architecture": [],
+  "package": {
+    "version": "0.4.2",
+    "name": "wenxu-desktop",
+    "configuredAppId": "local.wenxu.desktop",
+    "archiveHash": "dd030b18381d1e83406856842e63019a8719821c9ed67a301b71fd540084b740",
+    "piFiles": [],
+    "testSecrets": [],
+    "bundles": [
+      {
+        "file": "main",
+        "matches": true
+      },
+      {
+        "file": "preload",
+        "matches": true
+      },
+      {
+        "file": "worker",
+        "matches": true
+      },
+      {
+        "file": "document-worker",
+        "matches": true
+      }
+    ],
+    "workerMatches": true
+  }
+}

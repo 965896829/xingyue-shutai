@@ -1,0 +1,5 @@
+{
+  "command": "git diff --check",
+  "exitCode": 0,
+  "note": "Uses repository line-ending configuration; CRLF files are preserved."
+}

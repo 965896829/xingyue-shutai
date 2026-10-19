@@ -1,0 +1,12 @@
+{
+  "waitedMs": 13507,
+  "appStopped": true,
+  "provider": {
+    "requests": 2,
+    "pid": 53152,
+    "url": "/v1/chat/completions",
+    "dispatchedAt": "2026-10-10T11:41:02.228Z"
+  },
+  "checkedAt": "2026-10-10T11:41:28.8829911+00:00",
+  "workerStopped": true
+}

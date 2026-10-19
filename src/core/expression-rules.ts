@@ -5,7 +5,7 @@ import { hash } from './domain';
 import type { ProjectConfig, Run } from '../shared/types';
 import type { ExpressionBinding, ExpressionCatalog, ExpressionMode } from '../shared/expression';
 
-const policyVersion = 'natural-expression-1';
+const policyVersion = 'natural-expression-2';
 const ruleSchema = z.object({
   id: z.string().regex(/^[A-Z]+-\d{3}$/),
   version: z.literal('3.1.0'),
@@ -162,7 +162,7 @@ export function expressionPack(
   if (config.expressionRules?.enabled === false) return { prompt: '', fingerprint: 'expression-disabled' };
   validateExpressionSelection(root, config);
   const library = expressionLibrary(root);
-  const languageOnly = mode === 'discussion' || mode === 'record';
+  const languageOnly = mode === 'discussion' || mode === 'record' || mode === 'planning';
   const modules = new Set(
     languageOnly
       ? ['LEX', 'SYN', 'IMG', 'VOICE']

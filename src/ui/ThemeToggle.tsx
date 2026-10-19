@@ -10,7 +10,7 @@ export function ThemeToggle() {
       className="theme-toggle"
       aria-label={label}
       title={`${label} · 自动记住选择`}
-      onClick={() => setColorMode(mode === 'dark' ? 'light' : 'dark')}
+      onClick={() => setColorMode(getColorMode() === 'dark' ? 'light' : 'dark')}
     >
       {mode === 'dark' ? <MoonStar size={17} /> : <Sun size={17} />}
       <span>{mode === 'dark' ? '夜间' : '日间'}</span>

@@ -1,0 +1,669 @@
+{
+  "version": "cards-v1-draft",
+  "cards": [
+    {
+      "id": "card.concept.reading.plot.078",
+      "conceptId": "concept.reading.plot.078",
+      "label": "空间",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "空间可能是储物、可进入场域或可生产小世界，须先界定。",
+      "readerPromiseHypothesis": "资源保障、能力差异或成长反馈。",
+      "designQuestions": [
+        "容量与存取",
+        "时间/保鲜",
+        "活物限制",
+        "升级及代价。"
+      ],
+      "mechanismSuggestions": [
+        "以既定限制产生时间、运输、能源或组织选择。"
+      ],
+      "failureModes": [
+        "临时增加功能",
+        "无限复制一切",
+        "所有困难只靠空间解决。"
+      ],
+      "reviewChecks": [
+        "第一次关键解决是否使用已建立规则？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.9666bc2237c2",
+      "conceptId": "concept.9666bc2237c2",
+      "label": "囤物资",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "通过搜集、采购或保存资源建立储备，不自动包含重生预知。",
+      "readerPromiseHypothesis": "储备形成、价值兑现及风险管理。",
+      "designQuestions": [
+        "情报来源",
+        "资金/时间",
+        "物资结构",
+        "运输与保存。"
+      ],
+      "mechanismSuggestions": [
+        "让一次关键资源选择影响之后的生存或交易。"
+      ],
+      "failureModes": [
+        "只列采购清单",
+        "物資永不损耗",
+        "未经选择默认重生。"
+      ],
+      "reviewChecks": [
+        "储备是否在后续行动中被具体使用？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.reading.theme.014",
+      "conceptId": "concept.reading.theme.014",
+      "label": "末日求生",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "灾变生存语境，灾变原因与规则仍需具体定义。",
+      "readerPromiseHypothesis": "对威胁的应对与有限条件下的选择。",
+      "designQuestions": [
+        "威胁传播",
+        "食水住行",
+        "信息不确定性",
+        "救援边界。"
+      ],
+      "mechanismSuggestions": [
+        "用环境变化迫使主角调整计划。"
+      ],
+      "failureModes": [
+        "灾难只在背景里",
+        "普通角色全无行动能力。"
+      ],
+      "reviewChecks": [
+        "本阶段困难与灾变规则是否相连？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.content.plot.098",
+      "conceptId": "concept.content.plot.098",
+      "label": "末世基建",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "在末世条件下建设持续运行的生存系统。",
+      "readerPromiseHypothesis": "从临时生存到稳定生产与组织秩序。",
+      "designQuestions": [
+        "能源、水、卫生、防御、维护、人员协作。"
+      ],
+      "mechanismSuggestions": [
+        "建设→运行反馈→故障/矛盾→再建设。"
+      ],
+      "failureModes": [
+        "只修建筑不解决运行",
+        "基地建成后冲突消失。"
+      ],
+      "reviewChecks": [
+        "本次建设解决什么问题并产生什么新责任？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.content.plot.041",
+      "conceptId": "concept.content.plot.041",
+      "label": "经营建设",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "经营和建设是持续行动机制，不限于建造房屋。",
+      "readerPromiseHypothesis": "投入—产出—再投入与组织成长。",
+      "designQuestions": [
+        "输入资源",
+        "产能",
+        "人员",
+        "损耗",
+        "收益归属。"
+      ],
+      "mechanismSuggestions": [
+        "以决策取舍而非报表堆砌表现经营。"
+      ],
+      "failureModes": [
+        "收益无来源",
+        "失败零代价",
+        "只有建筑等级。"
+      ],
+      "reviewChecks": [
+        "是否能说明产出如何被下一阶段消耗或利用？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.3e133240a3a7",
+      "conceptId": "concept.3e133240a3a7",
+      "label": "单女主",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "角色/恋爱主线结构须说明具体作用对象；不等于只有一个女性角色。",
+      "readerPromiseHypothesis": "中心关系的独特性和持续发展。",
+      "designQuestions": [
+        "主线关系对象",
+        "配角关系范围",
+        "独立目标。"
+      ],
+      "mechanismSuggestions": [
+        "让关系双方在主线问题上共同选择并承担后果。"
+      ],
+      "failureModes": [
+        "工具化女主",
+        "所有女性角色都对主角恋爱示好。"
+      ],
+      "reviewChecks": [
+        "关系数量约束是否被遵守，同时保留女主自主性？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.4918cd225d05",
+      "conceptId": "concept.4918cd225d05",
+      "label": "1v1",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "通常作为核心配对结构建议，但须确认范围与对象。",
+      "readerPromiseHypothesis": "单一核心配对的关系发展。",
+      "designQuestions": [
+        "适用主角",
+        "关系是否独占",
+        "配角是否另有关系。"
+      ],
+      "mechanismSuggestions": [
+        "人物冲突来自目标/价值而非不断添加竞争伴侣。"
+      ],
+      "failureModes": [
+        "把配对标签自动扩成双洁、已婚、甜宠等未选设定。"
+      ],
+      "reviewChecks": [
+        "是否擅自推导未声明的情感历史与关系属性？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.reading.role.021",
+      "conceptId": "concept.reading.role.021",
+      "label": "腹黑",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "可建议为善于布局和隐藏意图；不自动等于滥害无辜。",
+      "readerPromiseHypothesis": "预判、信息差与布局回收。",
+      "designQuestions": [
+        "布局目标",
+        "信息来源",
+        "行动边界",
+        "对亲友态度。"
+      ],
+      "mechanismSuggestions": [
+        "提前展示可见信息，事后回收行动线索。"
+      ],
+      "failureModes": [
+        "作者不提供任何依据却声称一切都在计划中。"
+      ],
+      "reviewChecks": [
+        "谋划是否有前置条件，是否留有出错代价？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.content.persona.065",
+      "conceptId": "concept.content.persona.065",
+      "label": "领主",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "领地/群体管理身份，权力来源和组织边界需要定义。",
+      "readerPromiseHypothesis": "对资源、制度、外交和公共风险的决策。",
+      "designQuestions": [
+        "权力合法性",
+        "人口",
+        "领地",
+        "制度",
+        "治理成本。"
+      ],
+      "mechanismSuggestions": [
+        "把个人优势转化为可运行的组织能力。"
+      ],
+      "failureModes": [
+        "所有人无条件忠诚",
+        "主角包办全部岗位。"
+      ],
+      "reviewChecks": [
+        "组织能否在主角不在场时仍按规则运转？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.content.persona.046",
+      "conceptId": "concept.content.persona.046",
+      "label": "高智商",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "通过可追溯的判断体现能力，不凭叙述者宣告。",
+      "readerPromiseHypothesis": "信息处理、推演、验证和高质量取舍。",
+      "designQuestions": [
+        "掌握/未知信息",
+        "推理链可见证据",
+        "纠错机制。"
+      ],
+      "mechanismSuggestions": [
+        "让对手也合理行动，主角靠更好判断获得局部优势。"
+      ],
+      "failureModes": [
+        "全知",
+        "对手集体降智",
+        "无法复盘的事后解释。"
+      ],
+      "reviewChecks": [
+        "结论是否超出角色当时有权知道的信息？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.content.world.027",
+      "conceptId": "concept.content.world.027",
+      "label": "丧尸",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "世界威胁类型，不自动带入任何特定影视或游戏规则。",
+      "readerPromiseHypothesis": "可理解的传播威胁与生存环境。",
+      "designQuestions": [
+        "传播方式",
+        "行动感知",
+        "变异",
+        "死亡/隔离",
+        "社会应对。"
+      ],
+      "mechanismSuggestions": [
+        "以一致规则组织威胁，再用资源和协作制造选择。"
+      ],
+      "failureModes": [
+        "为了某场戏临时修改感染或感知方式。"
+      ],
+      "reviewChecks": [
+        "例外是否有铺垫或明确尚未解释的证据？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.df9d3e9874d3",
+      "conceptId": "concept.df9d3e9874d3",
+      "label": "规则怪谈",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "以异常规则与试探为核心的机制建议，具体世界仍需用户定义。",
+      "readerPromiseHypothesis": "理解规则、辨别信息和承担试错后果。",
+      "designQuestions": [
+        "规则来源",
+        "可信度",
+        "触发条件",
+        "惩罚",
+        "可发现的例外。"
+      ],
+      "mechanismSuggestions": [
+        "观察→假设→低成本验证→承担更高风险选择。"
+      ],
+      "failureModes": [
+        "每到结尾新增规则兜底",
+        "正确解法从未给线索。"
+      ],
+      "reviewChecks": [
+        "关键解法是否能用先前展示的信息解释？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.reading.plot.043",
+      "conceptId": "concept.reading.plot.043",
+      "label": "无敌",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "强度优势需要限定领域、时段、对手范围或评价维度。",
+      "readerPromiseHypothesis": "能力优势的明确兑现。",
+      "designQuestions": [
+        "无敌对象",
+        "非战斗难题",
+        "解决不了的选择。"
+      ],
+      "mechanismSuggestions": [
+        "胜负悬念可转向救谁、先后顺序、责任与价值选择。"
+      ],
+      "failureModes": [
+        "一会无敌一会任意削弱",
+        "全部矛盾只有战力。"
+      ],
+      "reviewChecks": [
+        "优势是否兑现，难题是否避开无解释削弱？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.reading.plot.027",
+      "conceptId": "concept.reading.plot.027",
+      "label": "升级流",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "通过阶段性能力、权限或组织提升维持进展。",
+      "readerPromiseHypothesis": "可感知、可验证的成长反馈。",
+      "designQuestions": [
+        "升级对象",
+        "资源",
+        "瓶颈",
+        "能力变化",
+        "代价。"
+      ],
+      "mechanismSuggestions": [
+        "新能力应改变处理问题的方式而非只改数值。"
+      ],
+      "failureModes": [
+        "境界命名膨胀",
+        "同一情节无限复制。"
+      ],
+      "reviewChecks": [
+        "升级前后行动空间发生何种具体变化？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.5adfd7c5d9db",
+      "conceptId": "concept.5adfd7c5d9db",
+      "label": "无女主",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "须确认指无中心女性主角还是无主角恋爱线；不自动等同无女性角色。",
+      "readerPromiseHypothesis": "依照用户确认的结构维持角色与关系边界。",
+      "designQuestions": [
+        "明确语义和作用对象",
+        "配角恋爱是否可有。"
+      ],
+      "mechanismSuggestions": [
+        "用伙伴、目标、师友或对手等非恋爱关系推进。"
+      ],
+      "failureModes": [
+        "自动删除所有女性人物",
+        "与无CP/无后宫直接合并。"
+      ],
+      "reviewChecks": [
+        "约束究竟针对角色定位还是恋爱关系？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.content.emotion.029",
+      "conceptId": "concept.content.emotion.029",
+      "label": "无CP",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "对核心配对的约束需要注明范围；不要自动删除所有情感。",
+      "readerPromiseHypothesis": "非配对型的人物关系和主线投入。",
+      "designQuestions": [
+        "主角是否无恋爱",
+        "配角限制",
+        "暧昧边界。"
+      ],
+      "mechanismSuggestions": [
+        "通过友情、亲情、合作、对抗等产生关系变化。"
+      ],
+      "failureModes": [
+        "把一切亲密情感都判为违规",
+        "给主角暗中绑定恋人。"
+      ],
+      "reviewChecks": [
+        "是否出现与已确认范围冲突的恋爱配对？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.content.emotion.028",
+      "conceptId": "concept.content.emotion.028",
+      "label": "无固定cp",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "保留原标签大小写；不得无定义地并入无CP。",
+      "readerPromiseHypothesis": "关系结构由作者另行确认。",
+      "designQuestions": [
+        "不固定配对的具体含义、作用角色和阶段。"
+      ],
+      "mechanismSuggestions": [
+        "先提供不同解释下的方案，并标为待确认。"
+      ],
+      "failureModes": [
+        "未经确认直接转成多伴侣、无恋爱或开放关系。"
+      ],
+      "reviewChecks": [
+        "是否保留了标签语义的不确定性？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.6656bd07aeb9",
+      "conceptId": "concept.6656bd07aeb9",
+      "label": "无后宫",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "伴侣结构约束，不等于无恋爱或无女性角色。",
+      "readerPromiseHypothesis": "维持作者确认的非后宫关系结构。",
+      "designQuestions": [
+        "核心关系对象",
+        "配角关系",
+        "暧昧边界。"
+      ],
+      "mechanismSuggestions": [
+        "把多角色互动和多伴侣结构分开审核。"
+      ],
+      "failureModes": [
+        "把与异性交流都判成违反标签。"
+      ],
+      "reviewChecks": [
+        "是否出现违背确认边界的持续多伴侣设置？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.reading.theme.033",
+      "conceptId": "concept.reading.theme.033",
+      "label": "武侠",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "以武学、江湖秩序与人物选择形成叙事的策略建议。",
+      "readerPromiseHypothesis": "行动能力、恩怨关系与价值选择。",
+      "designQuestions": [
+        "武学边界",
+        "门派/组织",
+        "恩怨",
+        "侠义或反侠义立场。"
+      ],
+      "mechanismSuggestions": [
+        "一次个人选择改变江湖关系和行动代价。"
+      ],
+      "failureModes": [
+        "默认必须修仙飞升",
+        "只有招式列表没有人物抉择。"
+      ],
+      "reviewChecks": [
+        "武学与江湖关系是否真实影响剧情？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.reading.plot.029",
+      "conceptId": "concept.reading.plot.029",
+      "label": "科举",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "需要确定时代或架空制度、学习路径及选拔过程。",
+      "readerPromiseHypothesis": "成长准备、制度约束与阶段结果。",
+      "designQuestions": [
+        "考试制度来源",
+        "家庭资源",
+        "学习过程",
+        "任职后主线。"
+      ],
+      "mechanismSuggestions": [
+        "准备→考试/评价→身份变化→新责任。"
+      ],
+      "failureModes": [
+        "真实制度年代混用",
+        "靠现代知识无成本解决一切。"
+      ],
+      "reviewChecks": [
+        "史实来源和虚构制度是否区分？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.601adba70dd6",
+      "conceptId": "concept.601adba70dd6",
+      "label": "第四天灾",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "先确认玩家/群体、进入机制与世界中原住民的视角。",
+      "readerPromiseHypothesis": "群体协作、涌现行为和规则碰撞。",
+      "designQuestions": [
+        "玩家目标",
+        "进入与退出",
+        "死亡代价",
+        "资源和治理。"
+      ],
+      "mechanismSuggestions": [
+        "任务引导→玩家行动→非预期后果→规则/局势调整。"
+      ],
+      "failureModes": [
+        "所有玩家想法相同",
+        "原住民没有行动权。"
+      ],
+      "reviewChecks": [
+        "玩家群体是否形成真实的利益差异？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.reading.plot.073",
+      "conceptId": "concept.reading.plot.073",
+      "label": "重生",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "回到过去或再次生命的具体机制需定义。",
+      "readerPromiseHypothesis": "经验差与重新选择的机会及代价。",
+      "designQuestions": [
+        "回返时点",
+        "记忆可靠性",
+        "蝴蝶效应",
+        "身份连续性。"
+      ],
+      "mechanismSuggestions": [
+        "先前知识提供初始优势，后续变化逐渐增加不确定性。"
+      ],
+      "failureModes": [
+        "默认记得所有信息",
+        "未来变化后仍完全预知。"
+      ],
+      "reviewChecks": [
+        "信息来源是否符合已经发生的变化？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.content.persona.027",
+      "conceptId": "concept.content.persona.027",
+      "label": "非穿越重生",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "否定类标签；需确认作用于主角还是全体人物。",
+      "readerPromiseHypothesis": "以原生经历建立能力、信息和目标。",
+      "designQuestions": [
+        "作用对象",
+        "知识来源",
+        "是否允许配角异类经历。"
+      ],
+      "mechanismSuggestions": [
+        "将优势落实为经历、技能或环境条件。"
+      ],
+      "failureModes": [
+        "未经确认给主角添加穿越或重生身份。"
+      ],
+      "reviewChecks": [
+        "核心身份设定是否违背确认的否定边界？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.reading.plot.071",
+      "conceptId": "concept.reading.plot.071",
+      "label": "系统",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "超常辅助机制需定义权限、触发、代价和信息范围。",
+      "readerPromiseHypothesis": "机制反馈与可预期的行动结果。",
+      "designQuestions": [
+        "奖励来源",
+        "任务逻辑",
+        "惩罚",
+        "限制",
+        "升级权限。"
+      ],
+      "mechanismSuggestions": [
+        "让系统规则带来选择，而不是直接替角色决定。"
+      ],
+      "failureModes": [
+        "临时发奖励解决所有问题",
+        "全知且无边界。"
+      ],
+      "reviewChecks": [
+        "关键收益是否可由现有机制推出？"
+      ],
+      "notOfficialPlatformDefinition": true
+    },
+    {
+      "id": "card.concept.reading.role.001",
+      "conceptId": "concept.reading.role.001",
+      "label": "多女主",
+      "status": "editorial_draft",
+      "confidence": "unvalidated_design_heuristic",
+      "sourceType": "authored_design",
+      "definition": "须确认中心女性角色数量与恋爱结构，不能仅凭人数自动定义后宫。",
+      "readerPromiseHypothesis": "多位中心人物各自具有目标与行动权。",
+      "designQuestions": [
+        "各角色地位",
+        "恋爱范围",
+        "叙事焦点",
+        "关系边界。"
+      ],
+      "mechanismSuggestions": [
+        "保证不同角色影响主线而非作为重复奖励。"
+      ],
+      "failureModes": [
+        "与单女主同一范围冲突未处理",
+        "人物模板化。"
+      ],
+      "reviewChecks": [
+        "是否先说明多女主指角色结构还是配对结构？"
+      ],
+      "notOfficialPlatformDefinition": true
+    }
+  ]
+}

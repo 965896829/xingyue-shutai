@@ -1,0 +1,12 @@
+{
+  "registry/combination-rules.json": "e889e2e1fdcc656a67e0829b47b8856b760da10d05ca50ba99ffa6f0b27d79fc",
+  "registry/coverage.json": "c23a491bd317980a5400a80e37db94146d2b79f762e6c9195041e56b89652c69",
+  "registry/genre-profiles.json": "068b96fb26331cf9eba6da8d6ad9d9a96bcf033ee461236d0d7cabfed993cff9",
+  "registry/knowledge-cards.json": "e4c460ffed922e769afd47db9edc0499b8b6398ff223e1b1fabad5ad4f66233f",
+  "registry/recipes.json": "6f053c62708de6dcf64b0110d669b3549df7aba8cced64b5e2677f35b9b3efbb",
+  "registry/taxonomy.json": "b2bc13947a56934a3f6f4f6a9bd4899be26e3004d6c08f71e33987eed9e8811c",
+  "prompts/planner.system.md": "e714124b8b63b099cbdd42d464d377ed555350a715f451af995efe771e36b101",
+  "prompts/reviewer.system.md": "2707a938d9f67748049538982174cedc4ea5a6456795b51256e1cd447eb03eac",
+  "prompts/writer.system.md": "d6be652a3163d67cca9026df648bf7ec2806c7387cfd091c409e0157293259e5",
+  "sources.json": "7ac326b9f4d32174b5d4d6aca5879ba5df4e950d86679b815245ab0e3de001e0"
+}

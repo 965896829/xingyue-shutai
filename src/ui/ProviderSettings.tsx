@@ -1,3 +1,5 @@
+import { invokeCommand } from '../shared/client';
+import type { Invoke } from '../shared/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { Plus, RefreshCw, Search, Server, X } from 'lucide-react';
 import { profileSchema, type Command, type ModelCatalog, type Profile } from '../shared/types';
@@ -6,8 +8,8 @@ import { applyModelLimits, officialModelLimits } from '../shared/model-limits';
 import { DeleteButton } from './DeleteButton';
 
 type Act = <T>(fn: () => Promise<T>, success?: string) => Promise<T | undefined>;
-const invoke = <T,>(command: Command, args: Record<string, unknown> = {}) =>
-  window.wenxu!.invoke<T>(command, args);
+const invoke: Invoke = (command, args) =>
+  invokeCommand(command, args);
 const fresh = (): Profile => ({
   ...profileSchema.parse({
     id: crypto.randomUUID(),
@@ -197,9 +199,9 @@ export function ProviderSettings({
       } catch {
         throw new Error('自定义请求头必须是有效 JSON');
       }
-      const data = await invoke<ModelCatalog>('profiles.models', {
+      const data = await invoke('profiles.models', {
         id: p.id,
-        connection: { protocol: p.protocol, baseUrl: p.baseUrl.trim(), proxy: p.proxy, headers },
+        connection: { protocol: p.protocol, baseUrl: p.baseUrl.trim(), proxy: p.proxy, headers: profileSchema.shape.headers.parse(headers) },
         apiKey: key
       });
       if (!mounted.current || generation.current !== request || currentToken.current !== token) return;
@@ -293,7 +295,7 @@ export function ProviderSettings({
     setResult('');
     await act(async () => {
       try {
-        const saved = await invoke<Profile[]>('profiles.saveGroup', {
+        const saved = await invoke('profiles.saveGroup', {
           connection: {
             ...connectionFields(connection),
             name: p.name.trim(),
@@ -326,7 +328,7 @@ export function ProviderSettings({
       try {
         const target = savedGroup.find((v) => v.model === editingModel && v.enabled !== false);
         if (!target) throw new Error('请先选择并保存要测试的模型');
-        const r = await invoke<{ text: string }>('profiles.test', { id: target.id, tools });
+        const r = await invoke('profiles.test', { id: target.id, tools });
         if (mounted.current) setResult(`${p.model} · ${tools ? '工具续轮' : '文字'}测试通过：${r.text}`);
       } catch (e) {
         if (mounted.current) setFormError(errorText(e));

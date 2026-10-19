@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { databaseVersion } from '../src/core/compatibility';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -523,6 +524,8 @@ test('P1：未绑定的批准、旧内容批准、过期快照均不能接受', 
       content: '# 修订',
       baseHash: service.store!.db.document(paths.seed)!.hash
     });
+    assert.equal(typeof id, 'string');
+    if (typeof id !== 'string') throw new Error('Expected run ID');
     const r = service.store!.db.run(id);
     await assert.rejects(service.invoke('run.accept', { id }));
     const old = r.proposalHash;
@@ -754,6 +757,8 @@ test('独立研究只接受报告，不登记书内事实或推进章节', async
       profileId: model.id
     });
     while (service.runner!.controller) await new Promise((r) => setTimeout(r, 10));
+    assert.equal(typeof id, 'string');
+    if (typeof id !== 'string') throw new Error('Expected run ID');
     const r = service.store!.db.run(id);
     assert.equal(r.status, 'awaiting_review', r.error ?? '');
     assert.equal(r.facts.length, 0);
@@ -799,7 +804,7 @@ test('v2 升级备份包含正文、历史数据库和封面附件', () => {
   s.close();
   const opened = new FileStore(root);
   try {
-    const name = fs.readdirSync(root).find((n) => n.startsWith('.novelclient.before-v3-'))!;
+    const name = fs.readdirSync(root).find((n) => n.startsWith(`.novelclient.before-v${databaseVersion}-`))!;
     const backup = path.join(root, name);
     assert.deepEqual(fs.readFileSync(path.join(backup, '10_封面/自选封面.png')), bytes);
     assert.equal(
