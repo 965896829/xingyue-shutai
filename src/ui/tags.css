@@ -508,3 +508,13 @@
   border-radius: 8px;
   background: var(--accent-wash);
 }
+.creation-reroll {
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--inset);
+}
+.creation-reroll label { display: grid; gap: 8px; }
+.creation-reroll-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.tag-policy { margin-top: 12px; font-size: 13px; line-height: 1.7; }

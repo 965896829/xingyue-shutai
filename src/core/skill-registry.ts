@@ -17,6 +17,7 @@ const entrySchema = z.object({
   tools: z.array(z.string())
 });
 export type SkillEntry = z.infer<typeof entrySchema>;
+export type SkillOutputMode = 'tools' | 'prose' | 'review' | 'memory';
 export const stageSkills: Record<StageId, string> = {
   S01: 'webnovel-premise-lab',
   S02: 'webnovel-project-config',
@@ -93,7 +94,7 @@ export class SkillRegistry {
     if (JSON.stringify(contract.tools) !== JSON.stringify(entry.tools)) throw new Error('技能工具契约不一致');
     return { ...entry, host: hostSkills.has(skillId) };
   }
-  load(skillId: string) {
+  load(skillId: string, options: { outputMode?: SkillOutputMode } = {}) {
     const entry = this.get(skillId),
       content = this.read(entry.path),
       controller = this.controller();
@@ -103,10 +104,18 @@ export class SkillRegistry {
       const relative = path.posix.normalize(path.posix.join(path.posix.dirname(entry.path), match[1]));
       if (!relative.includes('/naming/')) files.add(relative);
     }
+    const rawMode = options.outputMode && options.outputMode !== 'tools';
+    const specialist = content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
+      .split(/(?=^## )/m).filter(section => !rawMode || !/^## 输出(?:契约)?(?:\s|$)/.test(section)).join('');
+    // Validate every declared dependency even when its tool-output instructions are
+    // omitted from a raw prose/JSON subcall. Output mode never bypasses resource locks.
+    const references = [...files].map(file => ({ file, content: this.read(file) }));
     return {
       entry,
-      content: [controller.content, `\n--- 当前专项技能：${entry.title} ---\n${content}`, ...[...files].map((f) => `\n--- ${f} ---\n${f === 'references/agent-guidance.md' ? guidanceFor(skillId, this.read(f)) : this.read(f)}`)].join('\n'),
-      hash: hash(JSON.stringify(['agent-guide-selection-1', controller.hash, entry, ...[...files].map((f) => this.lock[f])]))
+      content: [controller.content, `\n--- 当前专项技能：${entry.title} ---\n${specialist}`,
+        ...references.filter(({ file }) => !rawMode || file !== 'references/shared-contract.md')
+          .map(({ file, content: reference }) => `\n--- ${file} ---\n${file === 'references/agent-guidance.md' ? guidanceFor(skillId, reference) : reference}`)].join('\n'),
+      hash: hash(JSON.stringify(['structured-loading-2', controller.hash, entry, ...[...files].map((f) => this.lock[f])]))
     };
   }
 }

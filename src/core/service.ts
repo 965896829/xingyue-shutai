@@ -22,6 +22,7 @@ import {
 } from './tags';
 import { approvedCreation, type TitleSelection } from '../shared/creation';
 import { titleSource, namingBinding, validateBookTitle, assertTitleSelection, titlePath, renderTitle } from './title-naming';
+import { loadTitleStyleProfile } from './title-style';
 import { tagInputSchema, type BookSpec } from '../shared/tags';
 import { brand } from '../shared/brand';
 import { buildVersion } from '../shared/build';
@@ -235,6 +236,7 @@ export class Service {
         ? { id: head.id, projectId: head.projectId, revision: head.revision, createdAt: head.createdAt }
         : null,
       snapshots: store.db.snapshots(),
+      recoveryConflicts: store.recoveryConflicts(),
       outbox: store.db.sql
         .prepare("SELECT id,status,error FROM materialization_outbox WHERE status<>'complete'")
         .all() as StudioState['outbox'],
@@ -569,6 +571,7 @@ export class Service {
     if (command === 'operation.query') return this.operations.read(this.require().s.db, str(a.id));
     if (command === 'history.preview') { const { s } = this.require(); return garbageCollectionPreview(s.root, s.db.sql); }
     if (command === 'tags.catalog') return tagBundle(this.skillRoot).taxonomy;
+    if (command === 'titles.styleProfile') return loadTitleStyleProfile(this.skillRoot);
     if (command === 'tags.validate') {
       const input = tagInputSchema.parse(a.input);
       return compileTags(
@@ -907,6 +910,7 @@ export class Service {
       r.parentRunId = sourceRunId;
       r.naming = { sourceRunId, planHash, sourceHash: source.sourceHash, inputHash: source.inputHash,
         contractRevision: source.contractRevision, rule, manualTitle, instruction: String(a.instruction ?? ''),
+        candidateCount: manualTitle ? 1 : 6,
         phase: 'generating', history: [], formatRepairs: 0, semanticRevisions: 0 };
       s.db.saveRun(r);
       s.db.set(`titleRequest:${requestId}`, { id: r.id, fingerprint });
@@ -922,6 +926,7 @@ export class Service {
       if (!t.batch!.candidates.some(v => v.id === candidateId)) throw new Error('书名候选不存在');
       t.history.push({ batch: structuredClone(t.batch!), review: t.review?.result });
       t.regenerate = { candidateId, instruction: str(a.instruction), original: structuredClone(t.batch!) };
+      t.candidateCount = t.batch!.candidates.length;
       t.manualTitle = undefined;
       t.phase = 'generating';
       t.review = undefined;
@@ -975,6 +980,41 @@ export class Service {
       this.emit({ type: 'snapshot' });
       return { selected: true };
     }
+    if (command === 'tags.reroll') {
+      idle();
+      const r = s.db.run(str(a.id));
+      planningBinding(s, r);
+      const t = r.planning!;
+      if (r.accepted || ['discarded', 'stale'].includes(r.status) || t.phase !== 'awaiting_direction' ||
+          !t.report || a.reportHash !== tagHash(t.report) || t.reportReview?.hash !== tagHash(t.report) ||
+          t.reportReview.binding !== t.binding)
+        throw new Error('三个方向已改变或尚未完成审核，请刷新后再生成');
+      const keepDirectionIds = z.array(z.string().min(1)).max(1).parse(a.keepDirectionIds);
+      if (keepDirectionIds.some(value => !t.report!.directions.some(direction => direction.id === value)))
+        throw new Error('要保留的方向不存在');
+      const instruction = String(a.instruction ?? '').trim() || (keepDirectionIds.length
+        ? '完整保留指定方向，重新设计另外两个机制不同的方案。'
+        : '保留作者的必须保留项与禁区，重新设计三个机制不同的方案。');
+      t.history.push({ kind: 'report', value: structuredClone(t.report) });
+      t.history.push({ kind: 'reroll_request', value: { keepDirectionIds, instruction, promptHashes: { ...t.promptHashes } } });
+      t.promptHashes = {};
+      t.regenerate = { directionId: keepDirectionIds[0] ?? '', keepDirectionIds, instruction, original: structuredClone(t.report) };
+      t.phase = 'planning';
+      t.planApproval = undefined;
+      t.titleSelection = undefined;
+      t.selectedDirectionId = undefined;
+      t.candidate = undefined;
+      t.contractReview = undefined;
+      t.reportReview = undefined;
+      t.resolutions = {};
+      t.formatRepairs = 0;
+      t.semanticRevisions = 0;
+      r.messages = [];
+      r.changes = [];
+      r.error = undefined;
+      r.issues = [];
+      return this.launch(r);
+    }
     if (command === 'tags.selectDirection' || command === 'tags.reviseDirection') {
       idle();
       const r = s.db.run(str(a.id));
@@ -998,6 +1038,8 @@ export class Service {
       if (command === 'tags.reviseDirection') {
         const instruction = z.string().trim().min(1).max(6000).parse(a.instruction);
         t.history.push({ kind: 'report', value: structuredClone(t.report) });
+        t.history.push({ kind: 'reroll_request', value: { directionId, instruction, promptHashes: { ...t.promptHashes } } });
+        t.promptHashes = {};
         t.regenerate = { directionId, instruction, original: structuredClone(t.report) };
         t.phase = 'planning';
       } else {
@@ -1059,6 +1101,15 @@ export class Service {
     if (command === 'snapshot.page') return s.db.snapshotPage(typeof a.before === 'number' ? a.before : undefined, typeof a.watermark === 'number' ? a.watermark : undefined, typeof a.limit === 'number' ? a.limit : 100);
     if (command === 'outbox.retry') {
       s.materialize();
+      return this.studio();
+    }
+    if (command === 'recovery.preview') return s.recoveryPreview(str(a.transactionId), str(a.path));
+    if (command === 'recovery.retry' || command === 'recovery.abandon') {
+      idle();
+      if (command === 'recovery.retry') s.retryRecovery(str(a.transactionId));
+      else s.abandonRecovery(str(a.transactionId));
+      s.scan();
+      this.emit({ type: 'snapshot' });
       return this.studio();
     }
     if (command === 'memory.list') {

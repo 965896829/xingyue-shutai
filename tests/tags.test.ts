@@ -34,6 +34,8 @@ import type { Caller } from '../src/core/runner';
 import { emptyTagInput } from '../src/shared/tags';
 import { approvedCreation, planKinds, type CreationPlan } from '../src/shared/creation';
 import { validateTitleBatch, titleSource, titlePath, namingBinding } from '../src/core/title-naming';
+import { loadTitleStyleProfile } from '../src/core/title-style';
+import { titleStyleProfileSchema, type TitleStyleProfile } from '../src/shared/title-style';
 const skill = path.resolve('resources/skill');
 const input: TagInput = {
   selection: {
@@ -143,7 +145,7 @@ async function setup(overrides?: {
       const source = titleSource(service.store!, naming.sourceRunId);
       return result(name, { planHash: naming.planHash,
         candidates: naming.manualTitle ? [{ id: 'manual', title: naming.manualTitle, angle: '作者命名', readerPromise: '维修供水与家园建设', supportingClaimIds: [source.plan.statements[0].id], payoffStage: 'ongoing', riskNotes: [] }]
-          : [1, 2, 3].map((n) => ({ id: 'title-' + n, title: ['水泵旁的聚居地', '从一口清水开始', '维修师的家园'][n - 1], angle: ['家园建设', '成长起点', '主角职业'][n - 1],
+          : Array.from({ length: naming.candidateCount ?? 3 }, (_, i) => i + 1).map((n) => ({ id: 'title-' + n, title: ['水泵旁的聚居地', '从一口清水开始', '维修师的家园', '水源线上的盟约', '缺水城的维修师', '一台水泵之后'][n - 1], angle: ['家园建设', '成长起点', '主角职业', '协作关系', '生存处境', '阶段变化'][n - 1],
             readerPromise: '维修供水与家园建设', supportingClaimIds: [source.plan.statements[0].id], payoffStage: 'ongoing', riskNotes: [] })),
         recommendedIds: naming.manualTitle ? ['manual'] : ['title-1', 'title-2', 'title-3'] });
     }
@@ -439,13 +441,41 @@ test('旧书主动补全方案不重置阶段，变更关联未来资料并保�
   } finally { service.close(); }
 });
 
+test('命名生成与审核实际接收带来源日期的番茄题面风格样本', async () => {
+  const sent: { tool: string; profile: TitleStyleProfile; system: string; planHash: string }[] = [];
+  const { service, parent } = await setup({ unified: true, idea: true, caller: standard => async (...args) => {
+    const tool = args[3][0].name;
+    if (tool === 'submit_title_candidates' || tool === 'submit_title_review') {
+      const payload = JSON.parse(args[2][0].content);
+      sent.push({ tool, profile: titleStyleProfileSchema.parse(payload.styleProfile), system: args[1], planHash: payload.planHash });
+    }
+    return standard(...args);
+  } });
+  try {
+    const plan = await confirmPlan(service, await select(service, (await start(service)).id));
+    const named = await namePlan(service, plan.id);
+    assert.equal(named.status, 'awaiting_review', named.error ?? '');
+    assert.equal(named.naming!.batch!.candidates.length, 6);
+    assert.deepEqual(sent.map(value => value.tool), ['submit_title_candidates', 'submit_title_review']);
+    for (const value of sent) {
+      assert.deepEqual(value.profile, loadTitleStyleProfile(skill));
+      assert.equal(value.planHash, named.naming!.planHash);
+      assert.match(value.system, /作者短名偏好优先/);
+      assert.match(value.system, /编辑归纳不等于官方规则或热度证明/);
+    }
+  } finally {
+    service.close();
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
 test('书名局部重做只修改指定候选，旧选择失效而方案确认保留，命名预算和历史不清零', async () => {
   const { service } = await setup({ unified: true, idea: true, caller: standard => async (...args) => {
     const reply = await standard(...args);
     if (args[3][0].name === 'submit_title_candidates') {
       const input = JSON.parse(args[2][0].content);
       if (input.regenerate) reply.calls[0].arguments = JSON.stringify({ ...input.regenerate.original,
-        candidates: input.regenerate.original.candidates.map((c: any) => c.id === input.regenerate.candidateId ? { ...c, title: '供水线上的家园' } : c) });
+        candidates: input.regenerate.original.candidates.map((c: any) => c.id === input.regenerate.candidateId ? { ...c, title: c.id === 'manual' ? '清水汇成的家园' : '供水线上的家园' } : c) });
     }
     return reply;
   } });
@@ -471,7 +501,7 @@ test('书名局部重做只修改指定候选，旧选择失效而方案确认�
     await settled(service);
     const revised = service.store!.db.run(manual.id);
     assert.equal(revised.status, 'awaiting_review', revised.error ?? '');
-    assert.equal(revised.naming!.batch!.candidates[0].title, '供水线上的家园');
+    assert.equal(revised.naming!.batch!.candidates[0].title, '清水汇成的家园');
   } finally { service.close(); }
 });
 
@@ -606,7 +636,7 @@ test('策划一次确认后进入下一阶段，重复操作复用回执，下�
   const { service } = await setup({ caller: standard => async (...args) => {
     if (args[3][0].name.startsWith('submit_')) return standard(...args);
     stageCalls++;
-    assert.match(args[1], /只有缺少会明显改变故事方向/);
+    assert.match(args[1], /只集中询问会改变核心方向或禁区的缺口/);
     if (args[2].at(-1)?.role === 'tool') return { text: '本阶段结果已准备好', calls: [], native: {}, usage: { input: 1, output: 1, cost: 0, currency: 'USD' }, stop: 'complete' };
     const p = service.store!.db.project();
     return result('propose_changes', { changes: stageOutputs(p.stage, p).map(file => ({ path: file, content: fixture(p, file, service), baseHash: service.store!.db.document(file)?.hash ?? null })) });
@@ -972,6 +1002,57 @@ test('局部重做保留其他方向、预算不重置，关键假设不能跳�
     fs.rmSync(parent, { recursive: true, force: true });
   }
 });
+for (const keepDirectionIds of [[], ['direction-2']]) {
+  test(keepDirectionIds.length ? '保留一案重抽另两案，冻结完整对象且旧报告不能重用' : '换一批三案保留历史，旧报告不能重复提交', async () => {
+    let submittedHistory: { directionId: string; storyEngine: string }[] = [];
+    let submittedScope: { mode: string; frozenDirectionIds: string[]; changedDirectionIds: string[] } | undefined;
+    const { service: s, parent } = await setup({
+      caller: standard => async (...args) => {
+        const response = await standard(...args);
+        if (args[3][0].name !== 'submit_planning_report') return response;
+        const data = JSON.parse(args[2][0].content);
+        if (!data.regenerate) return response;
+        submittedHistory = data.history;
+        submittedScope = data.regenerationScope;
+        const original: PlanningReport = data.regenerate.original;
+        const report = JSON.parse(response.calls[0].arguments) as PlanningReport;
+        report.directions = original.directions.map((direction, index) => keepDirectionIds.includes(direction.id)
+          ? direction
+          : { ...direction, title: '新方向' + index, logline: '维修师主动选择新的协作道路' + index,
+              storyEngine: ['交换维修债券，组织流动工队，再承担社区承诺', '识别旧管网故障，建立配水协议，再面对规则博弈', '护送净水设备，协同沿路居民，再建立巡回供应'][index] });
+        return result('submit_planning_report', report);
+      }
+    });
+    try {
+      const first = await start(s);
+      const original = structuredClone(first.planning!.report!);
+      const oldHash = first.planning!.reportHash;
+      const oldRounds = first.rounds;
+      await s.invoke('tags.reroll', { id: first.id, reportHash: oldHash, keepDirectionIds, instruction: '保留作者约定，换有实质差异的机制' });
+      await settled(s);
+      const next = s.store!.db.run(first.id);
+      assert.equal(next.planning!.phase, 'awaiting_direction', next.error ?? '');
+      assert.equal(next.planning!.report!.directions.length, 3);
+      assert.equal(next.rounds, oldRounds + 2);
+      assert.notEqual(next.planning!.reportHash, oldHash);
+      assert.ok(next.planning!.history.some(h => h.kind === 'report' && tagHash(h.value) === tagHash(original)));
+      assert.ok(submittedHistory.length > 0);
+      assert.equal(submittedScope!.mode, keepDirectionIds.length ? 'keep_one' : 'reroll_all');
+      assert.deepEqual(submittedScope!.frozenDirectionIds, keepDirectionIds);
+      for (const direction of original.directions) {
+        const current = next.planning!.report!.directions.find(v => v.id === direction.id)!;
+        if (keepDirectionIds.includes(direction.id)) assert.deepEqual(current, direction);
+        else assert.notEqual(current.storyEngine, direction.storyEngine);
+      }
+      await assert.rejects(s.invoke('tags.reroll', { id: first.id, reportHash: oldHash, keepDirectionIds }), /改变/);
+      await assert.rejects(s.invoke('tags.selectDirection', { id: first.id, reportHash: oldHash, directionId: 'direction-1', resolutions: { space: '采用' } }), /改变/);
+    } finally {
+      s.close();
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+}
+
 test('独立审核最多一次语义修订，不能因暂停续跑重置预算', async () => {
   const { service: s, parent } = await setup({
     caller:

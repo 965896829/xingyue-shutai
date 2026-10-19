@@ -190,7 +190,7 @@ export class AgentRunner {
     return { expression, system };
   }
   private contextResident(r: Run, p: ProjectState, naming = loadNamingRules(this.skillRoot)) {
-    if (r.pipeline) return { resident: { system: systemPrompt(this.skillRoot, p, 'S10', naming) + expressionPack(this.skillRoot, p.config, 'prose').prompt, ...taskEnvelope(this.store, this.skillRoot, r), task: r.request, chapter: p.chapter, batch: r.batch }, toolCount: 0 };
+    if (r.pipeline) return { resident: { system: systemPrompt(this.skillRoot, p, 'S10', naming, undefined, { outputMode: 'prose' }) + expressionPack(this.skillRoot, p.config, 'prose').prompt, ...taskEnvelope(this.store, this.skillRoot, r), task: r.request, chapter: p.chapter, batch: r.batch }, toolCount: 0 };
     const tools = this.toolsFor(r), { system } = this.taskRules(r, p, naming);
     return { resident: { system, tools, task: r.request, ...taskEnvelope(this.store, this.skillRoot, r), authorPremise: this.store.db.get('premise'), existingCandidates: r.changes }, toolCount: tools.length };
   }
@@ -748,7 +748,7 @@ export class AgentRunner {
         lastFlush = 0;
       const expression = expressionPack(this.skillRoot, p.config, 'prose');
       bindExpressionRules(r, expression.binding);
-      const system = `${systemPrompt(this.skillRoot, p, 'S10', naming)}\n本子调用只写小说正文，含章节标题。禁止工具调用、JSON、解释、评语和代码围栏。由宿主保存正文候选并安排独立校验，忽略上文要求本子调用提交工具或评分的表述。${expression.prompt}`;
+      const system = `${systemPrompt(this.skillRoot, p, 'S10', naming, undefined, { outputMode: 'prose' })}\n正文候选由宿主保存，再安排独立校验。${expression.prompt}`;
       for (;;) {
         const repair = r.repairAttempts?.prose ?? 0;
         draft = '';
@@ -818,7 +818,7 @@ export class AgentRunner {
       const skillId = phase === 'memory' ? 'webnovel-memory-extractor' : 'webnovel-chapter-reviewer';
       const expression = expressionPack(this.skillRoot, p.config, phase === 'memory' ? 'record' : 'review');
       bindExpressionRules(r, expression.binding);
-      const system = `${systemPrompt(this.skillRoot, p, stage, naming, skillId)}\n宿主分工：本阶段为 ${phase}。必须复读提供的候选正文。正文已固定，不得改写。${phase === 'memory' ? '从候选正文提取记忆，与正文一起待作者确认。证据 hash 必须使用候选哈希；同步字段填待提交。' : `只提交 ${qualityPath(r.chapter)} 质量报告。`}实际字数 ${countWords(prose.content)}；候选哈希 ${pipeline.proseHash}。只调用此请求提供的工具，工具名以提供的实际契约为准。${expression.prompt}`;
+      const system = `${systemPrompt(this.skillRoot, p, stage, naming, skillId, { outputMode: phase })}\n本阶段为 ${phase}。${phase === 'memory' ? '记忆与正文一起待作者确认。证据 hash 使用候选哈希；同步字段填待提交。' : `质量报告路径：${qualityPath(r.chapter)}。`}实际字数 ${countWords(prose.content)}；候选哈希 ${pipeline.proseHash}。${expression.prompt}`;
       if (!r.messages.length)
         r.messages.push({
           role: 'user',

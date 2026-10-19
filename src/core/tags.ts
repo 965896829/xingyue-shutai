@@ -13,11 +13,13 @@ import {
   type BookSpec,
   type TagKnowledge,
   type TagPlanning,
+  type PlanningReport,
   type ApprovedTags,
   type ContractCandidate
 } from '../shared/tags';
 import type { ProjectState, Run, Issue, Fact } from '../shared/types';
 import type { FileStore } from './storage';
+import { assessTagPolicy, tagPolicyProfileSchema, tagPolicySourceSchema } from '../shared/tag-policy';
 import { approvedCreation, creationPlanSchema, planKinds, payoffStages, type CreationPlan } from '../shared/creation';
 
 export const contractPath = '02_项目配置/标签创作契约.md';
@@ -59,6 +61,10 @@ export function tagBundle(skillRoot: string) {
     if (hash(fs.readFileSync(path.join(root, file))) !== lock[file])
       throw new Error('标签资源已改变：' + file);
   const taxonomy = read('registry/taxonomy.json') as TagCatalog;
+  taxonomy.sources = tagPolicySourceSchema.array().parse(read('sources.json'));
+  // An older resource pack without a locked profile remains usable, with unknown policy status.
+  if (lock['registry/platform-policy.json'])
+    taxonomy.policy = tagPolicyProfileSchema.parse(read('registry/platform-policy.json'));
   const genres = read('registry/genre-profiles.json').profiles as { mainOptionId: string; label: string }[];
   const cards = read('registry/knowledge-cards.json').cards as { conceptId: string }[];
   const rules = read('registry/combination-rules.json').rules as { allOfConceptIds: string[] }[];
@@ -68,7 +74,12 @@ export function tagBundle(skillRoot: string) {
     mainOptionIds: string[];
     allOfConceptIds: string[];
   }[];
-  if (taxonomy.options.length !== 482 || new Set(taxonomy.options.map((o) => o.id)).size !== 482)
+  const total = taxonomy.groups.reduce((sum, group) => sum + group.count, 0);
+  if (taxonomy.options.length !== total || new Set(taxonomy.options.map((o) => o.id)).size !== total ||
+    new Set(taxonomy.groups.map(group => group.id)).size !== taxonomy.groups.length ||
+    (taxonomy.counts && (taxonomy.counts.total !== total ||
+      taxonomy.counts.reading !== taxonomy.options.filter(option => option.group.startsWith('reading.')).length ||
+      taxonomy.counts.content !== taxonomy.options.filter(option => option.group.startsWith('content.')).length)))
     throw new Error('标签注册表编号或总数不符');
   for (const g of taxonomy.groups)
     if (taxonomy.options.filter((o) => o.group === g.id).length !== g.count)
@@ -94,7 +105,7 @@ export function validateTagInput(raw: unknown, catalog: TagCatalog): TagInput {
     const value = (input.selection[section] as Record<string, string | string[]>)[field];
     const ids = Array.isArray(value) ? value : [value];
     if (ids.length < group.min || ids.length > group.max || new Set(ids).size !== ids.length)
-      throw new Error('标签数量或重复选择不合法：' + group.id);
+      throw new Error('标签数量超出本地选择范围，或存在重复选择：' + group.id);
     for (const id of ids)
       if (!catalog.options.some((o) => o.id === id && o.group === group.id && o.status !== 'retired'))
         throw new Error('未知、停用或错分组的标签：' + id);
@@ -134,9 +145,10 @@ export function makeCreationSpec(p: ProjectState, input: unknown, revision: numb
 export function compileTags(spec: BookSpec, root: string): TagKnowledge {
   const b = tagBundle(root);
   if (spec.taxonomyVersion !== b.taxonomy.taxonomyVersion) throw new Error('标签库版本不匹配；请先审阅迁移');
+  const policy = assessTagPolicy(b.taxonomy, spec.selection);
   if (!selectedIds(spec).length) {
     if (!spec.premise.trim()) throw new Error('创意开书需要填写想法');
-    return { version: b.version, options: [], genre: null, cards: [], rules: [], recipes: [], candidates: [], coverage: [] };
+    return { version: b.version, options: [], genre: null, cards: [], rules: [], recipes: [], candidates: [], coverage: [], policy };
   }
   validateTagInput(
     { selection: spec.selection, premise: spec.premise, mustKeep: spec.mustKeep, mustAvoid: spec.mustAvoid },
@@ -160,6 +172,7 @@ export function compileTags(spec: BookSpec, root: string): TagKnowledge {
           r.allOfConceptIds.filter((c) => concepts.has(c)).length >= 2
       )
       .map((r) => ({ id: r.id, title: r.title, missing: r.allOfConceptIds.filter((c) => !concepts.has(c)) })),
+    policy,
     coverage: options.map((o) => ({
       optionId: o.id,
       level:
@@ -179,6 +192,49 @@ function sameSet(actual: string[], expected: string[], label: string) {
   )
     throw new Error(label + '存在缺漏、重复或未选择的标签');
 }
+
+/** The explicit reroll contract freezes metadata too; old single-direction tasks keep their contract. */
+export function frozenReportMetadata(planning: TagPlanning) {
+  const original = planning.regenerate?.original;
+  const directionIds = planning.regenerate?.keepDirectionIds ?? [];
+  const assumptions = original?.assumptions.filter(assumption => directionIds.some(id =>
+    !assumption.directionIds.length || assumption.directionIds.includes(id))) ?? [];
+  const ids = new Set(assumptions.map(assumption => assumption.id));
+  const diagnosis = directionIds.length ? original?.diagnosis.filter(item =>
+    !item.assumptionIds.length || item.assumptionIds.some(id => ids.has(id))) ?? [] : [];
+  return { directionIds, assumptions, diagnosis };
+}
+
+function validateFrozenReportMetadata(report: PlanningReport, planning: TagPlanning) {
+  const frozen = frozenReportMetadata(planning);
+  if (!frozen.directionIds.length) return;
+  const scope = (assumption: PlanningReport['assumptions'][number]) => frozen.directionIds.filter(id =>
+    !assumption.directionIds.length || assumption.directionIds.includes(id));
+  const ids = new Set(frozen.assumptions.map(assumption => assumption.id));
+  for (const [index, original] of frozen.assumptions.entries()) {
+    const current = report.assumptions.find(assumption => assumption.id === original.id);
+    if (!current || current.text !== original.text || current.critical !== original.critical ||
+      tagHash(scope(current)) !== tagHash(scope(original)))
+      throw new Error(`重抽删除或改写了保留方向的第 ${index + 1} 项假设，或改变了其关键性与适用范围`);
+  }
+  if (report.assumptions.some(assumption => scope(assumption).length && !ids.has(assumption.id)))
+    throw new Error('重抽新增或扩大的假设影响了保留方向；请将新设定限定到重做的方向');
+
+  // Mixed diagnostics may drop links to replaced directions, but retain the frozen part.
+  const diagnosticKey = (item: PlanningReport['diagnosis'][number]) => tagHash({
+    code: item.code, severity: item.severity, message: item.message,
+    optionIds: [...new Set(item.optionIds)].sort(),
+    global: !item.assumptionIds.length,
+    assumptionIds: [...new Set(item.assumptionIds.filter(id => ids.has(id)))].sort()
+  });
+  const remaining = report.diagnosis.map(diagnosticKey);
+  for (const original of frozen.diagnosis) {
+    const at = remaining.indexOf(diagnosticKey(original));
+    if (at < 0) throw new Error('重抽删除或改写了保留方向的诊断，或移除了其冻结假设关联');
+    remaining.splice(at, 1);
+  }
+}
+
 export function validateReport(value: unknown, planning: TagPlanning) {
   const report = planningReportSchema.parse(value),
     ids = selectedIds(planning.spec);
@@ -206,13 +262,21 @@ export function validateReport(value: unknown, planning: TagPlanning) {
   }
   for (const a of report.assumptions)
     if (a.directionIds.some((id) => !directionIds.includes(id))) throw new Error('假设引用了不存在的方向');
-  if (planning.regenerate)
-    for (const d of planning.regenerate.original.directions)
-      if (
-        d.id !== planning.regenerate.directionId &&
-        tagHash(d) !== tagHash(report.directions.find((v) => v.id === d.id))
-      )
+  if (planning.regenerate) {
+    const { original, directionId, keepDirectionIds } = planning.regenerate;
+    if (keepDirectionIds !== undefined && (
+      !Array.isArray(keepDirectionIds) || keepDirectionIds.length > 1 ||
+      new Set(keepDirectionIds).size !== keepDirectionIds.length ||
+      keepDirectionIds.some(id => !original.directions.some(direction => direction.id === id))
+    )) throw new Error('保留方向列表无效：只能保留原方案中的一个方向，或全部换新');
+    const preserved = keepDirectionIds === undefined
+      ? original.directions.filter(direction => direction.id !== directionId)
+      : original.directions.filter(direction => keepDirectionIds.includes(direction.id));
+    for (const direction of preserved)
+      if (tagHash(direction) !== tagHash(report.directions.find(value => value.id === direction.id)))
         throw new Error('局部重做改变了应保留的方向');
+    validateFrozenReportMetadata(report, planning);
+  }
   return report;
 }
 export function validateContract(value: unknown, planning: TagPlanning) {

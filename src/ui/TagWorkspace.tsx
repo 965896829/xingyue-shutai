@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { createPlanningTextFormatter } from '../shared/planning-language';
+import { assessTagPolicy } from '../shared/tag-policy';
 import type { Snapshot, Run } from '../shared/types';
 import {
   emptyTagInput,
@@ -56,6 +57,7 @@ export function TagForm({
   }, []);
   if (error) return <p role="alert">标签库加载失败：{error}</p>;
   if (!catalog) return <p>正在加载标签…</p>;
+  const policy = assessTagPolicy(catalog, value.selection);
   const choose = (section: 'reading' | 'content', field: string, id: string, max: number) => {
     const next = structuredClone(value),
       block = next.selection[section] as Record<string, string | string[]>;
@@ -176,13 +178,26 @@ export function TagForm({
             onChange={(e) => onChange({ ...value, mustAvoid: e.target.value.split('\n') })}
           />
         </label>
-        <details>
-          <summary>标签资料说明</summary>
-          <p>
-            共 482
-            项标签。阅读标签选择上限有官方公开说明；内容标签为提供的快照，未核对实时后台。详细知识仍为草案。
+      </details>
+      <details className="tag-policy">
+        <summary>标签资料说明 · {policy.mode === 'creative' ? '自由创意' : '查看核对范围'}</summary>
+        <p>{policy.message}</p>
+        <p className="muted">
+          本地标签快照共 {catalog.options.length} 项。资料范围：{policy.scope}。
+          {policy.verifiedAt ? `公开资料核对日期：${policy.verifiedAt}。` : ''}
+          内容标签的选择上限是本地配置，后台可用选项与组合条件仍需开书时核对。
+        </p>
+        {policy.checks.map((check) => (
+          <p key={check.id}>
+            <strong>{check.label}</strong>：{check.message}
           </p>
-        </details>
+        ))}
+        {policy.sources.filter((source) => source.url && /^https?:\/\//.test(source.url)).map((source) => (
+          <p key={source.id}>
+            <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+            {source.publishedAt ? `（${source.publishedAt}）` : ''}
+          </p>
+        ))}
       </details>
     </div>
   );
@@ -212,6 +227,7 @@ export function TagWorkspace({
   const [direction, setDirection] = useState(''),
     [resolutions, setResolutions] = useState<Record<string, string>>({});
   const [rework, setRework] = useState(''),
+    [rerollInstruction, setRerollInstruction] = useState(''),
     [reviewReason, setReviewReason] = useState('');
   const [coverage, setCoverage] = useState<any>(null),
     [diff, setDiff] = useState<any>(null);
@@ -590,6 +606,42 @@ export function TagWorkspace({
                       </article>
                     ))}
                   </div>
+                  {t.phase === 'awaiting_direction' && (
+                    <div className="creation-reroll">
+                      <label>
+                        这次希望怎样构思（选填）
+                        <textarea
+                          rows={2}
+                          maxLength={6000}
+                          value={rerollInstruction}
+                          disabled={busy || running}
+                          onChange={(e) => setRerollInstruction(e.target.value)}
+                          placeholder="例如：提高生存压力，让主角的能力必须付出代价"
+                        />
+                      </label>
+                      <div className="creation-reroll-actions">
+                        <button
+                          disabled={busy || running || !saved}
+                          onClick={() => void act(() => invoke('tags.reroll', {
+                            id: run.id,
+                            reportHash: t.reportHash!,
+                            keepDirectionIds: [],
+                            instruction: rerollInstruction
+                          }))}
+                        >换一批三案</button>
+                        <button
+                          disabled={busy || running || !saved || !direction}
+                          onClick={() => void act(() => invoke('tags.reroll', {
+                            id: run.id,
+                            reportHash: t.reportHash!,
+                            keepDirectionIds: [direction],
+                            instruction: rerollInstruction
+                          }))}
+                        >保留这一案，换另两案</button>
+                      </div>
+                      <p className="muted">沿用当前创作要求，旧方案会保存在历史中。</p>
+                    </div>
+                  )}
                   <details className="creation-background">
                     <summary>推荐理由与方向检查</summary>
                     <p>{showText(report.recommendationReasons.join('；'))}</p>

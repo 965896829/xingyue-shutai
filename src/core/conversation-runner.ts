@@ -514,6 +514,9 @@ ${tagContext(p, 'discussion')}
           calls: result.calls,
           native: result.native
         });
+        // A provider may finish after cancellation. Keep the response and its known
+        // usage, but do not execute its tools or turn the stopped conversation complete.
+        if (controller.signal.aborted) throw new Error('已停止，已保留收到的回答');
         if (
           this.store.db.project().revision !== revision ||
           this.rulesHash() !== rulesHash ||

@@ -3,6 +3,7 @@ import { configSchema, profileSchema, protocolSchema, stageIds } from './types';
 import { searchSettingsSchema } from './assistant';
 import { embeddingSettingsSchema, memoryScopeSchema } from './studio';
 import { tagInputSchema } from './tags';
+import { titleStyleProfileSchema } from './title-style';
 import * as schemas from './contract-schemas';
 import { errorCodes } from './errors';
 
@@ -98,11 +99,13 @@ export const commandContracts = {
   'tags.start': define(z.strictObject({ inputHash: key, requestId: key.max(100), profileId: optionalText, request: optionalText }), text, 'write'),
   'tags.selectDirection': define(z.strictObject({ id: key, reportHash: key, directionId: key, resolutions: z.record(text, key.max(4000)).optional(), acceptAssumptions: z.literal(true).optional() }), text, 'write'),
   'tags.reviseDirection': define(z.strictObject({ id: key, reportHash: key, directionId: key, instruction: key.max(6000) }), text, 'write'),
+  'tags.reroll': define(z.strictObject({ id: key, reportHash: key, keepDirectionIds: z.array(key).max(1), instruction: text.max(6000).optional() }), text, 'write'),
   'tags.diff': define(identity, z.object({ before: schemas.approvedTagsSchema.nullable(), after: schemas.contractCandidateSchema.nullable(), affected: z.array(z.object({ path: text }).passthrough()) }).passthrough()),
   'tags.restoreProjection': define(z.strictObject({ baseHash: text.nullable() }), ok, 'write'),
   'creation.saveDraft': define(z.strictObject({ input: tagInputSchema, expectedRevision: integer }), schemas.bookSpecSchema, 'write'),
   'creation.start': define(z.strictObject({ inputHash: key, requestId: key.max(100), profileId: optionalText, request: optionalText }), text, 'write'),
   'creation.confirmPlan': define(z.strictObject({ id: key, proposalHash: key, warningReason: optionalText }), ok, 'write'),
+  'titles.styleProfile': define(empty, titleStyleProfileSchema, 'read', 'global'),
   'titles.start': define(z.strictObject({ sourceRunId: optionalText, planHash: key, requestId: key.max(100), profileId: optionalText,
     rule: z.enum(['local', 'fanqie_experiment']).optional(), manualTitle: text.trim().min(1).max(80).optional(), instruction: text.max(6000).optional() }), text, 'write'),
   'titles.regenerate': define(z.strictObject({ id: key, batchHash: key, candidateId: key, instruction: key.max(6000) }), text, 'write'),
@@ -112,6 +115,9 @@ export const commandContracts = {
   'snapshot.list': define(empty, z.array(schemas.snapshotRefSchema)),
   'snapshot.page': define(z.strictObject({ before: integer.optional(), watermark: integer.optional(), limit: integer.min(1).max(200).optional() }), z.object({ items: z.array(schemas.snapshotRefSchema), watermark: integer, nextBefore: integer.nullable() })),
   'outbox.retry': define(empty, schemas.studioStateSchema, 'write'),
+  'recovery.preview': define(z.strictObject({ transactionId: key, path: key }), z.strictObject({ path: text, accepted: text, current: text.nullable(), candidate: text })),
+  'recovery.retry': define(z.strictObject({ transactionId: key }), schemas.studioStateSchema, 'write'),
+  'recovery.abandon': define(z.strictObject({ transactionId: key }), schemas.studioStateSchema, 'write'),
   'memory.list': define(z.strictObject({ category: z.enum(['all', 'character', 'injury', 'item', 'hook', 'knowledge', 'obligations']).optional(), offset: integer.optional(), pageSize: integer.min(1).max(100).optional(), scope: memoryScopeSchema.optional() }), retrieval),
   'memory.retrieve': define(z.strictObject({ query: optionalText, scope: memoryScopeSchema.optional() }), retrieval, 'remote'),
   'memory.search': define(z.strictObject({ query: optionalText, chapter: integer.optional() }), retrieval),

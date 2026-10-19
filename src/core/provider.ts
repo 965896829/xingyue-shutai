@@ -266,6 +266,7 @@ export function normalize(p: SecretProfile, data: Obj): ModelResult {
     calls: ToolCall[] = [],
     native: unknown,
     reason = '',
+    refused = false,
     input: number | null = null,
     output: number | null = null;
   const webSearch: NativeWebSearchState = { calls: [], citations: [] };
@@ -274,6 +275,10 @@ export function normalize(p: SecretProfile, data: Obj): ModelResult {
     if (!c?.message || !c.finish_reason) throw new RequestError('响应没有明确结束标记', true);
     native = c.message;
     text = c.message.content ?? '';
+    if (typeof c.message.refusal === 'string' && c.message.refusal.trim()) {
+      refused = true;
+      text += c.message.refusal;
+    }
     reason = c.finish_reason;
     calls = (c.message.tool_calls ?? []).map((t: Obj) => ({
       id: t.id,
@@ -289,6 +294,11 @@ export function normalize(p: SecretProfile, data: Obj): ModelResult {
     for (const item of data.output ?? []) {
       if (item.type === 'message')
         for (const part of item.content ?? []) {
+          if (part.type === 'refusal') {
+            refused = true;
+            text += part.refusal ?? '';
+            continue;
+          }
           if (part.type !== 'output_text') continue;
           const offset = Array.from(text).length;
           for (const annotation of part.annotations ?? []) {
@@ -340,7 +350,7 @@ export function normalize(p: SecretProfile, data: Obj): ModelResult {
     output = data.usageMetadata?.candidatesTokenCount ?? null;
   }
   const length = ['length', 'max_tokens', 'MAX_TOKENS'].includes(reason),
-    filtered = [
+    filtered = refused || [
       'content_filter',
       'filtered',
       'SAFETY',
@@ -461,6 +471,10 @@ export async function invokeModel(
             msg.content += d.content;
             onDelta(d.content);
           }
+          if (typeof d.refusal === 'string') {
+            msg.refusal = (msg.refusal ?? '') + d.refusal;
+            onDelta(d.refusal);
+          }
           if (d.reasoning_content)
             msg.reasoning_content = (msg.reasoning_content ?? '') + d.reasoning_content;
           for (const t of d.tool_calls ?? []) {
@@ -480,6 +494,7 @@ export async function invokeModel(
           if (e.usage) data.usage = e.usage;
         } else if (p.protocol === 'responses') {
           if (e.type === 'response.output_text.delta') onDelta(e.delta);
+          if (e.type === 'response.refusal.delta') onDelta(e.delta);
           if (typeof e.type === 'string' && e.type.startsWith('response.web_search_call.')) {
             const status = e.type.split('.').at(-1);
             if (['in_progress', 'searching', 'completed'].includes(status!))

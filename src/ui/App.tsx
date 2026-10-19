@@ -59,6 +59,7 @@ import { brand } from '../shared/brand';
 import { DeleteButton } from './DeleteButton';
 import { ProximitySidebar, type ProximitySection } from './ProximitySidebar';
 import { RecycleBin } from './RecycleBin';
+import { RecoveryConflicts } from './RecoveryConflicts';
 import { ChatWorkspace } from './ChatWorkspace';
 import { TaskDiscussion } from './TaskDiscussion';
 import { AssistantSettings } from './AssistantSettings';
@@ -839,6 +840,14 @@ export function App() {
             <Check size={16} />
             {notice}
           </div>
+        )}
+        {p && !!snapshot.studio?.recoveryConflicts?.length && (
+          <RecoveryConflicts
+            key={p.id}
+            conflicts={snapshot.studio.recoveryConflicts}
+            disabled={busy || !!running}
+            refresh={refresh}
+          />
         )}
         {!p ? (
           <div className="welcome">
