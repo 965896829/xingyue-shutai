@@ -24,6 +24,7 @@
 | `qa-studio.ts`、`qa-studio-server.ts` | 先生成工作台合成样本，再启动配套模拟服务；保留事实、评估和阶段数据场景。依次以 `node --import tsx scripts/<文件名>` 执行。 | 否 |
 | `tests/fixtures/desktop-smoke-seed.ts` | 简单桌面验收初始化，替代已移除的 `qa-desktop.ts`；`node --import tsx tests/fixtures/desktop-smoke-seed.ts`。使用隔离目录，同名样本已存在时需要先处理旧样本。 | 否 |
 | `tests/fixtures/desktop-hanging-provider.ts` | 模拟不结束的流，用于退出和未知请求结果检查；与普通模拟 API 的用途不同。 | 否 |
+| `tests/fixtures/management-provider.ts` | 网页管理联调夹具；`node --import tsx tests/fixtures/management-provider.ts`，默认仅监听 `127.0.0.1:9338`。提供模型列表、文字连通测试和可停止的任务流；不访问真实模型，使用独立 `WENXU_DATA_DIR` 和临时作品。 | 否 |
 | `tests/fixtures/tag-ui-server.ts` | 标签界面专用的本机服务，使用真实 Service 和合成模型结果。可设 `CREATION_UI_SCENARIO` 为 `connection_error`（首次请求失败及一般审核建议）、`unknown_request`（费用未知）、`blocking_review`（审核仍有冲突）或 `title_error`（命名中断），复验分步流程与恢复。 | 否 |
 | `tests/profile-large-book.ts` | 定位大数据样本各打开阶段耗时，须显式传入隔离样本路径；保留已有性能报告的复现入口。 | 否 |
 
@@ -50,3 +51,14 @@
 - 恢复时只从归档取出需要的文件并核对清单哈希；不要直接执行历史源码替换或清理脚本。
 
 新增可复用工具应登记入口、输入、输出和执行条件；真实缺陷的行为验证放入 `tests/*.test.ts`。一次性代码替换脚本完成后退出工作目录。历史日志、截图和源码备份不能按脚本重名直接删除。
+
+## 2026-10-21 生成文件清理
+
+本轮清理旧构建、已结束的隔离测试环境、自动回归生成的样本和浏览器临时记录，清单及核对结果保存在 `.test-output/workspace-cleanup-20261021/`。保留源码、全部正式回归、依赖、作品与配置备份、历史报告、重构基线，以及 0.4.29 的验收证据。
+
+- 当前完整构建：`.release/lock-recovery-0.4.29/`；上一版回退安装包：`.release/real-client-e2e-0.4.28/`。已删除更旧的构建和上一版重复的展开目录。`.release/` 与 `release/` 均排除在 Git 之外。
+- `.test-output/refactor/fixtures/`、`.test-output/chat-controls-tests/`、`.test-output/task-discussion-tests/` 是自动测试生成的合成样本，测试运行时会重新创建。确认测试进程结束后可以清理；`tests/fixtures/` 中的夹具源码仍需保留。
+- `.test-output/` 同时存有升级备份和验收证据，不能把整个目录当作缓存清空。包含作者作品或配置的历史备份本轮未删除。
+- 发布检查必须显式传入本次测试日志；省略参数会停止检查，不再默认读取旧的标签升级日志。交付报告里的测试结果对应所传入的日志，不表示检查时重新运行了测试。
+
+本次一次性清理脚本执行后移除，目录中只保留清单、删除日志和核对结果。

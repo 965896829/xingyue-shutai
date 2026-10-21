@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { compatibleRunBase } from './runtime-settings';
 import {
   approvedCreation,
   titleBatchSchema,
@@ -16,6 +17,7 @@ import { controllerRules, assertControllerRules, taskEnvelope } from './agent-co
 import { expressionPack, bindExpressionRules, expressionFingerprint } from './expression-rules';
 import { SkillRegistry } from './skill-registry';
 import { callModel } from './runtime/model-gateway';
+import { withTaskReasoning } from '../shared/reasoning';
 import { beginTool, finishTool, stopOnToolFailure, type ToolTicket } from './runtime/tool-gateway';
 import { setRunStatus } from './runtime/run-state';
 import { requestGuard, recordUsage, syncUsage } from './telemetry';
@@ -90,8 +92,7 @@ export function namingBinding(store: FileStore, r: Run) {
     p = store.db.project(),
     source = titleSource(store, t.sourceRunId);
   if (
-    r.baseRevision !== p.revision ||
-    r.baseSnapshotId !== store.db.get('headSnapshot') ||
+    !compatibleRunBase(store, r) ||
     t.planHash !== tagHash(source.plan) ||
     t.sourceHash !== source.sourceHash ||
     t.inputHash !== source.inputHash ||
@@ -211,6 +212,7 @@ export async function driveTitleNaming(args: {
   signal: AbortSignal;
   save: () => void;
   event: (text: string) => void;
+  onActivity?: (phase: import('../shared/generation').GenerationPhase) => void;
 }) {
   const { store, root, run: r, project: p, writer, profiles, caller, signal, save, event } = args;
   const t = r.naming!,
@@ -239,7 +241,7 @@ export async function driveTitleNaming(args: {
     if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools)
       throw new Error('命名与审核预算已用完，已有候选已保留');
     const reviewing = t.phase === 'reviewing',
-      profile = reviewing ? reviewer : writer;
+      profile = withTaskReasoning(reviewing ? reviewer : writer, r);
     if (profiles().find((v) => v.id === profile.id)?.version !== profile.version)
       throw new Error('模型配置已改变');
     const name = reviewing ? 'submit_title_review' : 'submit_title_candidates';
@@ -304,7 +306,8 @@ export async function driveTitleNaming(args: {
       r.messages,
       tools,
       signal,
-      () => {}
+      () => {},
+      { onActivity: args.onActivity }
     );
     recordUsage(store, r, result.usage, {
       phase: 'titles:' + t.phase,

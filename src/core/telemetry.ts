@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { compatibleSettingsSnapshot } from './runtime-settings';
 import { callModel, moneyUnits } from './runtime/model-gateway';
 import type { Assessment, DraftIdentity } from '../shared/studio';
 import { dimensions } from '../shared/studio';
@@ -266,7 +267,7 @@ export class NarrativeTelemetry {
             expression?.fingerprint) ||
         controller.signal.aborted ||
         JSON.stringify(this.latest.get(run.id)) !== JSON.stringify(identity) ||
-        this.store.db.get('headSnapshot') !== identity.snapshotId
+        (this.store.db.get('headSnapshot') !== identity.snapshotId && !compatibleSettingsSnapshot(this.store, identity.snapshotId))
       )
         return null;
       const parsed = resultSchema.parse(JSON.parse(result.text.replace(/^```(?:json)?\s*|\s*```$/g, '')));

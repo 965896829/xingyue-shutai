@@ -4,6 +4,7 @@ import { approvedCreation, payoffStages, titleRules } from '../shared/creation';
 import type { Snapshot } from '../shared/types';
 import type { TitleStyleProfile } from '../shared/title-style';
 import { CreationTaskStatus } from './CreationTaskStatus';
+import { runHasCurrentBasis } from '../shared/run-presentation';
 
 export function TitleWorkspace({
   snapshot,
@@ -29,7 +30,7 @@ export function TitleWorkspace({
     (r) =>
       r.naming &&
       r.naming.sourceRunId === sourceRunId &&
-      r.baseRevision === p.revision &&
+      runHasCurrentBasis(r, p) &&
       r.naming.planHash === planHash &&
       !r.accepted &&
       !['discarded', 'stale'].includes(r.status)

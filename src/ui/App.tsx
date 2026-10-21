@@ -1,4 +1,10 @@
+import { useDialogs } from './AppDialogs';
+import { ModelControl } from './ModelControl';
+import { GenerationStatus } from './GenerationStatus';
+import { streamText, visibleStreamText, type StreamText } from '../shared/generation';
+import { reasoningLabel } from '../shared/reasoning';
 import { invokeCommand } from '../shared/client';
+import { newProjectLocationError } from '../shared/project-location';
 import type { Invoke } from '../shared/contracts';
 import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
 import { resumeArguments, runCapabilities } from '../shared/run-capabilities';
@@ -37,6 +43,8 @@ import {
   AlertCircle,
   Trash2
 } from 'lucide-react';
+import { MonitorCog } from 'lucide-react';
+import type { ManagementView } from '../shared/management';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import {
@@ -69,13 +77,11 @@ import { SkillLauncher } from './SkillLauncher';
 import { ExpressionSettings } from './ExpressionSettings';
 import { TagForm, TagWorkspace, cleanTagInput } from './TagWorkspace';
 import { emptyTagInput } from '../shared/tags';
-import { requestErrorText, retryNeedsConfirmation, taskReplyText, documentPreviewText } from '../shared/run-presentation';
+import { requestErrorText, retryNeedsConfirmation, taskReplyText, documentPreviewText, visibleRunIssues } from '../shared/run-presentation';
 import { renderNativeCitations } from '../shared/web-search';
 import { WebSearchEvidence } from './WebSearchEvidence';
 import type { SourceRef } from '../shared/studio';
 import { gateEvent, syncEventCursor, type EventCursor } from '../shared/event-gate';
-import './studio.css';
-import './assistant.css';
 
 const names = {
   S01: '设定拆解',
@@ -159,7 +165,7 @@ function Modal({
     </div>
   );
 }
-export function App() {
+export function App({ management = false, managementView = 'workspace' }: { management?: boolean; managementView?: ManagementView } = {}) {
   const [inspector, setInspector] = useState<'manuscript' | 'characters' | 'details'>('manuscript');
   const [source, setSource] = useState<SourceRef | null>(null);
   const [focus, setFocus] = useState(false);
@@ -175,7 +181,10 @@ export function App() {
     ),
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
-    [busy, setBusy] = useState(false);
+    [actionBusy, setBusy] = useState(false);
+  const dialogs = useDialogs(snapshot.projectSessionId);
+  const [modelPending, setModelPending] = useState(false);
+  const busy = actionBusy || modelPending;
   const [request, setRequest] = useState(''),
     [mode, setMode] = useState('stage'),
     [profileId, setProfileId] = useState(''),
@@ -185,6 +194,8 @@ export function App() {
     [sidebarCollapsed, setSidebarCollapsed] = useState(false),
     [flowExpanded, setFlowExpanded] = useState(false);
   const [doc, setDoc] = useState<{
+    projectId: string;
+    projectKey: string;
       path: string;
       content: string;
       hash: string | null;
@@ -237,7 +248,7 @@ export function App() {
     [memory, setMemory] = useState<any>(null),
     [memoryChapter, setMemoryChapter] = useState(''),
     [timeline, setTimeline] = useState(false),
-    [deltas, setDeltas] = useState<Record<string, string>>({});
+    [deltas, setDeltas] = useState<Record<string, StreamText>>({});
   const refresh = useCallback(async () => {
     const requestId = ++refreshSeq.current;
     try {
@@ -316,8 +327,10 @@ export function App() {
         void refresh();
         return;
       }
-      if (event.type === 'delta')
-        setDeltas((d) => ({ ...d, [event.runId!]: ((d[event.runId!] ?? '') + event.text).slice(-20000) }));
+      if (event.type === 'delta') {
+        if (event.resource === 'runs' && event.runId && typeof event.text === 'string' && event.textOffset !== undefined)
+          setDeltas((d) => ({ ...d, [event.runId!]: streamText(d[event.runId!], { offset: event.textOffset!, text: event.text! }) }));
+      }
       else if (event.type === 'error') setError(event.text ?? '执行错误');
       else {
         if (event.resource) resources.add(event.resource);
@@ -368,6 +381,9 @@ export function App() {
     discussionRun = run && (mode === 'stage' || run.mode === 'revision') ? run : undefined,
     dirty = doc && text !== doc.content;
   const taskBusy = busy || !!running || !!snapshot.chatBusy;
+  const projectKey = p ? `${p.id}:${encodeURIComponent(p.root.replaceAll('\\', '/').toLowerCase())}` : undefined;
+  const activeProjectKey = useRef(projectKey);
+  activeProjectKey.current = projectKey;
   useEffect(() => {
     if (titleConfirmation && titleConfirmation.projectId !== p?.id) setTitleConfirmation(null);
   }, [p?.id, titleConfirmation?.projectId]);
@@ -413,7 +429,7 @@ export function App() {
   async function continueTask(rebuild = false) {
     if (!run || taskBusy) return;
     if (rebuild && !profileId) { setError('请先在输入框右下方选择模型'); return; }
-    if (retryNeedsConfirmation(run) && !confirm('上次请求结果与费用未知，继续会产生新请求，可能重复计费。确认继续？')) return;
+    if (retryNeedsConfirmation(run) && !await dialogs.confirm('上次请求结果与费用未知，继续会产生新请求，可能重复计费。确认继续？', { title: '重新请求当前任务？', confirmLabel: '确认重新请求', cancelLabel: '暂不重试' })) return;
     const instruction = request.trim();
     const result = await act(() => rebuild
       ? invoke('run.handoff', { id: run.id, profileId, instruction, retryUnknown: retryNeedsConfirmation(run) })
@@ -428,8 +444,10 @@ export function App() {
   useEffect(() => {
     const active = visibleRuns.find((r) => r.status === 'running' && r.pipeline);
     const prose = active?.changes.find((c) => c.path.startsWith('07_'));
-    if (!active || !prose || dirty) return;
+    if (!active || !prose || dirty || !p) return;
     setDoc({
+      projectId: p.id,
+      projectKey: projectKey!,
       path: prose.path,
       content: prose.content,
       hash: prose.baseHash,
@@ -442,19 +460,23 @@ export function App() {
     setEditorTab('edit');
   }, [visibleRuns.find((r) => r.status === 'running' && r.pipeline)?.pipeline?.version]);
   useEffect(() => {
-    if (!doc?.runId || !dirty || running || documentAccepted || !doc.path.startsWith('07_')) return;
+    if (!doc?.runId || doc.projectKey !== projectKey || !dirty || running || documentAccepted || !doc.path.startsWith('07_')) return;
     const timer = setTimeout(() => {
       void invoke('draft.checkpoint', { id: doc.runId!, content: text }).catch(() => {});
     }, 1200);
     return () => clearTimeout(timer);
-  }, [text, doc?.runId, documentAccepted, !!running]);
+  }, [text, doc?.runId, documentAccepted, !!running, projectKey]);
   useEffect(() => {
+    // Other authorized views can switch the active book. Keep cached edits bound
+    // to their original project and never carry an editor into the new book.
+    setDoc(null); setEditorOpen(false); setText(''); setSource(null); setMemory(null); setManifest(null);
+    setModal(null); setTitleConfirmation(null);
     const pending = snapshot.runs.find((r) => !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status));
     setSelectedRun(pending?.id ?? '');
     setMode('stage');
     setRequest('');
     setWorkView(pending?.planning || pending?.naming || ((p?.tagEnabled || p?.creationWorkflow === 2) && p.stage === 'S01') ? 'tags' : pending || p?.stage === 'S01' || snapshot.runs.some(r => r.mode === 'stage') ? 'tasks' : 'chat');
-  }, [p?.id]);
+  }, [projectKey]);
   useEffect(() => {
     if (!profileId || !snapshot.profiles.some((p) => p.id === profileId))
       setProfileId(
@@ -468,15 +490,17 @@ export function App() {
   useEffect(() => {
     if (doc) {
       try {
-        localStorage.setItem(`draft:${p?.id}:${doc.runId ?? ''}:${doc.path}`, text);
+        localStorage.setItem(`draft:${doc.projectKey}:${doc.runId ?? ''}:${doc.path}`, text);
       } catch {
         setError('本地草稿缓存空间不足，请立即保存草稿');
       }
     }
-  }, [text, doc?.runId, doc?.path]);
+  }, [text, doc?.runId, doc?.path, doc?.projectKey]);
   async function openDoc(relative: string, r?: Run) {
+    const projectId = p?.id;
+    if (!projectId || !projectKey) return;
     if (r?.accepted) r = undefined;
-    if (dirty && !confirm('编辑内容已保存在本机草稿缓存中。切换文档？')) return;
+    if (dirty && !await dialogs.confirm('编辑内容已保存在本机草稿缓存中。切换文档？', { title: '切换文档？', confirmLabel: '切换文档', cancelLabel: '继续编辑' })) return;
     await act(async () => {
       let old = { content: '', hash: null as string | null };
       try {
@@ -486,7 +510,13 @@ export function App() {
       }
       const candidate = r?.changes.find((c) => c.path === relative),
         value = candidate?.content ?? old.content;
-      const draft = localStorage.getItem(`draft:${p?.id}:${r?.id ?? ''}:${relative}`);
+      const cacheKey = `draft:${projectKey}:${r?.id ?? ''}:${relative}`;
+      const legacyKey = `draft:${projectId}:${r?.id ?? ''}:${relative}`;
+      const draft = localStorage.getItem(cacheKey) ?? localStorage.getItem(legacyKey);
+      if (draft !== null) {
+        localStorage.setItem(cacheKey, draft);
+        localStorage.removeItem(legacyKey);
+      }
       let baseline = old.content;
       if (candidate?.baseHash) {
         try {
@@ -497,7 +527,10 @@ export function App() {
           /* external changes may have no accepted revision yet */
         }
       }
+      if (activeProjectKey.current !== projectKey) return;
       setDoc({
+        projectId,
+        projectKey,
         path: relative,
         hash: candidate ? candidate.baseHash : old.hash,
         content: value,
@@ -513,6 +546,7 @@ export function App() {
   }
   async function saveDraft() {
     if (!doc) return;
+    if (doc.projectKey !== projectKey) { setError('作品已切换，请重新打开文稿；原编辑仍保留在原作品草稿缓存中。'); return; }
     if (doc.runId && visibleRuns.find((r) => r.id === doc.runId)?.accepted) {
       setError('正在载入已保存版本，请稍后再保存。');
       return;
@@ -524,7 +558,7 @@ export function App() {
           : invoke('document.save', { path: doc.path, baseHash: doc.hash, content: text }),
       '草稿已保存，确认采纳后会更新正式文稿'
     );
-    if (r) {
+    if (r && activeProjectKey.current === doc.projectKey) {
       setWorkView('tasks');
       setSelectedRun(typeof r === 'string' ? r : r.id);
       setDoc({ ...doc, content: text, runId: typeof r === 'string' ? r : r.id });
@@ -533,7 +567,7 @@ export function App() {
   async function start(taskMode = mode) {
     if (!p || ((taskMode === 'revision' || feedbackRun) && !request.trim())) return;
     if (taskMode === 'stage' && feedbackRun) {
-      if (retryNeedsConfirmation(feedbackRun) && !confirm('上次请求结果未知，重新请求可能重复计费。确认重新请求？')) return;
+      if (retryNeedsConfirmation(feedbackRun) && !await dialogs.confirm('上次请求结果未知，重新请求可能重复计费。确认重新请求？', { title: '重新请求当前任务？', confirmLabel: '确认重新请求', cancelLabel: '暂不重试' })) return;
       const resumed = await act(() => invoke('run.resume', resumeArguments(feedbackRun, request.trim())));
       if (resumed !== undefined) setRequest('');
       return;
@@ -571,6 +605,25 @@ export function App() {
       }
     });
   }
+  useEffect(() => {
+    if (!management) return;
+    const navigate = (event: Event) => {
+      const view = (event as CustomEvent<ManagementView>).detail;
+      if (view === 'open') { openProjectDirectory(); return; }
+      if (view === 'models') { setModal('settings'); return; }
+      if (['project', 'transfer', 'legacy', 'trash', 'new'].includes(view)) { setModal(view as 'project' | 'transfer' | 'legacy' | 'trash' | 'new'); return; }
+      setModal(null);
+      setPage(view === 'memory' || view === 'cover' ? view : 'work');
+      if (view === 'tasks' || view === 'creation' || view === 'workspace') { setWorkView(view === 'creation' ? 'tags' : view === 'tasks' ? 'tasks' : 'chat'); setEditorOpen(false); }
+    };
+    window.addEventListener('management:navigate', navigate);
+    const open = (event: Event) => { setPage('work'); setEditorOpen(true); void openDoc((event as CustomEvent<string>).detail); };
+    window.addEventListener('management:document', open);
+    return () => { window.removeEventListener('management:navigate', navigate); window.removeEventListener('management:document', open); };
+  });
+  useEffect(() => {
+    if (management) window.dispatchEvent(new CustomEvent('management:navigate', { detail: managementView }));
+  }, [management, managementView]);
   async function returnHome() {
     if (!p || busy) return;
     await act(async () => {
@@ -587,7 +640,7 @@ export function App() {
         ...(dirty ? ['编辑内容已保存在本机草稿缓存中，尚未保存为正式内容。'] : []),
         ...(request.trim() ? ['当前任务输入尚未发送，返回首页后将清空。'] : [])
       ];
-      if (reminders.length && !confirm(`${reminders.join('\n')}\n确认返回首页？`)) return;
+      if (reminders.length && !await dialogs.confirm(`${reminders.join('\n')}\n确认返回首页？`)) return;
       await invoke('project.close');
       setDoc(null);
       setText('');
@@ -625,7 +678,8 @@ export function App() {
     );
   }
   const filteredDocs = useMemo(() => snapshot.documents.filter((d) => !query || d.path.includes(query)), [snapshot.documents, query]);
-  const taskReply = run ? taskReplyText(renderNativeCitations(run.responseText || deltas[run.id] || '', run.webSearch?.citations)) : '';
+  const taskReply = run ? taskReplyText(renderNativeCitations(visibleStreamText(run.responseText, run.status === 'running' ? deltas[run.id] : undefined), run.webSearch?.citations)) : '';
+  const displayedIssues = run ? visibleRunIssues(run) : [];
   const chatSections: ProximitySection[] = run
     ? [
         { id: 'chat-request', label: '你的任务', kind: 'title' },
@@ -635,7 +689,7 @@ export function App() {
           ? [{ id: 'chat-candidates', label: '候选改动', kind: 'section' as const }]
           : []),
         ...(run.facts.length ? [{ id: 'chat-facts', label: '候选记忆', kind: 'body' as const }] : []),
-        ...(run.issues.length ? [{ id: 'chat-issues', label: '检查结果', kind: 'body' as const }] : []),
+        ...(displayedIssues.length ? [{ id: 'chat-issues', label: '检查结果', kind: 'body' as const }] : []),
         ...(timeline ? [{ id: 'chat-events', label: '执行日志', kind: 'body' as const }] : []),
         ...(['awaiting_input', 'awaiting_permission', 'awaiting_review', 'needs_repair'].includes(
           run.status
@@ -649,7 +703,7 @@ export function App() {
     <div
       className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${focus && editorOpen && page === 'work' ? 'studio-focus' : ''}`}
     >
-      <aside className="sidebar" aria-label="作品与功能导航">
+      {!management && <aside className="sidebar" aria-label="作品与功能导航">
         <div className="brand">
           <button
             type="button"
@@ -767,6 +821,9 @@ export function App() {
           </div>
         )}
         <div className="sidebar-bottom">
+          {!management && window.wenxu?.desktop && <button aria-label="打开网页管理后台" title="打开网页管理后台" onClick={() => void act(() => invoke('management.open'), '已在浏览器打开管理后台')}>
+            {btn(<MonitorCog size={16} />, '网页管理后台')}
+          </button>}
           <button
             aria-label="智能体与联网设置"
             title="智能体与联网设置"
@@ -791,9 +848,9 @@ export function App() {
             本地创作空间
           </div>
         </div>
-      </aside>
+      </aside>}
       <main>
-        <header className="topbar">
+        {!management && <header className="topbar">
           <div className="breadcrumb">
             创作空间 <ChevronRight size={14} />
             <b>{p?.title ?? '我的工作台'}</b>
@@ -825,7 +882,16 @@ export function App() {
               <span>文稿面板</span>
             </button>
           </div>
-        </header>
+        </header>}
+        {management && p && <div className="management-document-toolbar">
+          <span>{p.title}</span>
+          <select aria-label="打开作品文档" value={doc?.path ?? ''} onChange={event => { if (event.target.value) { setPage('work'); setEditorOpen(true); void openDoc(event.target.value); } }}>
+            <option value="">选择文稿、设定或大纲…</option>
+            {snapshot.documents.map(document => <option key={document.path} value={document.path}>{document.path}</option>)}
+          </select>
+          <button onClick={() => setEditorOpen(!editorOpen)} aria-pressed={editorOpen}>文稿面板</button>
+          <button onClick={() => setModal('project')}>作品配置</button>
+        </div>}
         {error && (
           <div role="alert" className="banner error">
             <AlertCircle size={17} />
@@ -1031,7 +1097,7 @@ export function App() {
                                   <Sparkles size={16} />
                                 </div>
                                 <b>{brand.name}</b>
-                                <span className={`status ${run.status}`}>{status[run.status]}</span>
+                                <GenerationStatus activity={run.activity} running={run.status === 'running'} label={status[run.status]} fallbackStart={run.createdAt} />
                               </div>
                               {run.manifest && (
                                 <details>
@@ -1121,13 +1187,13 @@ export function App() {
                                 ))}
                               </details>
                             )}
-                            {run.issues.length > 0 && (
-                              <details id="chat-issues" open={run.issues.some((i) => i.severity === 'error')}>
+                            {displayedIssues.length > 0 && (
+                              <details id="chat-issues" open={displayedIssues.some((i) => i.severity === 'error')}>
                                 <summary>
-                                  {run.issues.filter((i) => i.severity === 'error').length} 项阻断 ·{' '}
-                                  {run.issues.filter((i) => i.severity === 'warning').length} 项审阅提醒
+                                  {displayedIssues.filter((i) => i.severity === 'error').length} 项阻断 ·{' '}
+                                  {displayedIssues.filter((i) => i.severity === 'warning').length} 项审阅提醒
                                 </summary>
-                                {run.issues.map((i, n) => (
+                                {displayedIssues.map((i, n) => (
                                   <p
                                     key={n}
                                     id={taskIssueId(run.id, i)}
@@ -1335,33 +1401,7 @@ export function App() {
                         </label>
                       </div>
                       <div className="composer-actions">
-                        <label
-                          className="composer-select composer-model"
-                          title={
-                            snapshot.profiles.find((p) => p.id === profileId)
-                              ? modelLabel(
-                                  snapshot.profiles.find((p) => p.id === profileId)!,
-                                  snapshot.profiles
-                                )
-                              : '选择本次任务的模型'
-                          }
-                        >
-                          <select
-                            value={profileId}
-                            onChange={(e) => setProfileId(e.target.value)}
-                            aria-label="本次模型"
-                          >
-                            <option value="">选择模型</option>
-                            {snapshot.profiles
-                              .filter((p) => p.protocol !== 'images')
-                              .map((p) => (
-                                <option key={p.id} value={p.id} title={`${p.name} · ${p.baseUrl}`}>
-                                  {modelLabel(p, snapshot.profiles)}
-                                </option>
-                              ))}
-                          </select>
-                          <ChevronDown size={12} aria-hidden="true" />
-                        </label>
+                        <ModelControl profiles={snapshot.profiles} profileId={profileId} onProfileChange={setProfileId} onPendingChange={setModelPending} label="本次模型与推理强度" />
                         {running || snapshot.chatBusy ? (
                           <button
                             className="stop composer-send"
@@ -1435,6 +1475,7 @@ export function App() {
                   <div className="diagnostics-inspector">
                     <h3>当前任务</h3>
                     <p>{run ? status[run.status] : '暂无任务'}</p>
+                    {run && <p>本任务推理强度：{reasoningLabel(run.reasoningEfforts?.[run.profileId])}</p>}
                     {run?.manifest && (
                       <>
                         <p>上下文 · {run.manifest.estimatedTokens.toLocaleString()}（保守估计）</p>
@@ -1783,24 +1824,34 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
     [tagInput, setTagInput] = useState(emptyTagInput);
   const [parent, setParent] = useState(''),
     [premise, setPremise] = useState(''),
+    [createError, setCreateError] = useState(''),
     [submitting, setSubmitting] = useState(false),
+    [reasoningPending, setReasoningPending] = useState(false),
     [profileId, setProfileId] = useState(initialProfileId || profiles.find(p => p.protocol !== 'images')?.id || ''),
     [previewList, setPreviewList] = useState<string[]>([]);
+  const locationError = newProjectLocationError(parent);
   return (
     <Modal title="新建作品" subtitle="先写下想法，确认故事方向后再确定书名。" onClose={() => { if (!submitting) onClose(); }} wide={tagged}>
       <form
         className="modal-body form"
         onSubmit={(e) => {
           e.preventDefault();
-          if (submitting) return;
+          if (submitting || reasoningPending || locationError) return;
+          setCreateError('');
           setSubmitting(true);
           void act(async () => {
-            const created = await invoke('project.create', {
-              parent,
-              premise,
-              ...(profileId ? { config: { defaultProfileId: profileId } } : {}),
-              creationInput: cleanTagInput({ ...tagInput, premise, selection: tagged ? tagInput.selection : emptyTagInput().selection })
-            });
+            let created: Snapshot;
+            try {
+              created = await invoke('project.create', {
+                parent,
+                premise,
+                ...(profileId ? { config: { defaultProfileId: profileId } } : {}),
+                creationInput: cleanTagInput({ ...tagInput, premise, selection: tagged ? tagInput.selection : emptyTagInput().selection })
+              });
+            } catch (error) {
+              setCreateError((error as Error).message);
+              return;
+            }
             onCreated();
             if (!profileId) return;
             try {
@@ -1815,13 +1866,14 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
         <label>
           保存位置
           <div className="input-action">
-            <input readOnly required value={parent} placeholder="选择本机目录" />
+            <input readOnly required value={parent} title={parent} aria-invalid={!!locationError} aria-describedby="new-project-location-help" placeholder="选择本机目录" />
             <button
               type="button"
+              disabled={submitting}
               onClick={() =>
                 void act(async () => {
-                  const v = await invoke('app.chooseDirectory');
-                  if (v) setParent(v);
+                  const v = await invoke('app.chooseDirectory', { title: '选择新作品的保存位置' });
+                  if (v) { setParent(v); setCreateError(''); }
                 })
               }
             >
@@ -1829,6 +1881,9 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
             </button>
           </div>
         </label>
+        <p id="new-project-location-help" role={locationError ? 'alert' : undefined} className={`project-location-feedback ${locationError ? 'error-text' : 'muted'}`}>
+          {locationError || '选择存放作品的文件夹，客户端会在里面为新作品建立独立目录。'}
+        </p>
         <label>
             创作想法
             <textarea
@@ -1839,8 +1894,9 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
               placeholder="一句话也可以。例如：夜班检修员在电梯故障中发现异常规则。"
             />
         </label>
+        <div className="new-project-model"><span>创作模型</span><ModelControl profiles={profiles} profileId={profileId} onProfileChange={setProfileId} disabled={submitting} onPendingChange={setReasoningPending} label="创作模型与推理强度" /></div>
         <details>
-          <summary>更多开书选项：题材标签、模型与初始文件</summary>
+          <summary>更多开书选项：题材标签与初始文件</summary>
           <label className="check">
             <input type="checkbox" checked={tagged} disabled={submitting} onChange={e => setTagged(e.target.checked)} />
             添加平台题材标签（也可只按创意策划）
@@ -1850,13 +1906,7 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
             <label>必须保留（每行一项，选填）<textarea rows={2} value={tagInput.mustKeep.join('\n')} onChange={e => setTagInput({ ...tagInput, mustKeep: e.target.value.split('\n') })} /></label>
             <label>不能出现（每行一项，选填）<textarea rows={2} value={tagInput.mustAvoid.join('\n')} onChange={e => setTagInput({ ...tagInput, mustAvoid: e.target.value.split('\n') })} /></label>
           </>}
-          <label>
-            创作模型
-            <select aria-label="创作模型" value={profileId} disabled={submitting} onChange={e => setProfileId(e.target.value)}>
-              <option value="">稍后设置模型</option>
-              {profiles.filter(p => p.protocol !== 'images').map(p => <option key={p.id} value={p.id}>{modelLabel(p, profiles)}</option>)}
-            </select>
-          </label>
+
         <button
           type="button"
           onClick={() =>
@@ -1873,11 +1923,12 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
         )}
         </details>
         <p className="muted">{profileId ? `使用 ${modelLabel(profiles.find(p => p.id === profileId)!, profiles)} 生成方案；你确认后才会保存为正式设定。` : '先保存作品，设置模型连接后即可开始。'}</p>
+        {createError && <p className="project-location-feedback error-text" role="alert">{createError}</p>}
         <div className="modal-footer">
           <button type="button" disabled={submitting} onClick={onClose}>
             取消
           </button>
-          <button className="primary" disabled={submitting || !parent || (tagged ? !tagInput.selection.reading.main : !premise.trim())}>
+          <button className="primary" disabled={submitting || reasoningPending || !!locationError || !parent || (tagged ? !tagInput.selection.reading.main : !premise.trim())}>
             {submitting ? '正在创建…' : profileId ? '创建并开始' : '创建作品'}
           </button>
         </div>
@@ -1977,10 +2028,12 @@ function ProjectSettings({
               <input
                 type="number"
                 min={1}
+                max={key === 'maxRounds' ? 100 : key === 'maxTools' ? 500 : undefined}
                 value={c[key as keyof ProjectConfig] as number}
                 id={`project-setting-${key}`}
                 onChange={(e) => field(key as any, Number(e.target.value))}
               />
+              {key === 'maxRounds' && <small className="muted">每个任务累计调用模型的上限，1～100 轮。调高后可继续原任务，已有候选仍可审阅。</small>}
             </label>
           ))}
           <label>
@@ -2095,6 +2148,7 @@ function Transfer({
   onClose: () => void;
   onImport: (file: string, content: string) => Promise<void>;
 }) {
+  const dialogs = useDialogs(snapshot.projectSessionId);
   const [preview, setPreview] = useState<{ content: string; warnings: string[]; name: string } | null>(null),
     [file, setFile] = useState(''),
     [checked, setChecked] = useState(false),
@@ -2124,7 +2178,7 @@ function Transfer({
                   });
                   if (parent) {
                     const result = await invoke('project.restoreBackup', { source, parent });
-                    alert(`已恢复到新目录：${result}`);
+                    await dialogs.alert(`已恢复到新目录：${result}`);
                   }
                 })
               }
@@ -2221,7 +2275,7 @@ function Transfer({
                   onClick={() =>
                     void act(async () => {
                       const files = await invoke('project.repair', { preview: true });
-                      if (Array.isArray(files) && confirm('以下文件将作为修复候选，已有文稿不会覆盖：\n' + files.join('\n')))
+                      if (Array.isArray(files) && await dialogs.confirm('以下文件将作为修复候选，已有文稿不会覆盖：\n' + files.join('\n')))
                         await invoke('project.repair');
                     }, '修复候选已建立，请回工作台审阅')
                   }
@@ -2257,7 +2311,7 @@ function Transfer({
                       });
                       if (directory) {
                         const target = await invoke('project.backup', { directory });
-                        alert(`备份已保存：${target}`);
+                        await dialogs.alert(`备份已保存：${target}`);
                       }
                     })
                   }
@@ -2276,7 +2330,7 @@ function Transfer({
                       });
                       if (parent) {
                         const result = await invoke('project.restoreBackup', { source, parent });
-                        alert(`已恢复到新目录：${result}`);
+                        await dialogs.alert(`已恢复到新目录：${result}`);
                       }
                     })
                   }
@@ -2292,6 +2346,7 @@ function Transfer({
   );
 }
 function Cover({ profiles, title, act }: { profiles: Profile[]; title: string; act: Act }) {
+  const dialogs = useDialogs(title);
   const [prompt, setPrompt] = useState(''),
     [profile, setProfile] = useState(''),
     [picture, setPicture] = useState(''),
@@ -2361,7 +2416,7 @@ function Cover({ profiles, title, act }: { profiles: Profile[]; title: string; a
               void act(async () => {
                 const files = await invoke('cover.list');
                 if (!files.length) throw new Error('尚无已保存封面');
-                const name = window.prompt('输入要打开的配置路径：\n' + files.join('\n'), files.at(-1));
+                const name = await dialogs.prompt('输入要打开的配置路径：\n' + files.join('\n'), { title: '打开已保存的封面', inputLabel: '配置路径', defaultValue: files.at(-1) });
                 if (name) {
                   const m = await invoke('cover.load', { path: name });
                   setBook(m.book ?? '');

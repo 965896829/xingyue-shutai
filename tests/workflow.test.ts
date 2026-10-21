@@ -25,7 +25,8 @@ import { importLegacy, previewLegacy } from '../src/core/migration';
 import { FileStore } from '../src/core/storage';
 const root = path.resolve('resources/skill');
 import { fixture } from './fixtures/workflow';
-test('S01—S11 全流程、正文记忆一次批准与批次归档', async () => {
+import { runHasCurrentBasis } from '../src/shared/run-presentation';
+for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正文记忆一次批准与批次归档${restartWithSettings ? '（每阶段调整预算并重启）' : ''}`, async () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-full-'));
   let service: Service;
   const expressionModes = new Set<string>();
@@ -137,6 +138,15 @@ test('S01—S11 全流程、正文记忆一次批准与批次归档', async () =
       while (service.runner!.controller) await new Promise((r) => setTimeout(r, 10));
       const r = service.store!.db.run(id);
       assert.equal(r.status, 'awaiting_review', `${r.stage}: ${JSON.stringify(r.issues)} ${r.error}`);
+      if (restartWithSettings) {
+        await service.invoke('project.configure', { config: { ...p.config, maxRounds: 30 + stages, maxTools: 100 + stages } });
+        service.close();
+        await service.open(p.root);
+        assert.equal(service.store!.db.project().stage, p.stage);
+        const visible = service.snapshot().runs.find(run => run.id === id)!;
+        assert.equal(runHasCurrentBasis(visible, service.store!.db.project()), true, p.stage);
+        assert.equal(visible.proposalHash, r.proposalHash, '只改预算和重启不能改变候选批准指纹');
+      }
       if (r.pipeline) {
         assert.ok(r.expressionRules?.prose?.ruleIds.includes('META-001'));
         assert.ok(r.expressionRules?.review?.ruleIds.includes('EDIT-001'));

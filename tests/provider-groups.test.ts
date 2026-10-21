@@ -29,6 +29,18 @@ const model = (id: string) =>
     })
   );
 
+test('desktop/browser concurrent edits reject stale connection versions and model selections', () => {
+  const a = legacy();
+  const expected = { [a.id]: { version: a.version, enabled: true } };
+  const first = prepareProviderGroup([a], connectionFields(a), [modelFields(a)], undefined, undefined, expected);
+  assert.equal(first.saved[0].version, a.version);
+  const changed = { ...a, version: a.version + 1 };
+  assert.throws(() => prepareProviderGroup([changed], connectionFields(a), [modelFields(a)], undefined, undefined, expected), /另一处修改/);
+  assert.throws(() => prepareProviderGroup([{ ...a, enabled: false }], connectionFields(a), [modelFields(a)], undefined, undefined, expected), /另一处修改/);
+  assert.throws(() => prepareProviderGroup([], connectionFields(a), [modelFields(a)], undefined, undefined, expected), /另一处修改/);
+  assert.throws(() => prepareProviderGroup([a], connectionFields(a), [modelFields(a)], undefined, undefined, {}), /另一处修改/);
+});
+
 test('multi-model upgrade keeps legacy ID, key, capabilities and unrelated providers', () => {
   const a = legacy(),
     other = { ...legacy(), id: 'other', model: 'other-model' };
@@ -104,7 +116,7 @@ test('invalid batch is rejected before mutation; empty and duplicate selections 
   );
   assert.equal(JSON.stringify(a), original);
 });
-test('new provider does not reuse an unrelated key or trust client IDs and capabilities', () => {
+test('new provider preserves explicit disabled state without reusing unrelated keys or trusting IDs and capabilities', () => {
   const a = legacy(),
     result = prepareProviderGroup([a], { ...connectionFields(a), id: 'new-provider' }, [
       {
@@ -118,7 +130,7 @@ test('new provider does not reuse an unrelated key or trust client IDs and capab
   assert.equal(result.saved[0].id, 'new-provider');
   assert.equal(result.saved[0].encryptedKey, '');
   assert.deepEqual(result.saved[0].capabilities, {});
-  assert.equal(result.saved[0].enabled, true);
+  assert.equal(result.saved[0].enabled, false);
   assert.equal(
     result.all.find((p) => p.id === 'legacy'),
     a

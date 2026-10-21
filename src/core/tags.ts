@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { hash, paths, updateConfigDocument } from './domain';
+import { candidateChangesForCurrentSettings, compatibleRunBase } from './runtime-settings';
 import {
   tagInputSchema,
   bookSpecSchema,
@@ -336,21 +337,33 @@ export function assertPlanApproval(r: Run) {
   if (!t?.planApproval || t.planApproval.hash !== planCandidateHash(r) || t.planApproval.binding !== t.binding || t.planApproval.planHash !== tagHash(t.candidate?.plan))
     throw new Error('作品方案尚未确认或已经改变，请重新确认方案');
 }
-export function validatePlanningReview(value: unknown, candidate: unknown) {
+export function validatePlanningReview(value: unknown, candidate: unknown, envelopeRoot?: 'report' | 'candidate') {
   const review = planningReviewSchema.parse(value);
+  const exists = (pointer: string) => {
+    if (pointer === '') return true;
+    let at: any = candidate;
+    for (const part of pointer.slice(1).split('/').map((s) => s.replaceAll('~1', '/').replaceAll('~0', '~'))) {
+      if (!at || typeof at !== 'object' || !Object.hasOwn(at, part)) return false;
+      at = at[part];
+    }
+    return true;
+  };
   for (const issue of review.issues) {
     if (issue.jsonPointer === '') continue;
     if (!issue.jsonPointer.startsWith('/') || /~(?![01])/.test(issue.jsonPointer))
       throw new Error('审核位置不是有效 JSON Pointer');
-    let at: any = candidate;
-    for (const part of issue.jsonPointer
-      .slice(1)
-      .split('/')
-      .map((s) => s.replaceAll('~1', '/').replaceAll('~0', '~'))) {
-      if (!at || typeof at !== 'object' || !Object.hasOwn(at, part))
-        throw new Error('审核引用的候选位置不存在：' + issue.jsonPointer);
-      at = at[part];
+    if (exists(issue.jsonPointer)) continue;
+    // Models may address the explicit request envelope. Resolve only the current
+    // reviewed object, and persist a verified candidate-relative pointer.
+    const prefix = envelopeRoot && `/${envelopeRoot}`;
+    if (prefix && (issue.jsonPointer === prefix || issue.jsonPointer.startsWith(prefix + '/'))) {
+      const relative = issue.jsonPointer.slice(prefix.length);
+      if (exists(relative)) {
+        issue.jsonPointer = relative;
+        continue;
+      }
     }
+    throw new Error('审核引用的候选位置不存在：' + issue.jsonPointer);
   }
   return review;
 }
@@ -363,13 +376,13 @@ export function planningBinding(store: FileStore, r: Run) {
   const { inputHash, ...input } = t.spec;
   if (tagHash(input) !== inputHash || t.binding !== planningFingerprint(r))
     throw new Error('策划输入或知识版本校验失败');
-  if (store.db.project().revision !== r.baseRevision || store.db.get('headSnapshot') !== r.baseSnapshotId)
+  if (!compatibleRunBase(store, r))
     throw new Error('策划依据版本已改变');
   if (t.phase === 'ready' && r.changes.length) {
     const configured = structuredClone(store.db.project());
     configured.config.genre = t.knowledge.options.find((o) => o.group === 'reading.main')?.label ?? configured.config.genre;
     if (
-      r.changes.find((c) => c.path === paths.config)?.content !==
+      candidateChangesForCurrentSettings(store, r).find((c) => c.path === paths.config)?.content !==
       updateConfigDocument(store.readAccepted(paths.config).content, configured)
     )
       throw new Error('配置展示与标签主分类映射不一致');

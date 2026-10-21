@@ -1,5 +1,6 @@
-import { fetch, ProxyAgent } from 'undici';
+import { fetch, Agent, ProxyAgent, WebSocket, type Dispatcher } from 'undici';
 import { requireModelLimits } from '../shared/model-limits';
+import { reasoningRequest, reasoningAllowsTemperature } from '../shared/reasoning';
 import { webSourceUrl, type ModelRequestOptions, type NativeWebCitation, type NativeWebSearchCall, type NativeWebSearchState } from '../shared/web-search';
 import type {
   SecretProfile,
@@ -32,15 +33,22 @@ export async function boundedBody(body: { getReader(): any } | null, maxBytes: n
     reader.releaseLock();
   }
 }
+export interface RequestDiagnostic {
+  source: 'upstream' | 'transport' | 'protocol' | 'client';
+  code: string;
+  requestId?: string;
+  elapsedMs?: number;
+}
 export class RequestError extends Error {
   constructor(
     message: string,
-    readonly uncertain: boolean
+    readonly uncertain: boolean,
+    readonly diagnostic?: RequestDiagnostic
   ) {
     super(message);
   }
 }
-const interruptedResponse = '模型连接中断，已保留收到的内容。';
+const interruptedResponse = '模型连接中断，未收到完整结果。当前任务可以在连接恢复后继续。';
 const invalidResponse = '模型返回的数据不完整或格式异常，已保留收到的内容。';
 function httpFailure(status: number) {
   const reason = status === 401 || status === 403
@@ -58,18 +66,28 @@ function httpFailure(status: number) {
 }
 function streamFailure(event: Obj) {
   const code = event.code ?? event.error?.code ?? event.response?.error?.code;
+  const known: Record<string, string> = {
+    upstream_http2_stream_error: '中转与上游模型的 HTTP/2 连接中断，未收到完整结果。请检查中转连接后继续当前任务。',
+    upstream_stream_read_error: '中转读取上游模型响应时连接中断，未收到完整结果。请检查中转连接后继续当前任务。',
+    upstream_stream_truncated: '中转返回的模型响应提前结束，未收到完整结果。当前任务可以在连接恢复后继续。',
+    stream_timeout: '中转等待上游模型响应超时，未收到完整结果。请检查中转的等待时间设置后继续。',
+    stream_read_error: '模型服务的响应流中断，未收到完整结果。当前任务可以在连接恢复后继续。'
+  };
+  const knownCode = typeof code === 'string' && Object.hasOwn(known, code) ? code : 'RESPONSE_FAILED';
   return new RequestError(
-    [
-      'upstream_http2_stream_error',
-      'upstream_stream_read_error',
-      'upstream_stream_truncated',
-      'stream_timeout',
-      'stream_read_error'
-    ].includes(code)
-      ? interruptedResponse
-      : '模型服务中断了响应，已保留收到的内容。',
-    true
+    known[knownCode] ?? '模型服务中断了响应，未收到完整结果。',
+    true,
+    { source: 'upstream', code: knownCode }
   );
+}
+function transportFailure(error: unknown): RequestDiagnostic {
+  const known = new Set(['UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET', 'ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT']);
+  for (let value = error, depth = 0; value && typeof value === 'object' && depth < 5; depth++) {
+    const cause = value as { code?: unknown; cause?: unknown };
+    if (typeof cause.code === 'string' && known.has(cause.code)) return { source: 'transport', code: cause.code };
+    value = cause.cause;
+  }
+  return { source: 'transport', code: 'NETWORK_INTERRUPTED' };
 }
 function streamEvent(block: string): Obj | undefined {
   const lines = block.split('\n');
@@ -123,7 +141,8 @@ export function requestBody(
   for (const key of Object.keys(headers))
     if (/authorization|api[-_]key|host|cookie/i.test(key)) delete headers[key];
   let body: Obj, url: string;
-  const temperature = p.temperature === null ? {} : { temperature: p.temperature };
+  const reasoning = reasoningRequest(p, tools.length);
+  const temperature = p.temperature === null || !reasoningAllowsTemperature(p) ? {} : { temperature: p.temperature };
   if (p.protocol === 'chat') {
     headers.Authorization = `Bearer ${p.apiKey}`;
     url = endpoint(p, 'chat/completions');
@@ -140,6 +159,7 @@ export function requestBody(
         )
       ],
       max_completion_tokens: p.outputLimit,
+      ...reasoning,
       ...temperature,
       stream: p.stream
     };
@@ -159,6 +179,7 @@ export function requestBody(
             : [{ role: m.role, content: m.content }]
       ),
       max_output_tokens: p.outputLimit,
+      ...reasoning,
       store: false,
       include: ['reasoning.encrypted_content'],
       ...temperature,
@@ -421,6 +442,91 @@ export async function* sse(stream: ReadableStream<Uint8Array>) {
     reader.releaseLock();
   }
 }
+async function* responseWebSocketEvents(
+  request: ReturnType<typeof requestBody>,
+  dispatcher: Dispatcher,
+  signal: AbortSignal,
+  onSent: () => void
+): AsyncGenerator<Obj> {
+  signal.throwIfAborted();
+  const url = new URL(request.url);
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  const socket = new WebSocket(url, { dispatcher, headers: request.headers });
+  socket.binaryType = 'arraybuffer';
+  const queue: Obj[] = [];
+  let wake: (() => void) | undefined;
+  let failure: unknown;
+  let failed = false;
+  let total = 0;
+  let sent = false;
+  let terminalReceived = false;
+  const notify = () => { const resume = wake; wake = undefined; resume?.(); };
+  const fail = (error: unknown) => { if (!failed) { failed = true; failure = error; } notify(); };
+  const open = () => {
+    try {
+      if (signal.aborted) return fail(signal.reason);
+      // WebSocket implicitly streams. Preserve the full native conversation so
+      // a resumed task does not depend on a previous socket or response cache.
+      const { stream: _stream, background: _background, ...body } = request.body;
+      socket.send(JSON.stringify({ ...body, type: 'response.create' }));
+      sent = true;
+      onSent();
+    } catch (error) { fail(error); }
+  };
+  const message = (event: { data: unknown }) => {
+    if (failed || terminalReceived) return;
+    try {
+      const raw = typeof event.data === 'string' ? event.data
+        : event.data instanceof ArrayBuffer ? Buffer.from(event.data).toString('utf8') : '';
+      const bytes = Buffer.byteLength(raw);
+      total += bytes;
+      if (bytes > 8 * 1024 * 1024 || total > 32_000_000)
+        throw new RequestError('模型响应超出大小上限，已停止接收。', sent, { source: 'protocol', code: 'RESPONSE_TOO_LARGE' });
+      const value: unknown = JSON.parse(raw);
+      if (!value || typeof value !== 'object' || Array.isArray(value) || typeof (value as Obj).type !== 'string')
+        throw new SyntaxError('Invalid Responses WebSocket event');
+      const item = value as Obj;
+      terminalReceived = ['response.completed', 'response.incomplete', 'response.failed', 'error'].includes(item.type);
+      queue.push(item);
+      notify();
+    } catch (error) { fail(error); }
+  };
+  const error = () => fail(new RequestError(
+    sent ? '模型 WebSocket 连接中断，已保留收到的内容。'
+      : '无法建立模型 WebSocket 连接，请确认中转已启用 Responses WebSocket，或在模型设置中选择 HTTP。',
+    sent, { source: 'transport', code: 'WEBSOCKET_CONNECTION_ERROR' }
+  ));
+  const close = () => {
+    if (!terminalReceived) fail(new RequestError(interruptedResponse, sent, { source: 'transport', code: 'WEBSOCKET_CLOSED' }));
+  };
+  const abort = () => fail(signal.reason);
+  socket.addEventListener('open', open);
+  socket.addEventListener('message', message);
+  socket.addEventListener('error', error);
+  socket.addEventListener('close', close);
+  signal.addEventListener('abort', abort, { once: true });
+  if (signal.aborted) abort();
+  try {
+    while (true) {
+      signal.throwIfAborted();
+      while (queue.length) {
+        signal.throwIfAborted();
+        const item = queue.shift()!;
+        yield item;
+        if (['response.completed', 'response.incomplete', 'response.failed', 'error'].includes(item.type)) return;
+      }
+      if (failed) throw failure;
+      await new Promise<void>((resolve) => { wake = resolve; });
+    }
+  } finally {
+    signal.removeEventListener('abort', abort);
+    socket.removeEventListener('open', open);
+    socket.removeEventListener('message', message);
+    socket.removeEventListener('error', error);
+    socket.removeEventListener('close', close);
+    socket.close();
+  }
+}
 export async function invokeModel(
   p: SecretProfile,
   system: string,
@@ -431,53 +537,75 @@ export async function invokeModel(
   options: ModelRequestOptions = {}
 ): Promise<ModelResult> {
   const req = requestBody(p, system, messages, p.tools ? tools : [], options),
-    dispatcher = p.proxy ? new ProxyAgent(p.proxy) : undefined,
+    // One deadline applies to headers, quiet reasoning and streamed output. Undici's
+    // independent 300s defaults must not silently override the author's setting.
+    dispatcher = p.proxy ? new ProxyAgent({ uri: p.proxy, headersTimeout: 0, bodyTimeout: 0,
+      ...(p.protocol === 'responses' && p.responsesTransport === 'websocket' ? { proxyTunnel: true } : {})
+    }) : new Agent({ headersTimeout: 0, bodyTimeout: 0 }),
     timeout = AbortSignal.timeout(p.timeoutSeconds * 1000),
     requestSignal = AbortSignal.any([signal, timeout]);
+  const startedAt = Date.now();
+  let requestId: string | undefined;
   let sent = false;
   try {
-    sent = true;
-    const res = await fetch(req.url, {
-      method: 'POST',
-      headers: req.headers,
-      body: JSON.stringify(req.body),
-      signal: requestSignal,
-      redirect: 'error',
-      dispatcher
-    });
-    if (!res.ok)
-      throw new RequestError(
-        httpFailure(res.status) + (options.webSearch && [400, 404, 422].includes(res.status)
-          ? '本次启用了 OpenAI 原生 web_search，请确认所选模型和中转支持此工具；可关闭联网后继续普通对话。' : ''),
-        true
-      );
+    options.onActivity?.('waiting');
     let data: Obj = {};
-    if (!p.stream) {
-      const raw = (await boundedBody(res.body, 20_000_000)).toString('utf8');
-      data = JSON.parse(raw);
-    } else if (!res.body || !res.headers.get('content-type')?.includes('text/event-stream'))
-      throw new RequestError('配置要求流式输出，但端点未返回 SSE；可关闭流式重新测试', true);
-    else {
+    let events: AsyncIterable<Obj> | undefined;
+    if (p.protocol === 'responses' && p.responsesTransport === 'websocket') {
+      events = responseWebSocketEvents(req, dispatcher, requestSignal, () => { sent = true; });
+    } else {
+      sent = true;
+      const res = await fetch(req.url, {
+        method: 'POST',
+        headers: req.headers,
+        body: JSON.stringify(req.body),
+        signal: requestSignal,
+        redirect: 'error',
+        dispatcher
+      });
+      const receivedId = res.headers.get('x-request-id') ?? res.headers.get('request-id');
+      if (receivedId && /^[a-zA-Z0-9._:-]{1,160}$/.test(receivedId)) requestId = receivedId;
+      if (!res.ok)
+        throw new RequestError(
+          httpFailure(res.status) + (options.webSearch && [400, 404, 422].includes(res.status)
+            ? '本次启用了 OpenAI 原生 web_search，请确认所选模型和中转支持此工具；可关闭联网后继续普通对话。' : '') +
+            (p.reasoningEffort != null && [400, 422].includes(res.status) ? `本次推理强度为 ${p.reasoningEffort}，请确认中转支持该档位；客户端不会自动降档或重发。` : ''),
+          true,
+          { source: 'upstream', code: `HTTP_${res.status}` }
+        );
+      if (!p.stream) {
+        const raw = (await boundedBody(res.body, 20_000_000)).toString('utf8');
+        data = JSON.parse(raw);
+      } else if (!res.body || !res.headers.get('content-type')?.includes('text/event-stream'))
+        throw new RequestError('配置要求流式输出，但端点未返回 SSE；可关闭流式重新测试', true);
+      else events = sse(res.body as unknown as ReadableStream<Uint8Array>);
+    }
+    if (events) {
       const msg: Obj = { role: 'assistant', content: '', tool_calls: [] };
       let terminal = false;
       const content: Obj[] = [];
       let usage: Obj = {};
-      for await (const e of sse(res.body as unknown as ReadableStream<Uint8Array>)) {
+      for await (const e of events) {
         if (e.error || e.type === 'error') throw streamFailure(e);
         if (p.protocol === 'chat') {
           const c = e.choices?.[0],
             d = c?.delta ?? {};
           if (d.content) {
+            options.onActivity?.('responding');
             msg.content += d.content;
             onDelta(d.content);
           }
           if (typeof d.refusal === 'string') {
+            options.onActivity?.('responding');
             msg.refusal = (msg.refusal ?? '') + d.refusal;
             onDelta(d.refusal);
           }
-          if (d.reasoning_content)
+          if (d.reasoning_content) {
+            options.onActivity?.('thinking');
             msg.reasoning_content = (msg.reasoning_content ?? '') + d.reasoning_content;
+          }
           for (const t of d.tool_calls ?? []) {
+            options.onActivity?.('tool_input');
             const v = (msg.tool_calls[t.index] ??= {
               id: '',
               type: 'function',
@@ -493,9 +621,13 @@ export async function invokeModel(
           }
           if (e.usage) data.usage = e.usage;
         } else if (p.protocol === 'responses') {
+          if (['response.output_text.delta', 'response.refusal.delta'].includes(e.type)) options.onActivity?.('responding');
+          if (e.type?.startsWith('response.reasoning') || e.type === 'response.output_item.added' && e.item?.type === 'reasoning') options.onActivity?.('thinking');
+          if (e.type === 'response.function_call_arguments.delta' || e.type === 'response.output_item.added' && e.item?.type === 'function_call') options.onActivity?.('tool_input');
           if (e.type === 'response.output_text.delta') onDelta(e.delta);
           if (e.type === 'response.refusal.delta') onDelta(e.delta);
           if (typeof e.type === 'string' && e.type.startsWith('response.web_search_call.')) {
+            options.onActivity?.('searching');
             const status = e.type.split('.').at(-1);
             if (['in_progress', 'searching', 'completed'].includes(status!))
               options.onWebSearch?.({ id: String(e.item_id), status: status as NativeWebSearchCall['status'], sources: [] });
@@ -518,11 +650,12 @@ export async function invokeModel(
             const b = content[e.index],
               d = e.delta;
             if (d.type === 'text_delta') {
+              options.onActivity?.('responding');
               b.text = (b.text ?? '') + d.text;
               onDelta(d.text);
             }
-            if (d.type === 'input_json_delta') b._json = (b._json ?? '') + d.partial_json;
-            if (d.type === 'thinking_delta') b.thinking = (b.thinking ?? '') + d.thinking;
+            if (d.type === 'input_json_delta') { options.onActivity?.('tool_input'); b._json = (b._json ?? '') + d.partial_json; }
+            if (d.type === 'thinking_delta') { options.onActivity?.('thinking'); b.thinking = (b.thinking ?? '') + d.thinking; }
             if (d.type === 'signature_delta') b.signature = (b.signature ?? '') + d.signature;
           }
           if (e.type === 'message_delta') {
@@ -542,6 +675,9 @@ export async function invokeModel(
         } else {
           const c = e.candidates?.[0];
           for (const part of c?.content?.parts ?? []) {
+            if (part.thought) options.onActivity?.('thinking');
+            else if (part.functionCall) options.onActivity?.('tool_input');
+            else if (part.text) options.onActivity?.('responding');
             content.push(part);
             if (part.text && !part.thought) onDelta(part.text);
           }
@@ -560,18 +696,27 @@ export async function invokeModel(
     for (const citation of result.webSearch?.citations ?? []) options.onWebCitation?.(citation);
     return result;
   } catch (e) {
-    if (e instanceof RequestError && !requestSignal.aborted) throw e;
+    if (e instanceof RequestError && !requestSignal.aborted)
+      throw new RequestError(e.message, e.uncertain, { ...(e.diagnostic ?? { source: 'protocol', code: 'INCOMPLETE_RESPONSE' }), requestId, elapsedMs: Date.now() - startedAt });
+    const cancelled = requestSignal.aborted && requestSignal.reason === signal.reason;
+    const diagnostic: RequestDiagnostic = cancelled ? { source: 'client', code: 'CANCELLED' }
+      : timeout.aborted ? { source: 'client', code: 'REQUEST_TIMEOUT' }
+      : e instanceof SyntaxError ? { source: 'protocol', code: 'INVALID_RESPONSE' } : transportFailure(e);
     throw new RequestError(
-      requestSignal.aborted && requestSignal.reason === signal.reason
+      cancelled
         ? '已停止；服务端是否继续计费未知，恢复前需明确选择'
         : timeout.aborted
-          ? `等待模型超过 ${p.timeoutSeconds} 秒，已保留收到的内容。可在模型设置中增加等待时间后手动继续；服务端结果与费用尚不确定，请求不会自动重发。`
+          ? `等待模型超过 ${p.timeoutSeconds} 秒，当前任务已保留，但尚未收到完整结果。可在模型设置中增加等待时间后继续；服务端结果与费用尚不确定，请求不会自动重发。`
           : e instanceof SyntaxError
           ? invalidResponse
-          : interruptedResponse,
-      sent
+          : diagnostic.source === 'transport'
+            ? `客户端与模型接口的连接中断（${diagnostic.code}），未收到完整结果。请检查本机中转或网络后继续当前任务。`
+            : interruptedResponse,
+      sent,
+      { ...diagnostic, requestId, elapsedMs: Date.now() - startedAt }
     );
   } finally {
-    await dispatcher?.close();
+    // Do not wait for an unread failed response or a broken connection to drain.
+    await dispatcher.destroy();
   }
 }

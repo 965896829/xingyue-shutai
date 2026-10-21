@@ -1,9 +1,10 @@
 import type { FileStore } from '../storage';
 import type { ModelResult, Run, Usage } from '../../shared/types';
-import { invokeModel, requestBody, RequestError } from '../provider';
+import { invokeModel, requestBody, RequestError, type RequestDiagnostic } from '../provider';
 import { ApplicationError } from '../../shared/errors';
 import { fingerprint } from './canonical';
 import { assertRequestFits } from '../context-budget';
+import { withTaskReasoning } from '../../shared/reasoning';
 
 export interface Attempt {
   version: 1; id: string; runId: string; purpose: string; parentRunId: string;
@@ -12,8 +13,9 @@ export interface Attempt {
   currency: string; reservedUnits: string | null; settledUnits: string | null;
   usageState: 'pending' | 'known' | 'unknown'; usage?: Usage;
   requestHash: string; requestRef?: string; responseRef?: string; createdAt: string; completedAt?: string;
+  failure?: RequestDiagnostic;
 }
-export type AttemptOwner = Pick<Run, 'id' | 'usage' | 'parentRunId'>;
+export type AttemptOwner = Pick<Run, 'id' | 'usage' | 'parentRunId' | 'reasoningEfforts'>;
 export function moneyUnits(value: number): bigint {
   if (!Number.isFinite(value) || value < 0) throw new Error('无效金额');
   const [digits, exponent = '0'] = value.toString().toLowerCase().split('e');
@@ -93,6 +95,7 @@ export async function callExternal<T>(
     });
     return result;
   } catch (error) {
+    if (error instanceof RequestError && error.diagnostic) attempt.failure = error.diagnostic;
     attempt.status = error instanceof RequestError && !error.uncertain ? 'not_sent' : 'unknown';
     attempt.usageState = attempt.status === 'not_sent' ? 'known' : 'unknown';
     attempt.completedAt = new Date().toISOString();
@@ -107,7 +110,9 @@ export async function callModel(
   caller: typeof invokeModel, ...args: Parameters<typeof invokeModel>
 ): Promise<ModelResult> {
   const [profile, system, messages, tools, signal, , options] = args;
-  const body = requestBody(profile, system, messages, tools, options).body;
+  const bound = withTaskReasoning(profile, owner);
+  args[0] = bound;
+  const body = requestBody(bound, system, messages, tools, options).body;
   const sizing = assertRequestFits(profile, body, tools.length + (options?.webSearch ? 1 : 0));
   const pricing = { input: profile.inputPrice, output: profile.outputPrice, currency: profile.currency };
   if (options?.webSearch && store.db.project()?.config.stageBudget !== null && store.db.project()?.config.stageBudget !== undefined)
@@ -115,7 +120,14 @@ export async function callModel(
   const reserved = options?.webSearch || profile.inputPrice === null || profile.outputPrice === null ? null : estimatedUnits(sizing.tokens + sizing.providerReserve + sizing.safetyReserve, profile.outputLimit, profile.inputPrice, profile.outputPrice);
   return callExternal(store, owner, purpose, {
     provider: profile.protocol, model: profile.model, version: profile.version,
-    identity: { id: profile.id, version: profile.version, baseUrl: profile.baseUrl, model: profile.model, protocol: profile.protocol },
+    identity: { id: profile.id, version: profile.version, baseUrl: profile.baseUrl, model: profile.model, protocol: profile.protocol, reasoningEffort: bound.reasoningEffort },
     pricing, currency: profile.currency
-  }, body, reserved, signal, () => caller(...args), (result) => result.usage);
+  }, body, reserved, signal, async () => {
+    options?.onActivity?.('waiting');
+    const delta = args[5];
+    args[5] = text => { options?.onActivity?.('responding'); delta?.(text); };
+    const result = await caller(...args);
+    if (!signal.aborted) options?.onActivity?.('checking');
+    return result;
+  }, (result) => result.usage);
 }

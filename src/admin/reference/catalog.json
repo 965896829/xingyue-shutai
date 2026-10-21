@@ -1,0 +1,4162 @@
+{
+  "groups": [
+    {
+      "key": "overview",
+      "label": "工作总览",
+      "source_label": "数据看板",
+      "icon": "ChartNoAxesCombined"
+    },
+    {
+      "key": "agents",
+      "label": "创作引擎",
+      "source_label": "智能体开发",
+      "icon": "Sparkles"
+    },
+    {
+      "key": "platform",
+      "label": "模型与服务",
+      "source_label": "三方 API 接入",
+      "icon": "Network"
+    },
+    {
+      "key": "operations",
+      "label": "运营中心",
+      "source_label": "运营管理",
+      "icon": "Layers3"
+    },
+    {
+      "key": "users",
+      "label": "作者与用户",
+      "source_label": "用户管理",
+      "icon": "Users"
+    },
+    {
+      "key": "desktop",
+      "label": "桌面客户端",
+      "source_label": "桌面端管理",
+      "icon": "Monitor"
+    },
+    {
+      "key": "finance",
+      "label": "财务中心",
+      "source_label": "财务管理",
+      "icon": "Wallet"
+    },
+    {
+      "key": "system",
+      "label": "平台设置",
+      "source_label": "系统设置",
+      "icon": "Settings2"
+    }
+  ],
+  "pages": [
+    {
+      "key": "engine-console",
+      "group": "agents",
+      "label": "九大引擎",
+      "path": "/admin/novel/engines",
+      "description": "查看创作运行、结果、参考资料和检查状态，调整平台默认设置。",
+      "fields": [],
+      "view": "engine-console",
+      "actions": []
+    },
+    {
+      "key": "quality-evaluations",
+      "group": "agents",
+      "label": "质量盲评",
+      "path": "/admin/novel/evaluations",
+      "description": "查看作者授权的匿名文本，记录成对偏好与编辑负担。",
+      "fields": [],
+      "view": "evaluations",
+      "actions": []
+    },
+    {
+      "key": "dashboard",
+      "group": "overview",
+      "label": "数据看板",
+      "path": "/admin/dashboard",
+      "description": "每一次创作，都有迹可循。",
+      "fields": [],
+      "view": "dashboard",
+      "actions": []
+    },
+    {
+      "key": "mcp",
+      "group": "agents",
+      "label": "MCP Server 管理",
+      "path": "/admin/mcp/servers",
+      "description": "连接受控工具，为创作助手拓展能力。",
+      "fields": [
+        {
+          "key": "transport",
+          "label": "传输方式",
+          "type": "select",
+          "required": true,
+          "options": [
+            "streamable-http",
+            "sse",
+            "stdio"
+          ],
+          "default": "streamable-http"
+        },
+        {
+          "key": "url",
+          "label": "服务地址",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "auth_type",
+          "label": "认证方式",
+          "type": "select",
+          "required": true,
+          "options": [
+            "none",
+            "bearer",
+            "header",
+            "headers",
+            "oauth2"
+          ],
+          "default": "none"
+        },
+        {
+          "key": "token",
+          "label": "访问密钥",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "auth_header",
+          "label": "自定义认证头",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "X-API-Key"
+        },
+        {
+          "key": "headers",
+          "label": "静态请求头",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "oauth_registration",
+          "label": "客户端注册方式",
+          "type": "select",
+          "required": false,
+          "options": [
+            "dynamic",
+            "pre_registered"
+          ],
+          "default": "dynamic"
+        },
+        {
+          "key": "oauth_client_id",
+          "label": "Client ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "oauth_client_secret",
+          "label": "Client Secret",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "oauth_scopes",
+          "label": "Scopes",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "timeout_ms",
+          "label": "工具调用超时（毫秒）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "timeout",
+          "label": "超时秒数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 30
+        },
+        {
+          "key": "command",
+          "label": "stdio 解释器",
+          "type": "select",
+          "required": false,
+          "options": [
+            "python",
+            "node"
+          ],
+          "default": "python"
+        },
+        {
+          "key": "args",
+          "label": "stdio 参数（JSON 数组）",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "allowed_tools",
+          "label": "批准的只读工具名称",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "read_only_confirmed",
+          "label": "已核实允许的查询工具均为只读",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "approved_write_tools",
+          "label": "允许逐次审批的工具名称",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "description",
+          "label": "说明",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "probe",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "skills",
+      "group": "agents",
+      "label": "技能管理",
+      "path": "/admin/skills",
+      "description": "管理可复用的指令、资料和受控工具。",
+      "fields": [
+        {
+          "key": "description",
+          "label": "用途说明",
+          "type": "textarea",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "instructions",
+          "label": "技能指令",
+          "type": "textarea",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "surfaces",
+          "label": "可用范围",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": [
+            "admin"
+          ]
+        },
+        {
+          "key": "version",
+          "label": "技能版本",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "1.0.0"
+        },
+        {
+          "key": "file_id",
+          "label": "技能包文件 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "upload",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "knowledge",
+      "group": "agents",
+      "label": "知识库管理",
+      "path": "/admin/knowledge",
+      "description": "资料有来源，检索有边界。",
+      "fields": [
+        {
+          "key": "description",
+          "label": "资料说明",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "scope",
+          "label": "资料范围",
+          "type": "select",
+          "required": true,
+          "options": [
+            "platform",
+            "project",
+            "private"
+          ],
+          "default": "private"
+        },
+        {
+          "key": "project_id",
+          "label": "所属作品 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "purpose",
+          "label": "资料用途",
+          "type": "select",
+          "required": true,
+          "options": [
+            "reference",
+            "style",
+            "world"
+          ],
+          "default": "reference"
+        },
+        {
+          "key": "embedding_model",
+          "label": "嵌入模型",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "sandbox-hash-embedding"
+        },
+        {
+          "key": "rerank_model",
+          "label": "重排模型（可选）",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "retrieval_mode",
+          "label": "助手检索方式",
+          "type": "select",
+          "required": false,
+          "options": [
+            "lexical",
+            "semantic",
+            "hybrid"
+          ],
+          "default": "lexical"
+        },
+        {
+          "key": "chunk_size",
+          "label": "切片字符数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 800
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "upload",
+        "search",
+        "sync",
+        "delete"
+      ]
+    },
+    {
+      "key": "agents",
+      "group": "agents",
+      "label": "智能体管理",
+      "path": "/admin/agentmanage",
+      "description": "让每位助手专注于清楚、有边界的职责。",
+      "fields": [
+        {
+          "key": "description",
+          "label": "助手职责",
+          "type": "textarea",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "prompt",
+          "label": "专业提示词",
+          "type": "textarea",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "stage",
+          "label": "创作阶段",
+          "type": "select",
+          "required": true,
+          "options": [
+            "idea",
+            "planning",
+            "draft",
+            "review",
+            "memory",
+            "patch"
+          ],
+          "default": "draft"
+        },
+        {
+          "key": "model",
+          "label": "默认模型",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "sandbox-writer"
+        },
+        {
+          "key": "knowledge_ids",
+          "label": "知识库 ID",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "skill_ids",
+          "label": "技能 ID",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "mcp_ids",
+          "label": "MCP 服务 ID",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "budget",
+          "label": "单次算力上限",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 100
+        },
+        {
+          "key": "visibility",
+          "label": "可见范围",
+          "type": "select",
+          "required": true,
+          "options": [
+            "private",
+            "platform"
+          ],
+          "default": "private"
+        },
+        {
+          "key": "tags",
+          "label": "标签",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "cover",
+          "label": "封面地址",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "user_prompt_template",
+          "label": "用户提示词模板",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "memory_enabled",
+          "label": "启用记忆接入",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        },
+        {
+          "key": "memory_extract",
+          "label": "会话结束提炼",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "memory_tools",
+          "label": "记忆工具",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        },
+        {
+          "key": "recall_count",
+          "label": "召回条数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 12
+        },
+        {
+          "key": "recall_threshold",
+          "label": "召回最低分数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0.32
+        },
+        {
+          "key": "sub_agent_ids",
+          "label": "子 Agent",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "max_iterations",
+          "label": "最大回环次数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 5
+        },
+        {
+          "key": "cost_per_call",
+          "label": "算力消耗 / 次",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "hide_skill_details",
+          "label": "隐藏技能调用详情",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "internal_api",
+          "label": "启用内部 API 调用",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "http_tools_enabled",
+          "label": "启用 GET 和 POST 工具",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "schedule_enabled",
+          "label": "启用日程管理",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "script_enabled",
+          "label": "允许管理员脚本执行",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "guidance",
+          "label": "使用指导提示",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "temperature",
+          "label": "温度",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0.7
+        },
+        {
+          "key": "max_tokens",
+          "label": "输出 token 上限",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 2000
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "test",
+        "duplicate",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "memory",
+      "group": "agents",
+      "label": "记忆管理",
+      "path": "/admin/agent-memory",
+      "description": "区分事实、信念与候选，保留每一条证据。",
+      "fields": [
+        {
+          "key": "content",
+          "label": "记忆内容",
+          "type": "textarea",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "category",
+          "label": "记忆类型",
+          "type": "select",
+          "required": true,
+          "options": [
+            "profile",
+            "assistant",
+            "preference",
+            "reference",
+            "other"
+          ],
+          "default": "assistant"
+        },
+        {
+          "key": "owner_id",
+          "label": "所属用户 ID",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "project_id",
+          "label": "所属作品 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "agent_id",
+          "label": "助手 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "weight",
+          "label": "权重",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 1
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "recall",
+        "delete"
+      ]
+    },
+    {
+      "key": "workflows",
+      "group": "agents",
+      "label": "写作流程",
+      "path": "/admin/novel/workflows",
+      "description": "阶段有依赖，重要节点由作者决定。",
+      "fields": [
+        {
+          "key": "description",
+          "label": "流程说明",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "stages",
+          "label": "阶段配置",
+          "type": "json",
+          "required": true,
+          "options": [],
+          "default": [
+            "contract",
+            "plan",
+            "context",
+            "draft",
+            "review",
+            "patch",
+            "memory",
+            "approval"
+          ]
+        },
+        {
+          "key": "max_repair_rounds",
+          "label": "自动修订上限",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 2
+        },
+        {
+          "key": "budget",
+          "label": "运行算力上限",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 300
+        },
+        {
+          "key": "version",
+          "label": "流程版本",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "1.0.0"
+        }
+      ],
+      "view": "workflows",
+      "actions": [
+        "create",
+        "edit",
+        "publish",
+        "duplicate",
+        "delete"
+      ]
+    },
+    {
+      "key": "rules",
+      "group": "agents",
+      "label": "提示词与规则",
+      "path": "/admin/novel/rules",
+      "description": "905 条规则，按题材、场景和证据适用。",
+      "fields": [],
+      "view": "rules",
+      "actions": []
+    },
+    {
+      "key": "structured-content",
+      "group": "agents",
+      "label": "结构化内容管理",
+      "path": "/admin/novel/structured",
+      "description": "统一维护结构字段与抽取规则，按作品纠错并追溯修改。",
+      "fields": [],
+      "view": "structured",
+      "actions": []
+    },
+    {
+      "key": "platform-overview",
+      "group": "platform",
+      "label": "API 平台总览",
+      "path": "/admin/platform/overview",
+      "description": "统一观察模型可用性、负载与成本。",
+      "fields": [],
+      "view": "platform-overview",
+      "actions": []
+    },
+    {
+      "key": "models",
+      "group": "platform",
+      "label": "模型汇总",
+      "path": "/admin/platform/models",
+      "description": "查看已接入模型及它们适合的创作任务。",
+      "fields": [
+        {
+          "key": "model_id",
+          "label": "模型标识",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "provider_id",
+          "label": "厂商 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "platform_id",
+          "label": "平台 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "capability",
+          "label": "能力",
+          "type": "select",
+          "required": true,
+          "options": [
+            "text",
+            "embedding",
+            "image",
+            "video",
+            "audio",
+            "rerank"
+          ],
+          "default": "text"
+        },
+        {
+          "key": "context_window",
+          "label": "上下文窗口",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 32768
+        },
+        {
+          "key": "tokenizer",
+          "label": "内容长度估算",
+          "type": "select",
+          "required": true,
+          "options": [
+            "utf8",
+            "o200k_base",
+            "cl100k_base"
+          ],
+          "default": "utf8"
+        },
+        {
+          "key": "reasoning_efforts",
+          "label": "可选思考强度",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "input_price",
+          "label": "输入单价 / 百万 token",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "output_price",
+          "label": "输出单价 / 百万 token",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "stages",
+          "label": "适用阶段",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": [
+            "draft",
+            "review"
+          ]
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "providers",
+      "group": "platform",
+      "label": "厂商管理",
+      "path": "/admin/platform/providers",
+      "description": "记录供应商和接入协议。",
+      "fields": [
+        {
+          "key": "code",
+          "label": "厂商代码",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "protocol",
+          "label": "接入协议",
+          "type": "select",
+          "required": true,
+          "options": [
+            "openai",
+            "openai_responses",
+            "anthropic",
+            "gemini",
+            "sandbox"
+          ],
+          "default": "openai"
+        },
+        {
+          "key": "website",
+          "label": "官网",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "description",
+          "label": "说明",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "display_name",
+          "label": "显示名称",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "icon_url",
+          "label": "图标 URL",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "integration_template",
+          "label": "接入规范",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "openai"
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "pricing",
+      "group": "platform",
+      "label": "定价规则",
+      "path": "/admin/platform/pricing-rules",
+      "description": "产品收费与供应商成本分别核算。",
+      "fields": [
+        {
+          "key": "resource_type",
+          "label": "资源类型",
+          "type": "select",
+          "required": true,
+          "options": [
+            "text",
+            "embedding",
+            "image",
+            "video",
+            "audio",
+            "rerank"
+          ],
+          "default": "text"
+        },
+        {
+          "key": "unit",
+          "label": "计价单位",
+          "type": "select",
+          "required": true,
+          "options": [
+            "million_tokens",
+            "request",
+            "second"
+          ],
+          "default": "million_tokens"
+        },
+        {
+          "key": "input_rate",
+          "label": "输入算力 / 单位",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 100
+        },
+        {
+          "key": "output_rate",
+          "label": "输出算力 / 单位",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 200
+        },
+        {
+          "key": "base_rate",
+          "label": "基础算力 / 次",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 1
+        },
+        {
+          "key": "cache_read_rate",
+          "label": "缓存读取算力 / 百万 token",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "cache_write_rate",
+          "label": "缓存写入算力 / 百万 token",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "supplier_input_rate",
+          "label": "供应商输入成本 / 单位",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "supplier_output_rate",
+          "label": "供应商输出成本 / 单位",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "supplier_cache_read_rate",
+          "label": "供应商缓存读取成本",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "supplier_cache_write_rate",
+          "label": "供应商缓存写入成本",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "supplier_base_rate",
+          "label": "供应商基础成本 / 次",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "tiers",
+          "label": "上下文阶梯（达到 min_input_tokens 后整次使用该档）",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "currency",
+          "label": "成本币种",
+          "type": "select",
+          "required": true,
+          "options": [
+            "CNY",
+            "USD",
+            "resource"
+          ],
+          "default": "CNY"
+        },
+        {
+          "key": "description",
+          "label": "规则说明",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "rule_key",
+          "label": "规则 Key",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "category",
+          "label": "类型",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "custom"
+        },
+        {
+          "key": "billing_modes",
+          "label": "计费模式",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": {}
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "model-discounts",
+      "group": "platform",
+      "label": "模型折扣",
+      "path": "/admin/model-discounts",
+      "description": "独立维护组织的默认计费折扣与模型专属折扣。",
+      "fields": [],
+      "view": "model-discounts",
+      "actions": []
+    },
+    {
+      "key": "calculator",
+      "group": "platform",
+      "label": "算力试算",
+      "path": "/admin/platform/billing-calculator",
+      "description": "先了解成本，再开始创作。",
+      "fields": [],
+      "view": "calculator",
+      "actions": []
+    },
+    {
+      "key": "runtime-policies",
+      "group": "platform",
+      "label": "运行策略",
+      "path": "/admin/platform/runtime-policies",
+      "description": "为每个模型设置清楚的限额和回退规则。",
+      "fields": [
+        {
+          "key": "model",
+          "label": "模型标识",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "rpm",
+          "label": "每分钟请求数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 60
+        },
+        {
+          "key": "tpm",
+          "label": "每分钟 token",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 100000
+        },
+        {
+          "key": "concurrency",
+          "label": "最大并发",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 5
+        },
+        {
+          "key": "timeout",
+          "label": "超时秒数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 120
+        },
+        {
+          "key": "strategy",
+          "label": "分配策略",
+          "type": "select",
+          "required": true,
+          "options": [
+            "priority",
+            "round_robin",
+            "least_load"
+          ],
+          "default": "priority"
+        },
+        {
+          "key": "retry_limit",
+          "label": "重试上限",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 1
+        },
+        {
+          "key": "description",
+          "label": "描述",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "rate_behavior",
+          "label": "限流后行为",
+          "type": "select",
+          "required": false,
+          "options": [
+            "queue",
+            "reject"
+          ],
+          "default": "queue"
+        },
+        {
+          "key": "same_platform_retry",
+          "label": "允许同平台重试",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        },
+        {
+          "key": "max_attempts",
+          "label": "最大尝试次数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 2
+        },
+        {
+          "key": "retry_allow",
+          "label": "允许重试关键词",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": [
+            "rate_limit",
+            "timeout",
+            "server_error",
+            "network",
+            "429",
+            "5xx"
+          ]
+        },
+        {
+          "key": "retry_deny",
+          "label": "拒绝重试关键词",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": [
+            "invalid_api_key",
+            "insufficient_quota",
+            "billing_not_active",
+            "permission_denied"
+          ]
+        },
+        {
+          "key": "auto_disable",
+          "label": "启用自动禁用",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "disable_threshold",
+          "label": "禁用触发次数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 3
+        },
+        {
+          "key": "disable_keywords",
+          "label": "自动禁用关键词",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": [
+            "invalid_api_key",
+            "account_deactivated",
+            "permission_denied",
+            "billing_not_active"
+          ]
+        },
+        {
+          "key": "auto_degrade",
+          "label": "启用优先级降级",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        },
+        {
+          "key": "degrade_seconds",
+          "label": "降级冷却秒数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 300
+        },
+        {
+          "key": "degrade_keywords",
+          "label": "降级关键词",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": [
+            "rate_limit",
+            "quota",
+            "timeout",
+            "temporarily_unavailable",
+            "overloaded"
+          ]
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "base-models",
+      "group": "platform",
+      "label": "基础模型",
+      "path": "/admin/platform/base-models",
+      "description": "维护规范模型标识与能力目录。",
+      "fields": [
+        {
+          "key": "canonical_key",
+          "label": "规范标识",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "vendor",
+          "label": "厂商",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "capability",
+          "label": "能力",
+          "type": "select",
+          "required": true,
+          "options": [
+            "text",
+            "embedding",
+            "image",
+            "video",
+            "audio",
+            "rerank"
+          ],
+          "default": "text"
+        },
+        {
+          "key": "context_window",
+          "label": "上下文窗口",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 32768
+        },
+        {
+          "key": "version",
+          "label": "目录版本",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "1.0.0"
+        },
+        {
+          "key": "default_real_model_name",
+          "label": "默认真实模型名",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "description",
+          "label": "模型描述",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "icon_url",
+          "label": "图标 URL",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "runtime_policy_id",
+          "label": "默认运行策略",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "pricing_id",
+          "label": "默认定价规则",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "usage_scenes",
+          "label": "可选场景",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "model_types",
+          "label": "启用能力",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "capabilities",
+          "label": "模型能力",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": {}
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "sync",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "platforms",
+      "group": "platform",
+      "label": "平台管理",
+      "path": "/admin/platform/platforms",
+      "description": "接入模型服务，配置密钥、优先级与可用范围。",
+      "fields": [
+        {
+          "key": "provider",
+          "label": "厂商",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "protocol",
+          "label": "协议",
+          "type": "select",
+          "required": true,
+          "options": [
+            "openai",
+            "openai_responses",
+            "anthropic",
+            "gemini",
+            "sandbox"
+          ],
+          "default": "openai"
+        },
+        {
+          "key": "base_url",
+          "label": "API 地址",
+          "type": "url",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "api_key",
+          "label": "API 密钥",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "models",
+          "label": "模型标识",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "priority",
+          "label": "优先级",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 100
+        },
+        {
+          "key": "mode",
+          "label": "环境",
+          "type": "select",
+          "required": true,
+          "options": [
+            "sandbox",
+            "live"
+          ],
+          "default": "sandbox"
+        },
+        {
+          "key": "pricing_id",
+          "label": "定价规则 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "runtime_policy_id",
+          "label": "运行策略 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "balance",
+          "label": "供应商余额",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "display_name",
+          "label": "展示名",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "remark",
+          "label": "备注",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "documentation_url",
+          "label": "文档链接",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "icon_url",
+          "label": "图标 URL",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "native_protocols",
+          "label": "原生 API 协议",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "variables",
+          "label": "变量",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "discount",
+          "label": "平台折扣",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 1
+        },
+        {
+          "key": "multi_account",
+          "label": "多账号",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "accounts",
+          "label": "账号授权",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "min_level",
+          "label": "最小权限等级",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "allowed_organizations",
+          "label": "专属组织",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "denied_organizations",
+          "label": "排除组织",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "model_settings",
+          "label": "模型设置",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "timeout_override",
+          "label": "运行超时覆盖（秒）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "proxy_mode",
+          "label": "代理模式",
+          "type": "select",
+          "required": false,
+          "options": [
+            "none",
+            "global",
+            "custom"
+          ],
+          "default": "none"
+        },
+        {
+          "key": "proxy_url",
+          "label": "代理地址",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "support_base64",
+          "label": "支持 Base64 输入",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        },
+        {
+          "key": "support_url",
+          "label": "支持 URL 输入",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        },
+        {
+          "key": "skip_normalization",
+          "label": "跳过参数归一化",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "scripts",
+          "label": "高级脚本开发",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": {}
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "probe",
+        "sync",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "access-rules",
+      "group": "platform",
+      "label": "权限规则",
+      "path": "/admin/platform/access-rules",
+      "description": "模型访问同时受身份、作用域和预算约束。",
+      "fields": [
+        {
+          "key": "resource",
+          "label": "资源标识",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "principal",
+          "label": "用户或角色",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "effect",
+          "label": "规则效果",
+          "type": "select",
+          "required": true,
+          "options": [
+            "allow",
+            "deny"
+          ],
+          "default": "allow"
+        },
+        {
+          "key": "min_level",
+          "label": "最低会员等级",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "priority",
+          "label": "优先级",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 100
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "realtime-load",
+      "group": "platform",
+      "label": "实时负载",
+      "path": "/admin/platform/realtime-load",
+      "description": "观察活动任务、并发与排队。",
+      "fields": [],
+      "view": "load",
+      "actions": []
+    },
+    {
+      "key": "chat-audits",
+      "group": "platform",
+      "label": "大模型请求日志",
+      "path": "/admin/platform/chat-audits",
+      "description": "追踪每次调用的策略、耗时和用量。",
+      "fields": [],
+      "view": "requests",
+      "actions": []
+    },
+    {
+      "key": "cloud",
+      "group": "platform",
+      "label": "云服务平台",
+      "path": "/admin/cloud-platform",
+      "description": "管理对象存储、嵌入与推理服务配置。",
+      "fields": [
+        {
+          "key": "provider",
+          "label": "云服务商",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "endpoint",
+          "label": "服务端点",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "region",
+          "label": "区域",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "access_key",
+          "label": "访问密钥",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "secret_key",
+          "label": "密钥 Secret",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "base_auth",
+          "label": "平台认证信息",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "services",
+          "label": "服务配置",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "features",
+          "label": "支持能力",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "priority",
+          "label": "优先级",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 100
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "products",
+      "group": "operations",
+      "label": "套餐管理",
+      "path": "/admin/productManage",
+      "description": "把创作权益清楚地交给作者。",
+      "fields": [
+        {
+          "key": "price",
+          "label": "价格（分）",
+          "type": "number",
+          "required": true,
+          "options": [],
+          "default": 9900
+        },
+        {
+          "key": "currency",
+          "label": "币种",
+          "type": "select",
+          "required": true,
+          "options": [
+            "CNY",
+            "USD"
+          ],
+          "default": "CNY"
+        },
+        {
+          "key": "credits",
+          "label": "算力额度",
+          "type": "number",
+          "required": true,
+          "options": [],
+          "default": 10000
+        },
+        {
+          "key": "bonus",
+          "label": "赠送算力",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "duration_days",
+          "label": "有效天数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 30
+        },
+        {
+          "key": "membership_level",
+          "label": "会员等级",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 1
+        },
+        {
+          "key": "billing_mode",
+          "label": "计费方式",
+          "type": "select",
+          "required": true,
+          "options": [
+            "one_time",
+            "subscription"
+          ],
+          "default": "one_time"
+        },
+        {
+          "key": "renewal_days",
+          "label": "续费周期（天）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 30
+        },
+        {
+          "key": "redeem_enabled",
+          "label": "支持兑换码",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        },
+        {
+          "key": "online_pay",
+          "label": "支持在线支付",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "description",
+          "label": "权益说明",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "cover",
+          "label": "套餐封面",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "details",
+          "label": "套餐详情",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "virtual_item_id",
+          "label": "微信虚拟支付道具 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "sort",
+          "label": "排序",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "membership_days",
+          "label": "会员时长（天）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 30
+        },
+        {
+          "key": "package_type",
+          "label": "套餐类型",
+          "type": "select",
+          "required": false,
+          "options": [
+            "personal",
+            "organization"
+          ],
+          "default": "personal"
+        },
+        {
+          "key": "organization",
+          "label": "会员组织",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "applications",
+          "label": "关联应用",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "subscriptions",
+      "group": "operations",
+      "label": "订阅记录",
+      "path": "/admin/subscriptions",
+      "description": "查看账期、续费状态和权益履约。",
+      "fields": [
+        {
+          "key": "user_id",
+          "label": "用户 ID",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "product_id",
+          "label": "套餐 ID",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "period_start",
+          "label": "账期开始",
+          "type": "datetime",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "period_end",
+          "label": "账期结束",
+          "type": "datetime",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "next_charge",
+          "label": "下次扣款",
+          "type": "datetime",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "detail",
+        "cancel",
+        "renew"
+      ]
+    },
+    {
+      "key": "orders",
+      "group": "operations",
+      "label": "订单管理",
+      "path": "/admin/ordermanage",
+      "description": "支付、发放与退款的每一步都可追溯。",
+      "fields": [
+        {
+          "key": "user_id",
+          "label": "用户 ID",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "product_id",
+          "label": "套餐 ID",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "amount",
+          "label": "订单金额（分）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "payment_provider",
+          "label": "支付渠道",
+          "type": "select",
+          "required": false,
+          "options": [
+            "sandbox",
+            "wechat",
+            "alipay",
+            "paypal",
+            "stripe"
+          ],
+          "default": "sandbox"
+        },
+        {
+          "key": "invoice_status",
+          "label": "开票状态",
+          "type": "select",
+          "required": false,
+          "options": [
+            "none",
+            "requested",
+            "issued"
+          ],
+          "default": "none"
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "detail",
+        "pay",
+        "refund",
+        "invoice"
+      ]
+    },
+    {
+      "key": "redeem-codes",
+      "group": "operations",
+      "label": "兑换码",
+      "path": "/admin/redeemcode",
+      "description": "发放创作额度，追踪每一次兑换。",
+      "fields": [
+        {
+          "key": "code",
+          "label": "兑换码",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "product_id",
+          "label": "套餐 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "credits",
+          "label": "兑换算力",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 1000
+        },
+        {
+          "key": "max_uses",
+          "label": "可兑换次数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 1
+        },
+        {
+          "key": "expires_at",
+          "label": "失效时间",
+          "type": "datetime",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "description",
+          "label": "兑换码描述",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "type",
+          "label": "兑换码类型",
+          "type": "select",
+          "required": false,
+          "options": [
+            "credits",
+            "product"
+          ],
+          "default": "credits"
+        },
+        {
+          "key": "credit_expiry_days",
+          "label": "算力过期时间（天）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "activated",
+          "label": "兑换码是否激活",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "redeem",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "resource-packs",
+      "group": "operations",
+      "label": "资源包管理",
+      "path": "/admin/resourcePackageManage",
+      "description": "查看额度的来源、有效期和剩余量。",
+      "fields": [
+        {
+          "key": "user_id",
+          "label": "用户 ID",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "total",
+          "label": "总算力",
+          "type": "number",
+          "required": true,
+          "options": [],
+          "default": 1000
+        },
+        {
+          "key": "remaining",
+          "label": "剩余算力",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "source",
+          "label": "来源",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "expires_at",
+          "label": "失效时间",
+          "type": "datetime",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "detail",
+        "suspend",
+        "set_expiry",
+        "revoke"
+      ]
+    },
+    {
+      "key": "members",
+      "group": "operations",
+      "label": "会员管理",
+      "path": "/admin/user/memberManage",
+      "description": "管理作者权益及其有效期限。",
+      "fields": [
+        {
+          "key": "user_id",
+          "label": "用户 ID",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "level",
+          "label": "会员等级",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 1
+        },
+        {
+          "key": "starts_at",
+          "label": "生效时间",
+          "type": "datetime",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "expires_at",
+          "label": "到期时间",
+          "type": "datetime",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "product_id",
+          "label": "来源套餐 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "organization",
+          "label": "会员组织",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "detail",
+        "revoke"
+      ]
+    },
+    {
+      "key": "expenses",
+      "group": "operations",
+      "label": "消费记录",
+      "path": "/admin/expenserecord",
+      "description": "每一笔算力，都能回到对应的创作任务。",
+      "fields": [],
+      "view": "expenses",
+      "actions": []
+    },
+    {
+      "key": "projects",
+      "group": "operations",
+      "label": "作品与运行",
+      "path": "/admin/novel/projects",
+      "description": "关照创作进度，尊重作者的内容边界。",
+      "fields": [],
+      "view": "projects",
+      "actions": []
+    },
+    {
+      "key": "templates",
+      "group": "operations",
+      "label": "题材与创作模板",
+      "path": "/admin/novel/templates",
+      "description": "让不同题材从适合自己的约定开始。",
+      "fields": [
+        {
+          "key": "genre",
+          "label": "题材模块",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "description",
+          "label": "模板说明",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "contract",
+          "label": "合同默认值",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": {}
+        },
+        {
+          "key": "profile",
+          "label": "多轴规则配置",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": {}
+        },
+        {
+          "key": "target_words",
+          "label": "章节目标字数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 2500
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "publish",
+        "duplicate",
+        "delete"
+      ]
+    },
+    {
+      "key": "users",
+      "group": "users",
+      "label": "用户管理",
+      "path": "/admin/user/usermanage",
+      "description": "管理账号与权益，守护每一位作者的作品。",
+      "fields": [],
+      "view": "users",
+      "actions": []
+    },
+    {
+      "key": "desktop-brand",
+      "group": "desktop",
+      "label": "UI 和品牌",
+      "path": "/admin/sys/desktopConfig",
+      "description": "让桌面端延续网站的视觉与身份。",
+      "fields": [
+        {
+          "key": "client_name",
+          "label": "客户端名称",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "长篇创作"
+        },
+        {
+          "key": "server_url",
+          "label": "服务地址",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "icon_url",
+          "label": "品牌图标地址",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "accent",
+          "label": "品牌强调色",
+          "type": "color",
+          "required": false,
+          "options": [],
+          "default": "#d4ef68"
+        }
+      ],
+      "view": "settings",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "desktop-skills",
+      "group": "desktop",
+      "label": "技能中心",
+      "path": "/admin/desktop-skill-store",
+      "description": "审核、发布和维护客户端技能。",
+      "fields": [
+        {
+          "key": "category",
+          "label": "分类",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "description",
+          "label": "说明",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "version",
+          "label": "版本",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "1.0.0"
+        },
+        {
+          "key": "file_id",
+          "label": "技能文件 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "reject_reason",
+          "label": "审核意见",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "upload",
+        "edit",
+        "approve",
+        "reject",
+        "unlist",
+        "delete"
+      ]
+    },
+    {
+      "key": "desktop-workbench",
+      "group": "desktop",
+      "label": "工作台应用管理",
+      "path": "/admin/desktop-workbench-store",
+      "description": "审核发布版本并管理应用上架状态",
+      "fields": [],
+      "view": "desktop-workbench",
+      "actions": []
+    },
+    {
+      "key": "desktop-devices",
+      "group": "desktop",
+      "label": "客户端授权管理",
+      "path": "/admin/user/desktop-authorized-users",
+      "description": "授权到设备，撤销有记录。",
+      "fields": [
+        {
+          "key": "user_id",
+          "label": "用户 ID",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "device_id",
+          "label": "设备标识",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "client_version",
+          "label": "客户端版本",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "os",
+          "label": "操作系统",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "last_login",
+          "label": "最后登录",
+          "type": "datetime",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "detail",
+        "toggle",
+        "revoke"
+      ]
+    },
+    {
+      "key": "income",
+      "group": "finance",
+      "label": "收益结算",
+      "path": "/admin/finance/income",
+      "description": "核对邀请收益、结算和待提现金额。",
+      "fields": [
+        {
+          "key": "user_id",
+          "label": "收益所属用户",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "amount",
+          "label": "收益金额（分）",
+          "type": "number",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "order_id",
+          "label": "来源订单",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "settled",
+          "label": "已结算",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "detail",
+        "settle"
+      ]
+    },
+    {
+      "key": "withdrawals",
+      "group": "finance",
+      "label": "提现管理",
+      "path": "/admin/finance/withdrawal",
+      "description": "核验提现申请，记录实际转账凭证。",
+      "fields": [
+        {
+          "key": "user_id",
+          "label": "用户 ID",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "amount",
+          "label": "提现金额（分）",
+          "type": "number",
+          "required": true,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "account",
+          "label": "收款信息",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "proof",
+          "label": "转账凭证",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "remark",
+          "label": "备注",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "detail",
+        "approve",
+        "reject",
+        "complete"
+      ]
+    },
+    {
+      "key": "storage",
+      "group": "system",
+      "label": "存储设置",
+      "path": "/admin/sys/storageConfig",
+      "description": "管理作品、资料和导出文件的存储位置。",
+      "fields": [
+        {
+          "key": "driver",
+          "label": "存储类型",
+          "type": "select",
+          "required": true,
+          "options": [
+            "local",
+            "s3"
+          ],
+          "default": "local"
+        },
+        {
+          "key": "provider",
+          "label": "存储服务商",
+          "type": "select",
+          "required": false,
+          "options": [
+            "local",
+            "s3",
+            "minio",
+            "rains3",
+            "aliyun",
+            "cos",
+            "qiniu"
+          ],
+          "default": null
+        },
+        {
+          "key": "endpoint",
+          "label": "S3 端点",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "bucket",
+          "label": "存储桶",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "region",
+          "label": "区域",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "us-east-1"
+        },
+        {
+          "key": "access_key",
+          "label": "Access Key",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "secret_key",
+          "label": "Secret Key",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "max_mb",
+          "label": "最大上传 MB",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 20
+        },
+        {
+          "key": "backup_max_mb",
+          "label": "单份备份上限 MB",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 200
+        },
+        {
+          "key": "description",
+          "label": "存储描述",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "file_types",
+          "label": "支持文件类型",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "upload_enabled",
+          "label": "启用上传",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        },
+        {
+          "key": "return_enabled",
+          "label": "启用返图",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "api_return_enabled",
+          "label": "启用 API 返图",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "priority",
+          "label": "优先级",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 100
+        },
+        {
+          "key": "retention_days",
+          "label": "存储有效期（天）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "public_url",
+          "label": "空间域名",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "virtual_host",
+          "label": "忽略 bucket 在路径中",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        }
+      ],
+      "view": "settings",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "payments",
+      "group": "system",
+      "label": "支付设置",
+      "path": "/admin/sys/payConfig",
+      "description": "按渠道配置支付；环境和启用状态明确可见。",
+      "fields": [
+        {
+          "key": "provider",
+          "label": "支付渠道",
+          "type": "select",
+          "required": true,
+          "options": [
+            "wechat",
+            "alipay",
+            "paypal",
+            "stripe",
+            "kakao",
+            "naver",
+            "sandbox"
+          ],
+          "default": "sandbox"
+        },
+        {
+          "key": "mode",
+          "label": "运行环境",
+          "type": "select",
+          "required": true,
+          "options": [
+            "sandbox",
+            "live"
+          ],
+          "default": "sandbox"
+        },
+        {
+          "key": "app_id",
+          "label": "应用 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "merchant_id",
+          "label": "商户号 / 卖家 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "api_key",
+          "label": "API 密钥 / APIv3 密钥 / PayPal Secret",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "private_key",
+          "label": "商户 PEM 私钥",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "public_key",
+          "label": "平台 PEM 公钥",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "certificate_serial",
+          "label": "商户证书序列号",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "public_key_id",
+          "label": "微信支付公钥 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "webhook_id",
+          "label": "PayPal Webhook ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "webhook_secret",
+          "label": "回调验签密钥",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "notify_url",
+          "label": "回调地址",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "currency",
+          "label": "币种",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "CNY"
+        }
+      ],
+      "view": "settings",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "page-display",
+      "group": "system",
+      "label": "页面显示",
+      "path": "/admin/sys/pageConfig",
+      "description": "配置导航、品牌、登录页和公开页面。",
+      "fields": [
+        {
+          "key": "site_title",
+          "label": "网站标题",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "长篇创作"
+        },
+        {
+          "key": "tagline",
+          "label": "网站标语",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "写下更大的世界。"
+        },
+        {
+          "key": "logo_url",
+          "label": "Logo",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "navigation",
+          "label": "导航菜单",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "login_background",
+          "label": "登录页背景",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "privacy",
+          "label": "隐私政策",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "terms",
+          "label": "服务条款",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "page_overrides",
+          "label": "页面接管规则",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "layout",
+          "label": "布局样式",
+          "type": "select",
+          "required": false,
+          "options": [
+            "creative",
+            "dynamic",
+            "classic",
+            "custom"
+          ],
+          "default": "creative"
+        },
+        {
+          "key": "search_position",
+          "label": "搜索位置",
+          "type": "select",
+          "required": false,
+          "options": [
+            "top",
+            "center",
+            "hidden"
+          ],
+          "default": "top"
+        },
+        {
+          "key": "toolbar",
+          "label": "显示工具栏",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "contact",
+          "label": "联系方式",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "carousel",
+          "label": "轮播图",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "login_background_light",
+          "label": "亮色登录背景",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "about",
+          "label": "关于我们",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "custom_pages",
+          "label": "自定义页面",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "announcements",
+          "label": "公告内容",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "search_suggestions",
+          "label": "搜索推荐词",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "image_navigation",
+          "label": "图片导航",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": []
+        },
+        {
+          "key": "icon_url",
+          "label": "网站图标",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "logo_light_url",
+          "label": "Logo-明亮模式",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "show_service_card",
+          "label": "显示客服卡片",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        },
+        {
+          "key": "official_qr",
+          "label": "公众号二维码",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "service_url",
+          "label": "客服地址",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "service_image",
+          "label": "客服图片",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "police_record",
+          "label": "公安备案号",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "icp_record",
+          "label": "ICP备案号",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "seo_description",
+          "label": "SEO描述",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "seo_keywords",
+          "label": "SEO关键词",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "disable_app_details",
+          "label": "禁用应用详情页",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "disable_work_details",
+          "label": "禁用作品详情页",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "classic_carousel",
+          "label": "经典轮播配置",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": {}
+        },
+        {
+          "key": "custom_home",
+          "label": "自定义首页",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "settings",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "login-settings",
+      "group": "system",
+      "label": "用户登录",
+      "path": "/admin/sys/loginConfig",
+      "description": "配置登录渠道、会话有效期和密钥轮换。",
+      "fields": [
+        {
+          "key": "password_login",
+          "label": "密码登录",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": true
+        },
+        {
+          "key": "registration",
+          "label": "开放注册",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "channels",
+          "label": "其他登录渠道",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "session_hours",
+          "label": "会话有效期（小时）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 12
+        },
+        {
+          "key": "sms_provider",
+          "label": "短信服务商",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "sms_key",
+          "label": "短信密钥",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "client_secret",
+          "label": "登录客户端密钥",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "settings",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "audit",
+      "group": "system",
+      "label": "审计中心",
+      "path": "/admin/audit",
+      "description": "敏感操作留下完整记录，问题定位有据可依。",
+      "fields": [],
+      "view": "audit",
+      "actions": []
+    },
+    {
+      "key": "wechat",
+      "group": "system",
+      "label": "公众号接入",
+      "path": "/admin/sys/officialConfig",
+      "description": "配置公众号身份、消息验证与回复。",
+      "fields": [
+        {
+          "key": "app_id",
+          "label": "AppID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "app_secret",
+          "label": "AppSecret",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "token",
+          "label": "消息验证 Token",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "aes_key",
+          "label": "EncodingAESKey",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "reply",
+          "label": "公众号问答预设提示词",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "model",
+          "label": "回复模型",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "text_image_keyword",
+          "label": "文生图模式触发关键词",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "image_image_keyword",
+          "label": "图生图模式触发关键词",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "image_video_keyword",
+          "label": "图生视频模式触发关键词",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "text_image_workflow",
+          "label": "文生图工作流名称",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "image_image_workflow",
+          "label": "图生图工作流名称",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "image_video_workflow",
+          "label": "图生视频工作流名称",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "upload_hint",
+          "label": "提示用户上传图片",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "drawing_hint",
+          "label": "开始绘图任务提示",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "chat_hint",
+          "label": "AI 聊天等待提示",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "settings",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "mini-program",
+      "group": "system",
+      "label": "小程序配置",
+      "path": "/admin/sys/mpConfig",
+      "description": "管理小程序品牌和虚拟支付配置。",
+      "fields": [
+        {
+          "key": "app_id",
+          "label": "AppID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "app_secret",
+          "label": "AppSecret",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "banner",
+          "label": "首页图片",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "offer_id",
+          "label": "虚拟支付 OfferID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "production_key",
+          "label": "生产 AppKey",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "sandbox_key",
+          "label": "沙箱 AppKey",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        }
+      ],
+      "view": "settings",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "operation-settings",
+      "group": "system",
+      "label": "运营配置",
+      "path": "/admin/sys/operationConfig",
+      "description": "管理站点能力、默认额度和版本更新。",
+      "fields": [
+        {
+          "key": "default_credits",
+          "label": "新用户默认算力",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "max_workflows",
+          "label": "最大活动工作流",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 10
+        },
+        {
+          "key": "max_author_workflows",
+          "label": "每位作者同时写作数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 1
+        },
+        {
+          "key": "max_model_calls",
+          "label": "所有平台模型总并发",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 5
+        },
+        {
+          "key": "interactive_slots",
+          "label": "短交互保留名额",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 2
+        },
+        {
+          "key": "referral_percent",
+          "label": "邀请收益百分比",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "site_id",
+          "label": "站点标识",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": "novel-local"
+        },
+        {
+          "key": "release_feed",
+          "label": "版本目录地址",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "retention_days",
+          "label": "运行日志保留天数",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 90
+        },
+        {
+          "key": "poll_interval",
+          "label": "轮询间隔（秒）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 5
+        },
+        {
+          "key": "callback_url",
+          "label": "回调地址",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "watermark",
+          "label": "明水印",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "floating_watermark",
+          "label": "浮动水印",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "media_optimization",
+          "label": "媒体性能优化",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "default": false
+        },
+        {
+          "key": "media_rollout",
+          "label": "灰度比例（%）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 0
+        },
+        {
+          "key": "image_max_kb",
+          "label": "图片大小上限（KB）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 10240
+        },
+        {
+          "key": "image_max_width",
+          "label": "图片最大宽度",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 2048
+        },
+        {
+          "key": "image_max_height",
+          "label": "图片最大高度",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 2048
+        },
+        {
+          "key": "shop_url",
+          "label": "店铺地址",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "mcp_description",
+          "label": "MCP 公共描述",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "low_balance_threshold",
+          "label": "余额提醒临界值",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 100
+        },
+        {
+          "key": "low_balance_interval",
+          "label": "提醒间隔（分钟）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 60
+        },
+        {
+          "key": "pack_alert_percent",
+          "label": "资源包预警比例（%）",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 20
+        }
+      ],
+      "view": "settings",
+      "actions": [
+        "create",
+        "edit",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "themes",
+      "group": "system",
+      "label": "主题样式配置",
+      "path": "/admin/sys/themeStyleConfig",
+      "description": "让每个页面延续同一种创作氛围。",
+      "fields": [],
+      "view": "theme",
+      "actions": []
+    },
+    {
+      "key": "backups",
+      "group": "system",
+      "label": "备份与还原",
+      "path": "/admin/sys/backup-restore",
+      "description": "保存可恢复的数据快照，记录每次还原。",
+      "fields": [],
+      "view": "backups",
+      "actions": []
+    },
+    {
+      "key": "logs",
+      "group": "system",
+      "label": "后端日志",
+      "path": "/admin/sys/logs",
+      "description": "查看请求与任务状态，默认不记录正文。",
+      "fields": [],
+      "view": "logs",
+      "actions": []
+    },
+    {
+      "key": "notifications",
+      "group": "system",
+      "label": "事件通知配置",
+      "path": "/admin/sys/eventNotificationConfig",
+      "description": "在任务、费用和异常发生时通知合适的人。",
+      "fields": [
+        {
+          "key": "event",
+          "label": "事件类型",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "default": "run.failed"
+        },
+        {
+          "key": "category",
+          "label": "事件分类",
+          "type": "select",
+          "required": false,
+          "options": [
+            "system",
+            "finance",
+            "review",
+            "interaction",
+            "operations"
+          ],
+          "default": "operations"
+        },
+        {
+          "key": "description",
+          "label": "描述",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "channel_config",
+          "label": "分渠道通知配置",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": {}
+        },
+        {
+          "key": "channels",
+          "label": "通知渠道",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": [
+            "in_app"
+          ]
+        },
+        {
+          "key": "recipients",
+          "label": "接收用户 ID / 地址",
+          "type": "tags",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "template",
+          "label": "消息模板",
+          "type": "textarea",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "delivery_mode",
+          "label": "发送环境",
+          "type": "select",
+          "required": false,
+          "options": [
+            "sandbox",
+            "live"
+          ],
+          "default": "sandbox"
+        },
+        {
+          "key": "webhook_url",
+          "label": "IM / Webhook 网关地址",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "webhook_token",
+          "label": "网关 Bearer Token",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "webhook_secret",
+          "label": "网关 HMAC 密钥",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "smtp_host",
+          "label": "SMTP 主机",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "smtp_port",
+          "label": "SMTP TLS 端口",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "default": 465
+        },
+        {
+          "key": "smtp_user",
+          "label": "SMTP 用户名",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "smtp_password",
+          "label": "SMTP 密码",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "smtp_from",
+          "label": "邮件发件地址",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "sms_url",
+          "label": "短信网关地址（留空使用云服务平台）",
+          "type": "url",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "sms_key",
+          "label": "短信网关密钥",
+          "type": "secret",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "sms_cloud_platform_id",
+          "label": "指定短信云平台",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "sms_template_code",
+          "label": "事件通知的已审核短信模板 ID",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "default": null
+        },
+        {
+          "key": "sms_template_params",
+          "label": "短信模板参数（腾讯云使用有序数组）",
+          "type": "json",
+          "required": false,
+          "options": [],
+          "default": {}
+        }
+      ],
+      "view": "table",
+      "actions": [
+        "create",
+        "edit",
+        "test",
+        "toggle",
+        "delete"
+      ]
+    },
+    {
+      "key": "roles",
+      "group": "system",
+      "label": "角色菜单权限",
+      "path": "/admin/sys/role-menu-permissions",
+      "description": "菜单、操作与服务端授权保持一致。",
+      "fields": [],
+      "view": "roles",
+      "actions": []
+    }
+  ]
+}

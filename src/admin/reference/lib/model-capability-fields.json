@@ -1,0 +1,3471 @@
+[
+  {
+    "key": "text_generate",
+    "name": "文本生成",
+    "fields": [
+      {
+        "key": "supportStructuredOutput",
+        "label": "结构化输出",
+        "hint": "JSON Schema 等输出",
+        "kind": "boolean",
+        "default": true
+      },
+      {
+        "key": "supportReasoning",
+        "label": "推理能力",
+        "hint": "支持 reasoning / thinking 参数",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "supportThinkingSwitch",
+        "label": "思考开关",
+        "hint": "可按请求切换",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "supportWebSearch",
+        "label": "联网搜索",
+        "hint": "supportWebSearch",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "thinkingEffortLevels",
+        "label": "推理深度",
+        "hint": "后端 TextModelCapability.thinkingEffortLevels",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "none",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ]
+      },
+      {
+        "key": "thinkingBudgetRange",
+        "label": "思考预算 Token",
+        "hint": "显式 thinking budget 范围",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "webSearchParameters",
+        "label": "联网搜索参数",
+        "hint": "contextSizes / supportUserLocation",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"contextSizes\": [\"low\", \"medium\", \"high\"] }"
+      },
+      {
+        "key": "panelSections",
+        "label": "设置面板分区",
+        "hint": "Agent 模型设置面板可展示分区",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "generation_diversity",
+          "input_output",
+          "default_instructions",
+          "thinking",
+          "web_search"
+        ]
+      },
+      {
+        "key": "max_context_tokens",
+        "label": "上下文 Token",
+        "hint": "max_context_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "128000"
+      },
+      {
+        "key": "max_input_tokens",
+        "label": "最大输入 Token",
+        "hint": "max_input_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "64000"
+      },
+      {
+        "key": "max_output_tokens",
+        "label": "最大输出 Token",
+        "hint": "max_output_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "8192"
+      },
+      {
+        "key": "max_thinking_tokens",
+        "label": "最大思考 Token",
+        "hint": "max_thinking_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "32768"
+      }
+    ]
+  },
+  {
+    "key": "text_embedding",
+    "name": "文本向量",
+    "fields": [
+      {
+        "key": "dimensions",
+        "label": "向量维度",
+        "hint": "dimensions",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "3072",
+          "1536",
+          "1024",
+          "768",
+          "512",
+          "256"
+        ]
+      }
+    ]
+  },
+  {
+    "key": "image_generate",
+    "name": "图像生成",
+    "fields": [
+      {
+        "key": "support_base64_input",
+        "label": "Base64 输入",
+        "hint": "support_base64_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_url_input",
+        "label": "URL 输入",
+        "hint": "support_url_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_quality",
+        "label": "生成质量控制",
+        "hint": "支持请求中的 quality 参数",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "output_format_allowed",
+        "label": "输出格式",
+        "hint": "output_format_allowed",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "async_task",
+        "label": "异步任务",
+        "hint": "async_task",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "supports_preview",
+        "label": "支持预览流程",
+        "hint": "supports_preview",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "supports_extra_format_download",
+        "label": "额外格式下载",
+        "hint": "supports_extra_format_download",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "max_colors_options",
+        "label": "颜色数量选项",
+        "hint": "max_colors_options",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "cleanup_levels",
+        "label": "清理强度选项",
+        "hint": "cleanup_levels",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "output_multiple_images",
+        "label": "多图输出",
+        "hint": "output_multiple_images",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "output_max_images_count",
+        "label": "最多输出图片",
+        "hint": "output_max_images_count",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "output_resolutions",
+        "label": "输出分辨率",
+        "hint": "output_resolutions",
+        "kind": "choices",
+        "default": [
+          "1K"
+        ],
+        "options": [
+          "1K",
+          "2K",
+          "3K",
+          "4K",
+          "8K"
+        ]
+      },
+      {
+        "key": "output_max_size",
+        "label": "最大输出尺寸",
+        "hint": "output_max_size",
+        "kind": "number",
+        "default": null,
+        "placeholder": "16777216"
+      },
+      {
+        "key": "output_size_range",
+        "label": "输出尺寸范围",
+        "hint": "output_size_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "width_height_range",
+        "label": "宽高范围",
+        "hint": "width_height_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "size_multiple",
+        "label": "宽高倍数",
+        "hint": "宽高必须满足的倍数",
+        "kind": "number",
+        "default": null,
+        "placeholder": "16"
+      },
+      {
+        "key": "allow_custom_width_height_size",
+        "label": "自定义宽高",
+        "hint": "allow_custom_width_height_size",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "aspect_ratio_allowed",
+        "label": "支持宽高比",
+        "hint": "aspect_ratio_allowed",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "自动比例",
+          "保持原图比例",
+          "1:1",
+          "16:9",
+          "9:16",
+          "4:3",
+          "3:4",
+          "3:2",
+          "2:3",
+          "5:4",
+          "4:5",
+          "5:3",
+          "3:5",
+          "21:9",
+          "9:21",
+          "2:1",
+          "1:2",
+          "4:1",
+          "1:4",
+          "8:1",
+          "1:8",
+          "7:4",
+          "4:7"
+        ]
+      },
+      {
+        "key": "aspect_ratio_range",
+        "label": "宽高比范围",
+        "hint": "按宽/高数值限制，如 0.125 - 8",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小宽/高",
+          "最大宽/高"
+        ]
+      }
+    ]
+  },
+  {
+    "key": "image_edit",
+    "name": "图像编辑",
+    "fields": [
+      {
+        "key": "support_base64_input",
+        "label": "Base64 输入",
+        "hint": "support_base64_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_url_input",
+        "label": "URL 输入",
+        "hint": "support_url_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_quality",
+        "label": "生成质量控制",
+        "hint": "支持请求中的 quality 参数",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "input_multiple_images",
+        "label": "多图输入",
+        "hint": "input_multiple_images",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "input_max_images_count",
+        "label": "最多输入图片",
+        "hint": "input_max_images_count",
+        "kind": "number",
+        "default": null,
+        "placeholder": "10"
+      },
+      {
+        "key": "input_max_file_size",
+        "label": "单图大小上限",
+        "hint": "界面按 MiB 输入，保存为 bytes；每张输入图和 mask 独立生效",
+        "kind": "number",
+        "default": null,
+        "placeholder": "30"
+      },
+      {
+        "key": "input_size_range",
+        "label": "输入尺寸范围",
+        "hint": "如 [\"512x512\", \"2048x2048\"]",
+        "kind": "json",
+        "default": null,
+        "placeholder": "[\"512x512\", \"2048x2048\"]"
+      },
+      {
+        "key": "input_aspect_ratio_range",
+        "label": "输入宽高比范围",
+        "hint": "input_aspect_ratio_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小宽/高",
+          "最大宽/高"
+        ]
+      },
+      {
+        "key": "input_format_allowed",
+        "label": "输入格式",
+        "hint": "input_format_allowed",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "png",
+          "jpg",
+          "jpeg",
+          "webp",
+          "gif",
+          "tiff",
+          "bmp"
+        ]
+      },
+      {
+        "key": "input_parameter_mapping",
+        "label": "输入参数映射",
+        "hint": "base64/url 参数字段映射",
+        "kind": "json",
+        "default": null,
+        "placeholder": "[{ \"type\": \"url\", \"parameter\": \"image\" }]"
+      },
+      {
+        "key": "output_format_allowed",
+        "label": "输出格式",
+        "hint": "output_format_allowed",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "async_task",
+        "label": "异步任务",
+        "hint": "async_task",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "supports_preview",
+        "label": "支持预览流程",
+        "hint": "supports_preview",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "supports_extra_format_download",
+        "label": "额外格式下载",
+        "hint": "supports_extra_format_download",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "max_colors_options",
+        "label": "颜色数量选项",
+        "hint": "max_colors_options",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "cleanup_levels",
+        "label": "清理强度选项",
+        "hint": "cleanup_levels",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "output_multiple_images",
+        "label": "多图输出",
+        "hint": "output_multiple_images",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "output_max_images_count",
+        "label": "最多输出图片",
+        "hint": "output_max_images_count",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "input_output_max_images_count",
+        "label": "输入输出总图片数",
+        "hint": "input_output_max_images_count",
+        "kind": "number",
+        "default": null,
+        "placeholder": "15"
+      },
+      {
+        "key": "output_resolutions",
+        "label": "输出分辨率",
+        "hint": "output_resolutions",
+        "kind": "choices",
+        "default": [
+          "1K"
+        ],
+        "options": [
+          "1K",
+          "2K",
+          "3K",
+          "4K",
+          "8K"
+        ]
+      },
+      {
+        "key": "output_max_size",
+        "label": "最大输出尺寸",
+        "hint": "output_max_size",
+        "kind": "number",
+        "default": null,
+        "placeholder": "16777216"
+      },
+      {
+        "key": "output_size_range",
+        "label": "输出尺寸范围",
+        "hint": "output_size_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "width_height_range",
+        "label": "宽高范围",
+        "hint": "width_height_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "size_multiple",
+        "label": "宽高倍数",
+        "hint": "宽高必须满足的倍数",
+        "kind": "number",
+        "default": null,
+        "placeholder": "16"
+      },
+      {
+        "key": "allow_custom_width_height_size",
+        "label": "自定义宽高",
+        "hint": "allow_custom_width_height_size",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "aspect_ratio_allowed",
+        "label": "支持宽高比",
+        "hint": "aspect_ratio_allowed",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "自动比例",
+          "保持原图比例",
+          "1:1",
+          "16:9",
+          "9:16",
+          "4:3",
+          "3:4",
+          "3:2",
+          "2:3",
+          "5:4",
+          "4:5",
+          "5:3",
+          "3:5",
+          "21:9",
+          "9:21",
+          "2:1",
+          "1:2",
+          "4:1",
+          "1:4",
+          "8:1",
+          "1:8",
+          "7:4",
+          "4:7"
+        ]
+      },
+      {
+        "key": "aspect_ratio_range",
+        "label": "宽高比范围",
+        "hint": "按宽/高数值限制，如 0.125 - 8",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小宽/高",
+          "最大宽/高"
+        ]
+      }
+    ]
+  },
+  {
+    "key": "image_vectorize",
+    "name": "图片转矢量",
+    "fields": []
+  },
+  {
+    "key": "image_analysis",
+    "name": "图像理解",
+    "fields": [
+      {
+        "key": "supportStructuredOutput",
+        "label": "结构化输出",
+        "hint": "JSON Schema 等输出",
+        "kind": "boolean",
+        "default": true
+      },
+      {
+        "key": "supportReasoning",
+        "label": "推理能力",
+        "hint": "支持 reasoning / thinking 参数",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "supportThinkingSwitch",
+        "label": "思考开关",
+        "hint": "可按请求切换",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "supportWebSearch",
+        "label": "联网搜索",
+        "hint": "supportWebSearch",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "thinkingEffortLevels",
+        "label": "推理深度",
+        "hint": "后端 TextModelCapability.thinkingEffortLevels",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "none",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ]
+      },
+      {
+        "key": "thinkingBudgetRange",
+        "label": "思考预算 Token",
+        "hint": "显式 thinking budget 范围",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "webSearchParameters",
+        "label": "联网搜索参数",
+        "hint": "contextSizes / supportUserLocation",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"contextSizes\": [\"low\", \"medium\", \"high\"] }"
+      },
+      {
+        "key": "panelSections",
+        "label": "设置面板分区",
+        "hint": "Agent 模型设置面板可展示分区",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "generation_diversity",
+          "input_output",
+          "default_instructions",
+          "thinking",
+          "web_search"
+        ]
+      },
+      {
+        "key": "max_context_tokens",
+        "label": "上下文 Token",
+        "hint": "max_context_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "128000"
+      },
+      {
+        "key": "max_input_tokens",
+        "label": "最大输入 Token",
+        "hint": "max_input_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "64000"
+      },
+      {
+        "key": "max_output_tokens",
+        "label": "最大输出 Token",
+        "hint": "max_output_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "8192"
+      },
+      {
+        "key": "max_thinking_tokens",
+        "label": "最大思考 Token",
+        "hint": "max_thinking_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "32768"
+      }
+    ]
+  },
+  {
+    "key": "video_generate",
+    "name": "视频生成",
+    "fields": [
+      {
+        "key": "support_base64_input",
+        "label": "Base64 输入",
+        "hint": "support_base64_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_url_input",
+        "label": "URL 输入",
+        "hint": "support_url_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_resolutions",
+        "label": "输出分辨率",
+        "hint": "可直接配置，也可按首帧/首尾帧等模式配置",
+        "kind": "choices",
+        "default": [
+          "720p"
+        ],
+        "options": [
+          "480p",
+          "720p",
+          "1080p",
+          "1440p",
+          "2160p",
+          "720p 超分",
+          "1080p 超分",
+          "2K 超分",
+          "4K 超分"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "resolution_routes",
+        "label": "分辨率路由",
+        "hint": "将 1080p_upscale 等虚拟分辨率映射为低分辨率生成 + 视频增强",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"1080p_upscale\": { \"mode\": \"upscale\", \"generation_resolution\": \"720p\", \"target_resolution\": \"1080p\", \"enhance_model\": \"easy-proteus-standard-4\" } }"
+      },
+      {
+        "key": "aspect_ratio_allowed",
+        "label": "支持宽高比",
+        "hint": "支持按分辨率配置可选宽高比",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "自动比例",
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "fixed_sizes",
+        "label": "固定尺寸限制",
+        "hint": "按分辨率配置固定尺寸列表",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"720p\": [\"1280x720\"] }"
+      },
+      {
+        "key": "aspect_ratio_range",
+        "label": "宽高比范围",
+        "hint": "按宽/高数值限制，如 0.125 - 8",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小宽/高",
+          "最大宽/高"
+        ]
+      },
+      {
+        "key": "width_height_range",
+        "label": "宽高范围",
+        "hint": "width_height_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "duration_range",
+        "label": "时长范围",
+        "hint": "支持按分辨率或模式配置不同范围",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "duration_allowed",
+        "label": "可选时长",
+        "hint": "与时长范围二选一；只允许这些秒数",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "1秒",
+          "2秒",
+          "3秒",
+          "4秒",
+          "5秒",
+          "6秒",
+          "8秒",
+          "10秒",
+          "15秒",
+          "20秒",
+          "25秒",
+          "30秒"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "duration_step",
+        "label": "时长间隔",
+        "hint": "自定义时长按该秒数递增或取整",
+        "kind": "number",
+        "default": null,
+        "placeholder": "1",
+        "conditional": true
+      },
+      {
+        "key": "input_audio",
+        "label": "音频输入",
+        "hint": "input_audio",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_audio",
+        "label": "输出音频",
+        "hint": "output_audio",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "output_bgm",
+        "label": "背景音乐",
+        "hint": "output_bgm",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_support_return_last_frame",
+        "label": "返回尾帧",
+        "hint": "output_support_return_last_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_video_continuation",
+        "label": "视频续写",
+        "hint": "output_video_continuation",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_resolutions",
+        "label": "输入分辨率",
+        "hint": "input_resolutions",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "operations",
+        "label": "增强操作",
+        "hint": "operations",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "preserve_audio",
+        "label": "保留原声",
+        "hint": "preserve_audio",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "async_task",
+        "label": "异步任务",
+        "hint": "async_task",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "max_file_size_mb",
+        "label": "最大文件大小(MB)",
+        "hint": "max_file_size_mb",
+        "kind": "number",
+        "default": null,
+        "placeholder": "2048"
+      },
+      {
+        "key": "max_videos",
+        "label": "最多视频",
+        "hint": "max_videos",
+        "kind": "number",
+        "default": null,
+        "placeholder": "1"
+      },
+      {
+        "key": "max_images",
+        "label": "最多图片",
+        "hint": "max_images",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "max_elements",
+        "label": "最多主体",
+        "hint": "max_elements",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "max_images_and_elements",
+        "label": "图片主体合计",
+        "hint": "max_images_and_elements",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "limits_with_video",
+        "label": "有视频时限制",
+        "hint": "limits_with_video",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max_images_and_elements\": 4 }"
+      },
+      {
+        "key": "limits_in_first_last_frame_mode",
+        "label": "首尾帧模式限制",
+        "hint": "limits_in_first_last_frame_mode",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max_images\": 2 }"
+      },
+      {
+        "key": "max_images_for_last_frame",
+        "label": "尾帧最大图片数",
+        "hint": "max_images_for_last_frame",
+        "kind": "number",
+        "default": null,
+        "placeholder": "2"
+      },
+      {
+        "key": "support_instruction_edit",
+        "label": "指令编辑",
+        "hint": "support_instruction_edit",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "shot_remake",
+        "label": "视频片段重拍",
+        "hint": "配置单次片段数、时长、执行策略、计费口径、真人资产和合成规格",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"enabled\": true, \"max_segments_per_operation\": 5, \"min_segment_duration_ms\": 4000 }"
+      },
+      {
+        "key": "prompt_length_limit",
+        "label": "提示词长度限制",
+        "hint": "prompt_length_limit",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max\": 2500, \"count_mode\": \"non_ascii_weighted\" }"
+      }
+    ]
+  },
+  {
+    "key": "image_to_video",
+    "name": "图生视频",
+    "fields": [
+      {
+        "key": "support_base64_input",
+        "label": "Base64 输入",
+        "hint": "support_base64_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_url_input",
+        "label": "URL 输入",
+        "hint": "support_url_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_resolutions",
+        "label": "输出分辨率",
+        "hint": "可直接配置，也可按首帧/首尾帧等模式配置",
+        "kind": "choices",
+        "default": [
+          "720p"
+        ],
+        "options": [
+          "480p",
+          "720p",
+          "1080p",
+          "1440p",
+          "2160p",
+          "720p 超分",
+          "1080p 超分",
+          "2K 超分",
+          "4K 超分"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "resolution_routes",
+        "label": "分辨率路由",
+        "hint": "将 1080p_upscale 等虚拟分辨率映射为低分辨率生成 + 视频增强",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"1080p_upscale\": { \"mode\": \"upscale\", \"generation_resolution\": \"720p\", \"target_resolution\": \"1080p\", \"enhance_model\": \"easy-proteus-standard-4\" } }"
+      },
+      {
+        "key": "aspect_ratio_allowed",
+        "label": "支持宽高比",
+        "hint": "支持按分辨率配置可选宽高比",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "自动比例",
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "fixed_sizes",
+        "label": "固定尺寸限制",
+        "hint": "按分辨率配置固定尺寸列表",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"720p\": [\"1280x720\"] }"
+      },
+      {
+        "key": "aspect_ratio_range",
+        "label": "宽高比范围",
+        "hint": "按宽/高数值限制，如 0.125 - 8",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小宽/高",
+          "最大宽/高"
+        ]
+      },
+      {
+        "key": "width_height_range",
+        "label": "宽高范围",
+        "hint": "width_height_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "duration_range",
+        "label": "时长范围",
+        "hint": "支持按分辨率或模式配置不同范围",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "duration_allowed",
+        "label": "可选时长",
+        "hint": "与时长范围二选一；只允许这些秒数",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "1秒",
+          "2秒",
+          "3秒",
+          "4秒",
+          "5秒",
+          "6秒",
+          "8秒",
+          "10秒",
+          "15秒",
+          "20秒",
+          "25秒",
+          "30秒"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "duration_step",
+        "label": "时长间隔",
+        "hint": "自定义时长按该秒数递增或取整",
+        "kind": "number",
+        "default": null,
+        "placeholder": "1",
+        "conditional": true
+      },
+      {
+        "key": "input_audio",
+        "label": "音频输入",
+        "hint": "input_audio",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_audio",
+        "label": "输出音频",
+        "hint": "output_audio",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "output_bgm",
+        "label": "背景音乐",
+        "hint": "output_bgm",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_support_return_last_frame",
+        "label": "返回尾帧",
+        "hint": "output_support_return_last_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_video_continuation",
+        "label": "视频续写",
+        "hint": "output_video_continuation",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_first_frame",
+        "label": "首帧输入",
+        "hint": "input_first_frame",
+        "kind": "boolean",
+        "default": true
+      },
+      {
+        "key": "input_last_frame",
+        "label": "尾帧输入",
+        "hint": "input_last_frame",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "input_first_last_frame",
+        "label": "首尾帧模式",
+        "hint": "input_first_last_frame",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "input_width_height_range",
+        "label": "输入宽高范围",
+        "hint": "input_width_height_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "input_size_limit",
+        "label": "输入大小限制",
+        "hint": "input_size_limit",
+        "kind": "number",
+        "default": null,
+        "placeholder": "10485760"
+      },
+      {
+        "key": "input_reference_generate_single",
+        "label": "单参考图",
+        "hint": "input_reference_generate_single",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "input_reference_generate_multiple",
+        "label": "多参考图",
+        "hint": "input_reference_generate_multiple",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "input_smart_multi_frame",
+        "label": "智能多帧",
+        "hint": "input_smart_multi_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "smart_multi_frame_range",
+        "label": "智能多帧数量",
+        "hint": "smart_multi_frame_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "smart_multi_frame_mode",
+        "label": "智能多帧模式",
+        "hint": "smart_multi_frame_mode",
+        "kind": "text",
+        "default": null,
+        "placeholder": "native 或 stitch"
+      },
+      {
+        "key": "smart_multi_frame_duration_range",
+        "label": "智能多帧每段时长",
+        "hint": "smart_multi_frame_duration_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "support_video_effect_template",
+        "label": "视频特效模板",
+        "hint": "support_video_effect_template",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "support_video_effect_template_list",
+        "label": "特效模板列表",
+        "hint": "support_video_effect_template_list",
+        "kind": "json",
+        "default": null,
+        "placeholder": "[{ \"title\": \"模板\", \"id\": \"template-id\" }]"
+      },
+      {
+        "key": "input_video_required",
+        "label": "必须输入视频",
+        "hint": "input_video_required",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_resolutions",
+        "label": "输入分辨率",
+        "hint": "input_resolutions",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "operations",
+        "label": "增强操作",
+        "hint": "operations",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "preserve_audio",
+        "label": "保留原声",
+        "hint": "preserve_audio",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "async_task",
+        "label": "异步任务",
+        "hint": "async_task",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "max_file_size_mb",
+        "label": "最大文件大小(MB)",
+        "hint": "max_file_size_mb",
+        "kind": "number",
+        "default": null,
+        "placeholder": "2048"
+      },
+      {
+        "key": "max_videos",
+        "label": "最多视频",
+        "hint": "max_videos",
+        "kind": "number",
+        "default": null,
+        "placeholder": "1"
+      },
+      {
+        "key": "max_images",
+        "label": "最多图片",
+        "hint": "max_images",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "max_elements",
+        "label": "最多主体",
+        "hint": "max_elements",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "max_images_and_elements",
+        "label": "图片主体合计",
+        "hint": "max_images_and_elements",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "limits_with_video",
+        "label": "有视频时限制",
+        "hint": "limits_with_video",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max_images_and_elements\": 4 }"
+      },
+      {
+        "key": "limits_in_first_last_frame_mode",
+        "label": "首尾帧模式限制",
+        "hint": "limits_in_first_last_frame_mode",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max_images\": 2 }"
+      },
+      {
+        "key": "max_images_for_last_frame",
+        "label": "尾帧最大图片数",
+        "hint": "max_images_for_last_frame",
+        "kind": "number",
+        "default": null,
+        "placeholder": "2"
+      },
+      {
+        "key": "support_instruction_edit",
+        "label": "指令编辑",
+        "hint": "support_instruction_edit",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "shot_remake",
+        "label": "视频片段重拍",
+        "hint": "配置单次片段数、时长、执行策略、计费口径、真人资产和合成规格",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"enabled\": true, \"max_segments_per_operation\": 5, \"min_segment_duration_ms\": 4000 }"
+      },
+      {
+        "key": "prompt_length_limit",
+        "label": "提示词长度限制",
+        "hint": "prompt_length_limit",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max\": 2500, \"count_mode\": \"non_ascii_weighted\" }"
+      }
+    ]
+  },
+  {
+    "key": "video_edit",
+    "name": "视频编辑",
+    "fields": [
+      {
+        "key": "support_base64_input",
+        "label": "Base64 输入",
+        "hint": "support_base64_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_url_input",
+        "label": "URL 输入",
+        "hint": "support_url_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_resolutions",
+        "label": "输出分辨率",
+        "hint": "可直接配置，也可按首帧/首尾帧等模式配置",
+        "kind": "choices",
+        "default": [
+          "720p"
+        ],
+        "options": [
+          "480p",
+          "720p",
+          "1080p",
+          "1440p",
+          "2160p",
+          "720p 超分",
+          "1080p 超分",
+          "2K 超分",
+          "4K 超分"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "resolution_routes",
+        "label": "分辨率路由",
+        "hint": "将 1080p_upscale 等虚拟分辨率映射为低分辨率生成 + 视频增强",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"1080p_upscale\": { \"mode\": \"upscale\", \"generation_resolution\": \"720p\", \"target_resolution\": \"1080p\", \"enhance_model\": \"easy-proteus-standard-4\" } }"
+      },
+      {
+        "key": "aspect_ratio_allowed",
+        "label": "支持宽高比",
+        "hint": "支持按分辨率配置可选宽高比",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "自动比例",
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "fixed_sizes",
+        "label": "固定尺寸限制",
+        "hint": "按分辨率配置固定尺寸列表",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"720p\": [\"1280x720\"] }"
+      },
+      {
+        "key": "aspect_ratio_range",
+        "label": "宽高比范围",
+        "hint": "按宽/高数值限制，如 0.125 - 8",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小宽/高",
+          "最大宽/高"
+        ]
+      },
+      {
+        "key": "width_height_range",
+        "label": "宽高范围",
+        "hint": "width_height_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "duration_range",
+        "label": "时长范围",
+        "hint": "支持按分辨率或模式配置不同范围",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "duration_allowed",
+        "label": "可选时长",
+        "hint": "与时长范围二选一；只允许这些秒数",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "1秒",
+          "2秒",
+          "3秒",
+          "4秒",
+          "5秒",
+          "6秒",
+          "8秒",
+          "10秒",
+          "15秒",
+          "20秒",
+          "25秒",
+          "30秒"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "duration_step",
+        "label": "时长间隔",
+        "hint": "自定义时长按该秒数递增或取整",
+        "kind": "number",
+        "default": null,
+        "placeholder": "1",
+        "conditional": true
+      },
+      {
+        "key": "input_audio",
+        "label": "音频输入",
+        "hint": "input_audio",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_audio",
+        "label": "输出音频",
+        "hint": "output_audio",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "output_bgm",
+        "label": "背景音乐",
+        "hint": "output_bgm",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_support_return_last_frame",
+        "label": "返回尾帧",
+        "hint": "output_support_return_last_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_video_continuation",
+        "label": "视频续写",
+        "hint": "output_video_continuation",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_first_frame",
+        "label": "首帧输入",
+        "hint": "input_first_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_last_frame",
+        "label": "尾帧输入",
+        "hint": "input_last_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_first_last_frame",
+        "label": "首尾帧模式",
+        "hint": "input_first_last_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_width_height_range",
+        "label": "输入宽高范围",
+        "hint": "input_width_height_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "input_size_limit",
+        "label": "输入大小限制",
+        "hint": "input_size_limit",
+        "kind": "number",
+        "default": null,
+        "placeholder": "10485760"
+      },
+      {
+        "key": "input_smart_multi_frame",
+        "label": "智能多帧",
+        "hint": "input_smart_multi_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "smart_multi_frame_range",
+        "label": "智能多帧数量",
+        "hint": "smart_multi_frame_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "smart_multi_frame_mode",
+        "label": "智能多帧模式",
+        "hint": "smart_multi_frame_mode",
+        "kind": "text",
+        "default": null,
+        "placeholder": "native 或 stitch"
+      },
+      {
+        "key": "smart_multi_frame_duration_range",
+        "label": "智能多帧每段时长",
+        "hint": "smart_multi_frame_duration_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "support_video_effect_template",
+        "label": "视频特效模板",
+        "hint": "support_video_effect_template",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_video_effect_template_list",
+        "label": "特效模板列表",
+        "hint": "support_video_effect_template_list",
+        "kind": "json",
+        "default": null,
+        "placeholder": "[{ \"title\": \"模板\", \"id\": \"template-id\" }]"
+      },
+      {
+        "key": "input_video_required",
+        "label": "必须输入视频",
+        "hint": "input_video_required",
+        "kind": "boolean",
+        "default": true
+      },
+      {
+        "key": "input_resolutions",
+        "label": "输入分辨率",
+        "hint": "input_resolutions",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "operations",
+        "label": "增强操作",
+        "hint": "operations",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "preserve_audio",
+        "label": "保留原声",
+        "hint": "preserve_audio",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "async_task",
+        "label": "异步任务",
+        "hint": "async_task",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "max_file_size_mb",
+        "label": "最大文件大小(MB)",
+        "hint": "max_file_size_mb",
+        "kind": "number",
+        "default": null,
+        "placeholder": "2048"
+      },
+      {
+        "key": "max_videos",
+        "label": "最多视频",
+        "hint": "max_videos",
+        "kind": "number",
+        "default": null,
+        "placeholder": "1"
+      },
+      {
+        "key": "max_images",
+        "label": "最多图片",
+        "hint": "max_images",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "max_audios",
+        "label": "最多音频",
+        "hint": "max_audios",
+        "kind": "number",
+        "default": null,
+        "placeholder": "1"
+      },
+      {
+        "key": "max_elements",
+        "label": "最多主体",
+        "hint": "max_elements",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "max_images_and_elements",
+        "label": "图片主体合计",
+        "hint": "max_images_and_elements",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "limits_with_video",
+        "label": "有视频时限制",
+        "hint": "limits_with_video",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max_images_and_elements\": 4 }"
+      },
+      {
+        "key": "limits_in_first_last_frame_mode",
+        "label": "首尾帧模式限制",
+        "hint": "limits_in_first_last_frame_mode",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max_images\": 2 }"
+      },
+      {
+        "key": "max_images_for_last_frame",
+        "label": "尾帧最大图片数",
+        "hint": "max_images_for_last_frame",
+        "kind": "number",
+        "default": null,
+        "placeholder": "2"
+      },
+      {
+        "key": "support_instruction_edit",
+        "label": "指令编辑",
+        "hint": "support_instruction_edit",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "shot_remake",
+        "label": "视频片段重拍",
+        "hint": "配置单次片段数、时长、执行策略、计费口径、真人资产和合成规格",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"enabled\": true, \"max_segments_per_operation\": 5, \"min_segment_duration_ms\": 4000 }"
+      },
+      {
+        "key": "prompt_length_limit",
+        "label": "提示词长度限制",
+        "hint": "prompt_length_limit",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max\": 2500, \"count_mode\": \"non_ascii_weighted\" }"
+      }
+    ]
+  },
+  {
+    "key": "video_enhance",
+    "name": "视频增强",
+    "fields": [
+      {
+        "key": "support_base64_input",
+        "label": "Base64 输入",
+        "hint": "support_base64_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_url_input",
+        "label": "URL 输入",
+        "hint": "support_url_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_resolutions",
+        "label": "输出分辨率",
+        "hint": "可直接配置，也可按首帧/首尾帧等模式配置",
+        "kind": "choices",
+        "default": [
+          "1080p"
+        ],
+        "options": [
+          "480p",
+          "720p",
+          "1080p",
+          "1440p",
+          "2160p",
+          "720p 超分",
+          "1080p 超分",
+          "2K 超分",
+          "4K 超分"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "input_video_required",
+        "label": "必须输入视频",
+        "hint": "input_video_required",
+        "kind": "boolean",
+        "default": true
+      },
+      {
+        "key": "input_resolutions",
+        "label": "输入分辨率",
+        "hint": "input_resolutions",
+        "kind": "choices",
+        "default": [
+          "720p"
+        ],
+        "options": [
+          "720p"
+        ]
+      },
+      {
+        "key": "operations",
+        "label": "增强操作",
+        "hint": "operations",
+        "kind": "choices",
+        "default": [
+          "upscale"
+        ],
+        "options": [
+          "upscale"
+        ]
+      },
+      {
+        "key": "preserve_audio",
+        "label": "保留原声",
+        "hint": "preserve_audio",
+        "kind": "boolean",
+        "default": true
+      },
+      {
+        "key": "async_task",
+        "label": "异步任务",
+        "hint": "async_task",
+        "kind": "boolean",
+        "default": true
+      },
+      {
+        "key": "max_file_size_mb",
+        "label": "最大文件大小(MB)",
+        "hint": "max_file_size_mb",
+        "kind": "number",
+        "default": null,
+        "placeholder": "2048"
+      }
+    ]
+  },
+  {
+    "key": "omni_video",
+    "name": "多模态视频",
+    "fields": [
+      {
+        "key": "support_base64_input",
+        "label": "Base64 输入",
+        "hint": "support_base64_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_url_input",
+        "label": "URL 输入",
+        "hint": "support_url_input",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_resolutions",
+        "label": "输出分辨率",
+        "hint": "可直接配置，也可按首帧/首尾帧等模式配置",
+        "kind": "choices",
+        "default": [
+          "720p"
+        ],
+        "options": [
+          "480p",
+          "720p",
+          "1080p",
+          "1440p",
+          "2160p",
+          "720p 超分",
+          "1080p 超分",
+          "2K 超分",
+          "4K 超分"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "resolution_routes",
+        "label": "分辨率路由",
+        "hint": "将 1080p_upscale 等虚拟分辨率映射为低分辨率生成 + 视频增强",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"1080p_upscale\": { \"mode\": \"upscale\", \"generation_resolution\": \"720p\", \"target_resolution\": \"1080p\", \"enhance_model\": \"easy-proteus-standard-4\" } }"
+      },
+      {
+        "key": "aspect_ratio_allowed",
+        "label": "支持宽高比",
+        "hint": "支持按分辨率配置可选宽高比",
+        "kind": "choices",
+        "default": [
+          "16:9"
+        ],
+        "options": [
+          "自动比例",
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "fixed_sizes",
+        "label": "固定尺寸限制",
+        "hint": "按分辨率配置固定尺寸列表",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"720p\": [\"1280x720\"] }"
+      },
+      {
+        "key": "aspect_ratio_range",
+        "label": "宽高比范围",
+        "hint": "按宽/高数值限制，如 0.125 - 8",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小宽/高",
+          "最大宽/高"
+        ]
+      },
+      {
+        "key": "width_height_range",
+        "label": "宽高范围",
+        "hint": "width_height_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "duration_range",
+        "label": "时长范围",
+        "hint": "支持按分辨率或模式配置不同范围",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "duration_allowed",
+        "label": "可选时长",
+        "hint": "与时长范围二选一；只允许这些秒数",
+        "kind": "choices",
+        "default": [
+          "5秒"
+        ],
+        "options": [
+          "1秒",
+          "2秒",
+          "3秒",
+          "4秒",
+          "5秒",
+          "6秒",
+          "8秒",
+          "10秒",
+          "15秒",
+          "20秒",
+          "25秒",
+          "30秒"
+        ],
+        "conditional": true
+      },
+      {
+        "key": "duration_step",
+        "label": "时长间隔",
+        "hint": "自定义时长按该秒数递增或取整",
+        "kind": "number",
+        "default": null,
+        "placeholder": "1",
+        "conditional": true
+      },
+      {
+        "key": "task_types",
+        "label": "全模态任务类型引导",
+        "hint": "选择模型支持的任务类型；参考素材、视频时长和比例约束由系统自动配置",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ }"
+      },
+      {
+        "key": "input_audio",
+        "label": "音频输入",
+        "hint": "input_audio",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_audio",
+        "label": "输出音频",
+        "hint": "output_audio",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "output_bgm",
+        "label": "背景音乐",
+        "hint": "output_bgm",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_support_return_last_frame",
+        "label": "返回尾帧",
+        "hint": "output_support_return_last_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "output_video_continuation",
+        "label": "视频续写",
+        "hint": "output_video_continuation",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_first_frame",
+        "label": "首帧输入",
+        "hint": "input_first_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_last_frame",
+        "label": "尾帧输入",
+        "hint": "input_last_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_first_last_frame",
+        "label": "首尾帧模式",
+        "hint": "input_first_last_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_width_height_range",
+        "label": "输入宽高范围",
+        "hint": "input_width_height_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "input_size_limit",
+        "label": "输入大小限制",
+        "hint": "input_size_limit",
+        "kind": "number",
+        "default": null,
+        "placeholder": "10485760"
+      },
+      {
+        "key": "input_reference_generate_single",
+        "label": "单参考图",
+        "hint": "input_reference_generate_single",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_reference_generate_multiple",
+        "label": "多参考图",
+        "hint": "input_reference_generate_multiple",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_smart_multi_frame",
+        "label": "智能多帧",
+        "hint": "input_smart_multi_frame",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "smart_multi_frame_range",
+        "label": "智能多帧数量",
+        "hint": "smart_multi_frame_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "smart_multi_frame_mode",
+        "label": "智能多帧模式",
+        "hint": "smart_multi_frame_mode",
+        "kind": "text",
+        "default": null,
+        "placeholder": "native 或 stitch"
+      },
+      {
+        "key": "smart_multi_frame_duration_range",
+        "label": "智能多帧每段时长",
+        "hint": "smart_multi_frame_duration_range",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "support_video_effect_template",
+        "label": "视频特效模板",
+        "hint": "support_video_effect_template",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_video_effect_template_list",
+        "label": "特效模板列表",
+        "hint": "support_video_effect_template_list",
+        "kind": "json",
+        "default": null,
+        "placeholder": "[{ \"title\": \"模板\", \"id\": \"template-id\" }]"
+      },
+      {
+        "key": "input_video_required",
+        "label": "必须输入视频",
+        "hint": "input_video_required",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "input_resolutions",
+        "label": "输入分辨率",
+        "hint": "input_resolutions",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "operations",
+        "label": "增强操作",
+        "hint": "operations",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "preserve_audio",
+        "label": "保留原声",
+        "hint": "preserve_audio",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "async_task",
+        "label": "异步任务",
+        "hint": "async_task",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "max_file_size_mb",
+        "label": "最大文件大小(MB)",
+        "hint": "max_file_size_mb",
+        "kind": "number",
+        "default": null,
+        "placeholder": "2048"
+      },
+      {
+        "key": "supported_modes",
+        "label": "支持模式",
+        "hint": "supported_modes",
+        "kind": "choices",
+        "default": [
+          "文生视频"
+        ],
+        "options": [
+          "文生视频",
+          "图片参考",
+          "主体参考",
+          "首尾帧",
+          "视频参考",
+          "视频编辑",
+          "多镜头"
+        ]
+      },
+      {
+        "key": "max_videos",
+        "label": "最多视频",
+        "hint": "max_videos",
+        "kind": "number",
+        "default": null,
+        "placeholder": "1"
+      },
+      {
+        "key": "max_images",
+        "label": "最多图片",
+        "hint": "max_images",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "max_audios",
+        "label": "最多音频",
+        "hint": "max_audios",
+        "kind": "number",
+        "default": null,
+        "placeholder": "1"
+      },
+      {
+        "key": "max_elements",
+        "label": "最多主体",
+        "hint": "max_elements",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "max_images_and_elements",
+        "label": "图片主体合计",
+        "hint": "max_images_and_elements",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "limits_with_video",
+        "label": "有视频时限制",
+        "hint": "limits_with_video",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max_images_and_elements\": 4 }"
+      },
+      {
+        "key": "limits_in_first_last_frame_mode",
+        "label": "首尾帧模式限制",
+        "hint": "limits_in_first_last_frame_mode",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max_images\": 2 }"
+      },
+      {
+        "key": "max_images_for_last_frame",
+        "label": "尾帧最大图片数",
+        "hint": "max_images_for_last_frame",
+        "kind": "number",
+        "default": null,
+        "placeholder": "2"
+      },
+      {
+        "key": "support_instruction_edit",
+        "label": "指令编辑",
+        "hint": "support_instruction_edit",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "shot_remake",
+        "label": "视频片段重拍",
+        "hint": "配置单次片段数、时长、执行策略、计费口径、真人资产和合成规格",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"enabled\": true, \"max_segments_per_operation\": 5, \"min_segment_duration_ms\": 4000 }"
+      },
+      {
+        "key": "prompt_length_limit",
+        "label": "提示词长度限制",
+        "hint": "prompt_length_limit",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"max\": 2500, \"count_mode\": \"non_ascii_weighted\" }"
+      }
+    ]
+  },
+  {
+    "key": "video_understanding",
+    "name": "视频理解",
+    "fields": [
+      {
+        "key": "supportStructuredOutput",
+        "label": "结构化输出",
+        "hint": "JSON Schema 等输出",
+        "kind": "boolean",
+        "default": true
+      },
+      {
+        "key": "supportReasoning",
+        "label": "推理能力",
+        "hint": "支持 reasoning / thinking 参数",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "supportThinkingSwitch",
+        "label": "思考开关",
+        "hint": "可按请求切换",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "supportWebSearch",
+        "label": "联网搜索",
+        "hint": "supportWebSearch",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "thinkingEffortLevels",
+        "label": "推理深度",
+        "hint": "后端 TextModelCapability.thinkingEffortLevels",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "none",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ]
+      },
+      {
+        "key": "thinkingBudgetRange",
+        "label": "思考预算 Token",
+        "hint": "显式 thinking budget 范围",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "webSearchParameters",
+        "label": "联网搜索参数",
+        "hint": "contextSizes / supportUserLocation",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"contextSizes\": [\"low\", \"medium\", \"high\"] }"
+      },
+      {
+        "key": "panelSections",
+        "label": "设置面板分区",
+        "hint": "Agent 模型设置面板可展示分区",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "generation_diversity",
+          "input_output",
+          "default_instructions",
+          "thinking",
+          "web_search"
+        ]
+      },
+      {
+        "key": "max_context_tokens",
+        "label": "上下文 Token",
+        "hint": "max_context_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "128000"
+      },
+      {
+        "key": "max_input_tokens",
+        "label": "最大输入 Token",
+        "hint": "max_input_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "64000"
+      },
+      {
+        "key": "max_output_tokens",
+        "label": "最大输出 Token",
+        "hint": "max_output_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "8192"
+      },
+      {
+        "key": "max_thinking_tokens",
+        "label": "最大思考 Token",
+        "hint": "max_thinking_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "32768"
+      }
+    ]
+  },
+  {
+    "key": "audio_understanding",
+    "name": "音频理解",
+    "fields": [
+      {
+        "key": "supportStructuredOutput",
+        "label": "结构化输出",
+        "hint": "JSON Schema 等输出",
+        "kind": "boolean",
+        "default": true
+      },
+      {
+        "key": "supportReasoning",
+        "label": "推理能力",
+        "hint": "支持 reasoning / thinking 参数",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "supportThinkingSwitch",
+        "label": "思考开关",
+        "hint": "可按请求切换",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "supportWebSearch",
+        "label": "联网搜索",
+        "hint": "supportWebSearch",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "thinkingEffortLevels",
+        "label": "推理深度",
+        "hint": "后端 TextModelCapability.thinkingEffortLevels",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "none",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ]
+      },
+      {
+        "key": "thinkingBudgetRange",
+        "label": "思考预算 Token",
+        "hint": "显式 thinking budget 范围",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "webSearchParameters",
+        "label": "联网搜索参数",
+        "hint": "contextSizes / supportUserLocation",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"contextSizes\": [\"low\", \"medium\", \"high\"] }"
+      },
+      {
+        "key": "panelSections",
+        "label": "设置面板分区",
+        "hint": "Agent 模型设置面板可展示分区",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "generation_diversity",
+          "input_output",
+          "default_instructions",
+          "thinking",
+          "web_search"
+        ]
+      },
+      {
+        "key": "max_context_tokens",
+        "label": "上下文 Token",
+        "hint": "max_context_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "128000"
+      },
+      {
+        "key": "max_input_tokens",
+        "label": "最大输入 Token",
+        "hint": "max_input_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "64000"
+      },
+      {
+        "key": "max_output_tokens",
+        "label": "最大输出 Token",
+        "hint": "max_output_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "8192"
+      },
+      {
+        "key": "max_thinking_tokens",
+        "label": "最大思考 Token",
+        "hint": "max_thinking_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "32768"
+      }
+    ]
+  },
+  {
+    "key": "omni",
+    "name": "全模态理解",
+    "fields": [
+      {
+        "key": "supportStructuredOutput",
+        "label": "结构化输出",
+        "hint": "JSON Schema 等输出",
+        "kind": "boolean",
+        "default": true
+      },
+      {
+        "key": "supportReasoning",
+        "label": "推理能力",
+        "hint": "支持 reasoning / thinking 参数",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "supportThinkingSwitch",
+        "label": "思考开关",
+        "hint": "可按请求切换",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "supportWebSearch",
+        "label": "联网搜索",
+        "hint": "supportWebSearch",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "thinkingEffortLevels",
+        "label": "推理深度",
+        "hint": "后端 TextModelCapability.thinkingEffortLevels",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "none",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ]
+      },
+      {
+        "key": "thinkingBudgetRange",
+        "label": "思考预算 Token",
+        "hint": "显式 thinking budget 范围",
+        "kind": "range",
+        "default": null,
+        "parts": 2,
+        "placeholders": [
+          "最小",
+          "最大"
+        ]
+      },
+      {
+        "key": "webSearchParameters",
+        "label": "联网搜索参数",
+        "hint": "contextSizes / supportUserLocation",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"contextSizes\": [\"low\", \"medium\", \"high\"] }"
+      },
+      {
+        "key": "panelSections",
+        "label": "设置面板分区",
+        "hint": "Agent 模型设置面板可展示分区",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "generation_diversity",
+          "input_output",
+          "default_instructions",
+          "thinking",
+          "web_search"
+        ]
+      },
+      {
+        "key": "max_context_tokens",
+        "label": "上下文 Token",
+        "hint": "max_context_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "128000"
+      },
+      {
+        "key": "max_input_tokens",
+        "label": "最大输入 Token",
+        "hint": "max_input_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "64000"
+      },
+      {
+        "key": "max_output_tokens",
+        "label": "最大输出 Token",
+        "hint": "max_output_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "8192"
+      },
+      {
+        "key": "max_thinking_tokens",
+        "label": "最大思考 Token",
+        "hint": "max_thinking_tokens",
+        "kind": "number",
+        "default": null,
+        "placeholder": "32768"
+      }
+    ]
+  },
+  {
+    "key": "tools_call",
+    "name": "工具调用",
+    "fields": [
+      {
+        "key": "supportTools",
+        "label": "是否支持工具调用",
+        "hint": "由模型能力类型 tools_call 决定",
+        "kind": "derived",
+        "default": true
+      }
+    ]
+  },
+  {
+    "key": "audio_generate",
+    "name": "音频生成",
+    "fields": []
+  },
+  {
+    "key": "text_to_speech",
+    "name": "语音合成",
+    "fields": []
+  },
+  {
+    "key": "speech_to_text",
+    "name": "语音转写",
+    "fields": []
+  },
+  {
+    "key": "digital_human_generate",
+    "name": "数字人生成",
+    "fields": []
+  },
+  {
+    "key": "text_rerank",
+    "name": "text_rerank",
+    "fields": []
+  },
+  {
+    "key": "voice_clone",
+    "name": "voice_clone",
+    "fields": []
+  },
+  {
+    "key": "text_to_model",
+    "name": "文生 3D",
+    "fields": [
+      {
+        "key": "geometry_quality_options",
+        "label": "几何质量",
+        "hint": "geometry_quality_options",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "standard",
+          "detailed"
+        ]
+      },
+      {
+        "key": "texture_quality_options",
+        "label": "纹理质量",
+        "hint": "texture_quality_options",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "standard",
+          "detailed"
+        ]
+      },
+      {
+        "key": "support_texture",
+        "label": "纹理生成",
+        "hint": "support_texture",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "support_pbr",
+        "label": "PBR 材质",
+        "hint": "support_pbr",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "pbr_required_when_texture",
+        "label": "纹理时必须 PBR",
+        "hint": "pbr_required_when_texture",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_part_generation",
+        "label": "分部生成",
+        "hint": "support_part_generation",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "output_formats",
+        "label": "输出格式",
+        "hint": "output_formats",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "glb",
+          "gltf",
+          "usdz",
+          "fbx",
+          "obj",
+          "stl"
+        ]
+      },
+      {
+        "key": "default_output_format",
+        "label": "默认输出格式",
+        "hint": "default_output_format",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "support_texture_delight",
+        "label": "去除纹理光照",
+        "hint": "support_texture_delight",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_ta_pose",
+        "label": "T/A Pose",
+        "hint": "support_ta_pose",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "geometry_instruct_modes",
+        "label": "几何指令模式",
+        "hint": "geometry_instruct_modes",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "faithful",
+          "creative"
+        ]
+      },
+      {
+        "key": "default_geometry_instruct_mode",
+        "label": "默认几何指令模式",
+        "hint": "default_geometry_instruct_mode",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "support_micro_detail",
+        "label": "微细节几何",
+        "hint": "support_micro_detail",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_public_image_url_only",
+        "label": "仅公网图片 URL",
+        "hint": "support_public_image_url_only",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "provider_generation_only",
+        "label": "仅供应商生成",
+        "hint": "provider_generation_only",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "multiview_min_images",
+        "label": "多视图最少图片",
+        "hint": "multiview_min_images",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "multiview_max_images",
+        "label": "多视图最多图片",
+        "hint": "multiview_max_images",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "multiview_required_slots",
+        "label": "多视图必填槽位",
+        "hint": "multiview_required_slots",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "front",
+          "left",
+          "back",
+          "right"
+        ]
+      },
+      {
+        "key": "cross_provider_edit",
+        "label": "跨供应商编辑",
+        "hint": "cross_provider_edit",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"tripo3d_import_supported\": true }"
+      },
+      {
+        "key": "support_image_autofix",
+        "label": "图片自动优化",
+        "hint": "support_image_autofix",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_quad",
+        "label": "四边面输出",
+        "hint": "support_quad",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_smart_low_poly",
+        "label": "智能低模",
+        "hint": "support_smart_low_poly",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "max_face_limit",
+        "label": "三角面上限",
+        "hint": "max_face_limit",
+        "kind": "number",
+        "default": null,
+        "placeholder": "20000"
+      },
+      {
+        "key": "max_face_limit_quad",
+        "label": "四边面上限",
+        "hint": "max_face_limit_quad",
+        "kind": "number",
+        "default": null,
+        "placeholder": "10000"
+      },
+      {
+        "key": "face_limit_range",
+        "label": "面数范围",
+        "hint": "face_limit_range",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"min\": 48, \"max\": 20000 }"
+      },
+      {
+        "key": "face_limit_range_by_topology",
+        "label": "按拓扑面数范围",
+        "hint": "face_limit_range_by_topology",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"triangle\": { \"min\": 500, \"max\": 500000 }, \"quad\": { \"min\": 1000, \"max\": 200000 } }"
+      },
+      {
+        "key": "face_limit_by_geometry_quality",
+        "label": "按质量面数上限",
+        "hint": "face_limit_by_geometry_quality",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"standard\": { \"triangle\": 20000, \"quad\": 10000 } }"
+      },
+      {
+        "key": "smart_low_poly_face_limit",
+        "label": "智能低模面数范围",
+        "hint": "smart_low_poly_face_limit",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"triangle\": { \"min\": 1000, \"max\": 20000 } }"
+      }
+    ]
+  },
+  {
+    "key": "image_to_model",
+    "name": "图生 3D",
+    "fields": [
+      {
+        "key": "geometry_quality_options",
+        "label": "几何质量",
+        "hint": "geometry_quality_options",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "standard",
+          "detailed"
+        ]
+      },
+      {
+        "key": "texture_quality_options",
+        "label": "纹理质量",
+        "hint": "texture_quality_options",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "standard",
+          "detailed"
+        ]
+      },
+      {
+        "key": "support_texture",
+        "label": "纹理生成",
+        "hint": "support_texture",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "support_pbr",
+        "label": "PBR 材质",
+        "hint": "support_pbr",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "pbr_required_when_texture",
+        "label": "纹理时必须 PBR",
+        "hint": "pbr_required_when_texture",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_part_generation",
+        "label": "分部生成",
+        "hint": "support_part_generation",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "output_formats",
+        "label": "输出格式",
+        "hint": "output_formats",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "glb",
+          "gltf",
+          "usdz",
+          "fbx",
+          "obj",
+          "stl"
+        ]
+      },
+      {
+        "key": "default_output_format",
+        "label": "默认输出格式",
+        "hint": "default_output_format",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "support_texture_delight",
+        "label": "去除纹理光照",
+        "hint": "support_texture_delight",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_ta_pose",
+        "label": "T/A Pose",
+        "hint": "support_ta_pose",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "geometry_instruct_modes",
+        "label": "几何指令模式",
+        "hint": "geometry_instruct_modes",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "faithful",
+          "creative"
+        ]
+      },
+      {
+        "key": "default_geometry_instruct_mode",
+        "label": "默认几何指令模式",
+        "hint": "default_geometry_instruct_mode",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "support_micro_detail",
+        "label": "微细节几何",
+        "hint": "support_micro_detail",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_public_image_url_only",
+        "label": "仅公网图片 URL",
+        "hint": "support_public_image_url_only",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "provider_generation_only",
+        "label": "仅供应商生成",
+        "hint": "provider_generation_only",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "multiview_min_images",
+        "label": "多视图最少图片",
+        "hint": "multiview_min_images",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "multiview_max_images",
+        "label": "多视图最多图片",
+        "hint": "multiview_max_images",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "multiview_required_slots",
+        "label": "多视图必填槽位",
+        "hint": "multiview_required_slots",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "front",
+          "left",
+          "back",
+          "right"
+        ]
+      },
+      {
+        "key": "cross_provider_edit",
+        "label": "跨供应商编辑",
+        "hint": "cross_provider_edit",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"tripo3d_import_supported\": true }"
+      },
+      {
+        "key": "support_image_autofix",
+        "label": "图片自动优化",
+        "hint": "support_image_autofix",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_quad",
+        "label": "四边面输出",
+        "hint": "support_quad",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_smart_low_poly",
+        "label": "智能低模",
+        "hint": "support_smart_low_poly",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "max_face_limit",
+        "label": "三角面上限",
+        "hint": "max_face_limit",
+        "kind": "number",
+        "default": null,
+        "placeholder": "20000"
+      },
+      {
+        "key": "max_face_limit_quad",
+        "label": "四边面上限",
+        "hint": "max_face_limit_quad",
+        "kind": "number",
+        "default": null,
+        "placeholder": "10000"
+      },
+      {
+        "key": "face_limit_range",
+        "label": "面数范围",
+        "hint": "face_limit_range",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"min\": 48, \"max\": 20000 }"
+      },
+      {
+        "key": "face_limit_range_by_topology",
+        "label": "按拓扑面数范围",
+        "hint": "face_limit_range_by_topology",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"triangle\": { \"min\": 500, \"max\": 500000 }, \"quad\": { \"min\": 1000, \"max\": 200000 } }"
+      },
+      {
+        "key": "face_limit_by_geometry_quality",
+        "label": "按质量面数上限",
+        "hint": "face_limit_by_geometry_quality",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"standard\": { \"triangle\": 20000, \"quad\": 10000 } }"
+      },
+      {
+        "key": "smart_low_poly_face_limit",
+        "label": "智能低模面数范围",
+        "hint": "smart_low_poly_face_limit",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"triangle\": { \"min\": 1000, \"max\": 20000 } }"
+      }
+    ]
+  },
+  {
+    "key": "multiview_to_model",
+    "name": "多视角 3D",
+    "fields": [
+      {
+        "key": "geometry_quality_options",
+        "label": "几何质量",
+        "hint": "geometry_quality_options",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "standard",
+          "detailed"
+        ]
+      },
+      {
+        "key": "texture_quality_options",
+        "label": "纹理质量",
+        "hint": "texture_quality_options",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "standard",
+          "detailed"
+        ]
+      },
+      {
+        "key": "support_texture",
+        "label": "纹理生成",
+        "hint": "support_texture",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "support_pbr",
+        "label": "PBR 材质",
+        "hint": "support_pbr",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "pbr_required_when_texture",
+        "label": "纹理时必须 PBR",
+        "hint": "pbr_required_when_texture",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_part_generation",
+        "label": "分部生成",
+        "hint": "support_part_generation",
+        "kind": "boolean",
+        "default": false
+      },
+      {
+        "key": "output_formats",
+        "label": "输出格式",
+        "hint": "output_formats",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "glb",
+          "gltf",
+          "usdz",
+          "fbx",
+          "obj",
+          "stl"
+        ]
+      },
+      {
+        "key": "default_output_format",
+        "label": "默认输出格式",
+        "hint": "default_output_format",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "support_texture_delight",
+        "label": "去除纹理光照",
+        "hint": "support_texture_delight",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_ta_pose",
+        "label": "T/A Pose",
+        "hint": "support_ta_pose",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "geometry_instruct_modes",
+        "label": "几何指令模式",
+        "hint": "geometry_instruct_modes",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "faithful",
+          "creative"
+        ]
+      },
+      {
+        "key": "default_geometry_instruct_mode",
+        "label": "默认几何指令模式",
+        "hint": "default_geometry_instruct_mode",
+        "kind": "tags",
+        "default": []
+      },
+      {
+        "key": "support_micro_detail",
+        "label": "微细节几何",
+        "hint": "support_micro_detail",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_public_image_url_only",
+        "label": "仅公网图片 URL",
+        "hint": "support_public_image_url_only",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "provider_generation_only",
+        "label": "仅供应商生成",
+        "hint": "provider_generation_only",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "multiview_min_images",
+        "label": "多视图最少图片",
+        "hint": "multiview_min_images",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "multiview_max_images",
+        "label": "多视图最多图片",
+        "hint": "multiview_max_images",
+        "kind": "number",
+        "default": null,
+        "placeholder": "4"
+      },
+      {
+        "key": "multiview_required_slots",
+        "label": "多视图必填槽位",
+        "hint": "multiview_required_slots",
+        "kind": "choices",
+        "default": [],
+        "options": [
+          "front",
+          "left",
+          "back",
+          "right"
+        ]
+      },
+      {
+        "key": "cross_provider_edit",
+        "label": "跨供应商编辑",
+        "hint": "cross_provider_edit",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"tripo3d_import_supported\": true }"
+      },
+      {
+        "key": "support_image_autofix",
+        "label": "图片自动优化",
+        "hint": "support_image_autofix",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_quad",
+        "label": "四边面输出",
+        "hint": "support_quad",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "support_smart_low_poly",
+        "label": "智能低模",
+        "hint": "support_smart_low_poly",
+        "kind": "boolean",
+        "default": null
+      },
+      {
+        "key": "max_face_limit",
+        "label": "三角面上限",
+        "hint": "max_face_limit",
+        "kind": "number",
+        "default": null,
+        "placeholder": "20000"
+      },
+      {
+        "key": "max_face_limit_quad",
+        "label": "四边面上限",
+        "hint": "max_face_limit_quad",
+        "kind": "number",
+        "default": null,
+        "placeholder": "10000"
+      },
+      {
+        "key": "face_limit_range",
+        "label": "面数范围",
+        "hint": "face_limit_range",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"min\": 48, \"max\": 20000 }"
+      },
+      {
+        "key": "face_limit_range_by_topology",
+        "label": "按拓扑面数范围",
+        "hint": "face_limit_range_by_topology",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"triangle\": { \"min\": 500, \"max\": 500000 }, \"quad\": { \"min\": 1000, \"max\": 200000 } }"
+      },
+      {
+        "key": "face_limit_by_geometry_quality",
+        "label": "按质量面数上限",
+        "hint": "face_limit_by_geometry_quality",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"standard\": { \"triangle\": 20000, \"quad\": 10000 } }"
+      },
+      {
+        "key": "smart_low_poly_face_limit",
+        "label": "智能低模面数范围",
+        "hint": "smart_low_poly_face_limit",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"triangle\": { \"min\": 1000, \"max\": 20000 } }"
+      }
+    ]
+  },
+  {
+    "key": "mesh_edit",
+    "name": "3D 模型编辑",
+    "fields": [
+      {
+        "key": "operations",
+        "label": "支持编辑操作",
+        "hint": "segmentation/completion/smart_lowpoly/texture 等子操作能力",
+        "kind": "json",
+        "default": null,
+        "placeholder": "{ \"segmentation\": { \"supported\": true } }"
+      }
+    ]
+  }
+]

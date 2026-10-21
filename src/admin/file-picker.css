@@ -1,0 +1,145 @@
+.local-file-picker {
+  color-scheme: dark;
+  background: #202020;
+  color: #eee;
+  border: 1px solid #494949;
+  border-radius: 12px;
+  width: min(800px, 94vw);
+  padding: 22px;
+  font:
+    14px/1.5 'Microsoft YaHei',
+    sans-serif;
+  box-shadow: 0 20px 80px #0008;
+}
+.local-file-picker::backdrop {
+  background: #0009;
+}
+.local-file-picker * {
+  box-sizing: border-box;
+}
+.local-file-picker header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.local-file-picker h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.local-file-picker p {
+  color: #aaa;
+}
+.local-file-picker button,
+.local-file-picker input,
+.local-file-picker select {
+  font: inherit;
+  color: inherit;
+  border: 1px solid #494949;
+  border-radius: 6px;
+  background: #292929;
+  padding: 8px 12px;
+}
+.local-file-picker button {
+  cursor: pointer;
+}
+.local-file-picker button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.local-file-picker input {
+  min-width: 0;
+}
+.picker-address {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 10px;
+}
+.picker-address input {
+  flex: 1;
+}
+.picker-tools {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.picker-entries {
+  height: 320px;
+  overflow: auto;
+  border: 1px solid #383838;
+  border-radius: 6px;
+}
+.picker-row > button:first-child {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid #333;
+  border-radius: 0;
+  background: transparent;
+  gap: 12px;
+}
+.picker-row > button:first-child:hover,
+.picker-row > button:first-child.selected {
+  background: #d4ef6820;
+}
+.picker-row > button:first-child > span:nth-child(2) {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.picker-entries small {
+  color: #aaa;
+}
+.picker-enter {
+  color: #d4ef68;
+  padding: 4px 8px;
+}
+.picker-filename {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 12px;
+}
+.picker-filename input {
+  flex: 1;
+}
+.local-file-picker footer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 18px;
+}
+.local-file-picker footer > span {
+  flex: 1;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.local-file-picker .picker-primary {
+  background: #d4ef68;
+  color: #202020;
+  border-color: #d4ef68;
+}
+.local-file-picker .picker-error {
+  color: #ffb2a5;
+}
+.local-file-picker :focus-visible {
+  outline: 2px solid #d4ef68;
+  outline-offset: 2px;
+}
+
+.picker-row {
+  display: flex;
+}
+.picker-row > button:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.picker-row > .picker-enter {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #333;
+  border-radius: 0;
+  color: #d4ef68;
+}

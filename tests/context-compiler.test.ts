@@ -5,7 +5,7 @@ import path from 'node:path';
 import { compileContext, contextPayload, contextChanged, fitContext } from '../src/core/context-compiler';
 import { contextDependencies } from '../src/core/context-dependencies';
 import { contextAllowance, countInput, assertRequestFits } from '../src/core/context-budget';
-import { chapterSlice, endingSlice } from '../src/core/context-slices';
+import { chapterSlice, endingSlice, pastPlanText } from '../src/core/context-slices';
 import { retrieveMemory, tokensOf, visibleFact } from '../src/core/memory-studio';
 import { searchMemory } from '../src/core/memory';
 import { memoryScopeSchema } from '../src/shared/studio';
@@ -58,6 +58,24 @@ test('章节选择理解中文章号，无法可靠匹配时保留全文，结�
   const tail = endingSlice(body, 80);
   assert.equal(tail.content, Array.from(body).slice(tail.ranges[0].start).join(''));
   assert.ok(!tail.content.includes('\uFFFD'));
+});
+
+test('资料来源中的章号不被当成章节计划，后续同步仍保护真正的过往章节', () => {
+  const sources = '\n## 资料依据\n\n| 文件 | 采用位置 |\n| --- | --- |\n| 09_续写状态/当前进度.md | S07、当前第001章、已完成0章 |\n| 07_正文章节/第001章.md | 已接受原文 |\n| 第001章.md | 原文副本引用 |\n';
+  for (const [header, past, current] of [
+    ['章节', '第001章', '第002章'],
+    ['章号', '1', '2'],
+    ['单元', '**第一章**', '第二章：反馈']
+  ]) {
+    const plan = `# 计划\n\n| ${header} | 安排 |\n| --- | --- |\n| ${past} | 首章已经交接 |\n| ${current} | 继续首章约定；引用第001章 |\n` + sources;
+    const slice = chapterSlice(plan, 2).content;
+    assert.doesNotMatch(slice, /首章已经交接/);
+    assert.match(slice, /继续首章约定/);
+    assert.ok(slice.includes(sources.trim()), '来源及版本说明应留在本章资料包');
+    const updated = plan.replace('已完成0章', '已完成1章').replace('原文副本引用', '核对第001章的已接受版本') + '| 08_章后更新/第001章记忆更新.md | 新的章后证据 |\n';
+    assert.equal(pastPlanText(updated, 2), pastPlanText(plan, 2));
+    assert.notEqual(pastPlanText(plan.replace('首章已经交接', '首章没有交接'), 2), pastPlanText(plan, 2));
+  }
 });
 
 test('中文分词、两字姓名与别名召回共用范围和版本过滤', () => {

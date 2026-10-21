@@ -1,5 +1,8 @@
 import { setRunStatus } from './runtime/run-state';
 import { callModel } from './runtime/model-gateway';
+import { updateGeneration, type GenerationPhase } from '../shared/generation';
+import { withTaskReasoning } from '../shared/reasoning';
+import { retryNeedsConfirmation } from '../shared/run-presentation';
 import { beginTool, finishTool, stopOnToolFailure, type ToolTicket } from './runtime/tool-gateway';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { driveTagPlanning, planningRulesHash } from './tag-planning';
@@ -20,6 +23,7 @@ import {
 import { FileStore, fileHash, safePath } from './storage';
 import { assertRequestFits, countInput } from './context-budget';
 import { contextPayload, contextChanged, fitContext } from './context-compiler';
+import { candidateChangesForCurrentSettings, compatibleRunBase, compatibleSettingsSnapshot } from './runtime-settings';
 import {
   hash,
   now,
@@ -59,6 +63,8 @@ const object = (properties: Record<string, unknown>, required: string[] = Object
   additionalProperties: false
 });
 const string = { type: 'string' };
+const memoryFactParameters = z.toJSONSchema(factSchema, { target: 'draft-7', io: 'input' });
+delete memoryFactParameters.$schema;
 export const toolDefinitions: ToolDefinition[] = [
   {
     name: 'read_naming_rules',
@@ -88,8 +94,8 @@ export const toolDefinitions: ToolDefinition[] = [
   },
   {
     name: 'propose_memory',
-    description: '提出结构化事实更新，必须引用已接受正文的准确版本和原文',
-    parameters: object({ facts: { type: 'array', items: { type: 'object' } } })
+    description: '提出结构化事实候选，引用宿主指定的正式正文或待采纳正文的准确 path、hash、quote。候选经独立核对和作者采纳后才进入正式记忆。',
+    parameters: object({ facts: { type: 'array', items: memoryFactParameters } })
   },
   { name: 'validate', description: '检查当前候选的结构、字数和字段，返回具体问题', parameters: object({}) },
   { name: 'ask_author', description: '暂停等待作者补充缺失信息', parameters: object({ question: string }) },
@@ -148,6 +154,7 @@ export class AgentRunner {
     this.telemetry = new NarrativeTelemetry(store, emit, caller, skillRoot);
   }
   event(run: Run, kind: string, text: string) {
+    if (kind === 'tool') this.activity(run, 'tools');
     this.store.db.event(run.id, kind, text);
     this.emit({ type: 'run-event', resource: 'runs', resourceId: run.id, runId: run.id, text });
   }
@@ -156,6 +163,9 @@ export class AgentRunner {
     run.updatedAt = now();
     this.store.db.saveRun(run);
     this.emit({ type: 'snapshot', resource: 'runs', resourceId: run.id, resourceVersion: run.stateVersion });
+  }
+  activity(run: Run, phase: GenerationPhase) {
+    if (updateGeneration(run, phase)) this.save(run);
   }
   stop() {
     this.controller?.abort();
@@ -198,11 +208,17 @@ export class AgentRunner {
     const p = this.store.db.project();
     return assembleContext(this.store, p, r.stage, r.request, profile, r.mode === 'revision', this.contextResident(r, p));
   }
+  private taskRulesMatch(r: Run, p: ProjectState, currentHash: string) {
+    if (!r.skillHash || r.skillHash === currentHash) return true;
+    const transition = compatibleSettingsSnapshot(this.store, r.baseSnapshotId);
+    return !!transition && transition.base.revision === r.baseRevision &&
+      transition.snapshots.some(snapshot => r.skillHash === hash(this.taskRules(r, snapshot.project).system + JSON.stringify(this.toolsFor(r))));
+  }
   needsFreshContext(r: Run) {
     const p = this.store.db.project(), profile = this.profiles().find(item => item.id === r.profileId);
     const creation = approvedCreation(p);
     if (!profile?.apiKey) throw new Error('原任务的模型不可用，请选择模型后点击“用所选模型继续”。');
-    if (r.status === 'stale' || r.baseRevision !== p.revision || r.profileVersion !== profile.version) return true;
+    if (r.status === 'stale' || !compatibleRunBase(this.store, r) || r.profileVersion !== profile.version) return true;
     if (r.tagBinding && (!creation || r.tagBinding.inputHash !== creation.spec.inputHash || r.tagBinding.contractRevision !== creation.contract.revision)) return true;
     if (r.manifest && contextChanged(this.store, r.manifest)) return true;
     if (r.manifest && r.manifest.selectedBy !== 'context-compiler-v1') return true;
@@ -212,7 +228,7 @@ export class AgentRunner {
     if (r.naming) return !!r.skillHash && r.skillHash !== namingRulesHash(this.skillRoot, p);
     if (r.planning) return !!r.skillHash && r.skillHash !== planningRulesHash(this.skillRoot, p);
     if (r.pipeline) return !!r.skillHash && r.skillHash !== this.chapterRulesHash(p);
-    return !r.planning && !r.pipeline && !!r.skillHash && r.skillHash !== hash(this.taskRules(r, p).system + JSON.stringify(this.toolsFor(r)));
+    return !this.taskRulesMatch(r, p, hash(this.taskRules(r, p).system + JSON.stringify(this.toolsFor(r))));
   }
   private async retrieveForRun(query: string, r: Run, p: ProjectState) {
     syncUsage(this.store, r);
@@ -288,13 +304,14 @@ export class AgentRunner {
     if (this.controller) throw new Error('已有任务运行中');
     const r = this.store.db.run(runId),
       p = this.store.db.project(),
-      profile = this.profiles().find((x) => x.id === r.profileId);
+      selectedProfile = this.profiles().find((x) => x.id === r.profileId),
+      profile = selectedProfile && withTaskReasoning(selectedProfile, r);
     const creation = approvedCreation(p);
     if (!profile?.apiKey) throw new Error('请先设置模型 API Key');
     if (!r.memoryRepair && (!profile.tools || profile.capabilities.tools === 'failed'))
       throw new Error('此配置的工具调用未启用或测试失败，请在模型设置中启用并通过工具续轮测试');
     if (profile.version !== r.profileVersion) throw new Error('模型配置版本已改变，请新建任务以保留准确来源');
-    if (r.baseRevision !== p.revision) throw new Error('项目已改变，需重新建立任务上下文');
+    if (!compatibleRunBase(this.store, r)) throw new Error('项目已改变，需重新建立任务上下文');
     if (
       r.tagBinding &&
       (!creation ||
@@ -317,9 +334,10 @@ export class AgentRunner {
       const rules = controllerRules(this.skillRoot);
       if (r.agentRulesHash) assertControllerRules(this.skillRoot, r.agentRulesHash);
       r.agentRulesHash = rules.hash;
+      r.error = undefined;
       if (r.naming) {
         await driveTitleNaming({ store: this.store, root: this.skillRoot, run: r, project: p, writer: profile,
-          profiles: this.profiles, caller: this.caller, signal, save: () => this.save(r), event: text => this.event(r, 'title-phase', text) });
+          profiles: this.profiles, caller: this.caller, signal, save: () => this.save(r), event: text => this.event(r, 'title-phase', text), onActivity: phase => this.activity(r, phase) });
         return;
       }
       if (r.memoryRepair) {
@@ -337,6 +355,7 @@ export class AgentRunner {
           caller: this.caller,
           signal,
           save: () => this.save(r),
+          onActivity: phase => this.activity(r, phase),
           event: (text) => this.event(r, 'tag-phase', text)
         });
         if (r.planning.phase === 'ready') this.check(r, p);
@@ -357,8 +376,10 @@ export class AgentRunner {
       fitContext(r.manifest, profile, resident, tools.length);
       bindExpressionRules(r, expression.binding);
       const currentSkillHash = hash(system + JSON.stringify(tools));
-      if (r.skillHash && r.skillHash !== currentSkillHash)
+      if (!this.taskRulesMatch(r, p, currentSkillHash))
         throw new Error('任务规则或工具契约发生变化，请重新组装上下文');
+      if (r.skillHash && r.skillHash !== currentSkillHash && r.messages.length)
+        r.messages.push({ role: 'user', content: `作者仅调整了任务执行参数，已有故事与候选保持不变。当前累计已调用 ${r.rounds} 轮，最新上限：${JSON.stringify({ maxRounds: p.config.maxRounds, maxTools: p.config.maxTools, stageBudget: p.config.stageBudget })}。继续原任务，候选仍需作者审阅。` });
       r.skillHash = currentSkillHash;
       if (!r.messages.length) {
         r.messages.push({
@@ -373,7 +394,6 @@ export class AgentRunner {
         });
       }
       setRunStatus(r, 'running');
-      r.error = undefined;
       if (r.responseText.trim()) r.responseText += '\n\n';
       this.save(r);
       // Complete previously approved tool calls before issuing another model request.
@@ -422,12 +442,13 @@ export class AgentRunner {
         const searchOffset = Array.from(r.responseText).length;
         const result = await callModel(this.store, r, r.stage, this.caller, profile, system, r.messages, tools, signal, (s) => {
           r.responseText += s;
-          this.emit({ type: 'delta', runId: r.id, text: s });
+          this.emit({ type: 'delta', resource: 'runs', resourceId: r.id, runId: r.id, text: s, textOffset: r.responseText.length - s.length });
           if (Date.now() - lastFlush > 800) {
             this.store.db.saveRun(r);
             lastFlush = Date.now();
+            this.emit({ type: 'snapshot', resource: 'runs', resourceId: r.id, resourceVersion: r.stateVersion });
           }
-        }, searchOptions);
+        }, { ...searchOptions, onActivity: phase => this.activity(r, phase) });
         if (r.webSearch) {
           acceptNativeSearch(r.webSearch, result.webSearch, searchOffset);
           r.toolCount += Math.max(0, r.webSearch.calls.length - countedSearch);
@@ -463,6 +484,7 @@ export class AgentRunner {
           for (const call of result.calls) {
             if (!(await this.execute(r, p, call, signal, naming))) return;
           }
+          if ((r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools) && this.recoverReadyCandidate(r, p, 'budget')) return;
         } else {
           await this.auditMemory(r, p, profile, signal);
           this.check(r, p);
@@ -472,6 +494,7 @@ export class AgentRunner {
           return;
         }
       }
+      if (this.recoverReadyCandidate(r, p, 'budget')) return;
       setRunStatus(r, 'paused');
       r.error = '已达到本任务轮数上限。可审阅候选或在设置提高上限后继续。';
       this.save(r);
@@ -502,6 +525,39 @@ export class AgentRunner {
         this.child = null;
       }
     }
+  }
+  /** Purely local recovery: never issues a request, approves a candidate, or changes formal files. */
+  private completedToolBatch(r: Run) {
+    const assistant = r.messages.findLast(message => message.role === 'assistant');
+    return !!assistant?.calls?.length && assistant.calls.every(call => {
+      const response = r.messages.findLast(message => message.role === 'tool' && message.callId === call.id);
+      if (!response) return false;
+      try { const value = JSON.parse(response.content); return !value?.error && value?.ok !== false; }
+      catch { return false; }
+    });
+  }
+  recoverReadyCandidate(r: Run, p: ProjectState, source: 'budget' | 'restore' | 'settings' | 'continue' | 'accept') {
+    const eligible = source === 'budget' ? r.status === 'running' : ['paused', 'needs_repair'].includes(r.status);
+    if (!eligible || r.accepted || !r.changes.length || retryNeedsConfirmation(r) || this.store.db.get(`inflight:${r.id}`)) return false;
+    if (/输出达到上限|内容被服务端中止/.test(r.error ?? '')) return false;
+    if (r.status === 'paused' && source !== 'accept' && !/轮数上限|工具调用.*上限|请求次数上限|任务预算已用完/.test(r.error ?? '')) return false;
+    if (r.permission?.status === 'pending' || (r.input && !r.input.answer) || r.messages.at(-1)?.role === 'user') return false;
+    const assistant = r.messages.findLast(message => message.role === 'assistant');
+    if (assistant?.calls?.length && !this.completedToolBatch(r)) return false;
+    if (!compatibleRunBase(this.store, r) || (r.mode === 'stage' && (r.stage !== p.stage || r.chapter !== p.chapter))) return false;
+    try {
+      if (r.agentRulesHash) assertControllerRules(this.skillRoot, r.agentRulesHash);
+      if (r.manifest && contextChanged(this.store, r.manifest)) return false;
+      if (candidateChangesForCurrentSettings(this.store, r).some(change => fileHash(safePath(this.store.root, change.path)) !== change.baseHash)) return false;
+      this.check(r, p);
+      if (r.issues.some(issue => issue.severity === 'error')) return false;
+    } catch { return false; }
+    const previousError = r.error;
+    setRunStatus(r, 'awaiting_review');
+    r.error = undefined;
+    this.save(r);
+    this.store.db.event(r.id, 'local-recovery', '内部检查已完成，已有候选可直接审阅；未调用模型、未采纳或推进阶段。', { source, previousError });
+    return true;
   }
   private queueRepair(r: Run, p: ProjectState, issues: Run['issues'], phase = 'stage') {
     const errors = issues.filter(issue => issue.severity === 'error');
@@ -614,10 +670,27 @@ export class AgentRunner {
           );
         const prior = blocks(old),
           next = blocks(roleChange.content);
+        const identities = new Map([...prior].map(([name, body]) => {
+          const stableId = body.match(/^- (?:稳定ID|实体ID|人物ID)[：:]\s*([^\s。；;，,]+)/mu)?.[1];
+          const aliases = [...body.matchAll(/^- (?:别名|称谓|常用称呼|本名\/别名\/称谓规则)[：:]([^\r\n]*)/gmu)].flatMap(match => {
+            const quoted = [...match[1].matchAll(/[“「『"]([^”」』"\r\n]{1,30})[”」』"]/gu)].map(item => item[1].trim());
+            return quoted.length ? quoted : match[0].startsWith('- 别名')
+              ? match[1].split(/[、，,；;]/u).map(alias => alias.trim()).filter(alias => alias.length <= 30 && !/^(?:无|未知|未定|暂无|无已确认别名)[。.]?$/.test(alias)) : [];
+          }).filter(Boolean);
+          return [name, { stableId, aliases: [...new Set(aliases)] }] as const;
+        }));
+        const aliasOwners = new Map<string, number>();
+        for (const [name, identity] of identities)
+          for (const alias of new Set([name, ...identity.aliases])) aliasOwners.set(alias, (aliasOwners.get(alias) ?? 0) + 1);
         for (const [name, body] of prior) {
+          const identity = identities.get(name)!;
+          const names = new Set([name, ...identity.aliases]);
+          const ids = new Set([...names, ...(identity.stableId ? [identity.stableId] : [])]);
           const relevant =
             prose.content.includes(name) ||
-            r.facts.some((f) => f.subject === name || f.aliases.some((a) => prose.content.includes(a)));
+            identity.aliases.some(alias => aliasOwners.get(alias) === 1 && prose.content.includes(alias)) ||
+            r.facts.some(f => [f.subject, ...f.aliases, ...f.entityIds].some(value => ids.has(value) || value.split(/[\/、，,]/u).some(part => ids.has(part.trim()))) &&
+              !validateEvidence(this.store, f, p.chapter, r.pipeline ? r.changes : []).length);
           if (!relevant && next.get(name) !== body)
             r.issues.push({
               code: 'unaffected_character',
@@ -665,7 +738,7 @@ export class AgentRunner {
       if (binding && (binding.id !== profile.id || binding.version !== profile.version))
         throw new Error('分工模型配置已改变，请重新建立任务');
       (r.modelBindings ??= {})[role] = { id: profile.id, version: profile.version };
-      return profile;
+      return withTaskReasoning(profile, r);
     };
     const expressionVersion = expressionFingerprint(this.skillRoot, p.config);
     const lock = this.chapterRulesHash(p, naming);
@@ -702,7 +775,7 @@ export class AgentRunner {
       if (this.profiles().find((v) => v.id === profile.id)?.version !== profile.version)
         throw new Error('模型配置在运行期间改变');
       if (
-        this.store.db.get('headSnapshot') !== r.baseSnapshotId ||
+        !compatibleRunBase(this.store, r) ||
         contextChanged(this.store, r.manifest!)
       )
         throw new Error('任务依据已改变');
@@ -719,7 +792,7 @@ export class AgentRunner {
       r.rounds++;
       this.store.db.set(`inflight:${r.id}`, true);
       this.save(r);
-      const result = await callModel(this.store, r, pipeline.phase, this.caller, profile, system, messages, tools, signal, delta).finally(() => {
+      const result = await callModel(this.store, r, pipeline.phase, this.caller, profile, system, messages, tools, signal, delta, { onActivity: phase => this.activity(r, phase) }).finally(() => {
         this.telemetry.foregroundReserved = 0;
       });
       this.store.db.set(`inflight:${r.id}`, false);
@@ -833,7 +906,16 @@ export class AgentRunner {
         if (!r.messages.some((m) => m.role === 'tool' && m.callId === tool.id))
           if (!(await this.execute(r, p, tool, signal, naming))) return;
       let completed = false;
+      const locallyComplete = () => {
+        if (!this.completedToolBatch(r)) return false;
+        this.check(r, p);
+        return !r.issues.some(issue => issue.severity === 'error' && issue.code !== 'pipeline_pending' &&
+          (phase === 'memory' || issue.path === qualityPath(r.chapter)));
+      };
       for (let round = 0; round < p.config.maxRounds; round++) {
+        // A submitted, locally valid phase needs no extra model turn just to say "done".
+        // Memory review remains mandatory: check() includes its bound evidence receipt.
+        if ((r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools) && locallyComplete()) { completed = true; break; }
         const result = await call(profile, system, r.messages, this.toolsFor(r));
         r.messages.push({
           role: 'assistant',
@@ -843,6 +925,7 @@ export class AgentRunner {
         });
         if (result.calls.length) {
           for (const tool of result.calls) if (!(await this.execute(r, p, tool, signal, naming))) return;
+          if ((r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools) && locallyComplete()) { completed = true; break; }
         } else {
           if (phase === 'memory') await this.auditMemory(r, p, reviewer, signal);
           this.check(r, p);
@@ -876,7 +959,7 @@ export class AgentRunner {
     const verify = () => {
       if (signal.aborted) throw new RequestError('作者已停止执行', false);
       assertControllerRules(this.skillRoot, r.agentRulesHash!);
-      if (this.store.db.project().revision !== r.baseRevision || this.store.db.get('headSnapshot') !== r.baseSnapshotId)
+      if (!compatibleRunBase(this.store, r))
         throw new Error('作品已改变，请重新核对记忆');
       if (this.profiles().find(item => item.id === profile.id)?.version !== profile.version)
         throw new Error('模型配置已改变，请重新核对');
@@ -894,7 +977,7 @@ export class AgentRunner {
     this.store.db.set(`inflight:${r.id}`, true);
     this.save(r);
     this.event(r, phase, phase === 'memory-evidence-review' ? '独立核对记忆含义与原文证据' : '正在核对并同步受影响资料');
-    const result = await callModel(this.store, r, phase, this.caller, { ...profile, stream: false }, system, messages, [], signal);
+    const result = await callModel(this.store, r, phase, this.caller, { ...profile, stream: false }, system, messages, [], signal, undefined, { onActivity: phase => this.activity(r, phase) });
     this.store.db.set(`inflight:${r.id}`, false);
     recordUsage(this.store, r, result.usage, { phase, profileId: profile.id, profileVersion: profile.version, usage: result.usage });
     this.save(r);
@@ -934,19 +1017,23 @@ export class AgentRunner {
     setRunStatus(r, 'running');
     r.error = undefined;
     this.save(r);
+    // Applying one file invalidates its review receipt; keep the batch feedback
+    // available to the remaining files throughout this correction pass.
+    const repairFeedback = r.memoryReview?.issues.join('；') ?? '';
     while (r.memoryRepair!.cursor < r.memoryRepair!.paths.length) {
       const file = r.memoryRepair!.paths[r.memoryRepair!.cursor];
-      let error = r.memoryReview?.issues.join('；') ?? '';
+      let error = repairFeedback;
       for (let attempt = 0; attempt <= automaticRepairLimit; attempt++) {
         const raw = await this.memoryCall(r, p, profile, signal, 'memory-synchronization',
-          '按本次记忆同步任务处理一个文件。不把待核对文稿当作事实。逐条依据新版本复核；只有确实受影响时才修改，保留其余内容。records 和 withdrawn 必须是数组。', { ...memoryRepairRequest(this.store, r, file), correction: error });
+          '按本次记忆同步任务处理一个文件。不把待核对文稿当作事实。逐条依据新版本复核；只有确实受影响时才修改，保留其余内容。遵守 formatRequirements，字段名称及原分节保持一致，已经完成的状态写在字段内容中。records 和 withdrawn 必须是数组。', { ...memoryRepairRequest(this.store, r, file, this.skillRoot), correction: error });
         try {
-          applyMemoryRepairResponse(this.store, r, file, raw);
+          applyMemoryRepairResponse(this.store, r, file, raw, this.skillRoot);
           this.save(r);
           error = '';
           break;
         } catch (failure) {
           error = (failure as Error).message;
+          this.event(r, 'memory-sync-repair', `${file}：${error}`);
           if (attempt === automaticRepairLimit) throw failure;
         }
       }
@@ -1047,6 +1134,7 @@ export class AgentRunner {
               .max(80)
           })
           .parse(a);
+        v.changes = candidateChangesForCurrentSettings(this.store, { ...r, changes: v.changes });
         for (const c of v.changes) {
           if (c.path === contractPath) throw new Error('标签契约由宿主生成，请通过标签策划提出修订');
           safePath(this.store.root, c.path);

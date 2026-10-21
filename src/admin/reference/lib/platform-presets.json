@@ -1,0 +1,341 @@
+[
+  {
+    "name": "Anthropic",
+    "url": "https://api.anthropic.com/v1",
+    "protocol": "anthropic",
+    "native_protocols": [
+      "anthropic_messages"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "DeepSeek",
+    "url": "https://api.deepseek.com",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "Dify",
+    "url": "http://localhost/v1",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "EasyAI",
+    "url": "https://51easyai.com/api/v1",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": true
+  },
+  {
+    "name": "Gemini OpenAI兼容",
+    "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "Google Gemini",
+    "url": "https://generativelanguage.googleapis.com/v1beta",
+    "protocol": "gemini",
+    "native_protocols": [],
+    "compatible": true
+  },
+  {
+    "name": "Grok",
+    "url": "https://api.x.ai/v1",
+    "protocol": "openai",
+    "native_protocols": [
+      "xai"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "Hyper3D Rodin",
+    "url": "https://api.hyper3d.com/api",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "Kimi（OpenAI兼容）",
+    "url": "https://api.moonshot.cn/v1",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "LiblibAI",
+    "url": "https://openapi.liblibai.cloud",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "Midjourney",
+    "url": "https://api.legnext.ai/api/v1",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "mimo",
+    "url": "",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "MiniMax",
+    "url": "https://api.minimaxi.com/v1",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "MiniMax（OpenAI兼容）",
+    "url": "https://api.minimaxi.com/v1",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "n8n",
+    "url": "http://127.0.0.1:5678",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "NewAPI兼容平台",
+    "url": "https://api.newapi.com/v1",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": true
+  },
+  {
+    "name": "Ollama",
+    "url": "http://127.0.0.1:11434/v1",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "OpenAI",
+    "url": "https://api.openai.com/v1",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "OpenRouter",
+    "url": "https://openrouter.ai/api/v1",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "RunningHub",
+    "url": "https://www.runninghub.ai",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "Suno音乐生成",
+    "url": "https://api.cqtai.com/api/cqt",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "Tripo3D",
+    "url": "https://api.tripo3d.com/v2/openapi",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "Vidu视频生成",
+    "url": "https://api.vidu.cn/ent/v2",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "即梦AI",
+    "url": "https://visual.volcengineapi.com",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "可灵AI",
+    "url": "https://api-beijing.klingai.com/v1",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "智谱AI",
+    "url": "https://open.bigmodel.cn/api/paas/v4",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "火山引擎(OpenAI兼容)",
+    "url": "https://ark.cn-beijing.volces.com/api/v3",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "火山引擎（豆包 BytePlus 海外版）",
+    "url": "https://ark.ap-southeast.bytepluses.com/api/v3",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "火山引擎（豆包）",
+    "url": "https://ark.cn-beijing.volces.com/api/v3",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "火山引擎（豆包语音）",
+    "url": "",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "硅基流动",
+    "url": "https://api.siliconflow.cn/v1",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "美团",
+    "url": "",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "腾讯云智能体开发平台",
+    "url": "https://wss.lke.cloud.tencent.com/v1",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "腾讯混元3D",
+    "url": "https://ai3d.tencentcloudapi.com",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "腾讯混元生图（第三方）",
+    "url": "https://aiart.tencentcloudapi.com",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "腾讯混元视频（第三方）",
+    "url": "https://vclm.tencentcloudapi.com",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "自定义平台通用平台（支持自定义方式接入任意平台）",
+    "url": "",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "阿里云百炼",
+    "url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "阿里云百炼 Tripo-3D",
+    "url": "https://dashscope.aliyuncs.com/api/v1",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  },
+  {
+    "name": "阿里云百炼（Anthropic）",
+    "url": "https://token-plan.cn-beijing.maas.aliyuncs.com/apps/anthropic",
+    "protocol": "anthropic",
+    "native_protocols": [
+      "anthropic_messages"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "阿里云百炼(OpenAI兼容）",
+    "url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "protocol": "openai",
+    "native_protocols": [
+      "openai_responses",
+      "openai_chat_completions"
+    ],
+    "compatible": true
+  },
+  {
+    "name": "黑森林实验室",
+    "url": "https://api.bfl.ai/v1",
+    "protocol": "openai",
+    "native_protocols": [],
+    "compatible": false
+  }
+]

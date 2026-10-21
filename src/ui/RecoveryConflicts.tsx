@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { invokeCommand as invoke } from '../shared/client';
 import type { CommitRecoveryConflict } from '../shared/studio';
 import { Difference } from './Editor';
-import './recovery.css';
 
 type Preview = { path: string; accepted: string; current: string | null; candidate: string };
 

@@ -59,6 +59,8 @@ export interface ConversationMessage {
   citations: Citation[];
 }
 export interface ConversationTurn {
+  activity?: import('./generation').GenerationActivity;
+  reasoningEfforts?: import('./reasoning').ReasoningSnapshot;
   webSearch?: import('./web-search').NativeWebSearchState;
   manifest?: import('./types').ContextManifest;
   taskContext?: string;
@@ -98,8 +100,10 @@ export interface ConversationTurn {
 }
 export interface ActionProposal {
   id: string;
+  baseSnapshotId?: string;
   resumeRunId?: string;
   resumeRunHash?: string;
+  resumeRunHashVersion?: 2;
   conversationId: string;
   turnId: string;
   version: string;

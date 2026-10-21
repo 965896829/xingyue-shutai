@@ -1,0 +1,220 @@
+.builtin-agent-editor > .ref-modal-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.builtin-agent-editor .builtin-fieldset,
+.builtin-metadata-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.builtin-agent-editor .builtin-fieldset {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.builtin-agent-editor .ref-editor-top {
+  flex-shrink: 0;
+  min-height: 52px;
+  height: auto;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.builtin-agent-editor .ref-editor-top > .text-button {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.builtin-agent-editor .ref-editor-top > div {
+  align-items: center;
+  flex-shrink: 0;
+}
+.builtin-save-status {
+  font-size: 12px;
+  color: var(--ui-muted, #96998d);
+  margin-right: 8px;
+}
+.builtin-agent-editor .ref-editor-columns {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+}
+.builtin-prompt-tabs {
+  margin: -4px 0 12px;
+  flex-shrink: 0;
+}
+.builtin-agent-editor .ref-prompt-column > textarea {
+  width: 100%;
+}
+.builtin-agent-editor .ref-accordion textarea,
+.builtin-agent-editor .field textarea {
+  width: 100%;
+}
+.builtin-trigger {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--ui-soft, #b5b7aa);
+  margin: 0 0 12px;
+}
+.builtin-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+}
+.builtin-preview-result strong {
+  color: var(--ui-text, #d6d6cd);
+  font-weight: 500;
+}
+.builtin-preview-result pre {
+  max-height: 300px;
+}
+.builtin-agent-editor .ref-preview-output > p,
+.builtin-agent-editor .ref-preview-output > small {
+  text-align: center;
+  padding: 0 16px;
+  margin: 0;
+}
+.builtin-history-panel > .ref-field-help {
+  margin: 0 0 16px;
+}
+.builtin-history {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+.builtin-history > div {
+  min-width: 0;
+}
+.builtin-history strong {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-weight: 500;
+}
+.builtin-version-badge {
+  font-size: 10px;
+  border-radius: 12px;
+  padding: 1px 6px;
+  background: var(--ui-accent-bg, #d4ef6810);
+  color: var(--ui-accent, #b9cb8b);
+}
+.builtin-history time,
+.builtin-call time {
+  font-size: 11px;
+  color: var(--ui-muted, #96998d);
+}
+.builtin-history time {
+  display: block;
+  margin-top: 8px;
+}
+.builtin-history p {
+  color: var(--ui-soft, #b5b7aa);
+  overflow-wrap: anywhere;
+  margin: 6px 0 0;
+}
+.builtin-history .button {
+  flex-shrink: 0;
+}
+.builtin-calls-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.builtin-call {
+  padding: 16px;
+  font-size: 13px;
+}
+.builtin-call header,
+.builtin-call dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.builtin-call header strong {
+  color: var(--ui-text, #d6d6cd);
+  font-weight: 500;
+}
+.builtin-call dl {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 0;
+}
+.builtin-call dt {
+  color: var(--ui-muted, #96998d);
+  flex-shrink: 0;
+}
+.builtin-call dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.builtin-error {
+  color: var(--ui-danger, #f2aa98);
+  background: var(--ui-danger-bg, #a5412720);
+  font-size: 13px;
+  padding: 10px 24px;
+  margin: 0;
+}
+.builtin-choices { border: 0; padding: 0; margin: 14px 0; max-height: 220px; overflow: auto; min-width: 0; }
+.builtin-choices legend { font-size: 13px; color: var(--ui-text, #cbd1bc); margin-bottom: 8px; }
+.builtin-choices label, .builtin-source > label { display: flex; gap: 8px; align-items: center; padding: 6px 0; font-size: 13px; }
+.builtin-choices input[type=checkbox], .builtin-source input[type=checkbox] { width: 16px; height: 16px; flex: 0 0 16px; accent-color: var(--ui-accent, #bbd476); }
+.builtin-source { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin: 8px 0; }
+.builtin-source > input { width: 110px; min-width: 80px; }
+.builtin-source small { color: var(--ui-muted, #99a784); margin-left: 6px; }
+.builtin-model-order { padding-left: 24px; font-size: 12px; }
+.builtin-test-container { overflow: auto; min-height: 0; padding: 14px 0; }
+.builtin-test-panel { display: grid; gap: 12px; }
+.builtin-test-buttons, .builtin-history-actions, .builtin-trial-status > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.builtin-history-actions { max-width: 132px; }
+.builtin-trace { font-size: 13px; overflow-wrap: anywhere; }
+.builtin-trace details { margin: 14px 0; padding: 10px; background: var(--ui-hover, #ffffff05); border: 1px solid var(--ui-line, #ffffff12); border-radius: 8px; }
+.builtin-trace summary, .builtin-metrics summary { cursor: pointer; line-height: 1.6; }
+.builtin-trace pre, .builtin-diff pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 420px; overflow: auto; padding: 12px; border-radius: 6px; background: var(--ui-hover, #0002); line-height: 1.6; }
+.builtin-trial-status, .builtin-metrics { padding: 12px; margin: 12px 0; border: 1px solid var(--ui-accent-line, #c5d98e35); border-radius: 8px; font-size: 13px; }
+.builtin-diff section { border-top: 1px solid var(--ui-line, #ffffff15); padding-top: 12px; }
+.builtin-diff section > div { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.builtin-diff label { min-width: 0; font-size: 13px; }
+@media (max-width: 1100px) {
+  .builtin-agent-editor .ref-editor-top {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .builtin-agent-editor .ref-editor-top > div {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 760px) {
+  .builtin-diff section > div { grid-template-columns: 1fr; }
+  .builtin-agent-editor .ref-editor-top > .text-button {
+    font-size: 14px;
+    gap: 6px;
+    text-align: left;
+    white-space: normal;
+  }
+  .builtin-agent-editor .ref-editor-top > .text-button > span {
+    overflow-wrap: anywhere;
+  }
+  .builtin-agent-editor .ref-editor-top > div {
+    width: 100%;
+  }
+  .builtin-save-status {
+    flex-basis: 100%;
+    margin-right: 0;
+  }
+  .builtin-agent-editor .ref-editor-columns {
+    padding: 0 6px;
+  }
+  .builtin-agent-editor .ref-preview-composer > div {
+    flex-wrap: wrap;
+  }
+}

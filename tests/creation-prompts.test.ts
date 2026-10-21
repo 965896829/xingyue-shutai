@@ -180,13 +180,26 @@ test('同方案历史去重不阻止冻结书名、手填原名或审核修复',
   assert.doesNotThrow(() => validateTitleBatch(batch(1), r, source, history));
 });
 
-test('正文子调用仅有正文输出约定，仍携带一次总控和适用命名规则', () => {
+test('正文只输出正文，独立审核和记忆阶段携带实际工具提交契约', () => {
   const p = newProject('提示词测试', 'unused', {});
   const prose = systemPrompt(root, p, 'S10', undefined, undefined, { outputMode: 'prose' });
   assert.match(prose, /只返回本章完整正文/);
   assert.doesNotMatch(prose, /必须使用 propose_changes|使用实际工具提交完整文件候选|结构化事实的字段/);
   assert.equal(prose.split('## 总控优先级与工作模式').length - 1, 1);
+  const review = systemPrompt(root, p, 'S10', undefined, 'webnovel-chapter-reviewer', { outputMode: 'review' });
+  assert.match(review, /使用 propose_changes 提交完整质量报告候选/);
+  assert.match(review, /08_章后更新\/第001章质量评分\.md/);
+  assert.match(review, /json wenxu-review/);
+  assert.match(review, /checks 恰好五项/);
+  for (const field of ['proseHash', 'checks', 'aspect', 'verdict', 'quote', 'reason']) assert.ok(review.includes(field), field);
+  assert.doesNotMatch(review, /不提议阶段文件|只返回本轮给定审阅结构/);
   const memory = systemPrompt(root, p, 'S11', undefined, undefined, { outputMode: 'memory' });
+  assert.match(memory, /使用 propose_changes 提交本章记忆更新/);
+  assert.match(memory, /结构化事实通过 propose_memory 提交/);
+  assert.match(memory, /角色卡在既有角色二级标题下更新本章变化的当前字段/);
+  assert.match(memory, /08_章后更新\/第001章记忆更新\.md/);
+  assert.match(memory, /原文件 baseHash/);
+  assert.doesNotMatch(memory, /只返回本轮给定记忆结构/);
   assert.match(memory, /同版本证据检查和宿主事务/);
   assert.doesNotMatch(memory, /S11 必须复读正式正文/);
   const registry = new SkillRegistry(root);

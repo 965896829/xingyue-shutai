@@ -6,7 +6,7 @@ import { Service } from '../src/core/service';
 import type { Caller } from '../src/core/runner';
 import { encodeFacts, rebuildMemory, searchMemory } from '../src/core/memory';
 import { retrieveMemory, characterState, scopedRead } from '../src/core/memory-studio';
-import { prepareMemoryRepair } from '../src/core/memory-repair';
+import { prepareMemoryRepair, memoryRepairRequest } from '../src/core/memory-repair';
 import { memoryReviewInput, parseMemoryReview } from '../src/core/memory-review';
 import { SemanticIndex } from '../src/core/embeddings';
 import { embeddingSettingsSchema, memoryScopeSchema } from '../src/shared/studio';
@@ -102,7 +102,7 @@ test('只调整空行和缩进时重定位证据，不把未改变的剧情与�
   } finally { await service.drain(); }
 });
 
-test('记忆同步逐项修正文稿与事实，独立审核后一次接受并关闭待核对队列', async () => {
+for (const changeBudget of [false, true]) test(`记忆同步逐项修正文稿与事实，独立审核后一次接受并关闭待核对队列${changeBudget ? '（调整预算并交接）' : ''}`, async () => {
   const { service, store } = await setup();
   try {
     const edit = await service.invoke('document.save', { path: prosePath(1), baseHash: hash(body), content: body.replace('骨折，尚未治疗', '已经完全痊愈') });
@@ -112,10 +112,21 @@ test('记忆同步逐项修正文稿与事实，独立审核后一次接受并�
     run.memoryRepair = prepareMemoryRepair(store);
     store.db.saveRun(run);
     await service.runner!.drive(run.id);
-    const ready = store.db.run(run.id);
+    let ready = store.db.run(run.id);
     assert.equal(ready.status, 'awaiting_review', JSON.stringify({ error: ready.error, issues: ready.issues }));
     assert.equal(store.readAccepted(prosePath(2)).content, later);
     assert.ok(ready.memoryReview && !ready.memoryReview.issues.length);
+    if (changeBudget) {
+      const reviewed = structuredClone(ready.memoryReview), completed = structuredClone(ready.memoryRepair!.completed);
+      await service.invoke('project.configure', { config: { ...store.db.project().config, maxRounds: 50 } });
+      service.runner!.check(ready, store.db.project());
+      assert.deepEqual(ready.issues.filter(issue => issue.severity === 'error'), []);
+      ready = service.rebuildRun(store.db.run(run.id), profile.id);
+      assert.deepEqual(ready.memoryRepair!.completed, completed);
+      assert.deepEqual(ready.memoryReview, reviewed);
+      service.runner!.check(ready, store.db.project());
+      assert.deepEqual(ready.issues.filter(issue => issue.severity === 'error'), []);
+    }
     await service.invoke('run.accept', { id: ready.id, proposalHash: proposalHash(ready) });
     assert.match(store.readAccepted(prosePath(2)).content, /完全痊愈/);
     assert.deepEqual(store.db.project().stale, []);
@@ -289,6 +300,9 @@ test('后续调整按大纲到细纲传递候选，正式采纳前不覆盖，�
     if (input.file.path === detailPath(3)) {
       assert.ok(input.upstreamPlans.some((source: any) => source.path === paths.outline && source.content.includes('左手持盾')));
       content += '\n\n本章动作：左手持盾。';
+      assert.ok(input.formatRequirements.requiredFields.includes('章节类型'));
+      if (processed.filter(file => file === detailPath(3)).length === 1) content = content.replace('章节类型：', '章节形式：');
+      else assert.match(input.correction, /当前文件格式需要修正.*章节类型/);
     }
     return fakeResult(JSON.stringify({ content, reason: '依据作者新约束同步后续行动，保留第 1—2 章', records: [], withdrawn: [] }));
   });
@@ -322,6 +336,12 @@ test('后续调整按大纲到细纲传递候选，正式采纳前不覆盖，�
     assert.equal(ready.continuity?.mode, 'forward');
     assert.ok(processed.indexOf(paths.volumes) < processed.indexOf(paths.outline));
     assert.ok(processed.indexOf(paths.outline) < processed.indexOf(detailPath(3)));
+    assert.equal(processed.filter(file => file === paths.volumes).length, 1, '局部格式错误不重做已通过的上游文件');
+    assert.equal(processed.filter(file => file === paths.outline).length, 1);
+    assert.equal(processed.filter(file => file === detailPath(3)).length, 2);
+    assert.equal(ready.repairAttempts?.memory_sync, undefined);
+    assert.ok(memoryRepairRequest(active, ready, paths.volumes, service.skillRoot).formatRequirements.requiredFields.includes('需要埋下的伏笔'));
+    assert.ok(memoryRepairRequest(active, ready, batchPath(activeBatch(active.db.project())), service.skillRoot).formatRequirements.requiredFields.includes('依据文件'));
     assert.equal(active.readAccepted(paths.outline).content, oldOutline);
     assert.equal(active.readAccepted(prosePath(2)).content, original);
     const originalCandidate = ready.changes.find(change => change.path === paths.volumes)!.content;
@@ -337,6 +357,31 @@ test('后续调整按大纲到细纲传递候选，正式采纳前不覆盖，�
     assert.deepEqual(active.db.project().storyImpacts, []);
     assert.ok(active.db.sql.prepare("SELECT * FROM dependencies WHERE source_path=? AND dependent=? AND kind='plan'").get(paths.outline, detailPath(3)));
     assert.equal((await service.invoke('run.accept', { id: nextId, proposalHash: proposalHash(ready) })).alreadyAccepted, true);
+  } finally { await service.drain(); }
+});
+
+test('整批审核反馈传递到所有同步文件，前一个文件完成后不丢失', async () => {
+  const corrected: string[] = [];
+  const { service, store } = await setup(async (...args) => {
+    if (!args[1].includes('你独立检查')) {
+      const input = JSON.parse(args[2][0].content);
+      assert.match(input.correction, /不得重新拟定首章已确认的反馈时间/);
+      corrected.push(input.file.path);
+    }
+    return caller(...args);
+  });
+  try {
+    seedPlans(service);
+    const run = service.makeRun('revision', '核对后续计划的反馈时间', profile.id);
+    run.continuity = { mode: 'forward', fromChapter: 3 };
+    run.memoryRepair = { paths: [paths.volumes, paths.outline], sources: [prosePath(2)], completed: [], cursor: 0 };
+    run.memoryReview = { fingerprint: '', issues: ['不得重新拟定首章已确认的反馈时间'] };
+    store.db.saveRun(run);
+    await service.runner!.drive(run.id);
+    assert.deepEqual(corrected, [paths.volumes, paths.outline]);
+    const ready = store.db.run(run.id);
+    assert.equal(ready.status, 'awaiting_review', JSON.stringify(ready.issues));
+    assert.deepEqual(ready.memoryReview?.issues, []);
   } finally { await service.drain(); }
 });
 
@@ -385,7 +430,9 @@ test('后续调整禁止改动已有正文和过往计划，来源外改及候�
     assert.ok(continuityIssues(store, run).some(issue => issue.path === prosePath(1)));
     run.changes = [{ path: paths.outline, baseHash: store.db.document(paths.outline)!.hash,
       content: store.readAccepted(paths.outline).content.replace('| 第1章 |', '| 第100章 |') }];
-    assert.ok(continuityIssues(store, run).some(issue => issue.message.includes('之前')));
+    const protectedPlan = continuityIssues(store, run).find(issue => issue.message.includes('之前'));
+    assert.ok(protectedPlan);
+    assert.match(protectedPlan.message, /首处差异.*第1章/);
     run.continuity = { mode: 'extraction', fromChapter: 1 };
     assert.ok(continuityIssues(store, run).some(issue => issue.message.includes('纠正记忆')));
     run.continuity = { mode: 'forward', fromChapter: 3 };

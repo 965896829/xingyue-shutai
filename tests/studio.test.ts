@@ -7,7 +7,7 @@ import path from 'node:path';
 import { createServer } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
 import { FileStore, atomicWrite, safePath, proposalHash } from '../src/core/storage';
-import { hash, newProject, paths, prosePath, countWords } from '../src/core/domain';
+import { hash, newProject, paths, prosePath, countWords, updateConfigDocument, renderProgress } from '../src/core/domain';
 import { initialFiles, systemPrompt } from '../src/core/skill';
 import {
   factSchema,
@@ -370,6 +370,30 @@ test('M24/28/29/30/32：迟到评估拒收，未知保持 null，低分保留证
     await telemetry.stop();
   } finally {
     s.close();
+  }
+});
+
+test('后台评估仅遇到预算变更仍保留结果，遇到创作约束变更则拒收', async () => {
+  for (const storyChanged of [false, true]) {
+    const { s } = setup();
+    let release!: (v: ModelResult) => void;
+    const telemetry = new NarrativeTelemetry(s, () => {}, async () => new Promise<ModelResult>(resolve => { release = resolve; }));
+    try {
+      const r = run(s);
+      const pending = telemetry.final(r, '角色冒险修复设备。', model);
+      const p = s.db.project();
+      p.config.maxRounds = 30;
+      if (storyChanged) p.config.constraints = '禁止角色冒险';
+      p.revision++;
+      s.commit([
+        { path: paths.config, baseHash: s.db.document(paths.config)!.hash, content: updateConfigDocument(s.readAccepted(paths.config).content, p) },
+        { path: paths.progress, baseHash: s.db.document(paths.progress)!.hash, content: renderProgress(p) }
+      ], p);
+      release(response(JSON.stringify({ values: { pressure: 3, payoff: null, emotion: null, revelation: null, relationship: null }, quotes: ['角色冒险修复设备'], note: '离线证据评估' })));
+      const result = await pending;
+      if (storyChanged) assert.equal(result, null);
+      else assert.equal(result!.values.pressure, 3);
+    } finally { await telemetry.stop(); s.close(); }
   }
 });
 test('M26：只在完整段落边界评估，未完成尾句不进入请求', async (t) => {

@@ -4,8 +4,17 @@ import http from 'node:http';
 import { profileSchema, type Protocol } from '../src/shared/types';
 import { invokeModel } from '../src/core/provider';
 const streams: Record<string, unknown[]> = {
+  chat: [
+    { choices: [{ delta: { reasoning_content: 'opaque' } }] },
+    { choices: [{ delta: { content: '文字' } }] },
+    { choices: [{ delta: { tool_calls: [{ index: 0, id: 'c', function: { name: 'lookup', arguments: '{"query":"中文"}' } }] } }] },
+    { choices: [{ delta: {}, finish_reason: 'tool_calls' }], usage: { prompt_tokens: 7, completion_tokens: 3 } }
+  ],
   responses: [
+    { type: 'response.output_item.added', item: { type: 'reasoning' } },
+    { type: 'response.reasoning_summary_text.delta', delta: 'private-reasoning' },
     { type: 'response.output_text.delta', delta: '文字' },
+    { type: 'response.function_call_arguments.delta', delta: '{"query":"中文"}' },
     {
       type: 'response.completed',
       response: {
@@ -78,13 +87,20 @@ for (const [protocol, events] of Object.entries(streams))
       apiKey: 'local-fixture'
     };
     try {
+      const phases: string[] = [], visible: string[] = [];
       const result = await invokeModel(
         p,
         'system',
         [{ role: 'user', content: 'query' }],
         [],
-        new AbortController().signal
+        new AbortController().signal,
+        text => visible.push(text),
+        { onActivity: phase => phases.push(phase) }
       );
+      assert.equal(phases[0], 'waiting');
+      assert.ok(phases.includes('tool_input'));
+      if (protocol !== 'gemini') assert.ok(phases.includes('thinking'));
+      assert.doesNotMatch(visible.join(''), /opaque|private-reasoning|signed/);
       assert.equal(result.stop, 'tools');
       assert.equal(result.calls[0].arguments, '{"query":"中文"}');
       assert.equal(result.usage.input, 7);

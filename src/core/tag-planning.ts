@@ -1,5 +1,6 @@
 import { setRunStatus } from './runtime/run-state';
 import { callModel } from './runtime/model-gateway';
+import { withTaskReasoning } from '../shared/reasoning';
 import { beginTool, finishTool, stopOnToolFailure, type ToolTicket } from './runtime/tool-gateway';
 import { z } from 'zod';
 import {
@@ -51,6 +52,7 @@ export async function driveTagPlanning(args: {
   signal: AbortSignal;
   save: () => void;
   event: (text: string) => void;
+  onActivity?: (phase: import('../shared/generation').GenerationPhase) => void;
 }) {
   const { store, root, run: r, project: p, writer, profiles, caller, signal, save, event } = args;
   const t = r.planning!;
@@ -82,7 +84,7 @@ export async function driveTagPlanning(args: {
     if (r.manifest.sources.some((s) => fileHash(safePath(store.root, s.path)) !== s.hash))
       throw new Error('策划依赖资料已在外部改变');
     const reviewing = t.phase.startsWith('reviewing'),
-      profile = reviewing ? reviewer : writer;
+      profile = withTaskReasoning(reviewing ? reviewer : writer, r);
     if (profiles().find((v) => v.id === profile.id)?.version !== profile.version)
       throw new Error('模型配置已改变');
     const schema = reviewing
@@ -150,7 +152,7 @@ export async function driveTagPlanning(args: {
     event(planningPhaseNames[t.phase]);
     store.db.set(`inflight:${r.id}`, true);
     save();
-    const result = await callModel(store, r, 'tags:' + t.phase, caller, profile, system, r.messages, tools, signal, () => {});
+    const result = await callModel(store, r, 'tags:' + t.phase, caller, profile, system, r.messages, tools, signal, () => {}, { onActivity: args.onActivity });
     recordUsage(store, r, result.usage, {
       phase: 'tags:' + t.phase,
       profileId: profile.id,
@@ -205,7 +207,7 @@ export async function driveTagPlanning(args: {
         t.phase = 'reviewing_contract';
       } else {
         const reportPhase = t.phase === 'reviewing_report',
-          review = validatePlanningReview(value, reportPhase ? t.report : t.candidate);
+          review = validatePlanningReview(value, reportPhase ? t.report : t.candidate, reportPhase ? 'report' : 'candidate');
         checkPlanningReviewLanguage(review, t);
         const receipt = {
           hash: tagHash(reportPhase ? t.report : t.candidate),

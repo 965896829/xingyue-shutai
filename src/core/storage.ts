@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { syncGeneration } from '../shared/generation';
 import { contractPath, renderContract, tagHash } from './tags';
 import { approvedCreation } from '../shared/creation';
 import { titlePath, renderTitle } from './title-naming';
@@ -14,6 +15,7 @@ import { MaterializationConflict, preserveAndMaterialize } from './materializati
 import { pendingSource } from './memory-source';
 import { contextDependencies } from './context-dependencies';
 import { hash, id, now } from './domain';
+import { assertProjectLockInactive, parseProjectLock, processStartedAt } from './project-lock';
 import {
   factSchema,
   type Change,
@@ -232,6 +234,7 @@ export class Database {
     return run;
   }
   saveRun(run: Run) {
+    syncGeneration(run);
     this.withUsage(run);
     const candidateHash = proposalHash(run);
     let version = run.stateVersion ?? 0;
@@ -466,19 +469,15 @@ export class FileStore {
   }
   private acquireLock() {
     const lock = path.join(this.control, 'write-lock.json');
+    const ownerStartedAt = processStartedAt(process.pid);
     if (fs.existsSync(lock)) {
-      const old = JSON.parse(readUtf8(lock)) as { pid: number };
-      if (!Number.isSafeInteger(old.pid) || old.pid <= 0) throw new Error('作品锁身份无效，已停止自动接管');
-      let alive = true;
-      try {
-        process.kill(old.pid, 0);
-      } catch (e) {
-        if ((e as NodeJS.ErrnoException).code === 'ESRCH') alive = false;
-      }
-      if (alive) throw new Error('这部作品正在另一个窗口或进程中打开，请先关闭它');
+      const original = readUtf8(lock);
+      assertProjectLockInactive(parseProjectLock(original));
+      if (readUtf8(lock) !== original) throw new Error('作品占用状态刚刚发生变化，请重试');
       fs.unlinkSync(lock);
     }
-    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, nonce: this.lockNonce, startedAt: performance.timeOrigin, createdAt: now() }), { flag: 'wx' });
+    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, nonce: this.lockNonce, startedAt: performance.timeOrigin,
+      processStartedAt: ownerStartedAt, createdAt: now() }), { flag: 'wx' });
     this.lockOwned = true;
   }
   private releaseLock() {

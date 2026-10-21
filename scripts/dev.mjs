@@ -2,7 +2,9 @@ import { spawn } from 'node:child_process';
 import { createServer } from 'vite';
 import electron from 'electron';
 await import('./build-main.mjs');
-const server = await createServer();
+// The authenticated management host proxies HTML/modules. HMR stays on Vite's
+// loopback socket instead of incorrectly trying the management HTTP port.
+const server = await createServer({ server: { ws: { host: '127.0.0.1', clientPort: 5173 } } });
 await server.listen();
 const env = {
   ...process.env,

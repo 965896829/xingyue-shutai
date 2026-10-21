@@ -94,11 +94,24 @@
   border-radius: 10px;
   margin: 18px 0;
 }
-.creation-task-status > [role='status'] > p {
+.creation-task-summary > p {
   color: var(--muted);
   margin: 7px 0;
   line-height: 1.7;
 }
+.creation-task-summary { flex: 1 1 320px; min-width: 0; }
+.creation-progress { max-width: 660px; margin-top: 16px; }
+.creation-progress-steps { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0; margin: 0; font-size: 12px; color: var(--muted); }
+.creation-progress-steps li { min-width: 0; line-height: 1.5; }
+.creation-progress-track { display: block; position: relative; height: 4px; border-radius: 4px; overflow: hidden; background: var(--line-strong); margin-bottom: 8px; }
+.creation-progress-steps .done .creation-progress-track { background: var(--success); }
+.creation-progress-steps .current { color: var(--ink); }
+.creation-progress-steps .current .creation-progress-track { background: var(--accent-wash); }
+.creation-progress-steps .current .creation-progress-track::after { content: ''; position: absolute; inset: 0; background: var(--accent); opacity: 0.65; }
+.creation-progress-steps .moving .creation-progress-track::after { width: 40%; animation: creation-progress-motion 1.8s ease-in-out infinite; }
+.creation-time-estimate { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 10px 0 0; }
+@keyframes creation-progress-motion { from { transform: translateX(-100%); } to { transform: translateX(350%); } }
+@media (prefers-reduced-motion: reduce) { .creation-progress-steps .moving .creation-progress-track::after { animation: none; width: 100%; } }
 .creation-task-status.error {
   border-left-color: var(--danger);
 }

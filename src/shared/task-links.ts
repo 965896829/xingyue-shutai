@@ -1,4 +1,5 @@
 import type { Run } from './types';
+import { visibleRunIssues } from './run-presentation';
 
 function key(text: string) {
   let value = 2166136261;
@@ -21,6 +22,6 @@ export function taskHelpLink(run: Run) {
 export function taskProblemLinks(run: Run) {
   return [
     ...(run.error ? [{ label: '查看任务报错', href: `#${taskErrorId(run)}` }, taskHelpLink(run)] : []),
-    ...run.issues.map((issue, index) => ({ label: `${issue.path?.split('/').at(-1)?.replace(/\.md$/, '') || `问题 ${index + 1}`}：查看问题`, href: `#${taskIssueId(run.id, issue)}` }))
+    ...visibleRunIssues(run).map((issue, index) => ({ label: `${issue.path?.split('/').at(-1)?.replace(/\.md$/, '') || `问题 ${index + 1}`}：查看问题`, href: `#${taskIssueId(run.id, issue)}` }))
   ];
 }

@@ -26,8 +26,11 @@ export const modelFields = (p: Profile) => ({
   modelLimits: p.modelLimits,
   ...(p.contextPolicy ? { contextPolicy: p.contextPolicy } : {}),
   stream: p.stream,
+  ...(p.responsesTransport ? { responsesTransport: p.responsesTransport } : {}),
   tools: p.tools,
   temperature: p.temperature,
+  reasoningEffort: p.reasoningEffort ?? null,
+  reasoningRevision: p.reasoningRevision ?? 0,
   inputPrice: p.inputPrice,
   outputPrice: p.outputPrice,
   currency: p.currency,
@@ -37,6 +40,6 @@ export const modelFields = (p: Profile) => ({
 });
 
 export function modelExecutionFields(p: Profile) {
-  const { modelLimits, ...execution } = modelFields(p);
+  const { modelLimits, reasoningEffort, reasoningRevision, ...execution } = modelFields(p);
   return execution;
 }

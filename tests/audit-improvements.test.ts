@@ -116,11 +116,17 @@ test('正式导出挡住占位、未完成、待核对和磁盘未确认改动�
 test('审稿须绑定当前正文且五项引文可回查，问题结论不能被高分盖过', () => {
   const prose = sampleProse(), file = qualityPath(1);
   const value = { proseHash: hash(prose), checks: reviewAspects.map(aspect => ({ aspect, verdict: 'pass', quote: '阿宁推开诊室的门，把记录本递到灯下。', reason: '主角主动送交证据，推动医生作出接下来的选择。' })) };
-  const report = () => '中文审阅结论。\n\n```json wenxu-review\n' + JSON.stringify(value) + '\n```\n';
+  const report = (input: unknown = value) => '中文审阅结论。\n\n```json wenxu-review\n' + JSON.stringify(input) + '\n```\n';
   assert.deepEqual(checkReviewEvidence(file, report(), prose), []);
   assert.equal(documentPreviewText(report()), '中文审阅结论。');
   assert.ok(checkReviewEvidence(file, '总分：100/100', prose).some(issue => issue.code === 'review_evidence_missing'));
   assert.ok(checkReviewEvidence(file, report(), prose + '新增内容').some(issue => issue.code === 'review_evidence_stale'));
+  const extra = { ...value.checks[0], aspect: '重复解释', verdict: 'warning' };
+  const expanded = checkReviewEvidence(file, report({ ...value, checks: [...value.checks, extra, { ...extra, aspect: '节奏建议' }] }), prose);
+  assert.ok(expanded.some(issue => issue.code === 'review_evidence_coverage' && /当前填写 7 项/.test(issue.message)));
+  assert.ok(!expanded.some(issue => issue.code === 'review_evidence_missing'));
+  for (const checks of [value.checks.slice(1), [...value.checks.slice(0, 4), value.checks[0]], [...value.checks.slice(0, 4), extra]])
+    assert.ok(checkReviewEvidence(file, report({ ...value, checks }), prose).some(issue => issue.code === 'review_evidence_coverage'));
   value.checks[0].quote = '原文没有的桥段不能作为任何判断依据';
   assert.ok(checkReviewEvidence(file, report(), prose).some(issue => issue.code === 'review_evidence_quote'));
   value.checks[0].verdict = 'error';

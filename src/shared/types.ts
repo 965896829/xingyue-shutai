@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { reasoningEffortSchema, type ReasoningSnapshot } from './reasoning';
 
 export const stageIds = [
   'S01',
@@ -100,8 +101,11 @@ export const profileSchema = z
     limitMode: z.enum(['official', 'manual']).default('manual'),
     modelLimits: modelLimitsSchema.nullable().default(null),
     stream: z.boolean().default(true),
+    responsesTransport: z.enum(['http', 'websocket']).optional(),
     tools: z.boolean().default(true),
     temperature: z.number().min(0).max(2).nullable().default(null),
+    reasoningEffort: reasoningEffortSchema.nullable().optional(),
+    reasoningRevision: z.number().int().nonnegative().optional(),
     inputPrice: z.number().nonnegative().nullable().default(null),
     outputPrice: z.number().nonnegative().nullable().default(null),
     currency: z.string().default('USD'),
@@ -318,6 +322,9 @@ export type RunStatus =
   | 'awaiting_input'
   | 'awaiting_permission';
 export interface Run {
+  activity?: import('./generation').GenerationActivity;
+  /** Derived for display by the host; never used to advance or time out a task. */
+  creationTiming?: import('./creation-progress').CreationTiming;
   webSearch?: import('./web-search').NativeWebSearchState;
   stateVersion?: number;
   projectId?: string;
@@ -352,9 +359,12 @@ export interface Run {
   >;
   candidateWrites?: Record<string, number>;
   modelBindings?: Record<string, { id: string; version: number }>;
+  reasoningEfforts?: ReasoningSnapshot;
   proposalHash?: string;
   candidateFormat?: 2;
   baseSnapshotId?: string;
+  /** Derived by the host for UI gating; null means the current project is incompatible. */
+  basisRevision?: number | null;
   skillId?: string;
   pipeline?: {
     phase: 'prose' | 'review' | 'memory' | 'ready';
@@ -473,6 +483,7 @@ export interface AppEvent {
   draftVersion?: number;
   runId?: string;
   text?: string;
+  textOffset?: number;
   data?: unknown;
 }
 export interface ClientApi {

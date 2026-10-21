@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { syncGeneration } from '../shared/generation';
 import { id, now, hash } from './domain';
 import { atomicWrite, fileHash, FileStore, safePath } from './storage';
 import { preserveAndMaterialize } from './materialization';
@@ -47,6 +48,7 @@ export class Conversations {
     return JSON.parse(row.data);
   }
   save<K extends keyof Rows>(table: K, row: Rows[K]) {
+    if (table === 'conversation_turns') syncGeneration(row as ConversationTurn);
     if ('conversationId' in row && table !== 'draft_artifacts')
       this.store.db.sql
         .prepare(

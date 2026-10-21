@@ -43,6 +43,8 @@ for (const toolReply of [false, true])
       const message = chat.records.get('conversation_messages', turn.messageId);
       assert.equal(requests, 1);
       assert.equal(saved.status, 'stopped');
+      assert.ok(saved.activity?.startedAt);
+      assert.ok(saved.activity?.stoppedAt);
       assert.equal(message.status, 'stopped');
       assert.equal(message.content, '取消后收到的完整回答');
       assert.equal(saved.messages.at(-1)!.content, message.content);

@@ -1,0 +1,22 @@
+.quality-governance { margin-block: 24px; min-width: 0; }
+.quality-governance h3, .quality-governance h4 { margin: 0 0 14px; }
+.quality-governance p { margin-block: 10px; line-height: 1.7; overflow-wrap: anywhere; }
+.quality-governance label { display: flex; flex-direction: column; gap: 8px; margin-block: 14px; min-width: 0; }
+.quality-governance label:has(input[type="checkbox"]) { flex-direction: row; align-items: center; }
+.quality-governance :is(input:not([type="checkbox"]), textarea, select) { width: 100%; min-width: 0; max-width: 100%; }
+.quality-governance fieldset { border: 1px solid var(--line-strong); border-radius: 12px; padding: 16px; }
+.quality-governance legend { padding-inline: 8px; color: var(--soft); }
+.quality-governance details { margin-block: 16px; }
+.quality-governance summary { cursor: pointer; padding-block: 10px; overflow-wrap: anywhere; }
+.quality-governance dl { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 12px; margin: 12px 0 24px; }
+.quality-governance dl > div { background: var(--surface-high); border-radius: 10px; padding: 14px; }
+.quality-governance dt { color: var(--soft); line-height: 1.6; }
+.quality-governance dd { margin: 8px 0 0; font-size: 20px; }
+.quality-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 16px; }
+.quality-tabs button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--line-strong); border-radius: 8px; color: var(--text); background: var(--surface); cursor: pointer; }
+.quality-tabs button[aria-pressed="true"] { border-color: var(--lime); color: var(--lime); }
+@media (max-width: 640px) {
+  .quality-governance { padding: 16px; }
+  .quality-governance .mw-grid { grid-template-columns: minmax(0,1fr); }
+  .quality-governance dl { grid-template-columns: minmax(0,1fr); }
+}

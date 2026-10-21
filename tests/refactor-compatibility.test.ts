@@ -67,13 +67,29 @@ test('T-002 planning resume omits unsupported input and backend rejects forged i
   }
 });
 
-test('T-003 diagnostics use the trusted build version', async () => {
+test('T-003 diagnostics use the trusted build version and export only safe request failure metadata', async () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-harness-'));
   const service = new Service(path.resolve('resources/skill'), () => {});
   try {
     await service.invoke('project.create', { parent, title: '诊断测试', premise: '合成数据' });
+    const insert = service.store!.db.sql.prepare('INSERT INTO model_attempts VALUES(?,?,?,?)');
+    insert.run('legacy-attempt', 'diagnostic-run', 'unknown', JSON.stringify({ purpose: 'test', usageState: 'unknown' }));
+    insert.run('failed-attempt', 'diagnostic-run', 'unknown', JSON.stringify({
+      purpose: 'test', usageState: 'unknown', createdAt: '2026-10-21T05:52:43Z', completedAt: '2026-10-21T05:59:04Z',
+      failure: { source: 'upstream', code: 'upstream_http2_stream_error', requestId: 'relay-request-1', elapsedMs: 381395, message: 'private-upstream-detail' },
+      request: { authorization: 'private-request-secret' }, response: { text: 'private-manuscript' }
+    }));
     const report = JSON.parse(await service.invoke('diagnostics.export'));
     assert.equal(report.version, buildVersion);
+    const failure = report.attempts.find((attempt: { id: string }) => attempt.id === 'failed-attempt');
+    assert.equal(failure.failureSource, 'upstream');
+    assert.equal(failure.failureCode, 'upstream_http2_stream_error');
+    assert.equal(failure.upstreamRequestId, 'relay-request-1');
+    assert.equal(failure.elapsedMs, 381395);
+    assert.equal(failure.createdAt, '2026-10-21T05:52:43Z');
+    assert.equal(failure.completedAt, '2026-10-21T05:59:04Z');
+    assert.equal(report.attempts.find((attempt: { id: string }) => attempt.id === 'legacy-attempt').failureCode, null);
+    assert.doesNotMatch(JSON.stringify(report), /private-upstream-detail|private-request-secret|private-manuscript/);
   } finally {
     service.close();
   }

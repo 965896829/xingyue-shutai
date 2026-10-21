@@ -1,0 +1,156 @@
+.exit-dialog {
+  width: min(440px, calc(100vw - 48px));
+  padding: 24px 28px;
+  color: var(--ink, var(--text));
+  background: var(--panel, var(--ui-surface, var(--surface)));
+  border: 1px solid var(--line, var(--ui-line));
+  border-radius: 20px;
+  box-shadow: 0 24px 80px var(--shadow, #0005);
+  margin: auto;
+}
+.exit-dialog:not([open]) {
+  display: none;
+}
+.exit-dialog::backdrop {
+  background: var(--scrim, #080808aa);
+  backdrop-filter: blur(3px);
+}
+.exit-dialog > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.exit-dialog h2 {
+  color: var(--ink, var(--text));
+  font-size: 21px;
+  font-weight: 600;
+  margin: 16px 0 10px;
+}
+.exit-dialog p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+  margin: 0;
+}
+.exit-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+.exit-dialog footer button {
+  min-width: 88px;
+}
+.exit-dialog .exit-error {
+  color: var(--danger);
+  margin-top: 10px;
+}
+.app-dialog {
+  max-height: calc(100dvh - 48px);
+  font:
+    14px/1.6 Arial,
+    'Microsoft YaHei',
+    sans-serif;
+}
+.app-dialog > header .brand-logo-symbol,
+.app-dialog > header .brand-symbol {
+  position: relative;
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+.app-dialog .brand-symbol img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.app-dialog .brand-wordmark,
+.app-dialog .brand-fallback {
+  display: none;
+}
+.app-dialog .brand-symbol-night {
+  opacity: 1;
+}
+.app-dialog .brand-symbol-day {
+  opacity: 0;
+}
+:root[data-color-mode='light'] .app-dialog .brand-symbol-night {
+  opacity: 0;
+}
+:root[data-color-mode='light'] .app-dialog .brand-symbol-day {
+  opacity: 1;
+}
+.app-dialog-content {
+  max-height: calc(100dvh - 270px);
+  overflow: auto;
+  min-height: 40px;
+}
+.app-dialog p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.app-dialog button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  border: 1px solid var(--line, var(--ui-line));
+  border-radius: 9px;
+  background: var(--raised, var(--ui-hover, var(--surface-high)));
+  color: var(--ink, var(--text));
+  font: inherit;
+  cursor: pointer;
+}
+.app-dialog button:hover {
+  background: var(--inset, var(--ui-inset, var(--bg)));
+}
+.app-dialog button.primary {
+  background: var(--accent-fill, var(--lime));
+  border-color: transparent;
+  color: var(--on-accent, var(--ui-on-accent, #242a11));
+}
+.app-dialog button.primary:hover {
+  background: var(--accent-hover, var(--lime-dim));
+}
+.app-dialog button.icon {
+  padding: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+.app-dialog button:focus-visible,
+.app-dialog input:focus-visible,
+.app-dialog textarea:focus-visible {
+  outline: 2px solid var(--accent, var(--lime));
+  outline-offset: 3px;
+}
+.app-dialog-field {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.app-dialog-field input,
+.app-dialog-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line, var(--ui-line));
+  border-radius: 9px;
+  color: var(--ink, var(--text));
+  background: var(--inset, var(--ui-inset, var(--bg)));
+  font: inherit;
+}
+.app-dialog-field textarea {
+  resize: vertical;
+}
+@media (max-width: 480px) {
+  .app-dialog {
+    width: calc(100vw - 24px);
+    padding: 20px;
+  }
+}

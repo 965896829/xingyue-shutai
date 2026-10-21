@@ -2,6 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
+import { extractFile } from '@electron/asar';
+const testLog = process.argv[2];
+assert.ok(testLog, '请显式指定本次测试日志：node scripts/check-deliverables.mjs <测试日志路径>');
 const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const releaseRoot = process.env.WENXU_RELEASE_DIR ?? 'release';
 const docs = fs.readdirSync('docs').filter((f) => f.endsWith('.md'));
@@ -102,7 +105,6 @@ const taxonomy = JSON.parse(fs.readFileSync(path.join(tagRoot, 'registry/taxonom
 assert.equal(taxonomy.options.length, 482);
 assert.equal(new Set(taxonomy.options.map((o) => o.id)).size, 482);
 
-const testLog = process.argv[2] ?? '.test-output/tag-upgrade/tests.log';
 const tests = fs.readFileSync(testLog, 'utf8');
 // Node chooses TAP or the spec reporter depending on its output stream.
 const total = Number(tests.match(/(?:#|ℹ) tests (\d+)\r?\n/)?.[1]);
@@ -116,6 +118,17 @@ assert.ok(
 );
 assert.ok(!fs.existsSync(path.join(releaseRoot, 'win-unpacked/文序.exe')), 'Obsolete executable remains in current build');
 const version = pkg.version;
+const archive = path.join(releaseRoot, 'win-unpacked/resources/app.asar');
+for (const asset of filesIn('dist'))
+  assert.deepEqual(extractFile(archive, path.join('dist', asset)), fs.readFileSync(path.join('dist', asset)), `Packaged UI asset differs: ${asset}`);
+const managementEntries = ['admin.html'];
+for (const entry of managementEntries) {
+  const html = extractFile(archive, path.join('dist', entry)).toString('utf8');
+  assert.equal(html, fs.readFileSync(path.join('dist', entry), 'utf8'), `Packaged management entry differs: ${entry}`);
+  const assets = [...html.matchAll(/(?:src|href)="\.\/([^"?#]+\.(?:js|css))"/g)].map(match => match[1]);
+  assert.ok(assets.length, `Management entry has no built assets: ${entry}`);
+  for (const asset of assets) assert.deepEqual(extractFile(archive, path.join('dist', asset)), fs.readFileSync(path.join('dist', asset)), `Packaged management asset differs: ${asset}`);
+}
 const installer = path.join(releaseRoot, `${pkg.build.productName} Setup ${version}.exe`);
 const report = {
   at: new Date().toISOString(),
@@ -140,6 +153,7 @@ const report = {
   },
   testLog: { path: testLog, sha256: sha(testLog) },
   tests: total,
+  managementEntries,
   failures: 0,
   installer: { path: installer, bytes: fs.statSync(installer).size, sha256: sha(installer) },
   buildInputs: {

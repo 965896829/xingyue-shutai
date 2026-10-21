@@ -4,7 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Service } from '../src/core/service';
 import { paths } from '../src/core/domain';
-import { ProjectRecycleBin, RETENTION_MS } from '../src/core/recycle-bin';
+import { ProjectRecycleBin, RETENTION_MS, isRecyclePath } from '../src/core/recycle-bin';
+import { newProjectLocationError } from '../src/shared/project-location';
+import { ApplicationError } from '../src/shared/errors';
 import { FileStore } from '../src/core/storage';
 
 async function fixture() {
@@ -37,6 +39,39 @@ async function fixture() {
   }
   return { parent, data, time, bin, service, root, original, candidate, payload, cleanup };
 }
+
+test('新建只拦截回收站自身及内部目录，普通保存位置含回收站子目录仍能创建', async () => {
+  const f = await fixture();
+  try {
+    const bin = path.join(f.parent, '.文序回收站');
+    fs.mkdirSync(bin);
+    const session = f.service.projectSessionId;
+    const originalId = f.service.store!.db.project().id;
+    for (const parent of [bin, path.join(bin, '旧记录', '作品')]) {
+      assert.equal(isRecyclePath(parent), true);
+      assert.match(newProjectLocationError(parent)!, /选择目录/);
+      await assert.rejects(f.service.invoke('project.create', { parent, title: '不能创建', premise: '输入需要保留' }), (error: unknown) => {
+        assert.ok(error instanceof ApplicationError);
+        assert.equal(error.code, 'VALIDATION_ERROR');
+        assert.ok(error.message.includes(parent), '报错明确显示实际提交的完整保存路径');
+        return true;
+      });
+      assert.equal(f.service.projectSessionId, session);
+      assert.equal(f.service.store!.db.project().id, originalId);
+    }
+    assert.deepEqual(fs.readdirSync(bin), [], '拒绝时不在回收站创建任何文件');
+    assert.equal(fs.readFileSync(path.join(f.root, paths.seed), 'utf8'), f.original);
+    assert.equal(isRecyclePath(f.parent), false);
+    for (const parent of [f.parent, path.join(f.parent, '.文序回收站资料'), String.raw`D:\aiwenxu\新建文件夹`])
+      assert.equal(newProjectLocationError(parent), null);
+    assert.ok(newProjectLocationError(String.raw`D:\aiwenxu\新建文件夹\.文序回收站\旧记录\作品`));
+    const created = await f.service.invoke('project.create', { parent: f.parent, title: '正常新书', premise: '保存目录里有回收站不影响创建' });
+    assert.equal(created.project!.root, path.join(f.parent, '《正常新书》创作档案'));
+    assert.deepEqual(fs.readdirSync(bin), []);
+  } finally {
+    f.cleanup();
+  }
+});
 
 test('trash moves the complete book, restores manuscripts, candidates and revision history', async () => {
   const f = await fixture();
@@ -250,6 +285,31 @@ test('another process lock keeps an expired book recoverable until the lock is r
   } finally {
     f.cleanup();
   }
+});
+
+test('a reused PID in an abandoned legacy lock does not block trash, restore or expiry', async () => {
+  const f = await fixture();
+  const abandoned = JSON.stringify({ pid: process.pid, createdAt: '2000-01-01T00:00:00.000Z' });
+  try {
+    f.service.close();
+    fs.writeFileSync(path.join(f.root, '.novelclient/write-lock.json'), abandoned);
+    const first = f.bin.trash(f.root, '回收验证');
+    assert.equal(fs.readFileSync(path.join(f.payload(first.id), paths.seed), 'utf8'), f.original);
+    fs.writeFileSync(path.join(f.payload(first.id), '.novelclient/write-lock.json'), abandoned);
+    f.bin.restore(first.id);
+    assert.equal(fs.readFileSync(path.join(f.root, paths.seed), 'utf8'), f.original);
+    const second = f.bin.trash(f.root, '回收验证');
+    const lock = path.join(f.payload(second.id), '.novelclient/write-lock.json');
+    fs.writeFileSync(lock, '{"pid":-1}');
+    f.time.now = second.expiresAt;
+    f.bin.sweep();
+    assert.match(f.bin.list()[0].error!, /锁身份无效/);
+    assert.equal(fs.existsSync(f.payload(second.id)), true);
+    fs.writeFileSync(lock, abandoned);
+    f.bin.sweep();
+    assert.equal(f.bin.list().length, 0);
+    assert.equal(fs.existsSync(f.payload(second.id)), false);
+  } finally { f.cleanup(); }
 });
 
 test('journal recovers a completed move and a completed restore after interruption', async () => {

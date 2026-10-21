@@ -131,8 +131,8 @@ export function planningSystemPrompt(input: {
       '本阶段只提出报告，方案标识不等于书名；标签可以为空，此时tagCoverage为空，不伪造标签。'
     ] : []),
     ...(reviewing ? [t.phase === 'reviewing_report'
-      ? '只审核report，核对三案差异、历史重复与regenerationScope冻结范围；返回issues，不复写方向、契约或方案。'
-      : '只审核candidate，核对所选方向、方案依据、标签覆盖和设定拆解的一致性；返回issues，不重新生成契约或plan。'] : []),
+      ? '只审核report，核对三案差异、历史重复与regenerationScope冻结范围；jsonPointer相对于report本身，如/directions/0/storyEngine，整份报告用空字符串，不加/report前缀。返回issues，不复写方向、契约或方案。'
+      : '只审核candidate，核对所选方向、方案依据、标签覆盖和设定拆解的一致性；jsonPointer相对于candidate本身，如/premiseDocument，整份候选用空字符串，不加/candidate前缀。返回issues，不重新生成契约或plan。'] : []),
     ...(t.origin !== 'new' ? [t.phase === 'contract'
       ? '旧书接入或契约修订须兼容正式正文和当前阶段；premiseDocument原样返回currentPremise，不重写旧设定。'
       : '旧书接入或修订须兼容正式正文和当前阶段，不能把推翻旧设定的方案当作普通落实建议。'] : []),

@@ -1,4 +1,8 @@
+import { useDialogs } from './AppDialogs';
 import { invokeCommand } from '../shared/client';
+import { GenerationStatus } from './GenerationStatus';
+import { useLiveText } from './useLiveText';
+import { reasoningLabel } from '../shared/reasoning';
 import { mergeRows as merge, readChatUpdates } from '../shared/chat-history';
 import type { CommandInput, CommandOutput } from '../shared/contracts';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -45,6 +49,7 @@ export function ChatWorkspace({
   onSettings: () => void;
   refresh: () => Promise<void>;
 }) {
+  const dialogs = useDialogs(snapshot.projectSessionId);
   const [selected, select] = useState(''),
     [data, setData] = useState<ChatData>(),
     [inputs, setInputs] = useState<Record<string, string>>({}),
@@ -64,6 +69,7 @@ export function ChatWorkspace({
     });
   const scroll = useRef<HTMLDivElement>(null),
     request = useRef(0);
+  const liveText = useLiveText(snapshot.projectSessionId, selected);
   const cursor = useRef<{ nextBefore: number | null; watermark: number; latestWatermark: number; loading: boolean }>({ nextBefore: null, watermark: 0, latestWatermark: 0, loading: false });
   const conversations = (snapshot.conversations ?? []).filter(conversation => !conversation.runId),
     p = snapshot.project!,
@@ -462,21 +468,15 @@ export function ChatWorkspace({
                 <article key={m.id} id={`message-${m.id}`} className={`conversation-message ${m.role}`}>
                   <small>
                     {m.role === 'user' ? '你' : brand.name} · {new Date(m.createdAt).toLocaleTimeString()}{' '}
-                    {m.role === 'assistant' &&
-                      {
-                        running: '正在回答…',
-                        complete: '',
-                        stopped: '已停止',
-                        unknown: '请求结果未知',
-                        failed: '未完成'
-                      }[m.status]}
+                    {m.role === 'assistant' && <GenerationStatus activity={turn?.activity} running={m.status === 'running'} fallbackStart={m.createdAt}
+                      label={{ running: '', complete: '已完成', stopped: '已停止', unknown: '请求结果未知', failed: '未完成' }[m.status]} />}
                   </small>
                   <div
                     className="markdown-body"
                     dangerouslySetInnerHTML={{
                       __html: DOMPurify.sanitize(
                         marked.parse(
-                          renderNativeCitations(m.content, m.webSearch?.citations) || (m.status === 'running' ? '正在读取资料与组织回答…' : '没有返回正文')
+                          renderNativeCitations(liveText(m.turnId, m.content, m.status === 'running'), m.webSearch?.citations) || (m.status === 'running' ? '' : '没有返回正文')
                         ) as string
                       )
                     }}
@@ -526,6 +526,7 @@ export function ChatWorkspace({
                             · 输入 {turn.usage.input ?? '未知'} / 输出 {turn.usage.output ?? '未知'} tokens ·
                             费用 {turn.usage.cost ?? '未知'} {turn.usage.currency}
                           </p>
+                          <p>本轮推理强度：{reasoningLabel(turn.reasoningEfforts?.[turn.profileId])}</p>
                           {turn.budgets.map((b) => (
                             <p key={b.round}>
                               第 {b.round} 轮：按 UTF-8 字节保守估算 {b.estimatedInput} / 输入额度{' '}
@@ -558,8 +559,8 @@ export function ChatWorkspace({
                       {['unknown', 'failed', 'stopped'].includes(m.status) && turn?.kind === 'discussion' && (
                         <button
                           disabled={modelBusy || busy}
-                          onClick={() => {
-                            if (confirm('重新发送会产生新的模型请求和费用，是否继续？'))
+                          onClick={async () => {
+                            if (await dialogs.confirm('重新发送会产生新的模型请求和费用，是否继续？', { title: '重新发送这条消息？', confirmLabel: '确认重新发送', cancelLabel: '暂不发送' }))
                               void call('chat.retry', {
                                 id: turn.id,
                                 profileId,
@@ -660,7 +661,7 @@ export function ChatWorkspace({
               </button>
               <button
                 onClick={async () => {
-                  if (confirm('重新读取将替换编辑框里的未保存修改，是否继续？'))
+                  if (await dialogs.confirm('重新读取将替换编辑框里的未保存修改，是否继续？', { title: '重新读取本地修改？', confirmLabel: '重新读取', cancelLabel: '继续编辑' }))
                     await openDraft(draft.id, false);
                 }}
               >

@@ -5,9 +5,11 @@ import { DatabaseSync } from 'node:sqlite';
 import { z } from 'zod';
 import { atomicWrite, FileStore } from './storage';
 import { checkDatabaseCompatibility } from './compatibility';
+import { assertProjectLockInactive, parseProjectLock } from './project-lock';
+import { isProjectRecyclePath, projectRecycleDirectory } from '../shared/project-location';
 
 export const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
-const BIN = '.文序回收站';
+const BIN = projectRecycleDirectory;
 const recordSchema = z
   .object({
     id: z.string().uuid(),
@@ -23,7 +25,7 @@ const recordSchema = z
   .refine((r) => r.expiresAt === r.deletedAt + RETENTION_MS, '回收站保留时间记录不完整，停止自动清理');
 export type TrashRecord = z.infer<typeof recordSchema>;
 export function isRecyclePath(root: string) {
-  return path.resolve(root).split(path.sep).includes(BIN);
+  return isProjectRecyclePath(path.resolve(root));
 }
 export function samePath(a: string, b: string) {
   const normalize = (p: string) =>
@@ -73,14 +75,7 @@ function removeOwnedTree(root: string, target = root) {
 function assertUnlocked(root: string) {
   const lock = path.join(root, '.novelclient', 'write-lock.json');
   if (!fs.existsSync(lock)) return;
-  const { pid } = JSON.parse(fs.readFileSync(checked(lock), 'utf8'));
-  try {
-    process.kill(pid, 0);
-  } catch (e) {
-    if ((e as NodeJS.ErrnoException).code === 'ESRCH') return;
-    throw e;
-  }
-  throw new Error('这部作品正在另一个窗口或进程中打开，暂缓清理');
+  assertProjectLockInactive(parseProjectLock(fs.readFileSync(checked(lock), 'utf8')), '这部作品正在另一个窗口或进程中打开，暂缓清理');
 }
 
 export class ProjectRecycleBin {

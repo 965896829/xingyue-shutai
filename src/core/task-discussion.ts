@@ -3,8 +3,13 @@ import type { FileStore } from './storage';
 import type { Run } from '../shared/types';
 import { requestErrorText, retryNeedsConfirmation } from '../shared/run-presentation';
 import { taskProblemLinks, taskSectionId, taskFileId } from '../shared/task-links';
+import { proposalHash } from './storage';
 
-export const taskRunHash = (run: Run) => hash(JSON.stringify(run));
+export const taskRunHash = (run: Run, version: 1 | 2 = 2) => hash(JSON.stringify(version === 1 ? run : {
+  candidate: proposalHash(run), id: run.id, status: run.status, accepted: run.accepted,
+  request: run.request, profileId: run.profileId, profileVersion: run.profileVersion,
+  input: run.input, permission: run.permission, issues: run.issues, error: run.error, response: run.responseText
+}));
 
 export function taskDiscussionContext(store: FileStore, runId: string, displayedError?: string) {
   const run = store.db.run(runId), project = store.db.project();

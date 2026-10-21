@@ -104,11 +104,11 @@ export class SkillRegistry {
       const relative = path.posix.normalize(path.posix.join(path.posix.dirname(entry.path), match[1]));
       if (!relative.includes('/naming/')) files.add(relative);
     }
-    const rawMode = options.outputMode && options.outputMode !== 'tools';
+    const rawMode = options.outputMode === 'prose';
     const specialist = content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
       .split(/(?=^## )/m).filter(section => !rawMode || !/^## 输出(?:契约)?(?:\s|$)/.test(section)).join('');
     // Validate every declared dependency even when its tool-output instructions are
-    // omitted from a raw prose/JSON subcall. Output mode never bypasses resource locks.
+    // omitted from a prose subcall. Review and memory phases submit tool candidates.
     const references = [...files].map(file => ({ file, content: this.read(file) }));
     return {
       entry,

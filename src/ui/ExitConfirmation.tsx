@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { brand } from '../shared/brand';
 import { BrandLogo } from './BrandLogo';
+import './dialogs.css';
 
 export function ExitConfirmation() {
   const [requestId, setRequestId] = useState<string | null>(null);

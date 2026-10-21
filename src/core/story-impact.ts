@@ -4,6 +4,7 @@ import type { FileStore } from './storage';
 import { hash, paths } from './domain';
 import { chapterSpan, pastPlanText } from './context-slices';
 import { sameStoryText } from './memory-source';
+import { candidateChangesForCurrentSettings, currentSettingsSourceHash } from './runtime-settings';
 
 export const isPlan = (file: string) => /^(05_|06_)/.test(file);
 export const nextUnwrittenChapter = (p: ProjectState) => Math.max(p.chapter, 1, ...Object.keys(p.chapters).map(n => Number(n) + 1));
@@ -89,8 +90,13 @@ export function continuityIssues(store: FileStore, run: Run): Issue[] {
       if (isPlan(change.path)) {
         if (!isFuturePlan(change.path, scope.fromChapter)) fail('不能改写生效章节之前的章节设计。', change.path);
         const before = store.db.document(change.path)?.hash ? store.readAccepted(change.path).content : '';
-        if (!sameStoryText(pastPlanText(before, scope.fromChapter), pastPlanText(change.content, scope.fromChapter)))
-          fail('后续调整改变了生效章节之前的计划段落，请保留已发生部分。', change.path);
+        const previous = pastPlanText(before, scope.fromChapter), proposed = pastPlanText(change.content, scope.fromChapter);
+        if (!sameStoryText(previous, proposed)) {
+          const oldLines = previous.split('\n'), newLines = proposed.split('\n');
+          const first = oldLines.findIndex((line, index) => !sameStoryText(line, newLines[index] ?? ''));
+          const at = first < 0 ? oldLines.length : first;
+          fail(`后续调整改变了生效章节之前的计划段落，请保留已发生部分。首处差异：原“${(oldLines[at] ?? '无段落').slice(0, 120)}”，新“${(newLines[at] ?? '无段落').slice(0, 120)}”。新增承接说明请放在第${scope.fromChapter}章起或全局分节下。`, change.path);
+        }
       }
     }
     for (const fact of run.facts) {
@@ -102,13 +108,13 @@ export function continuityIssues(store: FileStore, run: Run): Issue[] {
     fail('纠正记忆提取不能改动大纲或原文；需要改动故事时请选择故事修订。');
   if (run.memoryRepair) {
     for (const [file, expected] of Object.entries(run.memoryRepair.sourceHashes ?? {}))
-      if (store.db.document(file)?.hash !== expected || store.inspect(file)?.status !== 'accepted')
+      if (store.db.document(file)?.hash !== currentSettingsSourceHash(store, run.baseSnapshotId, { path: file, hash: expected }) || store.inspect(file)?.status !== 'accepted')
         fail('关联修订的变更来源已改变，请重新建立核对任务。', file);
     for (const change of run.changes)
       if (!run.memoryRepair.paths.includes(change.path) && !change.path.startsWith('04_') && change.path !== paths.impact)
         fail('关联修订产生了核对范围之外的文件。', change.path);
     const humanText = (content: string) => content.replace(/(?:## 可追溯事实记录\s*)?<!-- wenxu-facts:v1 -->\s*```json\s*\n[\s\S]*?\n```/g, '').trim();
-    for (const change of run.changes.filter(change => run.memoryRepair!.readonlySources?.includes(change.path))) {
+    for (const change of candidateChangesForCurrentSettings(store, run).filter(change => run.memoryRepair!.readonlySources?.includes(change.path))) {
       const before = store.readAccepted(change.path).content;
       const unchanged = change.path.startsWith('04_') ? sameStoryText(humanText(before), humanText(change.content)) : before === change.content;
       if (!unchanged) fail('不能改写已经确认的变更依据来迁就旧计划；请另行提出故事修订。', change.path);

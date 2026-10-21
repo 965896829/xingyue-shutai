@@ -1,3 +1,4 @@
+import { useDialogs } from './AppDialogs';
 import { invokeCommand } from '../shared/client';
 import { useEffect, useRef, useState } from 'react';
 import type { Fact, Snapshot } from '../shared/types';
@@ -241,6 +242,7 @@ export function MemoryStudio({
     [correction, setCorrection] = useState(''),
     [correctionKind, setCorrectionKind] = useState('plan'),
     [fromChapter, setFromChapter] = useState(Math.max(p.chapter, 1, ...Object.keys(p.chapters).map(n => Number(n) + 1)));
+  const dialogs = useDialogs(snapshot.projectSessionId);
   const firstUnwritten = Math.max(p.chapter, 1, ...Object.keys(p.chapters).map(n => Number(n) + 1));
   useEffect(() => { setFromChapter(value => Math.max(value, firstUnwritten)); }, [firstUnwritten]);
   const seq = useRef(0);
@@ -563,8 +565,8 @@ export function MemoryStudio({
             <div className="impact-item" key={file}>
               <span>{file.split('/').at(-1)}</span>
               <button
-                onClick={() => {
-                  const reason = prompt('核对结果');
+                onClick={async () => {
+                  const reason = await dialogs.prompt('记录本次核对的结果，作为后续创作的参考。', { title: '记录核对结果', inputLabel: '核对结果', multiline: true, confirmLabel: '保存记录' });
                   if (reason)
                     void invokeCommand('impact.review', { path: file, reason })
                       .then(onRefresh)

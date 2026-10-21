@@ -1,3 +1,4 @@
+import { useDialogs } from './AppDialogs';
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
@@ -9,6 +10,8 @@ import { requestErrorText, retryNeedsConfirmation } from '../shared/run-presenta
 import { taskProblemLinks, taskTurnId } from '../shared/task-links';
 import { renderNativeCitations } from '../shared/web-search';
 import { WebSearchEvidence } from './WebSearchEvidence';
+import { GenerationStatus } from './GenerationStatus';
+import { useLiveText } from './useLiveText';
 
 type ChatPage = CommandOutput<'chat.page'>;
 
@@ -23,7 +26,9 @@ export function TaskDiscussion({ conversationId, projectSessionId, run, profileI
   onRun: (id: string) => void;
   onNavigate: (href: string) => void;
 }) {
+  const dialogs = useDialogs(projectSessionId);
   const [data, setData] = useState<ChatPage>();
+  const liveText = useLiveText(projectSessionId, conversationId);
   const [error, setError] = useState('');
   const [working, setWorking] = useState(false);
   const cursor = useRef({ generation: 0, latest: 0, request: 0 });
@@ -56,6 +61,7 @@ export function TaskDiscussion({ conversationId, projectSessionId, run, profileI
     const unsubscribe = window.wenxu?.onEvent(event => {
       if (event.projectSessionId && event.projectSessionId !== projectSessionId) return;
       if (event.resource && (event.resource !== 'chat' || event.resourceId && event.resourceId !== conversationId)) return;
+      if (event.type === 'delta') return;
       if (!timer) timer = setTimeout(() => { timer = undefined; void load(); }, 160);
     });
     return () => { cursor.current.generation++; unsubscribe?.(); clearTimeout(timer); };
@@ -97,21 +103,24 @@ export function TaskDiscussion({ conversationId, projectSessionId, run, profileI
     {data?.messages.map(message => {
       const turn = data.turns.find(turn => turn.id === message.turnId);
       return <article key={message.id} id={message.role === 'assistant' ? taskTurnId(message.turnId) : undefined} className={message.role === 'user' ? 'user-message' : 'assistant-message'}>
-        <small>{message.role === 'user' ? '你' : '任务助手'}</small>
-        <div className="markdown-body" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(renderNativeCitations(message.content, message.webSearch?.citations) || (message.status === 'running' ? '正在查看当前任务并回答…' : '本次没有返回回答')) as string, { FORBID_TAGS: ['img', 'style', 'iframe'] }) }} />
+        <small>{message.role === 'user' ? '你' : '任务助手'}{' '}
+          {message.role === 'assistant' && <GenerationStatus activity={turn?.activity} running={message.status === 'running'} fallbackStart={message.createdAt}
+            label={{ running: '', complete: '已完成', stopped: '已停止', unknown: '请求结果未知', failed: '未完成' }[message.status]} />}
+        </small>
+        <div className="markdown-body" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(renderNativeCitations(liveText(message.turnId, message.content, message.status === 'running'), message.webSearch?.citations) || (message.status === 'running' ? '' : '本次没有返回回答')) as string, { FORBID_TAGS: ['img', 'style', 'iframe'] }) }} />
         {message.role === 'assistant' && <>
           <WebSearchEvidence state={message.webSearch} running={message.status === 'running'} />
           {turn?.error && <p className="inline-warning">{requestErrorText(turn.error)}</p>}
-          {turn && ['unknown', 'failed', 'stopped'].includes(message.status) && <button disabled={working || busy} onClick={() => {
-            if (confirm('重新发送会产生新的模型请求和费用，是否继续？')) void act(async () => { await invokeCommand('chat.retry', { id: turn.id, profileId, confirmRetry: true }); });
+          {turn && ['unknown', 'failed', 'stopped'].includes(message.status) && <button disabled={working || busy} onClick={async () => {
+            if (await dialogs.confirm('重新发送会产生新的模型请求和费用，是否继续？', { title: '重新发送这条消息？', confirmLabel: '确认重新发送', cancelLabel: '暂不发送' })) void act(async () => { await invokeCommand('chat.retry', { id: turn.id, profileId, confirmRetry: true }); });
           }}>重新发送这条消息</button>}
           {data.proposals.filter(proposal => proposal.turnId === message.turnId).map(proposal => <section className="approval-box" key={proposal.id} aria-label="任务修复方案">
             <h3>{proposal.goal}</h3>
             <p>{proposal.scope}</p>
             {proposal.status === 'pending' ? <div className="button-row">
-              <button className="primary" disabled={working || busy} onClick={() => {
+              <button className="primary" disabled={working || busy} onClick={async () => {
                 const retryUnknown = !!proposal.resumeRunId && retryNeedsConfirmation(run);
-                if (retryUnknown && !confirm('上次请求结果未知，修复会产生新的请求，可能重复计费。确认继续？')) return;
+                if (retryUnknown && !await dialogs.confirm('上次请求结果未知，修复会产生新的请求，可能重复计费。确认继续？', { title: '重新请求并修复？', confirmLabel: '确认开始修复', cancelLabel: '暂不重试' })) return;
                 void act(async () => {
                   const result = await invokeCommand('proposal.confirm', { id: proposal.id, version: proposal.version, retryUnknown });
                   if (result.kind !== 'draft') onRun(result.id);

@@ -1,3 +1,4 @@
+import { ModelControl } from './ModelControl';
 import { invokeCommand } from '../shared/client';
 import type { Invoke } from '../shared/contracts';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -13,10 +14,9 @@ import {
   type TagInput,
   type TagCatalog
 } from '../shared/tags';
-import './tags.css';
 import { approvedCreation, planKinds, payoffStages } from '../shared/creation';
 import { TitleWorkspace } from './TitleWorkspace';
-import { creationStep, creationValidationIssues } from '../shared/run-presentation';
+import { creationDirectionId, creationStep, creationValidationIssues, runHasCurrentBasis } from '../shared/run-presentation';
 import { CreationTaskStatus, CreationChecks, type CreationCheckItem } from './CreationTaskStatus';
 
 const invoke: Invoke = (command, args) => invokeCommand(command, args);
@@ -221,9 +221,11 @@ export function TagWorkspace({
     draft = snapshot.tagDraft,
     accepted = approvedCreation(p);
   const [input, setInput] = useState<TagInput>(draft ? cleanTagInput(draft) : emptyTagInput());
-  const [busy, setBusy] = useState(false),
+  const [actionBusy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [note, setNote] = useState('');
+  const [modelPending, setModelPending] = useState(false);
+  const busy = actionBusy || modelPending;
   const [direction, setDirection] = useState(''),
     [resolutions, setResolutions] = useState<Record<string, string>>({});
   const [rework, setRework] = useState(''),
@@ -288,7 +290,7 @@ export function TagWorkspace({
     setCoverage(null);
   }, [draft?.inputHash]);
   useEffect(() => {
-    setDirection(t?.selectedDirectionId || report?.recommendedDirectionId || '');
+    setDirection(creationDirectionId(run));
     setResolutions({});
     setReviewReason('');
     setDiff(null);
@@ -318,7 +320,7 @@ export function TagWorkspace({
   };
   const saved =
     !!draft &&
-    (!run || run.baseRevision === p.revision) &&
+    (!run || runHasCurrentBasis(run, p)) &&
     draft.preferences.targetWords === p.config.targetWords &&
     draft.preferences.pov === p.config.pov &&
     draft.preferences.style === p.config.style &&
@@ -404,6 +406,7 @@ export function TagWorkspace({
                 : '先核对已有设定，保存后保持当前章节和阶段。'}
           </p>
         </div>
+        <ModelControl profiles={snapshot.profiles} profileId={profileId} onProfileChange={setProfileId} disabled={actionBusy} onPendingChange={setModelPending} label="策划模型与推理强度" />
         <button onClick={editInput} disabled={busy || running}>
           {run || accepted ? '修改想法与标签' : '填写创作想法'}
         </button>
@@ -426,24 +429,6 @@ export function TagWorkspace({
       >
         <summary>{run || accepted ? '开书想法、标签与模型' : '从你的想法开始'}</summary>
         <TagForm value={input} onChange={setInput} disabled={running || busy} optionalTags />
-        <label className="creation-model">
-          使用模型
-          <select
-            aria-label="策划模型"
-            value={profileId}
-            onChange={(e) => setProfileId(e.target.value)}
-            disabled={busy || running}
-          >
-            <option value="">选择模型</option>
-            {snapshot.profiles
-              .filter((v) => v.protocol !== 'images')
-              .map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name} · {v.model}
-                </option>
-              ))}
-          </select>
-        </label>
         <details>
           <summary>标签资料与单独保存</summary>
           <div className="tag-actions">

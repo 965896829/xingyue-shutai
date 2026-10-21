@@ -11,10 +11,47 @@ import { sendOnEnter } from '../src/ui/composer-keyboard';
 import { taskProblemLinks, taskIssueId } from '../src/shared/task-links';
 import { taskDiscussionContext } from '../src/core/task-discussion';
 import { fixture as documentFixture } from './fixtures/workflow';
-import { creationStep, creationTaskState, creationValidationIssues, retryNeedsConfirmation } from '../src/shared/run-presentation';
+import { creationDirectionId, creationStep, creationTaskState, creationValidationIssues, retryNeedsConfirmation } from '../src/shared/run-presentation';
 
 const profile: SecretProfile = { ...profileSchema.parse({ id: 'controls', name: '交互验收', protocol: 'chat', baseUrl: 'http://127.0.0.1:9999/v1', model: 'fixture', contextLimit: 180000, outputLimit: 4000, stream: false }), apiKey: 'fixture-only' };
 const response = (text = '已按要求处理。'): ModelResult => ({ text, calls: [], native: null, usage: { input: 20, output: 20, cost: 0, currency: 'USD' }, stop: 'complete' });
+
+test('保留非推荐案或单案重做后恢复同一方向，但不会替作者确认', () => {
+  for (const id of ['d1', 'd2']) for (const keepDirectionIds of [[id], undefined]) {
+    const run = { planning: { phase: 'awaiting_direction',
+      report: { directions: [{ id: 'd0' }, { id: 'd1' }, { id: 'd2' }], recommendedDirectionId: 'd0' },
+      regenerate: { directionId: id, keepDirectionIds }
+    } } as Run;
+    const saved = JSON.stringify(run);
+    assert.equal(creationDirectionId(run), id);
+    assert.equal(creationDirectionId(JSON.parse(saved)), id, '刷新后仍从持久化任务恢复保留案');
+    assert.equal(JSON.stringify(run), saved);
+    assert.equal(run.planning!.selectedDirectionId, undefined);
+    assert.equal(creationStep(run), 1);
+  }
+});
+
+test('整组三案重抽使用新推荐，失效方向与旧任务安全回退', () => {
+  assert.equal(creationDirectionId(), '');
+  assert.equal(creationDirectionId({ planning: {} } as Run), '');
+  const run = { planning: { phase: 'awaiting_direction',
+    report: { directions: [{ id: 'd0' }, { id: 'd1' }, { id: 'd2' }], recommendedDirectionId: 'd2' },
+    regenerate: { directionId: '', keepDirectionIds: [] }
+  } } as unknown as Run;
+  assert.equal(creationDirectionId(run), 'd2', '即使新三案复用旧 ID，也不能沿用旧保留案');
+  run.planning!.regenerate!.directionId = 'removed';
+  assert.equal(creationDirectionId(run), 'd2');
+  delete run.planning!.regenerate;
+  assert.equal(creationDirectionId(run), 'd2');
+});
+
+test('作者最终确认的方向优先于重做记录和模型推荐', () => {
+  const run = { planning: { selectedDirectionId: 'd2',
+    report: { directions: [{ id: 'd0' }, { id: 'd1' }, { id: 'd2' }], recommendedDirectionId: 'd0' },
+    regenerate: { directionId: 'd1', keepDirectionIds: ['d1'] }
+  } } as Run;
+  assert.equal(creationDirectionId(run), 'd2');
+});
 
 test('开书步骤以方案确认作为命名入口，生成候选或选择方向不会跳到保存', () => {
   assert.equal(creationStep(), 1);
@@ -164,6 +201,26 @@ test('用所选模型继续会带入输入框修改意见，失败任务能恢�
     assert.notEqual(next, run.id);
     assert.match(text, /只调整叙述视角/);
     assert.equal(service.store!.db.run(next).error, undefined);
+  } finally { await service.drain(); }
+});
+
+test('回答作者问题时模型配置已更新，重建任务仍携带本次答案和原候选', async () => {
+  let text = '';
+  const { service, run } = await fixture(async (_profile, _system, messages) => { text = JSON.stringify(messages); return response(); }, 'awaiting_input');
+  try {
+    run.input = { question: '是否保留检修员身份？' };
+    run.changes = [service.change(paths.seed, '待核对的原有设定')];
+    service.store!.db.saveRun(run);
+    service.profiles[0].version++;
+    const next = await service.invoke('run.answer', { id: run.id, answer: '保留检修员身份，擅长现场排障' });
+    await done(service);
+    assert.notEqual(next, run.id);
+    assert.match(text, /保留检修员身份，擅长现场排障/);
+    assert.match(text, /待核对的原有设定/);
+    assert.equal(service.store!.db.run(run.id).input?.answer, '保留检修员身份，擅长现场排障');
+    assert.equal(service.store!.db.run(run.id).status, 'discarded');
+    assert.equal(service.store!.db.run(next).profileVersion, service.profiles[0].version);
+    assert.equal(service.store!.db.project().stage, 'S01');
   } finally { await service.drain(); }
 });
 

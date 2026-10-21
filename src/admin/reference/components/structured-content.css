@@ -1,0 +1,445 @@
+.sc-page {
+  min-width: 0;
+}
+.sc-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin: 8px 0 28px;
+}
+.sc-heading h1 {
+  font-size: 30px;
+  margin: 10px 0;
+}
+.sc-heading p,
+.sc-section-heading p {
+  color: var(--text-muted, #999);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.sc-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent, #d4ef68);
+  font-size: 12px;
+}
+.sc-tag {
+  display: inline-block;
+  border: 1px solid var(--ui-line, #ffffff1a);
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--ui-soft, #bdc4ac);
+  white-space: nowrap;
+}
+.sc-toolbar,
+.sc-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}
+.sc-toolbar {
+  justify-content: space-between;
+}
+.sc-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+.sc-toolbar select {
+  min-width: 150px;
+}
+.sc-notice {
+  padding: 15px 18px;
+  margin: 18px 0;
+  color: var(--ui-soft, #bdc2ae);
+  background: var(--ui-accent-bg, #d4ef6809);
+  border: 1px solid var(--ui-accent-line, #d4ef6824);
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.sc-config-grid {
+  display: grid;
+  grid-template-columns: 195px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.sc-modules {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid var(--ui-line, #ffffff13);
+  border-radius: 10px;
+  background: var(--ui-hover, #ffffff02);
+}
+.sc-modules button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 12px;
+  background: none;
+  color: var(--ui-soft, #b6b8b0);
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+.sc-modules button.active,
+.sc-project.active {
+  background: var(--ui-accent-bg, #d4ef6812);
+  color: var(--ui-accent, #d4ef68);
+}
+.sc-modules small {
+  font-size: 10px;
+  opacity: 0.7;
+}
+.sc-box {
+  min-width: 0;
+  border: 1px solid var(--ui-line, #ffffff15);
+  border-radius: 12px;
+  padding: 22px;
+  background: var(--ui-hover, #ffffff02);
+}
+.sc-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+.sc-section-heading h2 {
+  font-size: 21px;
+  margin: 0;
+}
+.sc-section-heading h3 {
+  font-size: 15px;
+  margin: 14px 0 0;
+}
+.sc-section-heading small {
+  color: var(--ui-muted, #888);
+  font-size: 11px;
+}
+.sc-field-list {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0 24px;
+}
+.sc-field {
+  display: grid;
+  grid-template-columns: 1fr 1fr 110px 65px 32px;
+  gap: 12px;
+  padding: 15px;
+  background: var(--ui-hover, #1113);
+  border: 1px solid var(--ui-line, #ffffff12);
+  border-radius: 8px;
+}
+.sc-field label,
+.sc-evidence-controls label {
+  font-size: 11px;
+  color: var(--ui-muted, #9b9f93);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.sc-field input,
+.sc-field select {
+  width: 100%;
+  min-width: 0;
+}
+.sc-field-description {
+  grid-column: 1/-1;
+}
+.sc-field .sc-check {
+  flex-direction: row;
+  align-items: center;
+  padding-top: 20px;
+}
+.sc-field .sc-check input {
+  width: 15px;
+}
+.sc-field .icon-button {
+  align-self: center;
+  margin-top: 18px;
+}
+.sc-form {
+  display: grid;
+  gap: 18px;
+}
+.sc-form .field,
+.sc-box .field {
+  margin-bottom: 17px;
+}
+.sc-form .field input,
+.sc-form .field textarea,
+.sc-form .field select,
+.sc-box .field input,
+.sc-box .field textarea {
+  width: 100%;
+}
+.sc-history {
+  border-bottom: 1px solid var(--ui-line, #ffffff12);
+  padding: 18px 0;
+  display: block;
+}
+.sc-history .sc-tag {
+  margin-left: 10px;
+}
+.sc-history p {
+  color: var(--ui-muted, #aaa);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.sc-history-button {
+  background: none;
+  text-align: left;
+  width: 100%;
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  border-bottom: 1px solid var(--ui-line, #ffffff12);
+}
+.sc-history-button > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+.sc-history-button span,
+.sc-history-button small {
+  color: var(--ui-muted, #858b7a);
+  font-size: 11px;
+}
+.sc-project-grid {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.sc-project-grid > aside {
+  padding: 14px;
+}
+.sc-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.sc-search input {
+  width: 100%;
+  min-width: 0;
+}
+.sc-project {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--ui-soft, #b7baae);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.sc-project strong {
+  font-size: 13px;
+}
+.sc-project small {
+  font-size: 11px;
+  opacity: 0.7;
+}
+.sc-table-wrap {
+  overflow: auto;
+  max-width: 100%;
+  margin: 18px 0;
+}
+.sc-table-wrap table {
+  width: 100%;
+  min-width: 560px;
+}
+.sc-table-wrap td {
+  vertical-align: top !important;
+  white-space: normal !important;
+  max-width: 420px;
+}
+.sc-table-wrap td small {
+  display: block;
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--ui-muted, #858b7a);
+}
+.sc-quote {
+  font-size: 11px;
+  color: var(--ui-muted, #959b8a);
+  line-height: 1.8;
+  max-width: 460px;
+  white-space: normal;
+}
+.sc-fieldset {
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.sc-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.sc-evidence-controls {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+}
+.sc-evidence-controls input {
+  width: 90px;
+}
+.sc-source summary {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  cursor: pointer;
+  margin: 10px 0;
+}
+.sc-source pre,
+.sc-diff pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.9;
+  padding: 18px;
+  background: var(--ui-hover, #090b0a88);
+  border: 1px solid var(--ui-line, #ffffff12);
+  border-radius: 8px;
+  max-height: 420px;
+  overflow: auto;
+}
+.sc-diff {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.sc-diff section {
+  min-width: 0;
+}
+.sc-diff h3 {
+  font-size: 13px;
+}
+.sc-error {
+  color: var(--ui-danger, #f09b90);
+  white-space: pre-wrap;
+  font-size: 12px;
+}
+.sc-success {
+  color: var(--ui-accent, #d4ef68);
+  font-size: 13px;
+}
+.sc-project-data .sc-toolbar input {
+  min-width: 130px;
+  flex: 1;
+}
+.sc-box .pagination {
+  padding: 14px 0 0;
+  gap: 7px;
+  font-size: 10px;
+}
+.sc-box .pagination > div {
+  gap: 5px;
+}
+.sc-page button:focus-visible,
+.sc-page input:focus-visible,
+.sc-page select:focus-visible,
+.sc-page textarea:focus-visible {
+  outline: 2px solid var(--ui-accent-line, #d4ef68);
+  outline-offset: 3px;
+}
+.sc-page :disabled {
+  opacity: 0.6;
+}
+.sc-page textarea {
+  resize: vertical;
+}
+.sc-actions .button {
+  white-space: nowrap;
+}
+@media (max-width: 1100px) {
+  .sc-project-grid {
+    grid-template-columns: 205px minmax(0, 1fr);
+  }
+  .sc-field {
+    grid-template-columns: 1fr 1fr 100px;
+  }
+  .sc-field .sc-check {
+    padding: 0;
+  }
+  .sc-field .icon-button {
+    margin: 0;
+  }
+  .sc-config-grid {
+    grid-template-columns: 170px minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .sc-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .sc-config-grid,
+  .sc-project-grid {
+    grid-template-columns: 1fr;
+  }
+  .sc-modules {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .sc-toolbar {
+    align-items: stretch;
+  }
+  .sc-toolbar > label {
+    width: 100%;
+  }
+  .sc-toolbar select {
+    min-width: 0;
+    flex: 1;
+    max-width: 100%;
+  }
+  .sc-toolbar .ref-actions {
+    flex-wrap: wrap;
+  }
+  .sc-box {
+    padding: 16px;
+  }
+  .sc-field {
+    grid-template-columns: 1fr 1fr;
+  }
+  .sc-field .sc-check {
+    padding: 0;
+  }
+  .sc-project-grid > aside {
+    max-height: 270px;
+    overflow: auto;
+  }
+  .sc-two,
+  .sc-diff {
+    grid-template-columns: 1fr;
+  }
+  .sc-evidence-controls {
+    flex-wrap: wrap;
+  }
+  .sc-page .tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .sc-page .tabs button {
+    flex-shrink: 0;
+  }
+}
