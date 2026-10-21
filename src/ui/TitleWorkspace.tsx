@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { invokeCommand as invoke } from '../shared/client';
 import { approvedCreation, payoffStages, titleRules } from '../shared/creation';
 import type { Snapshot } from '../shared/types';
+import type { TitleStyleProfile } from '../shared/title-style';
 import { CreationTaskStatus } from './CreationTaskStatus';
+import { runHasCurrentBasis } from '../shared/run-presentation';
 
 export function TitleWorkspace({
   snapshot,
@@ -28,7 +30,7 @@ export function TitleWorkspace({
     (r) =>
       r.naming &&
       r.naming.sourceRunId === sourceRunId &&
-      r.baseRevision === p.revision &&
+      runHasCurrentBasis(r, p) &&
       r.naming.planHash === planHash &&
       !r.accepted &&
       !['discarded', 'stale'].includes(r.status)
@@ -41,6 +43,15 @@ export function TitleWorkspace({
     [rework, setRework] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  const [styleProfile, setStyleProfile] = useState<TitleStyleProfile | null>(null);
+  const [styleError, setStyleError] = useState('');
+  useEffect(() => {
+    let active = true;
+    void invoke('titles.styleProfile').then(value => {
+      if (active) setStyleProfile(value);
+    }).catch(e => { if (active) setStyleError((e as Error).message); });
+    return () => { active = false; };
+  }, []);
   const running = snapshot.chatBusy || snapshot.runs.some((r) => r.status === 'running');
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -66,7 +77,21 @@ export function TitleWorkspace({
         {sourceRunId
           ? '书名根据已确认的方案生成。选好后，在下方保存作品。'
           : '根据当前作品方案生成或核对书名。'}
+        每轮生成六个候选；再次生成时参考同一方案的命名历史。
       </p>
+      {styleProfile && (
+        <details className="title-style-reference">
+          <summary>番茄命名参考 · {styleProfile.verifiedAt}</summary>
+          <p className="muted">{styleProfile.scope}</p>
+          {styleProfile.examples.map(example => (
+            <p key={example.url}>
+              <a href={example.url} target="_blank" rel="noreferrer">《{example.title}》</a>：{example.patternNote}
+            </p>
+          ))}
+          <p className="muted">参考命名方式，具体承诺以你的作品方案为准。可在下方补充长名、短名和卖点偏好。</p>
+        </details>
+      )}
+      {styleError && <p role="alert" className="creation-action-error">命名参考加载失败：{styleError}</p>}
       {p.titleReviewRequired && !sourceRunId && (
         <p className="inline-warning" role="status">
           作品方案已改变，请核对当前书名「{p.title}」是否仍与内容一致。可以填写原书名进行核对，无需一定改名。

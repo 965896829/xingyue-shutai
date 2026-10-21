@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "version": "fanqie-original-long-form-policy-2026-10-19-v1",
+  "platform": "fanqie",
+  "scope": "original_long_form",
+  "scopeLabel": "番茄原创长篇小说；按 2026-10-19 核对的公开资料",
+  "verifiedAt": "2026-10-19",
+  "readingCardinality": [
+    {
+      "id": "reading.main.cardinality",
+      "groupId": "reading.main",
+      "min": 1,
+      "max": 1,
+      "verification": "verified",
+      "sourceIds": ["FQ-TAGS-20260316", "FQ-TAGS-20260824"],
+      "message": "阅读标签主分类必选且仅选 1 项。"
+    },
+    {
+      "id": "reading.theme.cardinality",
+      "groupId": "reading.theme",
+      "min": 0,
+      "max": 2,
+      "verification": "verified",
+      "sourceIds": ["FQ-TAGS-20260316", "FQ-TAGS-20260824"],
+      "message": "阅读标签主题可不选，最多选择 2 项。"
+    },
+    {
+      "id": "reading.role.cardinality",
+      "groupId": "reading.role",
+      "min": 0,
+      "max": 2,
+      "verification": "verified",
+      "sourceIds": ["FQ-TAGS-20260316", "FQ-TAGS-20260824"],
+      "message": "阅读标签角色可不选，最多选择 2 项。"
+    },
+    {
+      "id": "reading.plot.cardinality",
+      "groupId": "reading.plot",
+      "min": 0,
+      "max": 2,
+      "verification": "verified",
+      "sourceIds": ["FQ-TAGS-20260316", "FQ-TAGS-20260824"],
+      "message": "阅读标签情节可不选，最多选择 2 项。"
+    }
+  ],
+  "contentCardinality": {
+    "verification": "unverified",
+    "sourceIds": ["FQ-TAGS-20260824", "user-message-label-transcription"],
+    "message": "内容标签是新增的独立标签池。当前客户端的数量范围来自用户快照，必选规则与数量上限尚未核对实时后台，不能沿用阅读标签数量作为官方依据；以作品标签页面提示为准。"
+  },
+  "optionAvailability": {
+    "verification": "unverified",
+    "sourceIds": ["user-message-label-transcription"],
+    "message": "本库词条及其 ID 来自用户提供的转录快照；ID 是客户端稳定标识，不是平台内部 ID。未独立核实所有词条在当前频道、分类和创建页面中的可用性。"
+  },
+  "combinationRules": {
+    "verification": "unverified",
+    "sourceIds": ["FQ-TAGS-20260824"],
+    "message": "本资料未核实完整的后台依赖、互斥与组合限制。数量符合公开规则不代表整个组合已经获得平台确认；组合知识卡只提供创作建议，不能用于宣布平台禁止某个题材。"
+  },
+  "notes": [
+    "2026-08-24 公告将旧作品标签更名为阅读标签，并说明其分类、详情、功能和创建修改规则保持不变；因此 2026-03-16 的数量说明可用于阅读标签，不能据此推断新内容标签规则。",
+    "规则核对日期、标签快照采集日期和资源打包日期分别记录；本资料不声称持续与实时后台同步。",
+    "此资料只评估原创长篇小说标签；不推断其他频道、短篇或其他作品类型的规则。",
+    "未知只提供提示，不作为创作方案审批的阻断事项。自由创意、叙事知识覆盖与平台标签规则分开处理。"
+  ]
+}

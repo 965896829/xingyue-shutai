@@ -1,9 +1,11 @@
+import { ModelControl } from './ModelControl';
 import { invokeCommand } from '../shared/client';
 import type { Invoke } from '../shared/contracts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { createPlanningTextFormatter } from '../shared/planning-language';
+import { assessTagPolicy } from '../shared/tag-policy';
 import type { Snapshot, Run } from '../shared/types';
 import {
   emptyTagInput,
@@ -12,10 +14,9 @@ import {
   type TagInput,
   type TagCatalog
 } from '../shared/tags';
-import './tags.css';
 import { approvedCreation, planKinds, payoffStages } from '../shared/creation';
 import { TitleWorkspace } from './TitleWorkspace';
-import { creationStep, creationValidationIssues } from '../shared/run-presentation';
+import { creationDirectionId, creationStep, creationValidationIssues, runHasCurrentBasis } from '../shared/run-presentation';
 import { CreationTaskStatus, CreationChecks, type CreationCheckItem } from './CreationTaskStatus';
 
 const invoke: Invoke = (command, args) => invokeCommand(command, args);
@@ -56,6 +57,7 @@ export function TagForm({
   }, []);
   if (error) return <p role="alert">标签库加载失败：{error}</p>;
   if (!catalog) return <p>正在加载标签…</p>;
+  const policy = assessTagPolicy(catalog, value.selection);
   const choose = (section: 'reading' | 'content', field: string, id: string, max: number) => {
     const next = structuredClone(value),
       block = next.selection[section] as Record<string, string | string[]>;
@@ -176,13 +178,26 @@ export function TagForm({
             onChange={(e) => onChange({ ...value, mustAvoid: e.target.value.split('\n') })}
           />
         </label>
-        <details>
-          <summary>标签资料说明</summary>
-          <p>
-            共 482
-            项标签。阅读标签选择上限有官方公开说明；内容标签为提供的快照，未核对实时后台。详细知识仍为草案。
+      </details>
+      <details className="tag-policy">
+        <summary>标签资料说明 · {policy.mode === 'creative' ? '自由创意' : '查看核对范围'}</summary>
+        <p>{policy.message}</p>
+        <p className="muted">
+          本地标签快照共 {catalog.options.length} 项。资料范围：{policy.scope}。
+          {policy.verifiedAt ? `公开资料核对日期：${policy.verifiedAt}。` : ''}
+          内容标签的选择上限是本地配置，后台可用选项与组合条件仍需开书时核对。
+        </p>
+        {policy.checks.map((check) => (
+          <p key={check.id}>
+            <strong>{check.label}</strong>：{check.message}
           </p>
-        </details>
+        ))}
+        {policy.sources.filter((source) => source.url && /^https?:\/\//.test(source.url)).map((source) => (
+          <p key={source.id}>
+            <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+            {source.publishedAt ? `（${source.publishedAt}）` : ''}
+          </p>
+        ))}
       </details>
     </div>
   );
@@ -206,12 +221,15 @@ export function TagWorkspace({
     draft = snapshot.tagDraft,
     accepted = approvedCreation(p);
   const [input, setInput] = useState<TagInput>(draft ? cleanTagInput(draft) : emptyTagInput());
-  const [busy, setBusy] = useState(false),
+  const [actionBusy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [note, setNote] = useState('');
+  const [modelPending, setModelPending] = useState(false);
+  const busy = actionBusy || modelPending;
   const [direction, setDirection] = useState(''),
     [resolutions, setResolutions] = useState<Record<string, string>>({});
   const [rework, setRework] = useState(''),
+    [rerollInstruction, setRerollInstruction] = useState(''),
     [reviewReason, setReviewReason] = useState('');
   const [coverage, setCoverage] = useState<any>(null),
     [diff, setDiff] = useState<any>(null);
@@ -272,7 +290,7 @@ export function TagWorkspace({
     setCoverage(null);
   }, [draft?.inputHash]);
   useEffect(() => {
-    setDirection(t?.selectedDirectionId || report?.recommendedDirectionId || '');
+    setDirection(creationDirectionId(run));
     setResolutions({});
     setReviewReason('');
     setDiff(null);
@@ -302,7 +320,7 @@ export function TagWorkspace({
   };
   const saved =
     !!draft &&
-    (!run || run.baseRevision === p.revision) &&
+    (!run || runHasCurrentBasis(run, p)) &&
     draft.preferences.targetWords === p.config.targetWords &&
     draft.preferences.pov === p.config.pov &&
     draft.preferences.style === p.config.style &&
@@ -388,6 +406,7 @@ export function TagWorkspace({
                 : '先核对已有设定，保存后保持当前章节和阶段。'}
           </p>
         </div>
+        <ModelControl profiles={snapshot.profiles} profileId={profileId} onProfileChange={setProfileId} disabled={actionBusy} onPendingChange={setModelPending} label="策划模型与推理强度" />
         <button onClick={editInput} disabled={busy || running}>
           {run || accepted ? '修改想法与标签' : '填写创作想法'}
         </button>
@@ -410,24 +429,6 @@ export function TagWorkspace({
       >
         <summary>{run || accepted ? '开书想法、标签与模型' : '从你的想法开始'}</summary>
         <TagForm value={input} onChange={setInput} disabled={running || busy} optionalTags />
-        <label className="creation-model">
-          使用模型
-          <select
-            aria-label="策划模型"
-            value={profileId}
-            onChange={(e) => setProfileId(e.target.value)}
-            disabled={busy || running}
-          >
-            <option value="">选择模型</option>
-            {snapshot.profiles
-              .filter((v) => v.protocol !== 'images')
-              .map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name} · {v.model}
-                </option>
-              ))}
-          </select>
-        </label>
         <details>
           <summary>标签资料与单独保存</summary>
           <div className="tag-actions">
@@ -590,6 +591,42 @@ export function TagWorkspace({
                       </article>
                     ))}
                   </div>
+                  {t.phase === 'awaiting_direction' && (
+                    <div className="creation-reroll">
+                      <label>
+                        这次希望怎样构思（选填）
+                        <textarea
+                          rows={2}
+                          maxLength={6000}
+                          value={rerollInstruction}
+                          disabled={busy || running}
+                          onChange={(e) => setRerollInstruction(e.target.value)}
+                          placeholder="例如：提高生存压力，让主角的能力必须付出代价"
+                        />
+                      </label>
+                      <div className="creation-reroll-actions">
+                        <button
+                          disabled={busy || running || !saved}
+                          onClick={() => void act(() => invoke('tags.reroll', {
+                            id: run.id,
+                            reportHash: t.reportHash!,
+                            keepDirectionIds: [],
+                            instruction: rerollInstruction
+                          }))}
+                        >换一批三案</button>
+                        <button
+                          disabled={busy || running || !saved || !direction}
+                          onClick={() => void act(() => invoke('tags.reroll', {
+                            id: run.id,
+                            reportHash: t.reportHash!,
+                            keepDirectionIds: [direction],
+                            instruction: rerollInstruction
+                          }))}
+                        >保留这一案，换另两案</button>
+                      </div>
+                      <p className="muted">沿用当前创作要求，旧方案会保存在历史中。</p>
+                    </div>
+                  )}
                   <details className="creation-background">
                     <summary>推荐理由与方向检查</summary>
                     <p>{showText(report.recommendationReasons.join('；'))}</p>

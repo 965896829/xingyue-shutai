@@ -21,6 +21,15 @@ export function chapterSpan(text: string, bare = false): [number, number] | unde
   return match ? [numberOf(match[1]), numberOf(match[2] ?? match[1])] : undefined;
 }
 
+/** A chapter reference in a source/notes cell does not make that row a chapter plan. */
+function tableChapterSpan(cells: string[], column: number) {
+  const label = (cells[column >= 0 ? column : 0] ?? '').replace(/^[*_\x60]+|[*_\x60]+$/g, '').trim();
+  if (/\.md(?:$|[\s#?])/i.test(label)) return undefined;
+  const explicit = new RegExp(`^第?\\s*${numeral}\\s*(?:章|[—–\\-~～至到])`).test(label);
+  const numbered = column >= 0 && new RegExp(`^${numeral}$`).test(label);
+  return explicit || numbered ? chapterSpan(label, column >= 0) : undefined;
+}
+
 function selectLines(text: string, selected: boolean[]): TextSlice {
   const lines = text.split(/(?<=\n)/), ranges: TextSlice['ranges'] = [];
   let offset = 0;
@@ -56,7 +65,7 @@ export function chapterSlice(text: string, chapter: number): TextSlice {
       const header = cells.findIndex(c => /^(?:章节|章次|章号|章节范围|覆盖章节|起止章节|章节区间|章范围|覆盖章数)$/.test(c));
       if (header >= 0) tableColumn = header;
       else if (!cells.every(c => /^:?-+:?$/.test(c))) {
-        const span = tableColumn >= 0 ? chapterSpan(cells[tableColumn] ?? '', true) : cells.map(c => chapterSpan(c)).find(Boolean);
+        const span = tableChapterSpan(cells, tableColumn);
         if (span) { recognized = true; matched ||= span[0] <= chapter && chapter <= span[1]; include &&= span[0] <= chapter && chapter <= span[1]; }
       }
     } else if (line.trim()) tableColumn = -1;
@@ -97,7 +106,7 @@ export function pastPlanText(text: string, fromChapter: number): string {
       const header = cells.findIndex(cell => /^(?:章节|章次|章号|章节范围|覆盖章节|起止章节|章节区间|章范围|覆盖章数)$/.test(cell));
       if (header >= 0) tableColumn = header;
       else {
-        const span = tableColumn >= 0 ? chapterSpan(cells[tableColumn] ?? '', true) : cells.map(cell => chapterSpan(cell)).find(Boolean);
+        const span = tableChapterSpan(cells, tableColumn);
         past ||= !!span && span[1] < fromChapter;
       }
     } else if (line.trim()) tableColumn = -1;

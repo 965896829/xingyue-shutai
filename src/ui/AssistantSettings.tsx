@@ -6,9 +6,9 @@ import { parseOutput } from '../shared/contracts';
 import type { EmbeddingSettings } from '../shared/studio';
 
 type Settings = { roles: RoleRule[]; search: SearchSettings; hasKey: boolean; embedding: EmbeddingSettings };
-export function AssistantSettings({ onClose, profiles = [] }: { onClose: () => void; profiles?: Profile[] }) {
+export function AssistantSettings({ onClose, profiles = [], initialSection = 'editor' }: { onClose: () => void; profiles?: Profile[]; initialSection?: 'editor' | 'search' | 'embedding' }) {
   const [data, setData] = useState<Settings>(),
-    [selected, select] = useState('editor'),
+    [selected, select] = useState<string>(initialSection),
     [text, setText] = useState(''),
     [key, setKey] = useState(''),
     [error, setError] = useState(''),

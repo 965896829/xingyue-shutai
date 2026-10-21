@@ -33,5 +33,32 @@
     "publisher": "OpenAI",
     "url": "https://learn.chatgpt.com/docs/sandboxing",
     "accessedAt": "2026-10-10"
+  },
+  {
+    "id": "user-message-label-transcription",
+    "title": "用户提供的阅读标签与内容标签转录快照",
+    "publisher": "用户提供",
+    "kind": "user_snapshot",
+    "notes": "对应 fanqie-user-snapshot-v1。原始采集日期未记录；2026-10-10 是资源打包日期，不代表实时后台核验日期。选项 ID 为客户端固定标识，尚未取得平台内部 ID 映射。"
+  },
+  {
+    "id": "FQ-TAGS-20260316",
+    "title": "速进！作品标签最全讲解来啦！",
+    "publisher": "番茄小说",
+    "kind": "official_platform",
+    "url": "https://fanqienovel.com/writer/zone/article/7617805652965982232",
+    "publishedAt": "2026-03-16",
+    "accessedAt": "2026-10-19",
+    "notes": "说明旧作品标签的主分类、主题、角色、情节四组及数量：主分类必选且仅选一项，其余三组可不选、每组最多两项；不提供新内容标签的数量依据。"
+  },
+  {
+    "id": "FQ-TAGS-20260824",
+    "title": "番茄原创网文标签体系及标签管理功能升级公告",
+    "publisher": "番茄小说",
+    "kind": "official_platform",
+    "url": "https://fanqienovel.com/writer/zone/article/7677414599091552318",
+    "publishedAt": "2026-08-24",
+    "accessedAt": "2026-10-19",
+    "notes": "适用于原创长篇小说。旧作品标签更名为阅读标签，原分类、详情、功能与创建修改规则不变；另增独立内容标签池。两套规则分开，具体数量及必选要求以作品标签页面提示为准。"
   }
 ]

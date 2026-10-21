@@ -1,5 +1,6 @@
 import { containsInternalPlanningText, type PlanningTextContext } from '../shared/planning-language';
 import type { ContractCandidate, PlanningReport, PlanningReview, TagPlanning } from '../shared/tags';
+import { frozenReportMetadata } from './tags';
 
 function check(texts: string[], context: PlanningTextContext) {
   const index = texts.findIndex(text => containsInternalPlanningText(text, context));
@@ -8,9 +9,19 @@ function check(texts: string[], context: PlanningTextContext) {
 const coverageText = (rows: ContractCandidate['tagCoverage']) => rows.flatMap(row => [row.implementation, row.firstDemonstration, row.risk]);
 
 export function checkPlanningReportLanguage(report: PlanningReport, planning: TagPlanning) {
-  const directions = planning.regenerate ? report.directions.filter(direction => direction.id === planning.regenerate!.directionId) : report.directions;
+  const regeneration = planning.regenerate;
+  const directions = !regeneration ? report.directions : report.directions.filter(direction =>
+    regeneration.keepDirectionIds === undefined
+      ? direction.id === regeneration.directionId
+      : !regeneration.keepDirectionIds.includes(direction.id));
+  const frozen = frozenReportMetadata(planning);
+  // validateReport protects these exact historical texts before the language check runs.
+  const assumptions = report.assumptions.filter(row => !frozen.assumptions.some(old =>
+    old.id === row.id && old.text === row.text));
+  const diagnosis = report.diagnosis.filter(row => !frozen.diagnosis.some(old =>
+    old.code === row.code && old.message === row.message));
   check([
-    report.positioning, ...report.diagnosis.map(row => row.message), ...report.assumptions.map(row => row.text),
+    report.positioning, ...diagnosis.map(row => row.message), ...assumptions.map(row => row.text),
     ...directions.flatMap(row => [row.title, row.logline, row.storyEngine, row.differenceFromOtherDirections,
       row.openingDecision, row.firstVolumeChange, row.longRunRisk, ...row.intentChanges, ...coverageText(row.tagCoverage)]),
     ...report.recommendationReasons, ...report.unresolvedQuestions

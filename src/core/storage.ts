@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { syncGeneration } from '../shared/generation';
 import { contractPath, renderContract, tagHash } from './tags';
 import { approvedCreation } from '../shared/creation';
 import { titlePath, renderTitle } from './title-naming';
@@ -14,6 +15,7 @@ import { MaterializationConflict, preserveAndMaterialize } from './materializati
 import { pendingSource } from './memory-source';
 import { contextDependencies } from './context-dependencies';
 import { hash, id, now } from './domain';
+import { assertProjectLockInactive, parseProjectLock, processStartedAt } from './project-lock';
 import {
   factSchema,
   type Change,
@@ -23,7 +25,8 @@ import {
   type Run,
   type RunEvent
 } from '../shared/types';
-import type { CanonicalSnapshot, ChangeSet, SnapshotRef } from '../shared/studio';
+import type { CanonicalSnapshot, ChangeSet, CommitRecoveryConflict, SnapshotRef } from '../shared/studio';
+export type { CommitRecoveryConflict } from '../shared/studio';
 
 export const proposalHash = (run: Run) => {
   const payload = {
@@ -231,6 +234,7 @@ export class Database {
     return run;
   }
   saveRun(run: Run) {
+    syncGeneration(run);
     this.withUsage(run);
     const candidateHash = proposalHash(run);
     let version = run.stateVersion ?? 0;
@@ -424,6 +428,18 @@ interface Journal {
   payloadHash?: string;
   facts?: Fact[];
 }
+interface CommitRecoveryRecord extends CommitRecoveryConflict {
+  status: 'blocked' | 'abandoned' | 'resolved';
+  journalHash: string;
+  resolvedAt?: string;
+  actor?: 'local-author';
+}
+class PendingCommitConflict extends ApplicationError {
+  constructor(readonly reason: CommitRecoveryConflict['reason'], message: string) {
+    super(reason === 'approval_changed' ? 'APPROVAL_STALE' : 'VERSION_CONFLICT', message, ['refresh']);
+  }
+}
+const recoveryKey = (transactionId: string) => `commitRecovery:${transactionId}`;
 function completedJournal(journal: Journal) {
   const { project, run, facts, ...record } = journal;
   return JSON.stringify({ ...record, state: 'committed' }, null, 2);
@@ -453,19 +469,15 @@ export class FileStore {
   }
   private acquireLock() {
     const lock = path.join(this.control, 'write-lock.json');
+    const ownerStartedAt = processStartedAt(process.pid);
     if (fs.existsSync(lock)) {
-      const old = JSON.parse(readUtf8(lock)) as { pid: number };
-      if (!Number.isSafeInteger(old.pid) || old.pid <= 0) throw new Error('作品锁身份无效，已停止自动接管');
-      let alive = true;
-      try {
-        process.kill(old.pid, 0);
-      } catch (e) {
-        if ((e as NodeJS.ErrnoException).code === 'ESRCH') alive = false;
-      }
-      if (alive) throw new Error('这部作品正在另一个窗口或进程中打开，请先关闭它');
+      const original = readUtf8(lock);
+      assertProjectLockInactive(parseProjectLock(original));
+      if (readUtf8(lock) !== original) throw new Error('作品占用状态刚刚发生变化，请重试');
       fs.unlinkSync(lock);
     }
-    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, nonce: this.lockNonce, startedAt: performance.timeOrigin, createdAt: now() }), { flag: 'wx' });
+    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, nonce: this.lockNonce, startedAt: performance.timeOrigin,
+      processStartedAt: ownerStartedAt, createdAt: now() }), { flag: 'wx' });
     this.lockOwned = true;
   }
   private releaseLock() {
@@ -607,6 +619,8 @@ export class FileStore {
       }
       if (!approvalId) throw new ApplicationError('PERMISSION_DENIED', '正式候选必须通过作者审批入口提交');
     }
+    if (this.recoveryConflicts().length)
+      throw new ApplicationError('VERSION_CONFLICT', '有未处理的提交恢复冲突，请先比较并恢复或放弃该次提交', ['refresh']);
     for (const c of changes)
       if (
         c.path === contractPath &&
@@ -668,12 +682,17 @@ export class FileStore {
     const jp = safePath(this.root, `.novelclient/transactions/${tx}.json`, true);
     atomicWrite(jp, JSON.stringify(journal, null, 2));
     fault?.('prepared');
-    this.applyJournal(journal, fault);
+    try {
+      this.applyJournal(journal, fault);
+    } catch (error) {
+      if (error instanceof PendingCommitConflict) this.recordRecoveryConflict(journal, error);
+      throw error;
+    }
     atomicWrite(jp, completedJournal(journal));
     fault?.('committed');
     return tx;
   }
-  private applyJournal(j: Journal, fault?: (point: string) => void) {
+  private verifyJournal(j: Journal) {
     if (j.payloadHash) {
       const expected = hash(
         JSON.stringify({
@@ -688,13 +707,16 @@ export class FileStore {
       if (expected !== j.payloadHash || row?.payload_hash !== j.payloadHash)
         throw new Error('提交内容与作者确认的变更集不一致');
     }
-    if (this.db.sql.prepare('SELECT 1 FROM applied_transactions WHERE id=?').get(j.id)) {
-      const row = this.db.sql.prepare('SELECT payload_hash FROM changesets WHERE id=?').get(j.id) as
-        { payload_hash: string } | undefined;
-      if (j.payloadHash && row?.payload_hash !== j.payloadHash) throw new Error('提交编号对应的内容不一致');
-      this.materialize(j.id, fault);
-      return;
+    // Check every referenced object before classifying a recoverable conflict.
+    // A changed working copy must not conceal a damaged pending candidate.
+    for (const change of j.changes) {
+      safePath(this.root, change.path);
+      this.object(change.newHash);
+      if (change.baseHash) this.object(change.baseHash);
     }
+  }
+  private journalApproval(j: Journal) {
+    if (!j.run) return;
     if (j.run && !j.approvalId) {
       const row = this.db.sql.prepare('SELECT data FROM changesets WHERE id=?').get(j.id);
       const prior = row ? JSON.parse(String(row.data)) as ChangeSet : undefined;
@@ -707,25 +729,39 @@ export class FileStore {
         actor: prior.actor, issuedAt: prior.createdAt, revokedAt: null, consumedByCommit: null, source: 'legacy-change-set', sourceId: prior.id };
       this.db.sql.prepare('INSERT OR IGNORE INTO approvals VALUES(?,?,?,?)').run(j.approvalId, j.run.id, proposalHash(j.run), JSON.stringify(approval));
     }
-    if (j.baseSnapshotId !== undefined && j.baseSnapshotId !== (this.db.get('headSnapshot') ?? null))
-      throw new Error('提交基于旧快照，未写入正式版本');
+    const approvalRow = this.db.sql.prepare('SELECT data FROM approvals WHERE id=?').get(j.approvalId ?? '');
+    if (!approvalRow) throw new ApplicationError('APPROVAL_STALE', '提交缺少可信审批记录');
+    const approval = JSON.parse(String(approvalRow.data));
+    if (approval.fingerprint !== proposalHash(j.run) || approval.projectId !== j.project.id ||
+      approval.baseSnapshotId !== j.baseSnapshotId || approval.commitHash !== fingerprint({ project: j.project, changes: j.changes }) ||
+      fingerprint(approval.scope) !== fingerprint(j.changes.map((change) => change.path)))
+      throw new ApplicationError('APPROVAL_STALE', '提交内容与可信审批记录不一致');
+    return approval;
+  }
+  private applyJournal(j: Journal, fault?: (point: string) => void) {
+    this.verifyJournal(j);
+    if (this.db.sql.prepare('SELECT 1 FROM applied_transactions WHERE id=?').get(j.id)) {
+      this.materialize(j.id, fault);
+      return;
+    }
+    this.journalApproval(j);
     for (const c of j.changes) {
       const h = fileHash(safePath(this.root, c.path));
       if (h !== c.baseHash && h !== c.newHash)
-        throw new Error(`恢复遇到外部改稿，已保留，请先比较：${c.path}`);
+        throw new PendingCommitConflict('external_edit', `恢复遇到外部改稿，已保留，请先比较：${c.path}`);
     }
     fault?.('before-database');
     this.db.sql.exec('BEGIN IMMEDIATE');
     try {
+      if (j.baseSnapshotId !== undefined && j.baseSnapshotId !== (this.db.get('headSnapshot') ?? null))
+        throw new PendingCommitConflict('snapshot_changed', '提交基于旧快照，未写入正式版本');
       if (j.run) {
-        const approvalRow = this.db.sql.prepare('SELECT data FROM approvals WHERE id=?').get(j.approvalId ?? '');
-        if (!approvalRow) throw new ApplicationError('APPROVAL_STALE', '提交缺少可信审批记录');
-        const approval = JSON.parse(String(approvalRow.data));
-        if (approval.fingerprint !== proposalHash(j.run) || approval.projectId !== j.project.id || approval.revokedAt || approval.consumedByCommit ||
-          approval.baseSnapshotId !== j.baseSnapshotId || approval.commitHash !== fingerprint({ project: j.project, changes: j.changes }) ||
-          fingerprint(approval.scope) !== fingerprint(j.changes.map((change) => change.path)))
-          throw new ApplicationError('APPROVAL_STALE', '审批已失效或已经使用');
-        if (proposalHash(this.db.run(j.run.id)) !== approval.fingerprint) throw new ApplicationError('APPROVAL_STALE', '候选版本已改变');
+        const approval = this.journalApproval(j);
+        if (approval.revokedAt || approval.consumedByCommit)
+          throw new PendingCommitConflict('approval_changed', '审批已失效或已经使用，未自动提交');
+        const current = this.db.run(j.run.id);
+        if (proposalHash(current) !== approval.fingerprint || (current.stateVersion ?? 0) !== (j.run.stateVersion ?? 0))
+          throw new PendingCommitConflict('candidate_changed', '候选版本或任务状态已改变，未自动提交');
         approval.consumedByCommit = j.id;
         this.db.sql.prepare('UPDATE approvals SET data=? WHERE id=?').run(JSON.stringify(approval), j.approvalId!);
         this.db.sql.prepare('INSERT INTO candidate_commits VALUES(?,?,?,?)').run(j.run.id, proposalHash(j.run), j.id, j.approvalId!);
@@ -865,6 +901,97 @@ export class FileStore {
         .run('complete', row.id);
     }
   }
+  private recoveryRecords(): CommitRecoveryRecord[] {
+    return this.db.sql.prepare("SELECT value FROM kv WHERE key LIKE 'commitRecovery:%'").all()
+      .map((row) => JSON.parse(String(row.value)) as CommitRecoveryRecord);
+  }
+  recoveryConflicts(): CommitRecoveryConflict[] {
+    return this.recoveryRecords().filter((record) => record.status === 'blocked')
+      .sort((a, b) => a.detectedAt.localeCompare(b.detectedAt) || a.transactionId.localeCompare(b.transactionId))
+      .map(({ transactionId, runId, reason, message, paths, detectedAt }) => ({ transactionId, runId, reason, message, paths, detectedAt }));
+  }
+  private verifyRecoveryRecord(journal: Journal, record?: CommitRecoveryRecord) {
+    if (record && (record.transactionId !== journal.id || record.journalHash !== fingerprint(journal)))
+      throw new Error('待处理提交记录与原始日志不一致，已停止恢复');
+  }
+  private recordRecoveryConflict(journal: Journal, error: PendingCommitConflict): CommitRecoveryConflict {
+    const previous = this.db.get<CommitRecoveryRecord>(recoveryKey(journal.id));
+    this.verifyRecoveryRecord(journal, previous);
+    const conflict: CommitRecoveryConflict = {
+      transactionId: journal.id, runId: journal.run?.id, reason: error.reason, message: error.message,
+      paths: journal.changes.map((change) => change.path), detectedAt: previous?.detectedAt ?? now()
+    };
+    this.db.transaction(() => {
+      this.db.set(recoveryKey(journal.id), { ...conflict, status: 'blocked', journalHash: fingerprint(journal) } satisfies CommitRecoveryRecord);
+      if (!previous || previous.reason !== error.reason || previous.message !== error.message)
+        this.db.event(journal.run?.id ?? 'project', 'commit-recovery-conflict', error.message, { transactionId: journal.id, reason: error.reason });
+    });
+    return conflict;
+  }
+  private completeRecovery(journal: Journal, file: string) {
+    const record = this.db.get<CommitRecoveryRecord>(recoveryKey(journal.id));
+    if (record) this.db.transaction(() => {
+      // Clear the conflict before compacting the journal. A crash between these
+      // writes is resolved by applied_transactions without reviving the conflict.
+      this.db.set(recoveryKey(journal.id), { ...record, status: 'resolved', resolvedAt: now(), actor: 'local-author' });
+      this.db.event(journal.run?.id ?? 'project', 'commit-recovery-resolved', '已核验并恢复原批准提交', { transactionId: journal.id });
+    });
+    atomicWrite(file, completedJournal(journal));
+    this.invalidateListing();
+  }
+  private pendingRecoveryJournal(transactionId: string) {
+    const record = this.db.get<CommitRecoveryRecord>(recoveryKey(transactionId));
+    if (!record) throw new ApplicationError('VALIDATION_ERROR', '此提交没有待处理的恢复记录', ['refresh']);
+    const file = safePath(this.root, `.novelclient/transactions/${transactionId}.json`, true);
+    const journal = JSON.parse(readUtf8(file)) as Journal;
+    if (journal.id !== transactionId || journal.state !== 'prepared') throw new Error('待处理提交日志身份或状态不一致');
+    this.verifyJournal(journal);
+    this.journalApproval(journal);
+    this.verifyRecoveryRecord(journal, record);
+    return { file, journal, record };
+  }
+  recoveryPreview(transactionId: string, relative: string): { path: string; accepted: string; current: string | null; candidate: string } {
+    const { journal } = this.pendingRecoveryJournal(transactionId);
+    const change = journal.changes.find((entry) => entry.path === relative);
+    if (!change) throw new ApplicationError('PERMISSION_DENIED', '此文件不在待处理提交中');
+    const decode = (raw: Buffer) => new TextDecoder('utf-8', { fatal: true }).decode(raw);
+    const file = safePath(this.root, relative), accepted = this.db.document(relative)?.hash;
+    return { path: relative, accepted: accepted ? decode(this.object(accepted)) : '',
+      current: fs.existsSync(file) ? decode(fs.readFileSync(file)) : null, candidate: decode(this.object(change.newHash)) };
+  }
+  retryRecovery(transactionId: string): { recovered: boolean; conflict?: CommitRecoveryConflict } {
+    const previous = this.db.get<CommitRecoveryRecord>(recoveryKey(transactionId));
+    if (previous?.status === 'resolved' && this.db.sql.prepare('SELECT 1 FROM applied_transactions WHERE id=?').get(transactionId)) {
+      this.materialize(transactionId);
+      this.invalidateListing();
+      return { recovered: true };
+    }
+    const { file, journal, record } = this.pendingRecoveryJournal(transactionId);
+    if (record.status !== 'blocked') throw new ApplicationError('APPROVAL_STALE', '此提交已放弃，不能复用原批准恢复', ['refresh']);
+    try {
+      this.applyJournal(journal);
+    } catch (error) {
+      if (error instanceof PendingCommitConflict) return { recovered: false, conflict: this.recordRecoveryConflict(journal, error) };
+      throw error;
+    }
+    this.completeRecovery(journal, file);
+    return { recovered: true };
+  }
+  abandonRecovery(transactionId: string): void {
+    const { journal, record } = this.pendingRecoveryJournal(transactionId);
+    if (record.status === 'abandoned') return;
+    if (record.status !== 'blocked' || this.db.sql.prepare('SELECT 1 FROM applied_transactions WHERE id=?').get(transactionId))
+      throw new ApplicationError('APPROVAL_STALE', '已生效的正式提交不能通过放弃恢复撤销', ['refresh']);
+    const approval = this.journalApproval(journal), resolvedAt = now();
+    this.db.transaction(() => {
+      if (approval && !approval.consumedByCommit && !approval.revokedAt) {
+        approval.revokedAt = resolvedAt;
+        this.db.sql.prepare('UPDATE approvals SET data=? WHERE id=?').run(JSON.stringify(approval), journal.approvalId!);
+      }
+      this.db.set(recoveryKey(transactionId), { ...record, status: 'abandoned', resolvedAt, actor: 'local-author' });
+      this.db.event(journal.run?.id ?? 'project', 'commit-recovery-abandoned', '作者放弃此次未生效提交；原候选、日志与外部文件均已保留', { transactionId });
+    });
+  }
   recover(): string[] {
     const dir = safePath(this.root, '.novelclient/transactions', true);
     const messages: string[] = [];
@@ -872,15 +999,37 @@ export class FileStore {
     for (const file of fs.existsSync(dir) ? fs.readdirSync(dir) : []) {
       if (!file.endsWith('.json')) continue;
       const p = path.join(dir, file), j = JSON.parse(readUtf8(p)) as Journal;
+      if (file !== `${j.id}.json` || !['prepared', 'committed'].includes(j.state)) throw new Error('提交日志身份或状态无效');
       if (j.state === 'prepared') journals.push({ p, j });
     }
+    for (const record of this.recoveryRecords())
+      if (record.status !== 'resolved' && !journals.some(({ j }) => j.id === record.transactionId))
+        throw new Error('待处理提交的原始日志缺失，已停止恢复');
     journals.sort((a, b) => a.j.createdAt.localeCompare(b.j.createdAt));
-    for (const { p, j } of journals)
-      if (j.state === 'prepared') {
+    for (const { p, j } of journals) {
+      this.verifyJournal(j);
+      if (this.db.sql.prepare('SELECT 1 FROM applied_transactions WHERE id=?').get(j.id)) {
         this.applyJournal(j);
-        atomicWrite(p, completedJournal(j));
+        this.completeRecovery(j, p);
         messages.push(`已恢复提交 ${j.id}`);
+        continue;
       }
+      this.journalApproval(j);
+      const record = this.db.get<CommitRecoveryRecord>(recoveryKey(j.id));
+      this.verifyRecoveryRecord(j, record);
+      if (record?.status === 'abandoned') continue;
+      if (record?.status === 'blocked') { messages.push(record.message); continue; }
+      if (record?.status === 'resolved') throw new Error('已恢复提交缺少正式生效记录');
+      try {
+        this.applyJournal(j);
+      } catch (error) {
+        if (!(error instanceof PendingCommitConflict)) throw error;
+        messages.push(this.recordRecoveryConflict(j, error).message);
+        continue;
+      }
+      this.completeRecovery(j, p);
+      messages.push(`已恢复提交 ${j.id}`);
+    }
     this.materialize();
     if (this.db.project() && !this.db.get('headSnapshot')) this.db.captureSnapshot();
     return messages;

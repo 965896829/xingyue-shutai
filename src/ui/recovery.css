@@ -1,0 +1,25 @@
+.recovery-conflicts {
+  flex-shrink: 0;
+  max-height: 65vh;
+  overflow: auto;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--warning-line);
+  background: var(--warning-bg);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.recovery-conflicts summary { cursor: pointer; font-weight: 600; }
+.recovery-conflicts article { padding: 10px 0; border-top: 1px solid var(--line); }
+.recovery-files, .recovery-actions, .recovery-preview-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0;
+}
+.recovery-files button { max-width: 100%; overflow-wrap: anywhere; text-align: left; }
+.recovery-preview-heading strong { flex: 1; overflow-wrap: anywhere; }
+.recovery-preview-heading label { display: flex; gap: 6px; align-items: center; }
+.recovery-preview-heading input { width: auto; }
+.recovery-preview .merge { height: 320px; overflow: auto; border: 1px solid var(--line); }
+.recovery-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 6px 12px; }

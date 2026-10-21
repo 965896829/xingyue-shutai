@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { Fact, Run } from '../shared/types';
 import type { FileStore } from './storage';
 import { hash } from './domain';
+import { currentSettingsSourceHash } from './runtime-settings';
 
 export const memoryReviewSchema = z.object({
   decisions: z.array(z.object({
@@ -25,7 +26,12 @@ export function memoryReviewInput(store: FileStore, run: Run) {
   const files = [...new Set([...items.flatMap(item => item.fact ? item.fact.evidence.map(e => e.path) : item.path ? [item.path] : []), ...(run.memoryRepair?.sources ?? [])])];
   const sources = files.map(path => {
     const change = run.changes.find(change => change.path === path);
-    const content = change?.content ?? store.readAccepted(path).content;
+    let content = change?.content ?? store.readAccepted(path).content;
+    const expected = run.memoryRepair?.sourceHashes?.[path];
+    // Keep the exact reviewed input when only host execution controls changed.
+    if (!change && expected && hash(content) !== expected &&
+        hash(content) === currentSettingsSourceHash(store, run.baseSnapshotId, { path, hash: expected }))
+      content = store.object(expected).toString('utf8');
     return { path, hash: hash(content), content };
   });
   const input = { items, sources, ...(run.continuity ? { scope: run.continuity } : {}),

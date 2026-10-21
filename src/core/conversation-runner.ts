@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { callModel } from './runtime/model-gateway';
+import { captureReasoning, withTaskReasoning } from '../shared/reasoning';
 import { controllerRules, taskEnvelope } from './agent-control';
 import { beginTool, finishTool, stopOnToolFailure, type ToolTicket } from './runtime/tool-gateway';
 import { tagContext } from './tags';
@@ -13,6 +14,7 @@ import { FileStore, fileHash, safePath } from './storage';
 import { hash, id, now, paths, stageNames, stageOutputs } from './domain';
 import { requireModelLimits } from '../shared/model-limits';
 import { compileContext, contextPayload, contextChanged } from './context-compiler';
+import { compatibleRunBase, currentSettingsSourceHash } from './runtime-settings';
 import { countInput, requestSize } from './context-budget';
 import { invokeModel, requestBody, RequestError } from './provider';
 import { rebuildMemory, searchMemory } from './memory';
@@ -35,6 +37,7 @@ import type {
   Citation,
   ActionProposal
 } from '../shared/assistant';
+import { updateGeneration, type GenerationPhase } from '../shared/generation';
 
 export interface AssistantRuntime {
   embedding?: EmbeddingSettings;
@@ -181,6 +184,7 @@ export class ConversationRunner {
       profileId,
       profileVersion: profile.version,
       projectRevision: p.revision,
+      baseSnapshotId: this.store.db.get<string>('headSnapshot'),
       stage: p.stage,
       chapter: p.chapter,
       createdAt: now(),
@@ -202,6 +206,7 @@ export class ConversationRunner {
       const executionProfile = this.profile(run.profileId);
       proposal.resumeRunId = run.id;
       proposal.resumeRunHash = taskRunHash(run);
+      proposal.resumeRunHashVersion = 2;
       proposal.kind = run.mode === 'revision' ? 'revision' : 'stage';
       proposal.profileId = executionProfile.id;
       proposal.profileVersion = executionProfile.version;
@@ -217,13 +222,13 @@ export class ConversationRunner {
     const p = this.store.db.project(),
       profile = this.profile(proposal.profileId);
     if (
-      (proposal.resumeRunId && proposal.resumeRunHash !== taskRunHash(this.store.db.run(proposal.resumeRunId))) ||
-      proposal.projectRevision !== p.revision ||
+      (proposal.resumeRunId && proposal.resumeRunHash !== taskRunHash(this.store.db.run(proposal.resumeRunId), proposal.resumeRunHashVersion ?? 1)) ||
+      !compatibleRunBase(this.store, { baseRevision: proposal.projectRevision, baseSnapshotId: proposal.baseSnapshotId }) ||
       proposal.stage !== p.stage ||
       proposal.chapter !== p.chapter ||
       proposal.profileVersion !== profile.version ||
       proposal.rulesHash !== this.rulesHash() ||
-      proposal.sources.some((s) => fileHash(safePath(this.store.root, s.path)) !== s.hash)
+      proposal.sources.some((s) => fileHash(safePath(this.store.root, s.path)) !== currentSettingsSourceHash(this.store, proposal.baseSnapshotId, s))
     ) {
       proposal.status = 'stale';
       this.records.save('action_proposals', proposal);
@@ -251,6 +256,7 @@ export class ConversationRunner {
       profileId,
       profileVersion: profile.version,
       status: 'running',
+      reasoningEfforts: captureReasoning([profile]),
       createdAt: now(),
       updatedAt: now(),
       rules: [],
@@ -308,9 +314,12 @@ export class ConversationRunner {
       });
       this.emit({ type: 'snapshot', resource: 'chat', resourceId: turn.conversationId });
     };
+    const activity = (phase: GenerationPhase) => {
+      if (updateGeneration(turn, phase)) save();
+    };
     try {
       const conv = this.records.get('conversations', turn.conversationId);
-      const profile = this.profile(turn.profileId, !conv.runId),
+      const profile = withTaskReasoning(this.profile(turn.profileId, !conv.runId), turn),
         p = this.store.db.project(),
         runtime = structuredClone(this.settings());
       const revision = p.revision,
@@ -488,9 +497,10 @@ ${tagContext(p, 'discussion')}
             if (Date.now() - lastFlush > 500) {
               this.records.save('conversation_messages', message);
               lastFlush = Date.now();
+              this.emit({ type: 'snapshot', resource: 'chat', resourceId: turn.conversationId });
             }
-            this.emit({ type: 'delta', resource: 'chat', resourceId: turn.conversationId, runId: turn.id, text: chunk });
-          }, searchOptions
+            this.emit({ type: 'delta', resource: 'chat', resourceId: turn.conversationId, runId: turn.id, text: chunk, textOffset: message.content.length - chunk.length });
+          }, { ...searchOptions, onActivity: activity }
         );
         if (turn.webSearch) {
           acceptNativeSearch(turn.webSearch, result.webSearch, searchOffset);
@@ -514,6 +524,9 @@ ${tagContext(p, 'discussion')}
           calls: result.calls,
           native: result.native
         });
+        // A provider may finish after cancellation. Keep the response and its known
+        // usage, but do not execute its tools or turn the stopped conversation complete.
+        if (controller.signal.aborted) throw new Error('已停止，已保留收到的回答');
         if (
           this.store.db.project().revision !== revision ||
           this.rulesHash() !== rulesHash ||
@@ -526,6 +539,7 @@ ${tagContext(p, 'discussion')}
         if (result.stop === 'length' || result.stop === 'filtered')
           throw new Error('模型输出未完整结束，已保留接收到的文本');
         for (const call of result.calls) {
+          activity(['public_search', 'extract_pages'].includes(call.name) ? 'searching' : 'tools');
           if (controller.signal.aborted) throw new Error('已停止');
           let output: unknown;
           let ticket: ToolTicket | undefined;

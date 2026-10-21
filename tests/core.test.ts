@@ -17,11 +17,14 @@ import {
   renderConfig,
   stageOutputs,
   prosePath,
-  batchPath
+  batchPath,
+  rhythmPath,
+  worldRequiredFields,
+  behaviorRequiredFields
 } from '../src/core/domain';
 import { profileSchema, factSchema, type SecretProfile, type ModelResult } from '../src/shared/types';
-import { templates, initialFiles } from '../src/core/skill';
-import { validateCandidate, checkFields, validateCoverage } from '../src/core/validation';
+import { templates, initialFiles, systemPrompt } from '../src/core/skill';
+import { validateCandidate, checkFields, checkWorldFields, validateCoverage } from '../src/core/validation';
 import {
   rebuildMemory,
   encodeFacts,
@@ -33,7 +36,59 @@ import { Service } from '../src/core/service';
 import { importDocument, exportDocument, createBackup, restoreBackup } from '../src/core/documents';
 import { DatabaseSync } from 'node:sqlite';
 import { boundedBody } from '../src/core/provider';
+import { classifyProjectLock, parseProjectLock, processStartedAt } from '../src/core/project-lock';
 const skill = path.resolve('resources/skill');
+
+test('作品锁区分进程编号复用、真正存活的持有者和无法查询的进程', () => {
+  const start = Date.UTC(2026, 9, 21, 3);
+  const old = { pid: 123, createdAt: '2026-10-10T03:46:55.784Z' };
+  assert.equal(classifyProjectLock(old, { presence: 'alive', startedAt: start }), 'stale');
+  assert.equal(classifyProjectLock({ ...old, createdAt: new Date(start + 2000).toISOString() }, { presence: 'alive', startedAt: start }), 'active');
+  assert.equal(classifyProjectLock({ ...old, processStartedAt: start }, { presence: 'alive', startedAt: start }), 'active');
+  assert.equal(classifyProjectLock({ ...old, processStartedAt: start - 10000 }, { presence: 'alive', startedAt: start }), 'stale');
+  assert.equal(classifyProjectLock(old, { presence: 'exited' }), 'stale');
+  assert.equal(classifyProjectLock(old, { presence: 'unknown', startedAt: start }), 'unknown');
+  assert.equal(classifyProjectLock(old, { presence: 'alive' }), 'unknown');
+  assert.equal(classifyProjectLock({ pid: 123 }, { presence: 'alive', startedAt: start }), 'active');
+  assert.equal(classifyProjectLock({ ...old, createdAt: 'unreadable' }, { presence: 'alive', startedAt: start }), 'active');
+  for (const raw of ['null', '{"pid":0}', '{"pid":-1}', '{"pid":"123"}', '{"pid":123,"processStartedAt":0}'])
+    assert.throws(() => parseProjectLock(raw), /锁身份无效/);
+});
+
+test('旧作品遗留锁的 PID 被复用后可恢复，新锁仍阻止重复打开且正常关闭释放', () => {
+  const { s, root } = setup();
+  const before = s.read(paths.seed).content;
+  const revision = s.db.project().revision;
+  s.close();
+  const lock = path.join(root, '.novelclient/write-lock.json');
+  const startedAt = processStartedAt(process.pid);
+  assert.ok(startedAt && startedAt < Date.now());
+  for (const extra of [{}, { nonce: 'old-runtime', startedAt: 1 }, { processStartedAt: startedAt - 100000 }]) {
+    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, createdAt: '2000-01-01T00:00:00.000Z', ...extra }));
+    const reopened = new FileStore(root);
+    try {
+      const current = JSON.parse(fs.readFileSync(lock, 'utf8'));
+      assert.equal(current.processStartedAt, startedAt);
+      assert.notEqual(current.nonce, 'old-runtime');
+      assert.throws(() => new FileStore(root), /另一个窗口/);
+      assert.equal(reopened.read(paths.seed).content, before);
+      assert.equal(reopened.db.project().revision, revision);
+    } finally { reopened.close(); }
+    assert.equal(fs.existsSync(lock), false);
+  }
+});
+
+test('章后行为日志只检查本章人物记录，明确未变化说明不强制虚构八项更新', () => {
+  const p = newProject('行为日志', 'unused', {});
+  const role = '### 陈舟\n' + behaviorRequiredFields.map(field => `- ${field}：按原文记录并保留尚未完成的承诺`).join('\n');
+  const unchanged = '### 房东、师父、原维修者\n本章仅通过既有背景被提及，未新增本人行动、心情、获知或态度。保留原人物字段，不假更新。';
+  const check = (content: string) => validateCandidate('S11', p, [{ path: paths.behavior, content, baseHash: null }], skill, 'revision').filter(issue => issue.path === paths.behavior);
+  assert.deepEqual(check(`# 情绪与行为记忆\n## 第001章\n${role}\n${unchanged}\n## 第002—003章记录规则\n### 计划说明\n尚无正文，不登记行为。`), []);
+  assert.deepEqual(check(`# 情绪与行为记忆\n## 第001章\n${role}\n## 本章未变化角色\n${unchanged}`), []);
+  assert.ok(check(`# 情绪与行为记忆\n## 第001章\n### 陈舟\n保留原状态。`).some(issue => issue.code === 'missing_field'));
+  assert.ok(check(`# 情绪与行为记忆\n## 第001章\n${unchanged}\n- 本章情绪：未知`).some(issue => issue.code === 'missing_field'));
+  assert.ok(check(`# 情绪与行为记忆\n## 第002章\n${role}`).some(issue => issue.code === 'behavior_chapter'));
+});
 test('响应边读边限制大小，超过上限立即取消', async () => {
   let cancelled = false;
   const stream = new ReadableStream<Uint8Array>({
@@ -293,6 +348,95 @@ test('全部批次覆盖、非法强度、空字段不可通过', () => {
   assert.ok(bad.some((i) => i.code === 'intensity'));
   assert.ok(bad.some((i) => i.code === 'missing_field'));
 });
+
+test('世界规则接受编号章节、组合标题和列表字段，仍拦截空章节与只在正文提及的字段', () => {
+  const labels = ['世界底层规则', '主角金手指', '金手指限制', '使用代价', '信息差', '敌人反制方式', '体系升级空间', '中后期防重复机制'];
+  const headings = ['一、世界底层规则', '主角金手指', '三、金手指限制与核心待确认细则', '能力体系与使用代价', '信息差与知情边界', '掌握路径与敌人反制方式', '七、体系升级空间', '八、中后期防重复机制'];
+  const document = headings.map((heading, index) => `## ${heading}\n\n已填写第 ${index + 1} 项设计。`).join('\n\n');
+  assert.deepEqual(checkWorldFields(document, 'world.md'), []);
+  assert.deepEqual(checkWorldFields(labels.map(label => `- ${label}：有效设计`).join('\n'), 'world.md'), []);
+  assert.equal(checkWorldFields(labels.join('，'), 'world.md').length, 8);
+  assert.ok(checkWorldFields(document.replace('已填写第 1 项设计。', 'TODO'), 'world.md').some(i => i.code === 'empty_field'));
+  assert.ok(checkWorldFields(document.replace('已填写第 1 项设计。', '### 规则一\nTODO\n\n| 规则 | 代价 |\n| --- | --- |'), 'world.md').some(i => i.code === 'empty_field'));
+  assert.equal(checkWorldFields('```md\n' + document + '\n```', 'world.md').length, 8);
+  assert.ok(checkWorldFields(document.replace('一、世界底层规则', '尚未解释世界底层规则'), 'world.md').some(i => i.code === 'missing_field'));
+  assert.deepEqual(checkFields('## 普通必需字段\n内容', ['普通必需字段'], 'x').map(i => i.code), ['missing_field']);
+});
+
+test('S03 首次生成前即提供与校验器一致的字段，现实题材无需增设金手指', () => {
+  const project = newProject('社区维修铺', 'unused', { genre: '都市日常', constraints: '没有超自然能力' });
+  const prompt = systemPrompt(skill, project, 'S03');
+  const initial = initialFiles(project, skill, '维修铺经营')[paths.world];
+  for (const label of worldRequiredFields) {
+    assert.ok(prompt.includes(label));
+    assert.ok(initial.includes(`## ${label}`));
+  }
+  assert.match(prompt, /无金手指的题材/);
+  assert.match(prompt, /不能为填字段增设题材之外的设定/);
+  assert.equal(checkWorldFields(initial, paths.world).filter(issue => issue.code === 'empty_field').length, worldRequiredFields.length);
+  assert.deepEqual(checkWorldFields(initial.replaceAll('待填写', '不适用超自然机制；以真实维修手艺、时间和费用约束推进。'), paths.world), []);
+});
+test('人物档案的来源说明不误作角色，未评估关系保留表格且仍拒绝非法数据', () => {
+  const p = newProject('社区维修铺', 'unused', {});
+  const labels = [...fs.readFileSync(path.join(skill, 'references/memory-system.md'), 'utf8').split('```markdown')[1].split('```')[0].matchAll(/^- ([^：:]+)[：:]/gm)].map(m => m[1]);
+  const role = `## 陈舟\n\n${labels.map(label => `- ${label}：具体人物设计`).join('\n')}\n`;
+  const check = (file: string, content: string) => validateCandidate('S04', p, [{ path: file, content, baseHash: null }], skill, 'revision');
+  assert.deepEqual(check(paths.roles, '# 角色卡\n\n## 适用范围与记录口径\n背景与计划分开。\n\n## 依据与版本索引\n设定拆解 v1。\n\n' + role + '\n## 协作入口与防止扩编\n不虚构新人物或已同意的帮助。'), []);
+  assert.ok(check(paths.roles, role.replace('- 当前目标：具体人物设计\n', '')).some(i => i.code === 'missing_field'));
+  assert.ok(check(paths.roles, role + '\n## 摊主\n尚待补全。').some(i => i.code === 'missing_field'));
+  assert.ok(check(paths.roles, '# 角色卡\n## 适用范围\n只有说明，没有角色。').some(i => i.code === 'character_fields'));
+  assert.ok(check(paths.roles, '## 来源\n- 当前身份：维修者').some(i => i.code === 'missing_field'));
+  const relation = (value: string) => `# 人物关系\n\n| 角色A | 角色B | 关系标签 | 极性 | 信任度0-100 | 冲突点 | 当前状态 | 未来变化方向 |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n| 陈舟 | 摊主 | 委托 | ambiguous | ${value} | 营业与等待 | 尚未接洽 | 按计划合作 |\n`;
+  for (const value of ['0', '50', '100', '未评估', '未知', 'null', 'null（未评估）', 'null(未评估)']) assert.deepEqual(check(paths.relations, relation(value)), [], value);
+  for (const value of ['-1', '101', '50.5', '很信任', 'null（100分）']) assert.ok(check(paths.relations, relation(value)).some(i => i.code === 'relation_trust'), value);
+  assert.ok(check(paths.relations, relation('')).some(i => i.code === 'ledger_cells'));
+  assert.match(systemPrompt(skill, p, 'S04'), /不要用 0 代替未知/);
+});
+
+test('分卷容量接受章节与字数单位，仍检查断档、重叠、总量和非法数值', () => {
+  const p = newProject('三万字', 'unused', { targetWords: 30000, chapterWords: 2500 });
+  const check = (rows: string) => validateCandidate('S05', p, [{ path: paths.volumes, content: '# 分卷大纲\n' + rows, baseHash: null }], skill, 'revision').filter(i => i.code.startsWith('volume_'));
+  for (const row of [
+    '| 1 | 开铺 | 1-12 | 12 | 30000 | 001-003 |',
+    '| 第1卷 | 开铺 | 第001—012章 | 12章 | 30000字 | 001-003 |',
+    '| 第一卷 | 开铺 | 第001章至第012章 | 12 章 | 30000 字 | 001-003 |'
+  ]) assert.deepEqual(check(row), []);
+  assert.ok(check('| 1 | 开铺 | 2-12 | 11 | 27500 | 001-003 |').some(i => i.code === 'volume_capacity'));
+  assert.ok(check('| 1 | 开铺 | 1-12 | 12章 | 30001字 | 001-003 |').some(i => i.code === 'volume_capacity'));
+  assert.ok(check('| 1 | 开铺 | 1-11 | 11 | 27500 | 001-003 |').some(i => i.code === 'volume_total'));
+  assert.ok(check('| 1 | 开铺 | 1-6 | 6 | 15000 | 001-003 |\n| 2 | 续租 | 6-12 | 7 | 17500 | 006-012 |').some(i => i.code === 'volume_capacity'));
+  assert.ok(check('| 1 | 开铺 | 1-12 | 12 | 30000.5字 | 001-003 |').some(i => i.code === 'volume_ranges'));
+});
+
+test('章节总纲校验限定主表，附表提及章节不被误判为缺列或重复覆盖', () => {
+  const p = newProject('当前三章', 'unused', { targetWords: 30000, batchSize: 3 });
+  const header = '| 章节 | 类型 | 强度 | 承接上章 | 前300字入口 | 核心场面 | 主角动作 | 外部推动 | 状态变化 | 设定揭示 | 阅读回报 | 人物记忆变化 | 章末牵引 |';
+  const row = (n: number) => `| 第00${n}章 | 推进 | 3 | ${Array(10).fill('具体安排').join(' | ')} |`;
+  const main = [header, '|' + Array(13).fill(' --- ').join('|') + '|', row(1), row(2), row(3)].join('\n');
+  const check = (content: string) => validateCandidate('S06', p, [{ path: paths.outline, content, baseHash: null }], skill);
+  assert.deepEqual(check(main + '\n\n## 成本追踪\n\n| 事项 | 影响 |\n| --- | --- |\n| 第001章陈舟自付租金 | 钱少了 |\n| 第001章 | 留下等待成本 |'), []);
+  assert.deepEqual(check(main.replace(row(1), '\n' + row(1)) + '\n\n| 事项 | 影响 |\n| --- | --- |\n| 第001章 | 附表说明 |'), []);
+  assert.ok(check(main.replace(row(2), '')).some(i => i.code === 'chapter_coverage'));
+  assert.ok(check(main + '\n' + row(2)).some(i => i.code === 'chapter_coverage'));
+  assert.ok(check(main.replace(row(2), '| 第002章 | 推进 | 3 | 少字段 |')).some(i => i.code === 'outline_fields'));
+  assert.ok(check(main.replace('推进 | 3', '推进 | 9')).some(i => i.code === 'outline_intensity'));
+  assert.ok(check(main.replace('推进 | 3', '错误类型 | 3')).some(i => i.code === 'chapter_type'));
+  assert.match(systemPrompt(skill, p, 'S06'), /强冲突、推进、结算、日常、情绪、转场/);
+});
+
+test('节奏覆盖允许带标题的单元和完整逐章拆分，不放过缺章和重叠', () => {
+  const p = newProject('三章脉冲', 'unused', { targetWords: 30000, batchSize: 3 });
+  const header = '| 章节单元 | 类型与强度曲线 |\n| --- | --- |\n';
+  const check = (rows: string) => validateCandidate('S07', p, [{ path: rhythmPath(activeBatch(p)), content: '# 节奏\n' + header + rows, baseHash: null }], skill).filter(i => i.code === 'rhythm_coverage');
+  assert.deepEqual(check('| 第001—003章：完整脉冲 | 4→2→3 |'), []);
+  const chapters = '| 第001章：蓄力 | 4 |\n| 第002章：变化 | 2 |\n| 第003章：兑现 | 3 |';
+  assert.deepEqual(check('| 第001—003章：完整脉冲 | 4→2→3 |\n' + chapters), []);
+  assert.deepEqual(check(chapters + '\n\n| 章节 | 成本 |\n| --- | --- |\n| 第001章 | 租金 |'), []);
+  assert.ok(check(chapters.replace('| 第002章：变化 | 2 |\n', '')).length);
+  assert.ok(check(chapters + '\n| 第002章：重复 | 2 |').length);
+  assert.ok(check('| 第001—002章 | 4→2 |\n| 第002—003章 | 2→3 |').length);
+});
+
 test('完整备份、数据库和对象校验恢复到新目录', async () => {
   const { s, p, root } = setup();
   const backupRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-backups-'));
@@ -405,6 +549,22 @@ test('阶段请求必须显式发起，候选拒绝不写正式稿，接受幂�
     assert.equal(calls, 2);
   } finally {
     service.close();
+  }
+});
+test('打开普通目录失败时保留当前作品且不在目标目录创建数据库', async () => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-open-invalid-'));
+  const service = new Service(skill, () => {});
+  try {
+    await service.invoke('project.create', { parent, title: '保留当前作品', premise: '初稿' });
+    const original = service.store!.root;
+    const unrelated = path.join(parent, '普通文件夹');
+    fs.mkdirSync(unrelated);
+    await assert.rejects(service.invoke('project.open', { root: unrelated }), /不是.*项目/);
+    assert.equal(service.store!.root, original);
+    assert.equal(fs.existsSync(path.join(unrelated, '.novelclient')), false);
+  } finally {
+    service.close();
+    fs.rmSync(parent, { recursive: true, force: true });
   }
 });
 test('逐项核对完成后恢复章节完成状态，不影响未核对范围', async () => {

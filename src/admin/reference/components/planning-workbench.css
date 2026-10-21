@@ -1,0 +1,103 @@
+.pw {
+  padding: 8px 0 24px;
+}
+.pw-tabs {
+  display: flex;
+  gap: 5px;
+  border: 1px solid var(--ui-line, #444a38);
+  padding: 4px;
+  border-radius: 10px;
+}
+.pw-tabs button {
+  background: transparent;
+  border: 0;
+  color: var(--ui-soft, #bac1a8);
+  border-radius: 7px;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+.pw-tabs button.active {
+  background: var(--ui-surface, #343e22);
+  color: var(--ui-accent, #d0e77f);
+}
+.pw-settings,
+.pw-proposals {
+  padding: 16px;
+  margin: 14px 0;
+  border: 1px solid var(--ui-line, #414737);
+  border-radius: 12px;
+  background: var(--ui-hover, #25291f55);
+}
+.pw-settings > *,
+.pw-proposals > section {
+  margin-top: 16px;
+}
+.pw-settings > summary,
+.pw-proposals > summary {
+  margin-top: 0;
+}
+.pw-plan-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+.pw-card {
+  padding: 18px;
+  border: 1px solid var(--ui-line, #424638);
+  border-radius: 12px;
+  background: linear-gradient(140deg, var(--ui-surface, #282d23), var(--ui-inset, #1a1d18));
+  min-width: 0;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
+}
+.pw-card > .mw-heading {
+  margin-top: 0;
+}
+.pw-card h4 {
+  font-size: 18px;
+  margin: 12px 0;
+}
+.pw-card > details {
+  margin-top: 16px;
+}
+.pw-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.pw-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--ui-soft, #c2c9b0);
+  font-size: 12px;
+}
+.pw-preview {
+  padding: 18px;
+  background: var(--ui-hover, #343d234d);
+  border: 1px solid var(--ui-accent-line, #657643);
+  border-radius: 12px;
+}
+.pw-proposal {
+  border-bottom: 1px solid var(--ui-line, #404535);
+  padding: 16px 0;
+}
+.pw .mw-filters {
+  grid-template-columns: 110px minmax(140px, 1fr) minmax(100px, 1fr);
+}
+@media (max-width: 600px) {
+  .pw .mw-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pw-tabs {
+    width: 100%;
+  }
+  .pw-tabs button {
+    flex: 1;
+  }
+  .pw-card {
+    padding: 14px;
+  }
+}

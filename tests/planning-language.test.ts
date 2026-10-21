@@ -4,6 +4,7 @@ import { createPlanningTextFormatter, containsInternalPlanningText } from '../sr
 import { checkPlanningReportLanguage, checkPlanningContractLanguage, checkPlanningReviewLanguage } from '../src/core/planning-language';
 import type { ContractCandidate, PlanningReport, TagPlanning } from '../src/shared/tags';
 import { emptyTagInput } from '../src/shared/tags';
+import { validateReport } from '../src/core/tags';
 
 function fixture() {
   const coverage = [{ optionId: 'reading.main.003', implementation: '城市设施维修中的异常事件', firstDemonstration: '修复停电故障', risk: '不增加全知能力' }];
@@ -99,4 +100,48 @@ test('局部重做保留其他方向的历史文字，不强迫改写已冻结�
   report.directions[1].storyEngine = '历史方向引用A_D1_RULE';
   planning.regenerate = { directionId: 'D1', instruction: '完善首卷变化', original: structuredClone(report) };
   assert.doesNotThrow(() => checkPlanningReportLanguage(report, planning));
+});
+
+test('整批重做检查所有新方向，保留一案时检查另外两案', () => {
+  const { planning, report } = fixture();
+  planning.regenerate = { directionId: '', keepDirectionIds: [], instruction: '换一批', original: structuredClone(report) };
+  report.directions[2].storyEngine = '采用A_D1_RULE';
+  assert.throws(() => checkPlanningReportLanguage(report, planning), /作者可见文字/);
+  report.directions[2].storyEngine = '排查事故并重新分配责任';
+  report.directions[0].storyEngine = '历史方向引用A_D1_RULE';
+  planning.regenerate = { directionId: 'D1', keepDirectionIds: ['D1'], instruction: '保留第一案', original: structuredClone(report) };
+  assert.doesNotThrow(() => checkPlanningReportLanguage(report, planning));
+  report.directions[1].storyEngine = '保留mustKeep';
+  assert.throws(() => checkPlanningReportLanguage(report, planning), /作者可见文字/);
+});
+
+test('冻结旧假设和诊断的原文不被语言检查强迫改写，新元数据仍须检查', () => {
+  const { planning, report } = fixture();
+  planning.spec.selection.reading.main = 'reading.main.003';
+  report.assumptions[0].text = '历史假设：保留mustKeep';
+  report.diagnosis = [{ code: 'legacy-risk', severity: 'warning', message: '历史诊断采用A_D1_RULE', optionIds: [], assumptionIds: ['A_D1_RULE'] }];
+  planning.regenerate = { directionId: 'D1', keepDirectionIds: ['D1'], instruction: '只重做另外两案', original: structuredClone(report) };
+  assert.doesNotThrow(() => validateReport(report, planning));
+  assert.doesNotThrow(() => checkPlanningReportLanguage(report, planning));
+
+  report.assumptions.push({ id: 'new-assumption', text: '新假设采用mustAvoid', critical: false, directionIds: ['D2'] });
+  assert.doesNotThrow(() => validateReport(report, planning));
+  assert.throws(() => checkPlanningReportLanguage(report, planning), /作者可见文字/);
+  report.assumptions[report.assumptions.length - 1].text = '第二案改用协作协议';
+  report.diagnosis.push({ code: 'new-risk', severity: 'note', message: '新诊断采用scope', optionIds: [], assumptionIds: ['new-assumption'] });
+  assert.doesNotThrow(() => validateReport(report, planning));
+  assert.throws(() => checkPlanningReportLanguage(report, planning), /作者可见文字/);
+  report.diagnosis.pop();
+  assert.doesNotThrow(() => checkPlanningReportLanguage(report, planning));
+
+  report.assumptions[0].text = '改写后的旧假设使用mustAvoid';
+  assert.throws(() => validateReport(report, planning), /保留方向/);
+  assert.throws(() => checkPlanningReportLanguage(report, planning), /作者可见文字/);
+});
+
+test('全部换新时不能借旧元数据例外跳过语言检查', () => {
+  const { planning, report } = fixture();
+  report.assumptions[0].text = '旧假设使用mustKeep';
+  planning.regenerate = { directionId: '', keepDirectionIds: [], instruction: '全部换新', original: structuredClone(report) };
+  assert.throws(() => checkPlanningReportLanguage(report, planning), /作者可见文字/);
 });

@@ -10,6 +10,7 @@ import { pendingSource } from './memory-source';
 import { contextAllowance, countInput } from './context-budget';
 import { chapterSlice, endingSlice } from './context-slices';
 import { contextDependencies } from './context-dependencies';
+import { compatibleSettingsSnapshot, currentSettingsSourceHash } from './runtime-settings';
 
 export interface CompileOptions {
   purpose?: NonNullable<ContextManifest['purpose']>;
@@ -146,5 +147,8 @@ export function assembleContext(store: FileStore, p: ProjectState, stage: StageI
 }
 
 export function contextChanged(store: FileStore, manifest: ContextManifest) {
-  return (!!manifest.snapshotId && store.db.get('headSnapshot') !== manifest.snapshotId) || contextDependencies(manifest).some(s => fileHash(safePath(store.root, s.path)) !== s.hash);
+  if (manifest.snapshotId && store.db.get('headSnapshot') !== manifest.snapshotId &&
+      !compatibleSettingsSnapshot(store, manifest.snapshotId)) return true;
+  return contextDependencies(manifest).some(s =>
+    fileHash(safePath(store.root, s.path)) !== currentSettingsSourceHash(store, manifest.snapshotId, s));
 }

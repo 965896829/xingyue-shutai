@@ -12,6 +12,9 @@ import {
   parseConfig,
   qualityPath,
   rhythmPath,
+  worldRequiredFields,
+  chapterTypes,
+  behaviorRequiredFields,
   estimatedChapters
 } from './domain';
 import type { Change, Issue, ProjectState, StageId } from '../shared/types';
@@ -40,9 +43,15 @@ export function computedScore(content: string): number | null {
   }
   return Math.round(total * 10) / 10;
 }
-export function checkFields(text: string, labels: string[], file: string): Issue[] {
+export function checkFields(text: string, labels: string[], file: string, allowSections = false): Issue[] {
   const issues: Issue[] = [];
   const fields = parseMarkdownFields(text);
+  if (allowSections) {
+    const sections = markdownSections(text);
+    for (const label of labels)
+      for (const section of sections)
+        if (section.label.split(/以及|与|及/).map(part => part.trim()).includes(label)) fields.push({ ...section, label });
+  }
   for (const label of labels) {
     const matches = fields.filter((f) => f.label === label);
     if (!matches.length)
@@ -58,6 +67,32 @@ export function checkFields(text: string, labels: string[], file: string): Issue
         });
   }
   return issues;
+}
+
+/** World-design documents allow named sections as well as the legacy list fields. */
+export function checkWorldFields(text: string, file: string) {
+  return checkFields(text, [...worldRequiredFields], file, true);
+}
+function markdownSections(text: string) {
+  let fence = '';
+  const lines = text.split(/\r?\n/).map(line => {
+    const marker = line.trim().match(/^(`{3,}|~{3,})/);
+    if (marker) { if (!fence) fence = marker[1]; else if (marker[1][0] === fence[0] && marker[1].length >= fence.length) fence = ''; return ''; }
+    return fence ? '' : line;
+  });
+  const headings = lines.flatMap((line, index) => {
+    const match = line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*$/);
+    return match ? [{ index, level: match[1].length, label: match[2].replace(/\*\*/g, '').replace(/^(?:[一二三四五六七八九十百\d]+[、.．)]\s*|[（(][一二三四五六七八九十百\d]+[）)]\s*)/, '').trim() }] : [];
+  });
+  return headings.map((heading, index) => {
+    const end = headings.slice(index + 1).find(next => next.level <= heading.level)?.index ?? lines.length;
+    const body = lines.slice(heading.index + 1, end).filter((line, i, block) => {
+      // Subheadings, table headers and separators alone do not fill a section.
+      const separator = /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/;
+      return !/^\s*#{1,6}\s/.test(line) && !separator.test(line) && !separator.test(block[i + 1] ?? '');
+    }).map(line => line.replace(/^\s*\||\|\s*$/g, '').replace(/\s*\|\s*/g, '\n')).join('\n').trim();
+    return { label: heading.label, content: body, line: heading.index + 1 };
+  });
 }
 /** A field owns continuation paragraphs and deeper lists, never its next sibling or heading. */
 export function parseMarkdownFields(text: string): { label: string; content: string; line: number }[] {
@@ -129,6 +164,26 @@ export function validateCoverage(text: string, start: number, end: number, file:
         message: `第 ${n} 章需要唯一、明确的标题或表格行`
       });
   return issues;
+}
+function tableContent(text: string, leadingColumns: string[]) {
+  let found = false, active = false;
+  const rows: string[] = [];
+  const lines = text.split(/\r?\n/);
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
+    if (!line.trim()) continue;
+    const cells = line.trim().split(/(?<!\\)\|/).slice(1, -1).map(value => value.trim());
+    if (leadingColumns.every((label, i) => cells[i] === label)) {
+      found = active = true;
+      continue;
+    }
+    const nextCells = (lines[index + 1] ?? '').trim().split('|').slice(1, -1).map(value => value.trim());
+    if (nextCells.length && nextCells.every(value => /^:?-+:?$/.test(value))) active = false;
+    if (!line.trim().startsWith('|')) active = false;
+    if (active) rows.push(line.trim());
+  }
+  // Older imported outlines may use chapter headings instead of a table.
+  return found ? rows.join('\n') : text;
 }
 export function validateCandidate(
   stage: StageId,
@@ -230,22 +285,7 @@ export function validateCandidate(
       issues.push(...checkFields(c.content, labels, c.path));
     }
     if (c.path === paths.world)
-      issues.push(
-        ...checkFields(
-          c.content,
-          [
-            '世界底层规则',
-            '主角金手指',
-            '金手指限制',
-            '使用代价',
-            '信息差',
-            '敌人反制方式',
-            '体系升级空间',
-            '中后期防重复机制'
-          ],
-          c.path
-        )
-      );
+      issues.push(...checkWorldFields(c.content, c.path));
     if (c.path === qualityPath(p.chapter)) {
       const prose = changes.find(change => change.path === prosePath(p.chapter));
       if (prose) issues.push(...checkReviewEvidence(c.path, c.content, prose.content));
@@ -278,7 +318,7 @@ export function validateCandidate(
     if (c.path === paths.volumes) {
       const ranges = [
         ...c.content.matchAll(
-          /^\|\s*(?:第)?[一二三四五六七八九十\d]+卷?\s*\|[^|]*\|\s*(?:第)?(\d+)\s*[-—～~至]\s*(\d+)章?\s*\|\s*(\d+)\s*\|\s*(\d+)/gm
+          /^\|\s*(?:第)?[一二三四五六七八九十\d]+卷?\s*\|[^|]*\|\s*(?:第)?(\d+)\s*章?\s*[-—～~至]\s*(?:第)?(\d+)\s*章?\s*\|\s*(\d+)\s*章?\s*\|\s*(\d+)\s*字?\s*\|/gm
         )
       ].map((m) => ({ start: Number(m[1]), end: Number(m[2]), count: Number(m[3]), words: Number(m[4]) }));
       if (!ranges.length)
@@ -314,11 +354,17 @@ export function validateCandidate(
     }
     if (c.path === rhythmPath(b)) {
       const covered: number[] = [];
-      for (const m of c.content.matchAll(/^\|\s*第?(\d+)\s*(?:[-—～~至]\s*(\d+))?章?\s*\|/gm)) {
-        const start = Number(m[1]),
-          end = Number(m[2] ?? m[1]);
-        if (end - start > 10000) continue;
-        for (let n = start; n <= end; n++) covered.push(n);
+      const table = tableContent(c.content, ['章节单元', '类型与强度曲线']);
+      const ranges = [...table.matchAll(/^\|\s*第?(\d+)\s*(?:章\s*)?(?:[-—～~至]\s*第?(\d+)\s*)?章?(?:[：:][^|]*)?\s*\|/gm)]
+        .map(m => ({ start: Number(m[1]), end: Number(m[2] ?? m[1]) }))
+        .filter(range => range.end >= range.start && range.end - range.start <= 10000);
+      for (const range of ranges) {
+        const children = ranges.filter(other => other.start >= range.start && other.end <= range.end && (other.start !== range.start || other.end !== range.end));
+        // A pulse overview may accompany its complete chapter-by-chapter breakdown.
+        // Count the narrower rows once; equal or partial overlaps remain errors.
+        const expanded = Array.from({ length: range.end - range.start + 1 }, (_, i) => range.start + i);
+        if (children.length && expanded.every(n => children.some(child => child.start <= n && n <= child.end))) continue;
+        covered.push(...expanded);
       }
       for (let n = b.start; n <= b.end; n++)
         if (covered.filter((v) => v === n).length !== 1)
@@ -337,7 +383,13 @@ export function validateCandidate(
           .split('```')[0]
           .matchAll(/^- ([^：:]+)[：:]/gm)
       ].map((m) => m[1]);
-      const blocks = c.content.split(/(?=^## )/m).filter((x) => /^## (?!可追溯)/.test(x));
+      const blocks = c.content.split(/(?=^## )/m).filter((block) => {
+        const heading = block.match(/^## (.+)/)?.[1].trim();
+        if (!heading) return false;
+        const hasRoleFields = parseMarkdownFields(block).some(field => labels.includes(field.label) || field.label === '稳定ID');
+        const metadata = /^(?:可追溯.*|适用范围(?:与记录口径)?|记录口径|使用说明|依据与版本索引|来源(?:与版本)?|版本索引|参考资料|协作入口(?:与防止扩编)?)$/u.test(heading);
+        return hasRoleFields || !metadata;
+      });
       if (!blocks.length)
         issues.push({
           code: 'character_fields',
@@ -345,12 +397,15 @@ export function validateCandidate(
           path: c.path,
           message: '角色卡需要逐角色二级标题与完整 19 个字段'
         });
-      for (const block of blocks) issues.push(...checkFields(block, labels, c.path));
+      for (const block of blocks) {
+        const heading = block.match(/^## (.+)/)?.[1].trim();
+        issues.push(...checkFields(block, labels, c.path).map(issue => ({ ...issue, message: `人物分节“${heading}”：${issue.message}` })));
+      }
     }
     if (c.path === paths.behavior && stage === 'S11') {
       const section = c.content
-        .split(/(?=^## 第\d+章)/m)
-        .find((v) => new RegExp(`^## 第0*${p.chapter}章`).test(v));
+        .split(/(?=^## )/m)
+        .find((v) => new RegExp(`^## 第0*${p.chapter}章(?:\\s|[：:]|$)`).test(v));
       if (!section)
         issues.push({
           code: 'behavior_chapter',
@@ -359,23 +414,13 @@ export function validateCandidate(
           message: '行为日志缺少本章分节'
         });
       else
-        for (const block of section.split(/(?=^### )/m).filter((v) => v.startsWith('### ')))
-          issues.push(
-            ...checkFields(
-              block,
-              [
-                '本章情绪',
-                '情绪变化原因',
-                '本章行动',
-                '行动方式是否符合做事风格',
-                '对主角态度变化',
-                '新增压力',
-                '新增秘密或误会',
-                '下次出场必须承接'
-              ],
-              c.path
-            )
-          );
+        for (const block of section.split(/(?=^### )/m).filter((v) => v.startsWith('### '))) {
+          const hasBehaviorFields = parseMarkdownFields(block).some(field => (behaviorRequiredFields as readonly string[]).includes(field.label));
+          const unchanged = !hasBehaviorFields &&
+            /本章未出场|未新增(?:本人)?(?:行动|行为)|(?:本章|状态)(?:未变化|无变化|未发生变化)/u.test(block) &&
+            /保留(?:原|既有)[^\n。]*(?:字段|状态|设定)|不(?:假|强制)?更新|无需更新/u.test(block);
+          if (!unchanged) issues.push(...checkFields(block, [...behaviorRequiredFields], c.path));
+        }
     }
     if (c.path === paths.summary && stage === 'S11' && p.chapter === b.end)
       issues.push(...checkFields(c.content, fields['批次人物摘要'] ?? [], c.path));
@@ -447,13 +492,14 @@ export function validateCandidate(
         );
     }
     if (c.path === paths.outline) {
-      issues.push(...validateCoverage(c.content, b.start, b.end, c.path));
-      for (const line of c.content.split('\n')) {
+      const outline = tableContent(c.content, ['章节', '类型', '强度']);
+      issues.push(...validateCoverage(outline, b.start, b.end, c.path));
+      for (const line of outline.split('\n')) {
         const cells = line
-          .split('|')
+          .split(/(?<!\\)\|/)
           .slice(1, -1)
           .map((v) => v.trim());
-        if (/^第?\d+章/.test(cells[0] ?? '')) {
+        if (/^第?\d+章(?:\s|[：:—-]|$)/.test(cells[0] ?? '')) {
           if (cells.length !== 13 || cells.some((v) => !v || blank.test(v)))
             issues.push({
               code: 'outline_fields',
@@ -468,7 +514,7 @@ export function validateCandidate(
               path: c.path,
               message: '总纲强度必须为 1—5'
             });
-          if (!/强冲突|推进|结算|日常|情绪|转场/.test(cells[1] ?? ''))
+          if (!chapterTypes.some(type => cells[1]?.includes(type)))
             issues.push({
               code: 'chapter_type',
               severity: 'error',
@@ -486,7 +532,7 @@ export function validateCandidate(
         message: '单章细纲至少需要一个具体场面，场面数量按类型决定'
       });
     for (const m of c.content.matchAll(/^- 章节类型[：:]\s*(.*)$/gm))
-      if (!/强冲突|推进|结算|日常|情绪|转场/.test(m[1]))
+      if (!chapterTypes.some(type => m[1].includes(type)))
         issues.push({
           code: 'chapter_type',
           severity: 'error',
@@ -541,12 +587,13 @@ export function validateCandidate(
             path: c.path,
             message: `关系极性无效：${cells[3]}`
           });
-        if (cells[4] && cells[4] !== '信任度0-100' && (!/^\d+$/.test(cells[4]) || Number(cells[4]) > 100))
+        const unassessed = /^(?:null(?:（未评估）|\(未评估\))?|未知|未评估)$/i.test(cells[4] ?? '');
+        if (cells[4] && cells[4] !== '信任度0-100' && !unassessed && (!/^\d+$/.test(cells[4]) || Number(cells[4]) > 100))
           issues.push({
             code: 'relation_trust',
             severity: 'error',
             path: c.path,
-            message: `关系信任度必须为 0—100：${cells[4]}`
+            message: `关系信任度须为 0—100 整数；无评分依据填“未评估”，不能以 0 代替未知：${cells[4]}`
           });
       }
     }

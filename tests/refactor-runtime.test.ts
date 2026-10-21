@@ -88,9 +88,15 @@ test('T-011/012 state CAS and transition journal are atomic', () => {
   try {
     const a = store.db.run(run.id), b = store.db.run(run.id);
     setRunStatus(a, 'running'); store.db.saveRun(a);
+    assert.ok(store.db.run(run.id).activity?.startedAt);
+    assert.equal(store.db.run(run.id).activity?.stoppedAt, undefined);
     setRunStatus(b, 'discarded'); assert.throws(() => store.db.saveRun(b), /状态已改变/);
     const current = store.db.run(run.id); setRunStatus(current, 'awaiting_review'); store.db.saveRun(current);
+    const endedAt = current.activity?.stoppedAt;
+    assert.ok(endedAt);
+    assert.deepEqual(parseOutput('run.revalidate', current).activity, current.activity);
     setRunStatus(current, 'complete'); store.db.saveRun(current);
+    assert.equal(current.activity?.stoppedAt, endedAt);
     const count = store.db.events().length;
     assert.throws(() => setRunStatus(current, 'running'), /不允许/);
     assert.equal(store.db.events().length, count); assert.equal(store.db.run(run.id).status, 'complete');
@@ -140,9 +146,11 @@ test('T-020/022/023/026 recovery preserves unknown and never silently retries', 
   const { store, run, project } = refactorFixture(); let requests = 0;
   try {
     project.config.stageBudget = 1; store.db.set('project', project);
-    await assert.rejects(callModel(store, run, 'test', async () => { requests++; throw new RequestError('remote unknown', true); }, fakeProfile, 'system', [], [], new AbortController().signal));
+    const diagnostic = { source: 'upstream' as const, code: 'upstream_http2_stream_error', requestId: 'relay-123', elapsedMs: 381000 };
+    await assert.rejects(callModel(store, run, 'test', async () => { requests++; throw new RequestError('remote unknown', true, diagnostic); }, fakeProfile, 'system', [], [], new AbortController().signal));
     assert.equal(attempts(store, run.id)[0].status, 'unknown');
     recoverAttempts(store);
+    assert.deepEqual(attempts(store, run.id)[0].failure, diagnostic, '恢复后仍能按请求编号定位中转错误');
     await assert.rejects(callModel(store, run, 'test', async () => { requests++; return fakeResult(); }, fakeProfile, 'system', [], [], new AbortController().signal), /费用未知/);
     assert.equal(requests, 1);
   } finally { store.close(); }

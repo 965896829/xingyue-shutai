@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Service } from '../src/core/service';
-import { hash, paths } from '../src/core/domain';
+import { hash, paths, renderProgress } from '../src/core/domain';
+import { recordUsage } from '../src/core/telemetry';
 import { profileSchema, type ModelResult, type Run, type SecretProfile } from '../src/shared/types';
 import type { Caller } from '../src/core/runner';
 
@@ -21,7 +22,8 @@ async function fixture(caller: Caller, status: Run['status'] = 'needs_repair') {
   const project = service.store!.db.project();
   project.stage = 'S02';
   project.completed.S01 = '已确认';
-  service.store!.db.set('project', project);
+  project.revision++;
+  service.store!.commit([service.change(paths.progress, renderProgress(project))], project);
   const run = service.makeRun('stage', '整理项目与文风');
   run.status = status;
   run.responseText = '旧模型判断：缺少授权封装，不能生成。';
@@ -191,4 +193,35 @@ test('任务变化后旧修复方案失效；结果未知时不能绕过重新�
     await done(second.service);
     assert.ok(second.executions() > 0);
   } finally { await second.service.drain(); }
+});
+
+test('预算调整和后台费用入账不会使待确认修复卡失效，仍由作者启动执行', async () => {
+  const { service, run, proposal, executions } = await proposedRepair();
+  try {
+    await service.invoke('project.configure', { config: { ...service.store!.db.project().config, maxRounds: 32 } });
+    const current = service.store!.db.run(run.id);
+    const usage = { input: 20, output: 10, cost: 0.2, currency: 'USD' };
+    recordUsage(service.store!, current, usage, { phase: 'assessment', profileId: profile.id, profileVersion: 1, usage });
+    assert.equal(executions(), 0);
+    const result = await service.invoke('proposal.confirm', { id: proposal.id, version: proposal.version });
+    await done(service);
+    assert.equal(result.id, run.id);
+    assert.ok(executions() > 0);
+    assert.equal(service.store!.db.project().stage, 'S02');
+    assert.equal(service.store!.db.run(run.id).accepted, false);
+    assert.ok(service.store!.db.run(run.id).usage.cost! >= 0.2);
+  } finally { await service.drain(); }
+});
+
+test('旧版待确认任务卡沿用原指纹协议，升级本身不会使未变化的卡片失效', async () => {
+  const { service, run, proposal, executions } = await proposedRepair();
+  try {
+    delete proposal.resumeRunHashVersion;
+    proposal.resumeRunHash = hash(JSON.stringify(service.store!.db.run(run.id)));
+    service.chat!.records.save('action_proposals', proposal);
+    const result = await service.invoke('proposal.confirm', { id: proposal.id, version: proposal.version });
+    await done(service);
+    assert.equal(result.id, run.id);
+    assert.ok(executions() > 0);
+  } finally { await service.drain(); }
 });

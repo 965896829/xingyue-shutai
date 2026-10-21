@@ -41,14 +41,15 @@ const service: Service = new Service(
         throw new RequestError('模型返回 HTTP 502。命名请求暂时失败。', false);
       }
       const source = titleSource(service.store!, t.sourceRunId);
+      const iteration = service.store!.db.runs().filter(candidate => candidate.naming?.planHash === t.planHash).length;
       const batch = { planHash: t.planHash, candidates: t.manualTitle ? [{ id: 'manual', title: t.manualTitle,
         angle: '作者命名', readerPromise: '维修、协作与家园建设', supportingClaimIds: [source.plan.statements[0].id], payoffStage: 'ongoing', riskNotes: [] }]
-        : ['供水线上的维修师', '从一口清水开始', '水泵旁的家园'].map((title, i) => ({ id: 'name-' + i, title,
-          angle: ['职业与行动', '成长起点', '家园建设'][i], readerPromise: '用维修技术恢复供水，逐步建设家园',
+        : ['供水线上的维修师', '从一口清水开始', '水泵旁的家园', '修好水泵之后', '废城里的一口清水', '末世供水站'].map((title, i) => ({ id: 'name-' + i, title: iteration > 1 ? `${title}·${iteration}` : title,
+          angle: ['职业与行动', '成长起点', '家园建设', '行动结果', '资源冲突', '环境与职业'][i], readerPromise: '用维修技术恢复供水，逐步建设家园',
           supportingClaimIds: [source.plan.statements[0].id], payoffStage: 'ongoing', riskNotes: ['家园成长需要在后续持续展示'] })),
         recommendedIds: t.manualTitle ? ['manual'] : ['name-0', 'name-1', 'name-2'] };
       if (t.regenerate) {
-        batch.candidates = t.regenerate.original.candidates.map(c => c.id === t.regenerate!.candidateId ? { ...c, title: '修好水泵之后' } : c);
+        batch.candidates = t.regenerate.original.candidates.map(c => c.id === t.regenerate!.candidateId ? { ...c, title: `修水师的新约定·${t.history.length}` } : c);
         batch.recommendedIds = t.regenerate.original.recommendedIds;
       }
       return { ...fakeResult(''), stop: 'tools', calls: [{ id: crypto.randomUUID(), name, arguments: JSON.stringify(name === 'submit_title_candidates' ? batch : {
@@ -91,11 +92,17 @@ const service: Service = new Service(
         assumptions: [
           { id: 'limit', text: '储物空间只保存物品，不能复制或制造物品。', critical: true, directionIds: [] }
         ],
-        directions: ['供水社区', '流动维修车队', '跨城技术协作'].map((title, i) => ({
+        directions: ['供水社区', '流动维修车队', '跨城技术协作'].map((title, i) => {
+          const regeneration = t.regenerate;
+          const frozen = regeneration && (regeneration.keepDirectionIds === undefined
+            ? 'd' + i !== regeneration.directionId : regeneration.keepDirectionIds.includes('d' + i));
+          if (frozen) return structuredClone(regeneration.original.directions.find(direction => direction.id === 'd' + i)!);
+          const revision = regeneration ? `第${t.history.filter(item => item.kind === 'reroll_request').length}轮新构思` : '';
+          return {
           id: 'd' + i,
-          title,
+          title: title + revision,
           logline: '维修师用有限工具应对资源与合作难题。',
-          storyEngine: ['公共设备维护与分配冲突', '沿途故障与不同社区的交换', '跨区域标准与互信建设'][i],
+          storyEngine: ['公共设备维护与分配冲突', '沿途故障与不同社区的交换', '跨区域标准与互信建设'][i] + revision,
           differenceFromOtherDirections: ['固定社区治理', '移动路线与短期协作', '跨城组织与长期博弈'][i],
           openingDecision: '修复水泵还是先救被困的人？',
           firstVolumeChange: '建立一条可持续供水的协作链。',
@@ -107,7 +114,7 @@ const service: Service = new Service(
             firstDemonstration: '开篇维修行动',
             risk: '保持能力边界。'
           }))
-        })),
+        }; }),
         recommendedDirectionId: 'd0',
         recommendationReasons: ['最接近作者的社区想法。'],
         marketClaims: [],

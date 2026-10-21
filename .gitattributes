@@ -1,2 +1,3 @@
 resources/skill/runtime/** -text -whitespace
 resources/skill/expression/** -text -whitespace
+resources/skill/tags/** -text -whitespace

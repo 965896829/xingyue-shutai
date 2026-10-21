@@ -97,7 +97,16 @@ export interface Assessment extends DraftIdentity {
   usage: Usage;
   stale?: boolean;
 }
+export interface CommitRecoveryConflict {
+  transactionId: string;
+  runId?: string;
+  reason: 'external_edit' | 'snapshot_changed' | 'candidate_changed' | 'approval_changed';
+  message: string;
+  paths: string[];
+  detectedAt: string;
+}
 export interface StudioState {
+  recoveryConflicts?: CommitRecoveryConflict[];
   snapshot: SnapshotRef | null;
   snapshots: SnapshotRef[];
   outbox: { id: string; status: string; error: string | null }[];

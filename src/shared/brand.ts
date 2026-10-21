@@ -1,7 +1,9 @@
+import { buildVersion } from './build';
+
 /** Public branding changes must not change the installed application's data identity. */
 export const brand = {
   name: '星月书台',
-  windowTitle: '星月书台 · 创作工作台',
+  windowTitle: `星月书台 · v${buildVersion}`,
   internalName: 'wenxu-desktop',
   appId: 'local.wenxu.desktop',
   executableName: '星月书台'

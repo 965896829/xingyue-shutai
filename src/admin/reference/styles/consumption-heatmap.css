@@ -1,0 +1,56 @@
+.u-consumption-section { margin: 24px 0; min-width: 0; }
+.u-consumption-heading, .u-consumption-summary, .u-consumption-model-heading, .u-consumption-notes, .u-consumption-legend { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.u-consumption-heading { flex-wrap: wrap; margin-bottom: 16px; }
+.u-consumption-heading h2 { margin: 0; font-size: 18px; color: var(--text); }
+.u-consumption-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+.u-consumption-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; }
+.u-consumption-controls label { display: grid; gap: 4px; color: var(--muted); font-size: 11px; }
+.u-consumption-controls select { min-width: 104px; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: 10px; color: var(--soft); background: var(--surface); }
+.u-consumption-card { position: relative; min-width: 0; max-width: 100%; padding: 22px; overflow: hidden; border-radius: 28px; background: var(--ui-inset, #121411); border: 1px solid var(--line); }
+.u-consumption-card[data-has-models="true"] { padding-bottom: 92px; }
+.u-consumption-summary { flex-wrap: wrap; margin-bottom: 22px; }
+.u-consumption-summary p { margin: 0; color: var(--soft); font-size: 14px; }
+.u-consumption-summary strong { font-size: 26px; color: var(--text); font-variant-numeric: tabular-nums; font-weight: 500; margin: 0 4px; }
+.u-consumption-summary > span { color: var(--muted); font-size: 12px; }
+.u-consumption-weeks { display: flex; gap: 4px; justify-content: center; min-height: 148px; }
+.u-consumption-week { flex: 0 0 14px; display: flex; flex-direction: column; gap: 4px; }
+.u-consumption-month { position: relative; width: 14px; height: 20px; overflow: visible; white-space: nowrap; font-size: 10px; color: var(--muted); }
+button.u-consumption-cell { position: relative; display: block; padding: 0; width: 14px; height: 14px; min-width: 14px; min-height: 14px; border: 0; border-radius: 3px; background: var(--ui-hover, #ffffff12); cursor: pointer; }
+.u-consumption-cell > span, .u-consumption-legend i > b { display: block; width: 100%; height: 100%; border-radius: inherit; background: var(--lime); }
+.u-consumption-cell:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; z-index: 2; }
+.u-consumption-legend { flex-wrap: wrap; margin-top: 12px; color: var(--muted); font-size: 10px; }
+.u-consumption-legend > span:last-child { display: flex; align-items: center; gap: 4px; }
+.u-consumption-legend i { width: 11px; height: 11px; background: var(--ui-hover, #ffffff12); border-radius: 3px; }
+.u-consumption-model-panel { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 3; overflow: auto; background: var(--ui-surface, #242820f5); backdrop-filter: blur(18px); }
+.u-consumption-model-panel[data-state="open"] { top: 12px; }
+.u-consumption-model-heading { padding: 13px 16px; font-size: 13px; }
+.u-consumption-model-actions { display: flex; align-items: center; gap: 14px; }
+.u-consumption-model-actions button { display: grid; place-items: center; width: 30px; height: 30px; border: 0; padding: 0; border-radius: 50%; color: var(--soft); background: var(--surface-high); cursor: pointer; }
+.u-consumption-model-actions button:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+.u-consumption-stack { display: flex; padding-left: 8px; }
+.u-consumption-avatar { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; font-size: 11px; border-radius: 50%; color: var(--lime); background: #373d2d; box-shadow: 0 0 0 2px #242820; }
+.u-consumption-stack .u-consumption-avatar { margin-left: -8px; }
+.u-consumption-models { padding: 0 12px 12px; margin: 0; list-style: none; }
+.u-consumption-models li { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 8px; border-radius: 12px; }
+.u-consumption-models li:hover { background: var(--ui-hover, #ffffff08); }
+.u-consumption-models li > span:not(.u-consumption-avatar) { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.u-consumption-models strong { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.u-consumption-models small { color: var(--muted); font-weight: 400; }
+.u-consumption-notes { flex-wrap: wrap; font-size: 11px; color: var(--muted); margin: 10px 0; }
+.u-consumption-notice { color: var(--ui-warning, #e3bf79); font-size: 12px; }
+.u-consumption-empty { color: var(--muted); text-align: center; font-size: 12px; margin: 18px 0 0; }
+.u-consumption-method { color: var(--muted); font-size: 11px; margin-top: 10px; }
+.u-consumption-method summary { cursor: pointer; }
+.u-consumption-tooltip-anchor { position: fixed; pointer-events: none; z-index: 1600; max-width: calc(100vw - 16px); }
+.u-consumption-tooltip { width: max-content; max-width: calc(100vw - 16px); padding: 8px 11px; border-radius: 9px; font-size: 11px; line-height: 1.5; color: var(--ui-text, #20251a); background: var(--ui-surface, #e6ebd9); box-shadow: 0 6px 20px var(--ui-shadow, #0005); }
+.s-usage-heatmap .u-consumption-card { background: var(--s-panel); border-color: var(--s-line); }
+.s-app .s-usage-heatmap .u-consumption-heading h2 { color: var(--s-ink); font-size: 20px; }
+.s-app .s-usage-heatmap .u-consumption-heading p { margin-top: 5px; }
+.s-usage-heatmap .u-consumption-controls label { display: grid; gap: 4px; color: var(--s-muted); font-size: 11px; }
+.s-usage-heatmap .u-consumption-controls select { padding: 7px 10px; font-size: 13px; }
+.s-usage-heatmap .u-consumption-controls .s-btn { min-height: 38px; padding: 7px 14px; font-size: 13px; }
+.s-usage-heatmap .u-consumption-avatar { background: var(--account-avatar); box-shadow: 0 0 0 2px var(--account-panel); }
+.s-app .s-usage-heatmap .u-consumption-notice { margin-top: 10px; color: var(--ui-warning, #e3bf79); }
+.s-app .s-usage-heatmap .u-consumption-empty { margin-top: 18px; }
+.s-usage-heatmap .u-consumption-controls select:focus-visible { outline-offset: 2px; }
+@media (max-width: 600px) { .u-consumption-card { padding: 18px 14px; } .u-consumption-card[data-has-models="true"] { padding-bottom: 88px; } .u-consumption-controls { width: 100%; } .u-consumption-model-heading { padding: 12px; font-size: 12px; } .u-consumption-stack { display: none; } }

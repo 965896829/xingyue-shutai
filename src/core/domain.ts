@@ -88,6 +88,9 @@ export const memoryPaths = [
   paths.terms,
   paths.knowledge
 ];
+export const worldRequiredFields = ['世界底层规则', '主角金手指', '金手指限制', '使用代价', '信息差', '敌人反制方式', '体系升级空间', '中后期防重复机制'] as const;
+export const chapterTypes = ['强冲突', '推进', '结算', '日常', '情绪', '转场'] as const;
+export const behaviorRequiredFields = ['本章情绪', '情绪变化原因', '本章行动', '行动方式是否符合做事风格', '对主角态度变化', '新增压力', '新增秘密或误会', '下次出场必须承接'] as const;
 export function stageOutputs(stage: StageId, p: ProjectState): string[] {
   const b = activeBatch(p),
     n = p.chapter;

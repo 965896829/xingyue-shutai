@@ -1,7 +1,9 @@
+import { useDialogs } from './AppDialogs';
+import { ReasoningSlider } from './ModelControl';
 import { invokeCommand } from '../shared/client';
 import type { Invoke } from '../shared/contracts';
 import { useEffect, useRef, useState } from 'react';
-import { Plus, RefreshCw, Search, Server, X } from 'lucide-react';
+import { CheckCircle2, Plus, RefreshCw, Search, Server, X } from 'lucide-react';
 import { profileSchema, type Command, type ModelCatalog, type Profile } from '../shared/types';
 import { connectionId, connectionFields, modelFields, providerGroups } from '../shared/provider-groups';
 import { applyModelLimits, officialModelLimits } from '../shared/model-limits';
@@ -50,6 +52,7 @@ export function ProviderSettings({
   onClose: () => void;
   act: Act;
 }) {
+  const dialogs = useDialogs();
   const groups = providerGroups(profiles);
   const initialGroup = groups[0] ?? [];
   const [connection, setConnection] = useState<Profile>(() => initialGroup[0] ?? fresh());
@@ -87,6 +90,7 @@ export function ProviderSettings({
   const [working, setWorking] = useState(false);
   const [result, setResult] = useState('');
   const [formError, setFormError] = useState('');
+  const [savedNotice, setSavedNotice] = useState<{ at: number } | null>(null);
   const generation = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastRequested = useRef('');
@@ -254,9 +258,15 @@ export function ProviderSettings({
       clearTimeout(timer.current);
     };
   }, []);
+  useEffect(() => {
+    if (!savedNotice) return;
+    const dismiss = setTimeout(() => setSavedNotice(null), 3000);
+    return () => clearTimeout(dismiss);
+  }, [savedNotice]);
 
-  function choose(group: Profile[], saved: boolean) {
-    if (working || (dirty && !confirm('当前连接有未保存的修改，放弃这些修改？'))) return;
+  async function choose(group: Profile[], saved: boolean) {
+    if (working || (dirty && !await dialogs.confirm('当前连接有未保存的修改，放弃这些修改？', { title: '放弃未保存的修改？', confirmLabel: '放弃并切换', cancelLabel: '继续编辑' }))) return;
+    setSavedNotice(null);
     generation.current++;
     clearTimeout(timer.current);
     loadGroup(group, saved);
@@ -264,8 +274,8 @@ export function ProviderSettings({
     setResult('');
     setFormError('');
   }
-  function close() {
-    if (!working && (!dirty || confirm('连接修改尚未保存，放弃修改并关闭？'))) onClose();
+  async function close() {
+    if (!working && (!dirty || await dialogs.confirm('连接修改尚未保存，放弃修改并关闭？', { title: '关闭模型与连接设置？', confirmLabel: '放弃修改并关闭', cancelLabel: '继续编辑' }))) onClose();
   }
   async function deleteGroup(group: Profile[]) {
     const id = connectionId(group[0]);
@@ -290,7 +300,9 @@ export function ProviderSettings({
     }
   }
   async function save() {
+    if (working) return;
     setWorking(true);
+    setSavedNotice(null);
     setFormError('');
     setResult('');
     await act(async () => {
@@ -303,17 +315,19 @@ export function ProviderSettings({
             headers: JSON.parse(headerText)
           },
           models: selected.map((id) => modelFields(models[id])),
-          apiKey: key
+          apiKey: key,
+          expectedProfiles: Object.fromEntries(savedGroup.map(profile => [profile.id, { version: profile.version, enabled: profile.enabled !== false }]))
         });
         if (!mounted.current) return;
         loadGroup(saved, true, editingModel);
         scheduleAuto();
         setResult(`已保存 ${selected.length} 个模型，可在写作区分别选择。`);
+        setSavedNotice({ at: Date.now() });
       } catch (e) {
         setFormError(errorText(e));
         throw e;
       }
-    }, '模型配置已保存');
+    });
     if (mounted.current) setWorking(false);
   }
   async function testConnection(tools: boolean) {
@@ -354,6 +368,15 @@ export function ProviderSettings({
       }}
     >
       <section className="modal wide provider-dialog" role="dialog" aria-modal="true" aria-label="模型与连接">
+        {savedNotice && (
+          <div className="provider-save-toast" role="status" aria-live="polite" aria-atomic="true">
+            <CheckCircle2 size={18} aria-hidden="true" />
+            <span>保存成功</span>
+            <button type="button" className="icon" aria-label="关闭保存成功提示" onClick={() => setSavedNotice(null)}>
+              <X size={14} aria-hidden="true" />
+            </button>
+          </div>
+        )}
         <header>
           <div>
             <h2>模型与连接</h2>
@@ -684,6 +707,7 @@ export function ProviderSettings({
                 <small>新选模型默认跟随官方上限，参数独立保存；价格仍按你的实际服务填写。</small>
               </label>
               <fieldset className="provider-model-fields" disabled={!editingModel}>
+                {p.protocol !== 'images' && editingModel && <ReasoningSlider profile={p} value={p.reasoningEffort ?? null} onChange={value => update('reasoningEffort', value)} disabled={working} note="保存后用于新消息和新任务。" />}
                 {p.protocol === 'images' && (
                   <div className="form-grid">
                     <label>
@@ -783,11 +807,22 @@ export function ProviderSettings({
                     </div>
                   </>
                 )}
+                {p.protocol === 'responses' && (
+                  <label>
+                    连接方式
+                    <select value={p.responsesTransport ?? 'http'} onChange={(e) => update('responsesTransport', e.target.value)}>
+                      <option value="http">HTTP（默认）</option>
+                      <option value="websocket">WebSocket（中转需启用）</option>
+                    </select>
+                    <small>WebSocket 持续接收生成内容，适用于支持此方式的 OpenAI 或 Sub2API。更改后用于新请求。</small>
+                  </label>
+                )}
                 <div className="button-row">
                   <label className="check">
                     <input
                       type="checkbox"
-                      checked={p.stream}
+                      checked={p.protocol === 'responses' && p.responsesTransport === 'websocket' || p.stream}
+                      disabled={p.protocol === 'responses' && p.responsesTransport === 'websocket'}
                       onChange={(e) => update('stream', e.target.checked)}
                     />
                     流式输出

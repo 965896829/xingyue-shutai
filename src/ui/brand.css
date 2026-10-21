@@ -99,53 +99,6 @@
   width: 58px;
   height: 58px;
 }
-.exit-dialog {
-  width: min(440px, calc(100vw - 48px));
-  padding: 24px 28px;
-  color: var(--ink);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  box-shadow: 0 24px 80px var(--shadow);
-  margin: auto;
-}
-.exit-dialog:not([open]) {
-  display: none;
-}
-.exit-dialog::backdrop {
-  background: var(--scrim);
-  backdrop-filter: blur(3px);
-}
-.exit-dialog > header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-.exit-dialog h2 {
-  color: var(--ink);
-  font-size: 21px;
-  font-weight: 600;
-  margin: 16px 0 10px;
-}
-.exit-dialog p {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.9;
-  margin: 0;
-}
-.exit-dialog footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 24px;
-}
-.exit-dialog footer button {
-  min-width: 88px;
-}
-.exit-dialog .exit-error {
-  color: var(--danger);
-  margin-top: 10px;
-}
 .sidebar-collapsed .brand {
   flex-direction: column;
   gap: 8px;

@@ -5,8 +5,13 @@
   "registry/knowledge-cards.json": "e4c460ffed922e769afd47db9edc0499b8b6398ff223e1b1fabad5ad4f66233f",
   "registry/recipes.json": "6f053c62708de6dcf64b0110d669b3549df7aba8cced64b5e2677f35b9b3efbb",
   "registry/taxonomy.json": "b2bc13947a56934a3f6f4f6a9bd4899be26e3004d6c08f71e33987eed9e8811c",
-  "prompts/planner.system.md": "e714124b8b63b099cbdd42d464d377ed555350a715f451af995efe771e36b101",
-  "prompts/reviewer.system.md": "2707a938d9f67748049538982174cedc4ea5a6456795b51256e1cd447eb03eac",
+  "prompts/planner.system.md": "69853183ac38e963653be21cfd5af0413add52dcb15fa50571f604e3ab515919",
+  "prompts/reviewer.system.md": "2312cb8a1e513d52caa924aa43c33ee86dcd0fb6c4751865fe613260b3814f38",
   "prompts/writer.system.md": "d6be652a3163d67cca9026df648bf7ec2806c7387cfd091c409e0157293259e5",
-  "sources.json": "7ac326b9f4d32174b5d4d6aca5879ba5df4e950d86679b815245ab0e3de001e0"
+  "sources.json": "37573d1c36c82df06b1122ba63251ba680613b9412f59be480bacf57aa007d44",
+  "registry/platform-policy.json": "bea36a620aecf5728a978cb3210f2ddb942a625684a63766c3a58a930c879a74",
+  "prompts/contract.system.md": "f1a1429bd408afa4690293914b4ea169b97e029fe4bd171eb579755718d0096a",
+  "prompts/title-writer.system.md": "7112ebed16c7faf518ebf53c3a8d6aed51fd75301bab7387bd8da0e89f6eb141",
+  "prompts/title-reviewer.system.md": "8f9fa7d54a67dc150f9de5e7def2cd15ce2221a17284226555b131c316305408",
+  "registry/title-style-profile.json": "968da59f1e9f9f1555282f48699147c8440ab664825f6be77761534cc91882cc"
 }

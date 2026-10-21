@@ -1,4 +1,8 @@
+import { useDialogs } from './AppDialogs';
 import type { Run } from '../shared/types';
+import { GenerationStatus } from './GenerationStatus';
+import { CreationProgress } from './CreationProgress';
+import { reasoningLabel } from '../shared/reasoning';
 import { creationTaskState, requestErrorText, retryNeedsConfirmation } from '../shared/run-presentation';
 import { invokeCommand as invoke } from '../shared/client';
 
@@ -17,11 +21,14 @@ export function CreationTaskStatus({
   onEdit?: () => void;
   format?: (text: string) => string;
 }) {
+  const dialogs = useDialogs(run.id);
   const state = creationTaskState(run);
   return (
     <div className={`creation-task-status ${state.tone}`}>
-      <div role="status">
-        <strong>{state.title}</strong>
+      <div className="creation-task-summary">
+        <strong role="status">{state.title}</strong>
+        {(run.status === 'running' || run.activity) && <GenerationStatus activity={run.activity} running={run.status === 'running'} label="本次执行结束" fallbackStart={run.createdAt} />}
+        <CreationProgress run={run} />
         {state.detail && <p>{state.detail}</p>}
       </div>
       {state.recovery && (
@@ -30,10 +37,10 @@ export function CreationTaskStatus({
             <button
               className="primary"
               disabled={disabled}
-              onClick={() => {
+              onClick={async () => {
                 if (
                   retryNeedsConfirmation(run) &&
-                  !window.confirm('上次请求结果与费用未知，重新请求可能重复计费。确认重新请求？')
+                  !await dialogs.confirm('上次请求结果与费用未知，重新请求可能重复计费。确认重新请求？', { title: '重新请求当前任务？', confirmLabel: '确认重新请求', cancelLabel: '暂不重试' })
                 )
                   return;
                 void act(() =>
@@ -62,6 +69,7 @@ export function CreationTaskStatus({
       <details className="creation-task-details">
         <summary>运行详情{run.error && run.status !== 'running' ? '与错误信息' : ''}</summary>
         <p>已用 {run.rounds} 次模型调用</p>
+        <p>本任务推理强度：{reasoningLabel(run.reasoningEfforts?.[run.profileId])}</p>
         {run.error && <p>{format(requestErrorText(run.error))}</p>}
         <button onClick={() => onReview(run.id)}>查看完整任务记录</button>
       </details>

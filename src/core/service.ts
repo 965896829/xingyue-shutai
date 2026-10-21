@@ -1,4 +1,7 @@
 import { contextChanged } from './context-compiler';
+import { candidateChangesForCurrentSettings, compatibleRunBase, compatibleSettingsSnapshot } from './runtime-settings';
+import { planningRulesHash } from './tag-planning';
+import { captureReasoning } from '../shared/reasoning';
 import { ProseIndexer } from './prose-index';
 import { setRunStatus } from './runtime/run-state';
 import fs from 'node:fs';
@@ -21,13 +24,16 @@ import {
   assertPlanApproval
 } from './tags';
 import { approvedCreation, type TitleSelection } from '../shared/creation';
-import { titleSource, namingBinding, validateBookTitle, assertTitleSelection, titlePath, renderTitle } from './title-naming';
+import { titleSource, namingBinding, namingRulesHash, validateBookTitle, assertTitleSelection, titlePath, renderTitle } from './title-naming';
+import { loadTitleStyleProfile } from './title-style';
 import { tagInputSchema, type BookSpec } from '../shared/tags';
 import { brand } from '../shared/brand';
+import { CreationTimings } from './creation-timing';
 import { buildVersion } from '../shared/build';
 import { assertProjectVersion } from './compatibility';
 import { commandContracts, isCommand, parseInput, parseOutput, type CommandOutput } from '../shared/contracts';
 import { ApplicationError } from '../shared/errors';
+import { newProjectLocationError } from '../shared/project-location';
 import { Operations } from './runtime/operations';
 import { recoverAttempts } from './runtime/model-gateway';
 import { ProjectCommitService } from './runtime/commit-kernel';
@@ -73,6 +79,7 @@ import {
   paths,
   renderProgress,
   renderConfig,
+  parseConfig,
   updateConfigDocument,
   reconfigure,
   prosePath,
@@ -121,6 +128,7 @@ export class Service {
   readonly operations = new Operations();
   readonly scheduler = new ResourceScheduler();
   requestJournal: FileStore | null = null;
+  private creationTimings = new CreationTimings();
   private watcher: ProjectWatcher | null = null;
   private managementController = new AbortController();
   index: SemanticIndex | null = null;
@@ -181,12 +189,15 @@ export class Service {
     this.requestJournal?.close();
     this.requestJournal = null;
   }
-  close() {
+  private assertCanClose() {
     if (this.index?.controller) throw new Error('请先停止语义索引更新');
     if (this.chat?.controller) throw new Error('请先停止当前聊天任务');
     if (this.coverController) throw new Error('封面请求尚未结束，请先停止或等待结果');
     if (this.runner?.controller) throw new Error('请先停止当前任务');
     if (this.runner?.telemetry.busy) throw new Error('评估尚未结束，请先停止或等待结果');
+  }
+  close() {
+    this.assertCanClose();
     this.proseIndexer?.stop();
     this.proseIndexer = null;
     this.watcher?.close();
@@ -215,7 +226,7 @@ export class Service {
       project: store?.db.project() ?? null,
       tagDraft: store?.db.get<BookSpec>('tagDraft'),
       documents: store?.documentListing() ?? [],
-      runs: (store?.db.runs() ?? []).map((r) => ({ ...r, messages: [], toolResults: {} })),
+      runs: (store?.db.runs() ?? []).map((r) => this.presentRun(r)),
       events: store?.db.events() ?? [],
       profiles: this.profiles.map(({ apiKey, ...p }) => p),
       recent: this.recent,
@@ -227,6 +238,11 @@ export class Service {
       }))
     };
   }
+  private presentRun(run: Run, full = false): Run {
+    const store = this.store!;
+    return { ...run, creationTiming: this.creationTimings.view(run), basisRevision: compatibleRunBase(store, run) ? store.db.project().revision : null,
+      ...(full ? {} : { messages: [], toolResults: {} }) };
+  }
   studio(): StudioState {
     const store = this.store!;
     const head = store.db.headRef();
@@ -235,6 +251,7 @@ export class Service {
         ? { id: head.id, projectId: head.projectId, revision: head.revision, createdAt: head.createdAt }
         : null,
       snapshots: store.db.snapshots(),
+      recoveryConflicts: store.recoveryConflicts(),
       outbox: store.db.sql
         .prepare("SELECT id,status,error FROM materialization_outbox WHERE status<>'complete'")
         .all() as StudioState['outbox'],
@@ -253,7 +270,7 @@ export class Service {
                 ? a.evidence.some((e) => store.db.document(e.path)?.hash !== e.hash)
                 : store.db.document(a.track === 'plan' ? detailPath(a.chapter) : prosePath(a.chapter))
                     ?.hash !== a.hash
-              : a.snapshotId !== head?.id ||
+              : (a.snapshotId !== head?.id && !compatibleSettingsSnapshot(store, a.snapshotId)) ||
                 !identity ||
                 identity.hash !== a.hash ||
                 identity.epoch !== a.epoch ||
@@ -268,6 +285,9 @@ export class Service {
   }
   async open(root: string) {
     if (isRecyclePath(root)) throw new Error('请先从客户端回收站恢复作品，再打开编辑');
+    this.assertCanClose();
+    if (!fs.existsSync(path.join(root, '.novelclient/state.sqlite')))
+      throw new Error(`此目录不是${brand.name}项目；请新建作品后导入文档`);
     this.close();
     const store = new FileStore(root);
     this.store = store;
@@ -347,6 +367,7 @@ export class Service {
       }
       rebuildMemory(store);
       syncEntities(store);
+      for (const run of store.db.runs()) this.runner.recoverReadyCandidate(run, p, 'restore');
       const proseIndexer = this.proseIndexer = new ProseIndexer(store);
       setImmediate(() => { if (this.proseIndexer === proseIndexer) void this.track(proseIndexer.rebuild()).catch(() => {}); });
       this.watcher = new ProjectWatcher(store, () => this.emit({ type: 'snapshot', resource: 'documents' }), () => {});
@@ -392,6 +413,7 @@ export class Service {
       status: 'awaiting_review',
       profileId: profile?.id ?? '',
       profileVersion: profile?.version ?? 0,
+      reasoningEfforts: captureReasoning(this.profiles),
       createdAt: now(),
       updatedAt: now(),
       baseRevision: p.revision,
@@ -454,7 +476,16 @@ export class Service {
       s.db.saveRun(r);
       this.operations.complete(receipt);
     });
-    void this.track(this.scheduler.run(r.id, ['foreground'], 10, () => this.executor!.execute({ id: r.id, kind: 'run' }))).catch((e) => {
+    void this.track(this.scheduler.run(r.id, ['foreground'], 10, async () => {
+      const timingStore = (this.requestJournal ?? s).db;
+      // Optional timing telemetry must never prevent generation or alter its result.
+      try { this.creationTimings.begin(r, s.db.project(), this.profiles, timingStore); } catch {}
+      try {
+        return await this.executor!.execute({ id: r.id, kind: 'run' });
+      } finally {
+        try { this.creationTimings.finish(s.db.run(r.id), timingStore); } catch {}
+      }
+    })).catch((e) => {
       const latest = s.db.run(r.id);
       if (['complete', 'discarded', 'stale'].includes(latest.status)) return;
       setRunStatus(latest, latest.status === 'failed' ? 'failed' : 'paused');
@@ -479,14 +510,20 @@ export class Service {
     r.steps = structuredClone(old.steps);
     r.repairAttempts = structuredClone(old.repairAttempts);
     r.candidateWrites = structuredClone(old.candidateWrites);
-    r.changes = structuredClone(old.changes);
+    r.changes = candidateChangesForCurrentSettings(s, old);
     r.facts = structuredClone(old.facts);
     r.factRetractions = structuredClone(old.factRetractions);
     r.continuity = structuredClone(old.continuity);
     if (old.memoryRepair) {
-      r.memoryRepair = old.baseRevision === p.revision ? structuredClone(old.memoryRepair) : prepareMemoryRepair(s);
+      const compatible = compatibleRunBase(s, old);
+      r.memoryRepair = compatible ? structuredClone(old.memoryRepair) : prepareMemoryRepair(s);
       r.continuity = memoryRepairScope(r.memoryRepair);
-      if (old.baseRevision !== p.revision) {
+      if (compatible) {
+        r.baseRevision = old.baseRevision;
+        r.baseSnapshotId = old.baseSnapshotId;
+        r.changes = structuredClone(old.changes);
+        r.memoryReview = structuredClone(old.memoryReview);
+      } else {
         r.changes = [];
         r.facts = [];
         r.factRetractions = [];
@@ -503,13 +540,47 @@ export class Service {
     }
     if (old.planning) {
       planningBinding(s, old);
+      // The report and the author's approval bind the original immutable input, not this handoff's ID.
+      r.baseRevision = old.baseRevision;
+      r.baseSnapshotId = old.baseSnapshotId;
       r.planning = structuredClone(old.planning);
       r.planning.promptHashes = {};
-      r.planning.titleSelection = undefined;
+      if (old.skillHash && old.skillHash !== planningRulesHash(this.skillRoot, p)) {
+        r.planning.phase = 'reviewing_report';
+        r.planning.reportReview = undefined;
+        r.planning.contractReview = undefined;
+        r.planning.planApproval = undefined;
+        r.planning.titleSelection = undefined;
+      }
     }
-    if (old.naming) { namingBinding(s, old); r.naming = structuredClone(old.naming); }
+    if (old.naming) {
+      namingBinding(s, old);
+      r.baseRevision = old.baseRevision;
+      r.baseSnapshotId = old.baseSnapshotId;
+      r.naming = structuredClone(old.naming);
+      if (old.skillHash && old.skillHash !== namingRulesHash(this.skillRoot, p) && r.naming.batch) {
+        r.naming.phase = 'reviewing';
+        r.naming.review = undefined;
+      }
+    }
+    const namingChildren = r.planning?.planApproval
+      ? [...s.db.allRuns()].filter(child => child.naming?.sourceRunId === old.id && !child.accepted && !['discarded', 'stale'].includes(child.status))
+      : [];
     s.db.transaction(() => {
       s.db.saveRun(r);
+      for (const child of namingChildren) {
+        child.naming!.sourceRunId = r.id;
+        s.db.saveRun(child);
+        s.db.event(child.id, 'source-handoff', '已接续同一份已确认方案，保留书名候选与审核记录', { from: old.id, to: r.id });
+      }
+      if (r.naming?.sourceRunId) {
+        const parent = s.db.run(r.naming.sourceRunId);
+        if (parent.planning?.titleSelection?.batchRunId === old.id) {
+          if (r.naming.phase === 'ready') parent.planning.titleSelection.batchRunId = r.id;
+          else parent.planning.titleSelection = undefined;
+          s.db.saveRun(parent);
+        }
+      }
       setRunStatus(old, 'discarded');
       old.error = `已交接至 ${r.id}，原始任务和请求记录保留`;
       s.db.saveRun(old);
@@ -528,7 +599,7 @@ export class Service {
   startMemoryRepair(profileId?: string, receipt?: { count: number; issues: string[] }) {
     const { s, p } = this.require();
     if (p.titleReviewRequired) throw new Error('请先在独立命名中核对当前书名，再同步后续计划');
-    const existing = s.db.runs().find(run => run.memoryRepair && !run.accepted && !['discarded', 'stale', 'failed'].includes(run.status) && run.baseRevision === p.revision);
+    const existing = s.db.runs().find(run => run.memoryRepair && !run.accepted && !['discarded', 'stale', 'failed'].includes(run.status) && compatibleRunBase(s, run));
     if (existing) return existing.id;
     const run = this.makeRun('revision', '核对并同步前文修改影响的记忆与后续资料，保留无关内容，汇总为一次审阅。', profileId);
     run.memoryRepair = prepareMemoryRepair(s);
@@ -561,7 +632,7 @@ export class Service {
       const { s } = this.require();
       const resources = a.resources as string[];
       return { projectSessionId: this.projectSessionId, eventSeq: this.eventSeq,
-        ...(resources.includes('runs') ? { runs: s.db.runs().map((run) => ({ ...run, messages: [], toolResults: {} })), events: s.db.events() } : {}),
+        ...(resources.includes('runs') ? { runs: s.db.runs().map((run) => this.presentRun(run)), events: s.db.events() } : {}),
         ...(resources.includes('chat') ? { conversations: this.chat!.records.all('conversations'), chatBusy: !!this.chat?.controller } : {}),
         ...(resources.includes('documents') ? { documents: s.documentListing() } : {}),
         ...(resources.includes('studio') ? { studio: this.studio() } : {}) };
@@ -569,6 +640,7 @@ export class Service {
     if (command === 'operation.query') return this.operations.read(this.require().s.db, str(a.id));
     if (command === 'history.preview') { const { s } = this.require(); return garbageCollectionPreview(s.root, s.db.sql); }
     if (command === 'tags.catalog') return tagBundle(this.skillRoot).taxonomy;
+    if (command === 'titles.styleProfile') return loadTitleStyleProfile(this.skillRoot);
     if (command === 'tags.validate') {
       const input = tagInputSchema.parse(a.input);
       return compileTags(
@@ -676,7 +748,8 @@ export class Service {
       if (args.creationInput && suppliedTitle) throw new Error('统一开书流程请先确认作品方案，再确定书名');
       const title = suppliedTitle || `待定书名-${id().slice(0, 8)}`;
       validateExpressionSelection(this.skillRoot, configSchema.parse(args.config ?? {}));
-      if (isRecyclePath(args.parent)) throw new Error('不能在回收站内新建作品');
+      const locationError = newProjectLocationError(path.resolve(args.parent));
+      if (locationError) throw new ApplicationError('VALIDATION_ERROR', locationError);
       if (/[<>:"/\\|?*\x00-\x1f]/.test(title) || /[. ]$/.test(title))
         throw new Error('作品名称包含无效路径字符');
       this.close();
@@ -795,7 +868,10 @@ export class Service {
       if (runner.controller || chat.controller || this.coverController)
         throw new Error('同一本书同时只能运行一个模型任务，请等待或停止当前任务');
     };
-    if (command === 'run.page') return s.db.runPage(typeof a.before === 'number' ? a.before : undefined, typeof a.watermark === 'number' ? a.watermark : undefined, typeof a.limit === 'number' ? a.limit : 100);
+    if (command === 'run.page') {
+      const page = s.db.runPage(typeof a.before === 'number' ? a.before : undefined, typeof a.watermark === 'number' ? a.watermark : undefined, typeof a.limit === 'number' ? a.limit : 100);
+      return { ...page, items: page.items.map(run => this.presentRun(run, true)) };
+    }
     if (command === 'run.events')
       return s.db.runEvents(
         str(a.id),
@@ -907,6 +983,7 @@ export class Service {
       r.parentRunId = sourceRunId;
       r.naming = { sourceRunId, planHash, sourceHash: source.sourceHash, inputHash: source.inputHash,
         contractRevision: source.contractRevision, rule, manualTitle, instruction: String(a.instruction ?? ''),
+        candidateCount: manualTitle ? 1 : 6,
         phase: 'generating', history: [], formatRepairs: 0, semanticRevisions: 0 };
       s.db.saveRun(r);
       s.db.set(`titleRequest:${requestId}`, { id: r.id, fingerprint });
@@ -922,6 +999,7 @@ export class Service {
       if (!t.batch!.candidates.some(v => v.id === candidateId)) throw new Error('书名候选不存在');
       t.history.push({ batch: structuredClone(t.batch!), review: t.review?.result });
       t.regenerate = { candidateId, instruction: str(a.instruction), original: structuredClone(t.batch!) };
+      t.candidateCount = t.batch!.candidates.length;
       t.manualTitle = undefined;
       t.phase = 'generating';
       t.review = undefined;
@@ -975,6 +1053,41 @@ export class Service {
       this.emit({ type: 'snapshot' });
       return { selected: true };
     }
+    if (command === 'tags.reroll') {
+      idle();
+      const r = s.db.run(str(a.id));
+      planningBinding(s, r);
+      const t = r.planning!;
+      if (r.accepted || ['discarded', 'stale'].includes(r.status) || t.phase !== 'awaiting_direction' ||
+          !t.report || a.reportHash !== tagHash(t.report) || t.reportReview?.hash !== tagHash(t.report) ||
+          t.reportReview.binding !== t.binding)
+        throw new Error('三个方向已改变或尚未完成审核，请刷新后再生成');
+      const keepDirectionIds = z.array(z.string().min(1)).max(1).parse(a.keepDirectionIds);
+      if (keepDirectionIds.some(value => !t.report!.directions.some(direction => direction.id === value)))
+        throw new Error('要保留的方向不存在');
+      const instruction = String(a.instruction ?? '').trim() || (keepDirectionIds.length
+        ? '完整保留指定方向，重新设计另外两个机制不同的方案。'
+        : '保留作者的必须保留项与禁区，重新设计三个机制不同的方案。');
+      t.history.push({ kind: 'report', value: structuredClone(t.report) });
+      t.history.push({ kind: 'reroll_request', value: { keepDirectionIds, instruction, promptHashes: { ...t.promptHashes } } });
+      t.promptHashes = {};
+      t.regenerate = { directionId: keepDirectionIds[0] ?? '', keepDirectionIds, instruction, original: structuredClone(t.report) };
+      t.phase = 'planning';
+      t.planApproval = undefined;
+      t.titleSelection = undefined;
+      t.selectedDirectionId = undefined;
+      t.candidate = undefined;
+      t.contractReview = undefined;
+      t.reportReview = undefined;
+      t.resolutions = {};
+      t.formatRepairs = 0;
+      t.semanticRevisions = 0;
+      r.messages = [];
+      r.changes = [];
+      r.error = undefined;
+      r.issues = [];
+      return this.launch(r);
+    }
     if (command === 'tags.selectDirection' || command === 'tags.reviseDirection') {
       idle();
       const r = s.db.run(str(a.id));
@@ -998,6 +1111,8 @@ export class Service {
       if (command === 'tags.reviseDirection') {
         const instruction = z.string().trim().min(1).max(6000).parse(a.instruction);
         t.history.push({ kind: 'report', value: structuredClone(t.report) });
+        t.history.push({ kind: 'reroll_request', value: { directionId, instruction, promptHashes: { ...t.promptHashes } } });
+        t.promptHashes = {};
         t.regenerate = { directionId, instruction, original: structuredClone(t.report) };
         t.phase = 'planning';
       } else {
@@ -1059,6 +1174,15 @@ export class Service {
     if (command === 'snapshot.page') return s.db.snapshotPage(typeof a.before === 'number' ? a.before : undefined, typeof a.watermark === 'number' ? a.watermark : undefined, typeof a.limit === 'number' ? a.limit : 100);
     if (command === 'outbox.retry') {
       s.materialize();
+      return this.studio();
+    }
+    if (command === 'recovery.preview') return s.recoveryPreview(str(a.transactionId), str(a.path));
+    if (command === 'recovery.retry' || command === 'recovery.abandon') {
+      idle();
+      if (command === 'recovery.retry') s.retryRecovery(str(a.transactionId));
+      else s.abandonRecovery(str(a.transactionId));
+      s.scan();
+      this.emit({ type: 'snapshot' });
       return this.studio();
     }
     if (command === 'memory.list') {
@@ -1163,7 +1287,7 @@ export class Service {
     if (command === 'draft.checkpoint' || command === 'assessment.refresh') {
       if (runner.controller) throw new Error('正文生成中，请等待任务完成');
       const r = s.db.run(str(a.id));
-      if (r.baseSnapshotId !== s.db.get('headSnapshot') || r.accepted || r.status === 'discarded')
+      if (!compatibleRunBase(s, r) || r.accepted || ['discarded', 'stale'].includes(r.status))
         throw new Error('候选版本已改变');
       const content =
         typeof a.content === 'string'
@@ -1382,21 +1506,18 @@ export class Service {
       const r = s.db.run(str(a.id));
       if (r.accepted) throw new Error('已接受任务无需重查候选');
       if (a.reviewSaved === true) {
-        if (!['unknown', 'paused', 'needs_repair'].includes(r.status))
+        if (!['unknown', 'paused', 'needs_repair', 'awaiting_review'].includes(r.status))
           throw new Error('当前任务不能恢复候选审阅');
         if (!r.changes.length) throw new Error('没有已保存的候选');
         if (r.permission?.status === 'pending' || (r.input && !r.input.answer))
           throw new Error('请先处理任务中待确认的问题');
-        if (
-          r.baseRevision !== p.revision ||
-          (r.baseSnapshotId && r.baseSnapshotId !== s.db.get('headSnapshot'))
-        )
+        if (!compatibleRunBase(s, r))
           throw new Error('候选依据已变化，请重建上下文后继续');
         if (r.mode === 'stage' && (r.stage !== p.stage || r.chapter !== p.chapter))
           throw new Error('候选所属阶段已变化');
         if (
           (r.manifest && contextChanged(s, r.manifest)) ||
-          r.changes.some((change) => fileHash(safePath(s.root, change.path)) !== change.baseHash)
+          candidateChangesForCurrentSettings(s, r).some((change) => fileHash(safePath(s.root, change.path)) !== change.baseHash)
         )
           throw new Error('候选依据或正式文件已变化，请先核对');
       }
@@ -1415,7 +1536,7 @@ export class Service {
       if (a.reviewSaved === true || ['awaiting_review', 'needs_repair'].includes(r.status))
         setRunStatus(r, r.issues.some((i) => i.severity === 'error') ? 'needs_repair' : 'awaiting_review');
       s.db.saveRun(r);
-      return r;
+      return this.presentRun(r, true);
     }
     if (
       [
@@ -1489,7 +1610,13 @@ export class Service {
         projectSessionId: this.projectSessionId,
         scheduler: { running: this.scheduler.running, queued: this.scheduler.pending },
         operations: s.db.sql.prepare('SELECT id,kind FROM operation_receipts ORDER BY rowid DESC LIMIT 100').all(),
-        attempts: s.db.sql.prepare("SELECT id,run_id AS runId,status,json_extract(data,'$.purpose') AS purpose,json_extract(data,'$.usageState') AS usageState,json_extract(data,'$.requestHash') AS requestHash FROM model_attempts ORDER BY rowid DESC LIMIT 100").all(),
+        attempts: s.db.sql.prepare(`SELECT id,run_id AS runId,status,
+          json_extract(data,'$.purpose') AS purpose,json_extract(data,'$.usageState') AS usageState,
+          json_extract(data,'$.requestHash') AS requestHash,json_extract(data,'$.createdAt') AS createdAt,
+          json_extract(data,'$.completedAt') AS completedAt,json_extract(data,'$.failure.source') AS failureSource,
+          json_extract(data,'$.failure.code') AS failureCode,json_extract(data,'$.failure.requestId') AS upstreamRequestId,
+          json_extract(data,'$.failure.elapsedMs') AS elapsedMs
+          FROM model_attempts ORDER BY rowid DESC LIMIT 100`).all(),
         commits: s.db.sql.prepare('SELECT * FROM candidate_commits ORDER BY rowid DESC LIMIT 100').all(),
         outbox: s.db.sql.prepare('SELECT id,status FROM materialization_outbox ORDER BY rowid DESC LIMIT 100').all()
       };
@@ -1569,6 +1696,7 @@ export class Service {
       if (s.read(paths.config).hash !== s.db.document(paths.config)?.hash)
         throw new Error('配置文件存在外部改动，请先比较并接受，不能用旧设置覆盖');
       const cfg = configSchema.parse(a.config);
+      if (tagHash(cfg) === tagHash(p.config)) return this.snapshot();
       if (approvedCreation(p)?.knowledge.options.some(o => o.group === 'reading.main') && cfg.genre !== p.config.genre)
         throw new Error('本书题材由正式标签契约确定，请在标签与策划中修订主分类');
       validateExpressionSelection(this.skillRoot, cfg);
@@ -1580,6 +1708,7 @@ export class Service {
         ],
         next
       );
+      for (const run of s.db.runs()) runner.recoverReadyCandidate(run, next, 'settings');
       return this.snapshot();
     }
     if (command === 'run.start') {
@@ -1626,15 +1755,24 @@ export class Service {
         throw new Error('策划输入变更请在标签与策划中保存，或使用方向局部重做；恢复只继续已绑定的输入');
       if (command === 'run.resume') {
         if (!['paused', 'unknown', 'needs_repair', 'awaiting_review', 'failed', 'stale'].includes(r.status)) throw new Error('请先处理当前待回答或待授权的事项');
+        if (!String(a.instruction ?? '').trim() && runner.recoverReadyCandidate(r, p, 'continue')) return r.id;
         if (runner.needsFreshContext(r)) return this.launch(this.rebuildRun(r, r.profileId, typeof a.instruction === 'string' ? a.instruction : ''));
       }
       if (command === 'run.answer') {
         if (!r.input) throw new Error('任务没有待回答问题');
         r.input.answer = str(a.answer);
+        if (runner.needsFreshContext(r)) {
+          s.db.saveRun(r);
+          return this.launch(this.rebuildRun(r, r.profileId, `作者已回答待确认问题：${r.input.question}\n回答：${r.input.answer}`));
+        }
       }
       if (command === 'run.permission') {
         if (!r.permission) throw new Error('没有待批准动作');
         r.permission.status = a.approved === true ? 'approved' : 'denied';
+        if (runner.needsFreshContext(r)) {
+          s.db.saveRun(r);
+          return this.launch(this.rebuildRun(r, r.profileId, `先前待确认动作：${JSON.stringify(r.permission)}。上下文已改变，不能直接执行旧动作；如仍需执行，提出当前具体动作重新确认。`));
+        }
       }
       if (typeof a.instruction === 'string' && a.instruction.trim()) {
         if (r.messages.length) r.messages.push({ role: 'user', content: a.instruction });
@@ -1671,7 +1809,7 @@ export class Service {
       runner.check(r, p);
       setRunStatus(r, r.issues.some((i) => i.severity === 'error') ? 'needs_repair' : 'awaiting_review');
       s.db.saveRun(r);
-      return r;
+      return this.presentRun(r, true);
     }
     if (command === 'run.accept') {
       if (runner.controller) throw new Error('任务还在运行');
@@ -1685,11 +1823,11 @@ export class Service {
         return { alreadyAccepted: true };
       }
       if (str(a.proposalHash) !== proposalHash(r)) throw new Error('候选内容已改变，请重新打开审阅');
-      if (r.baseSnapshotId && r.baseSnapshotId !== s.db.get('headSnapshot'))
-        throw new Error('候选依据的快照已改变');
+      runner.recoverReadyCandidate(r, p, 'accept');
+      if (!compatibleRunBase(s, r))
+        throw new Error('生成候选后，作品内容或创作要求已改变。候选已保留，请点击“继续当前任务”核对新资料后再采纳。');
       if (!['awaiting_review', 'needs_repair'].includes(r.status))
         throw new Error('请先完成任务并进入候选审阅');
-      if (r.baseRevision !== p.revision) throw new Error('候选基于旧项目版本，请重新审阅并建立候选');
       if (r.agentRulesHash) assertControllerRules(this.skillRoot, r.agentRulesHash);
       if (r.planning) planningBinding(s, r);
       if ((p.tagEnabled || p.creationWorkflow === 2) && r.stage === 'S01' && r.mode === 'stage' && !r.planning)
@@ -1720,6 +1858,10 @@ export class Service {
         s.db.saveRun(r);
         throw new Error('候选存在阻断问题，请先修改');
       }
+      if (r.status === 'needs_repair') {
+        setRunStatus(r, 'awaiting_review');
+        s.db.saveRun(r);
+      }
       if (!r.changes.length) throw new Error('没有可接受的候选文件');
       if (r.issues.some((i) => i.severity === 'warning') && !String(a.warningReason ?? '').trim())
         throw new Error('请填写保留警告的审阅理由');
@@ -1727,7 +1869,18 @@ export class Service {
       let next = r.mode === 'stage' ? advance(p, r.id) : structuredClone(p);
       if (r.pipeline) next = advance(next, r.id);
       next.revision++;
-      let changes = structuredClone(r.changes);
+      let changes = candidateChangesForCurrentSettings(s, r);
+      // S02's reviewed creative settings must also become the settings shown by
+      // the client. Otherwise saving a later budget change restores the old
+      // constraints/style over the accepted configuration document.
+      const creativeConfig = r.mode === 'stage' && r.stage === 'S02'
+        ? changes.find(change => change.path === paths.config)
+        : undefined;
+      if (creativeConfig) {
+        const reviewed = parseConfig(creativeConfig.content, p.config);
+        for (const key of ['pov', 'genre', 'style', 'constraints'] as const)
+          next.config[key] = reviewed[key];
+      }
       const substantiveChanges = changes.filter(change => {
         const previous = s.db.document(change.path)?.hash;
         return !previous || !sameStoryText(s.object(previous).toString('utf8'), change.content);

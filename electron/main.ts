@@ -8,12 +8,15 @@ import {
   shell,
   Menu,
   nativeTheme,
+  clipboard,
   type UtilityProcess
 } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { validateReasoning } from '../src/shared/reasoning';
+import { updateReasoningPreference, checkReasoningRevision, sameModelExecution } from '../src/core/reasoning-preferences';
 import {
   profileSchema,
   type Profile,
@@ -21,6 +24,9 @@ import {
   type Command,
   type ModelLimits
 } from '../src/shared/types';
+import type { AppEvent } from '../src/shared/types';
+import { ManagementAudit } from '../src/core/management/audit';
+import { LocalManagementServer, type ManagementCaller, type ManagementResponse } from '../src/core/management/server';
 import { atomicWrite, FileStore } from '../src/core/storage';
 import { callExternal, recoverAttempts } from '../src/core/runtime/model-gateway';
 import { commandContracts, isCommand, parseInput, parseOutput, type CommandOutput } from '../src/shared/contracts';
@@ -63,7 +69,7 @@ let settings: {
 } = { profiles: [], recent: [] };
 const pending = new PendingRequests();
 const supervisor = new WorkerSupervisor();
-const requestContext = new AsyncLocalStorage<z.infer<typeof rendererContextSchema> & { signal?: AbortSignal }>();
+const requestContext = new AsyncLocalStorage<z.infer<typeof rendererContextSchema> & { signal?: AbortSignal; fileGrants?: Set<string> }>();
 const waiting = new Map<string, AbortController>();
 let projectSessionId: string | undefined;
 let openedProjectRoot: string | undefined;
@@ -84,6 +90,12 @@ let stateFile = '';
 let appearanceFile = '';
 let assistantSettings: AssistantSettings;
 let managementJournal: FileStore | undefined;
+let managementAudit: ManagementAudit | undefined;
+let webManagement: LocalManagementServer | undefined;
+function emitAppEvent(event: AppEvent) {
+  if (win && !win.isDestroyed()) win.webContents.send('wenxu:event', event);
+  webManagement?.emit(event);
+}
 const managementController = new AbortController();
 let appearance: StoredAppearance = windowThemes.dark;
 let windowAppearance: WindowAppearanceTransition | undefined;
@@ -188,9 +200,9 @@ function startWorker() {
         if (generation > 1) {
           reconnect = openedProjectRoot ? rpc('project.open', { root: openedProjectRoot }) : Promise.resolve();
           void reconnect.catch(() => {
-            if (win && !win.isDestroyed()) win.webContents.send('wenxu:event', { type: 'error', text: '执行内核已重启，原作品恢复未完成，请重新打开并核对', workerGeneration: generation });
+            emitAppEvent({ type: 'error', text: '执行内核已重启，原作品恢复未完成，请重新打开并核对', workerGeneration: generation });
           }).finally(() => {
-            if (win && !win.isDestroyed()) win.webContents.send('wenxu:event', { type: 'snapshot', workerGeneration: generation, projectSessionId });
+            emitAppEvent({ type: 'snapshot', workerGeneration: generation });
           });
         }
       } catch (error) { rejectReady(error as Error); child.kill(); }
@@ -199,7 +211,7 @@ function startWorker() {
     if (message.type === 'shutdown-complete') { resolveShutdown?.(); return; }
     if (message.workerGeneration !== undefined && message.workerGeneration !== generation) return;
     if (message.event) {
-      if (win && !win.isDestroyed()) win.webContents.send('wenxu:event', message.event);
+      emitAppEvent(message.event as AppEvent);
       return;
     }
     if (!message.requestId) return;
@@ -218,7 +230,7 @@ function startWorker() {
     if (quitting) resolveShutdown?.();
     const delay = supervisor.exited(quitting);
     if (!quitting && win && !win.isDestroyed()) {
-      win.webContents.send('wenxu:event', { type: 'error', text: delay === null ? '执行内核连续启动失败，已停止自动重启。请安全退出后检查诊断。' : '执行内核正在恢复连接；不会自动重新调用模型。', workerGeneration: generation });
+      emitAppEvent({ type: 'error', text: delay === null ? '执行内核连续启动失败，已停止自动重启。请安全退出后检查诊断。' : '执行内核正在恢复连接；不会自动重新调用模型。', workerGeneration: generation });
       if (delay !== null) setTimeout(() => { if (!quitting) startWorker(); }, delay);
     }
   });
@@ -240,6 +252,7 @@ async function rpc<C extends Command>(command: C, args: Record<string, unknown>)
 }
 function stopWorker() {
   managementController.abort();
+  void webManagement?.stop();
   if (shutdownPromise) return shutdownPromise;
   shutdownPromise = new Promise<void>((resolve) => {
     let settled = false;
@@ -256,10 +269,18 @@ function stopWorker() {
 
 function selected(file: unknown) {
   const target = z.string().parse(file);
-  if (!granted.has(path.resolve(target))) throw new Error('请通过系统选择框选择此目录或文件');
+  if (!(requestContext.getStore()?.fileGrants ?? granted).has(path.resolve(target))) throw new Error('请通过文件选择界面选择此目录或文件');
   return target;
 }
 async function handle(command: Command, a: Record<string, unknown>) {
+  if (command.startsWith('management.')) {
+    if (!webManagement) throw new Error('网页管理服务未初始化');
+    if (command === 'management.status') return webManagement.status();
+    if (command === 'management.open') { await shell.openExternal(await webManagement.pairingUrl()); return true; }
+    if (command === 'management.link') return webManagement.pairingUrl();
+    if (command === 'management.revoke') { webManagement.revoke(); return true; }
+    if (command === 'management.stop') { await webManagement.stop(); return true; }
+  }
   if (command === 'app.openUrl') {
     const url = new URL(z.string().parse(a.url));
     if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password)
@@ -322,7 +343,8 @@ async function handle(command: Command, a: Record<string, unknown>) {
       a.connection,
       a.models,
       key ? safeStorage.encryptString(key).toString('base64') : undefined,
-      (p) => trustedModelLimits(p, modelLimitsCache.get(limitsCacheKey(p, p.model)))
+      (p) => trustedModelLimits(p, modelLimitsCache.get(limitsCacheKey(p, p.model))),
+      a.expectedProfiles as Record<string, { version: number; enabled: boolean }> | undefined
     );
     const next = { ...settings, profiles: update.all };
     atomicWrite(stateFile, JSON.stringify(next, null, 2));
@@ -332,6 +354,10 @@ async function handle(command: Command, a: Record<string, unknown>) {
   }
   if (command === 'profiles.deleteGroup') {
     const id = z.string().min(1).parse(a.id);
+    const expected = a.expectedProfiles as Record<string, { version: number; enabled: boolean }> | undefined;
+    const group = settings.profiles.filter(p => connectionId(p) === id);
+    if (expected && (Object.keys(expected).length !== group.length || group.some(p => expected[p.id]?.version !== p.version || expected[p.id]?.enabled !== (p.enabled !== false))))
+      throw new ApplicationError('VERSION_CONFLICT', '此供应商已在另一处修改，请刷新后再删除。', ['refresh']);
     const next = { ...settings, profiles: settings.profiles.filter((p) => connectionId(p) !== id) };
     atomicWrite(stateFile, JSON.stringify(next, null, 2));
     settings = next;
@@ -365,9 +391,26 @@ async function handle(command: Command, a: Record<string, unknown>) {
     granted.add(path.resolve(result.filePaths[0]));
     return result.filePaths[0];
   }
+  if (command === 'profiles.reasoning') {
+    const old = settings.profiles.find(p => p.id === a.id);
+    if (!old) throw new Error('模型已移除，请重新选择');
+    const input = parseInput('profiles.reasoning', a);
+    const saved = updateReasoningPreference(old, input.effort, input.expectedVersion, input.expectedRevision);
+    const next = { ...settings, profiles: settings.profiles.map(p => p.id === saved.id ? saved : p) };
+    atomicWrite(stateFile, JSON.stringify(next, null, 2));
+    settings = next;
+    sync();
+    const { encryptedKey, ...profile } = saved;
+    return profile;
+  }
   if (command === 'profiles.save') {
     let profile = profileSchema.parse(a.profile);
     const old = settings.profiles.find((v) => v.id === profile.id);
+    if (old && profile.version !== old.version)
+      throw new ApplicationError('VERSION_CONFLICT', '模型配置已在另一处修改，请载入最新版本后再保存。', ['refresh']);
+    if (old) checkReasoningRevision(profile, old);
+    validateReasoning(profile);
+    profile.reasoningRevision = (old?.reasoningRevision ?? 0) + ((old?.reasoningEffort ?? null) !== (profile.reasoningEffort ?? null) ? 1 : 0);
     profile = normalizeLimits(
       profile,
       trustedModelLimits(
@@ -383,9 +426,10 @@ async function handle(command: Command, a: Record<string, unknown>) {
       if (/authorization|api[-_]key|cookie|^host$/i.test(h))
         throw new Error('密钥请填写独立的 API Key 栏，不能存入自定义请求头');
     endpoint(profile, 'test');
-    profile.version = (old?.version ?? 0) + 1;
+    const executionChanged = !old || !!key || !sameModelExecution(profile, old);
+    profile.version = old ? old.version + (executionChanged ? 1 : 0) : 1;
     profile.hasKey = !!(key || old?.encryptedKey);
-    profile.capabilities = {};
+    profile.capabilities = executionChanged ? {} : old!.capabilities;
     const saved = {
       ...profile,
       encryptedKey: key ? safeStorage.encryptString(key).toString('base64') : (old?.encryptedKey ?? '')
@@ -396,6 +440,8 @@ async function handle(command: Command, a: Record<string, unknown>) {
     return profile;
   }
   if (command === 'profiles.delete') {
+    if (a.expectedVersion !== undefined && settings.profiles.find(p => p.id === a.id)?.version !== a.expectedVersion)
+      throw new ApplicationError('VERSION_CONFLICT', '模型配置已变化，请刷新后再删除');
     settings.profiles = settings.profiles.filter((p) => p.id !== a.id);
     saveSettings();
     sync();
@@ -479,6 +525,53 @@ async function handle(command: Command, a: Record<string, unknown>) {
   }
   return result;
 }
+
+/** Both renderers enter this boundary; the browser never opens another Service/SQLite writer. */
+async function dispatch(command: Command, args: unknown, rawContext: unknown, caller: ManagementCaller): Promise<ManagementResponse> {
+  let waitId: string | undefined;
+  let registeredWait = false;
+  let context: z.infer<typeof rendererContextSchema> | undefined;
+  let failure: string | undefined;
+  const started = Date.now();
+  try {
+    await reconnect.catch(() => {});
+    context = rendererContextSchema.parse(rawContext);
+    waitId = context.waitId;
+    const controller = new AbortController();
+    if (waitId) {
+      if (waiting.has(waitId)) throw new ApplicationError('VALIDATION_ERROR', '重复等待编号');
+      waiting.set(waitId, controller);
+      registeredWait = true;
+    }
+    const contract = commandContracts[command];
+    const bound = contract.scope === 'project' || caller.source === 'browser' && contract.access === 'lifecycle';
+    if (bound && (caller.source === 'browser' || context.projectSessionId) && context.projectSessionId !== projectSessionId)
+      throw new ApplicationError('PROJECT_SESSION_STALE', '作品会话已改变，请刷新后操作', ['refresh']);
+    if (bound && context.workerGeneration !== undefined && context.workerGeneration !== supervisor.generation)
+      throw new ApplicationError('PROJECT_SESSION_STALE', '执行内核已恢复，请刷新后操作', ['refresh']);
+    const input = parseInput(command, args);
+    const result = parseOutput(command, await requestContext.run({ ...context, signal: controller.signal, fileGrants: caller.fileGrants }, () => handle(command, input)));
+    // Changing the active book is shared with every view, including an already-open desktop window.
+    if (contract.scope === 'global' && contract.access !== 'read') emitAppEvent({ type: 'snapshot', workerGeneration: supervisor.generation });
+    return { ok: true, result, projectSessionId, workerGeneration: supervisor.generation };
+  } catch (error) {
+    const payload = errorPayload(error, [
+      ...settings.profiles.map(profile => decryptKey(profile.encryptedKey)),
+      ...(assistantSettings ? [decryptKey(assistantSettings.secret()), decryptKey(assistantSettings.embeddingSecret())] : [])
+    ]);
+    failure = payload.code;
+    return { ok: false, error: payload, projectSessionId, workerGeneration: supervisor.generation };
+  } finally {
+    if (registeredWait && waitId) waiting.delete(waitId);
+    if (failure || commandContracts[command].access !== 'read') {
+      try { managementAudit?.append({ source: caller.source, command, status: failure ? 'error' : 'ok', durationMs: Date.now() - started,
+        operationId: context?.operationId && z.string().uuid().safeParse(context.operationId).success ? context.operationId : undefined,
+        projectSessionId: context?.projectSessionId && z.string().uuid().safeParse(context.projectSessionId).success ? context.projectSessionId : undefined,
+        errorCode: failure }); }
+      catch { emitAppEvent({ type: 'error', text: '管理操作日志写入失败，请检查本机磁盘空间。原操作结果未改变。' }); }
+    }
+  }
+}
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => {
@@ -492,6 +585,18 @@ else {
     fs.mkdirSync(journalRoot, { recursive: true });
     managementJournal = new FileStore(journalRoot);
     recoverAttempts(managementJournal);
+    managementAudit = new ManagementAudit(path.join(app.getPath('userData'), 'management', 'audit.sqlite'));
+    const clientIdFile = path.join(app.getPath('userData'), 'management', 'client-id');
+    let clientId: string;
+    try { clientId = z.string().uuid().parse(fs.readFileSync(clientIdFile, 'utf8').trim()); }
+    catch { clientId = randomUUID(); atomicWrite(clientIdFile, clientId); }
+    webManagement = new LocalManagementServer({
+      client: { id: clientId, name: `${brand.name} · 本机`, version: buildVersion,
+        state: () => ({ workerState: supervisor.state, workerGeneration: supervisor.generation }),
+        invoke: dispatch, cancelWait: waitId => waiting.get(waitId)?.abort() },
+      audit: managementAudit, staticRoot: path.join(__dirname, '../dist'),
+      devOrigin: !app.isPackaged ? process.env.VITE_DEV_SERVER_URL : undefined
+    });
     stateFile = path.join(app.getPath('userData'), 'settings.json');
     assistantSettings = new AssistantSettings(app.getPath('userData'));
     appearanceFile = path.join(app.getPath('userData'), 'appearance.json');
@@ -550,7 +655,7 @@ else {
       persistedAppearance,
       () => {
         if (!win.isDestroyed())
-          win.webContents.send('wenxu:event', {
+          emitAppEvent({
             type: 'error',
             text: '主题偏好保存失败；当前界面可以继续使用，退出时会重试保存。'
           });
@@ -563,7 +668,13 @@ else {
     win.webContents.session.setPermissionRequestHandler((_, __, cb) => cb(false));
     Menu.setApplicationMenu(
       Menu.buildFromTemplate([
-        { id: 'app', label: brand.name, submenu: [{ label: '退出', click: requestClose }] },
+        { id: 'app', label: brand.name, submenu: [
+          { label: '打开网页管理后台', click: () => void dispatch('management.open', {}, {}, { source: 'desktop' }) },
+          { label: '复制网页管理链接', click: () => void dispatch('management.link', {}, {}, { source: 'desktop' }).then(result => { if (result.ok) clipboard.writeText(String(result.result)); }) },
+          { label: '断开所有网页连接', click: () => void dispatch('management.revoke', {}, {}, { source: 'desktop' }) },
+          { label: '停止网页管理服务', click: () => void dispatch('management.stop', {}, {}, { source: 'desktop' }) },
+          { type: 'separator' }, { label: '退出', click: requestClose }
+        ] },
         {
           id: 'edit',
           label: '编辑',
@@ -648,7 +759,7 @@ else {
     startWorker();
     win.webContents.once('did-finish-load', () => {
       const notice = settingsNotice || assistantSettings.recoveryNotice;
-      if (notice) win.webContents.send('wenxu:event', { type: 'error', text: notice });
+      if (notice) emitAppEvent({ type: 'error', text: notice });
     });
     ipcMain.on('wenxu:cancel-wait', (event, waitId: unknown) => {
       if (event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame || typeof waitId !== 'string') return;
@@ -661,26 +772,7 @@ else {
         !isCommand(command)
       )
         throw new Error('未授权的调用');
-      let waitId: string | undefined;
-      try {
-        await reconnect.catch(() => {});
-        const context = rendererContextSchema.parse(rawContext);
-        waitId = context.waitId;
-        const controller = new AbortController();
-        if (waitId) {
-          if (waiting.has(waitId)) throw new ApplicationError('VALIDATION_ERROR', '重复等待编号');
-          waiting.set(waitId, controller);
-        }
-        if (commandContracts[command].scope === 'project' && context.projectSessionId && context.projectSessionId !== projectSessionId)
-          throw new ApplicationError('PROJECT_SESSION_STALE', '作品会话已改变，请刷新后操作', ['refresh']);
-        if (context.workerGeneration !== undefined && context.workerGeneration !== supervisor.generation && commandContracts[command].scope === 'project')
-          throw new ApplicationError('PROJECT_SESSION_STALE', '执行内核已恢复，请刷新后操作', ['refresh']);
-        const input = parseInput(command, args);
-        const result = parseOutput(command, await requestContext.run({ ...context, signal: controller.signal }, () => handle(command, input)));
-        return { ok: true, result, projectSessionId, workerGeneration: supervisor.generation };
-      } catch (error) {
-        return { ok: false, error: errorPayload(error), projectSessionId, workerGeneration: supervisor.generation };
-      } finally { if (waitId) waiting.delete(waitId); }
+      return dispatch(command, args, rawContext, { source: 'desktop' });
     });
     if (!app.isPackaged && process.env.VITE_DEV_SERVER_URL) void win.loadURL(process.env.VITE_DEV_SERVER_URL);
     else void win.loadFile(path.join(__dirname, '../dist/index.html'));
@@ -692,7 +784,7 @@ else {
     });
   });
   app.on('window-all-closed', () => app.quit());
-  app.on('will-quit', () => { managementJournal?.close(); managementJournal = undefined; });
+  app.on('will-quit', () => { managementJournal?.close(); managementJournal = undefined; managementAudit?.close(); managementAudit = undefined; });
   app.on('before-quit', (event) => {
     if (!quitting && win && !win.isDestroyed()) {
       event.preventDefault();

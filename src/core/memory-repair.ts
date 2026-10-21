@@ -7,6 +7,7 @@ import { pendingSource } from './memory-source';
 import { sortImpactFiles, continuityIssues } from './story-impact';
 import { contractPath } from './tags';
 import { approvedCreation } from '../shared/creation';
+import { validateCandidate } from './validation';
 
 export function memoryRepairScope(repair: NonNullable<Run['memoryRepair']>): Run['continuity'] {
   const creationChange = repair.impacts?.some(impact => impact.creationChange);
@@ -36,7 +37,7 @@ export function prepareMemoryRepair(store: FileStore): NonNullable<Run['memoryRe
       .filter(file => !project.stale.includes(file)) };
 }
 
-export function memoryRepairRequest(store: FileStore, run: Run, file: string) {
+export function memoryRepairRequest(store: FileStore, run: Run, file: string, skillRoot: string) {
   const repair = run.memoryRepair!;
   const read = (path: string) => {
     const content = run.changes.find(change => change.path === path)?.content ?? store.readAccepted(path).content;
@@ -44,6 +45,8 @@ export function memoryRepairRequest(store: FileStore, run: Run, file: string) {
   };
   const facts = store.db.facts().filter(fact => fact.reviewStatus !== 'retracted' && fact.state !== 'superseded' &&
     repair.paths.find(path => path.startsWith('07_') && fact.evidence.some(e => e.path === path)) === file);
+  const format = validateCandidate(run.stage, store.db.project(), [{ path: file, content: '', baseHash: null }], skillRoot, 'revision')
+    .filter(issue => issue.severity === 'error' && issue.code !== 'placeholder');
   return {
     authorRequest: run.request,
     scope: run.continuity,
@@ -53,6 +56,11 @@ export function memoryRepairRequest(store: FileStore, run: Run, file: string) {
     changeReasons: repair.impacts?.map(impact => ({ reason: impact.reason, scope: impact.scope, targets: impact.targets })) ?? [],
     task: '核对前文修改的影响，仅修复现有内容与记忆，不扩写新章节。不受影响的文稿返回 content:null。每条既有记忆必须保留或替换到 records，或明确放入 withdrawn；不因引用位置改变而丢弃仍成立的事实。新增记录的 state 必须明确为 active 或 resolved，不能照抄旧记录的 disputed/superseded 标记；无法证实则撤回并说明。新增事实同样须有准确原文证据，人物误解不能当成客观事实。',
     file: read(file),
+    formatRequirements: {
+      policy: '必需字段保留原名称及所在分节，特别是文件首部字段；用字段内容区分历史、已发生和未来计划，不通过改名或移位表达状态变化。新增后续承接说明以生效章节或全局说明命名，不挂在已完成章节的分节下；此前章节分节和表格行保持不变。每份文件通过格式检查后才继续下游；内容无需修改也须满足现有格式。',
+      requiredFields: [...new Set(format.filter(issue => issue.code === 'missing_field').map(issue => issue.message.replace(/^缺少字段：/, '')))],
+      checks: [...new Set(format.filter(issue => issue.code !== 'missing_field').map(issue => issue.message))]
+    },
     changedSources: repair.sources.filter(path => path !== file).map(read),
     upstreamPlans: repair.completed.filter(item => (repair.impacts?.some(impact => impact.creationChange) ? /^(03_|04_|05_|06_)/ : /^(05_|06_)/).test(item.path) && item.path !== file).map(item => read(item.path)),
     previousFacts: facts,
@@ -74,9 +82,9 @@ const repairResponse = z.object({
   withdrawn: z.array(z.object({ id: z.string().min(1), reason: z.string().min(1) }))
 });
 
-export function applyMemoryRepairResponse(store: FileStore, run: Run, file: string, text: string) {
+export function applyMemoryRepairResponse(store: FileStore, run: Run, file: string, text: string, skillRoot: string) {
   const response = repairResponse.parse(JSON.parse(text.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '')));
-  const request = memoryRepairRequest(store, run, file);
+  const request = memoryRepairRequest(store, run, file, skillRoot);
   const old = request.previousFacts.map(fact => fact.id);
   const decisions = [...response.records.flatMap(record => record.replaces ? [record.replaces] : []), ...response.withdrawn.map(item => item.id)];
   if (new Set(decisions).size !== decisions.length || old.some(id => !decisions.includes(id)) || decisions.some(id => !old.includes(id)))
@@ -85,6 +93,8 @@ export function applyMemoryRepairResponse(store: FileStore, run: Run, file: stri
     throw new Error('只能在复读原文章节时提取事件记忆');
   const content = response.content ?? request.file.content;
   const change = { path: file, content, baseHash: store.db.document(file)!.hash };
+  const formatIssues = validateCandidate(run.stage, store.db.project(), [change], skillRoot, 'revision').filter(issue => issue.severity === 'error');
+  if (formatIssues.length) throw new Error(`当前文件格式需要修正：${formatIssues.map(issue => issue.message).join('；')}`);
   const changes = [...run.changes.filter(item => item.path !== file), change];
   const scopeIssues = continuityIssues(store, { ...run, changes });
   if (scopeIssues.length) throw new Error(scopeIssues.map(issue => issue.message).join('；'));

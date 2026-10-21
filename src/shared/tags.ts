@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { creationPlanSchema, type TitleSelection } from './creation';
+import type { TagPolicyAssessment, TagPolicyProfile, TagPolicySource } from './tag-policy';
 
 const text = z.string().trim().min(1).max(12000);
 const ids = (max = 30) => z.array(z.string().min(1).max(100)).max(max);
@@ -34,12 +35,25 @@ export interface TagOption {
   conceptId: string;
   editorialFlags: string[];
   status: string;
+  sourceRef?: string;
+  sourceLabel?: string;
+  definitionStatus?: string;
 }
 export interface TagCatalog {
   taxonomyVersion: string;
-  groups: { id: string; count: number; min: number; max: number }[];
+  counts?: { reading: number; content: number; total: number };
+  groups: {
+    id: string;
+    count: number;
+    min: number;
+    max: number;
+    minimumSource?: string;
+    maximumSource?: string;
+  }[];
   options: TagOption[];
   provenance: unknown;
+  policy?: TagPolicyProfile;
+  sources?: TagPolicySource[];
 }
 export interface BookSpec extends TagInput {
   projectId: string;
@@ -74,6 +88,8 @@ export interface TagKnowledge {
   recipes: unknown[];
   candidates: unknown[];
   coverage: { optionId: string; level: 'genre_draft' | 'detailed_draft' | 'registry_only' }[];
+  // Optional so previously approved, hashed knowledge snapshots remain unchanged.
+  policy?: TagPolicyAssessment;
 }
 const coverageSchema = z
   .array(
@@ -225,7 +241,12 @@ export interface TagPlanning {
   resolutions: Record<string, string>;
   semanticRevisions: number;
   formatRepairs: number;
-  regenerate?: { directionId: string; instruction: string; original: PlanningReport };
+  regenerate?: {
+    directionId: string;
+    instruction: string;
+    original: PlanningReport;
+    keepDirectionIds?: string[];
+  };
   origin: 'new' | 'adoption' | 'revision';
   history: { kind: string; value: unknown }[];
 }

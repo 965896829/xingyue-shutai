@@ -5,6 +5,9 @@ import { connectionId, connectionFields, modelExecutionFields } from '../shared/
 import { endpoint } from './provider';
 import { sameEndpoint } from './model-catalog';
 import { normalizeLimits, trustedModelLimits } from './model-limits';
+import { ApplicationError } from '../shared/errors';
+import { validateReasoning } from '../shared/reasoning';
+import { checkReasoningRevision } from './reasoning-preferences';
 
 export type StoredProfile = Profile & { encryptedKey: string };
 const connectionSchema = z.object({
@@ -21,7 +24,8 @@ export function prepareProviderGroup(
   rawConnection: unknown,
   rawModels: unknown,
   replacementKey?: string,
-  resolveLimits?: (p: Profile) => ModelLimits | null
+  resolveLimits?: (p: Profile) => ModelLimits | null,
+  expectedProfiles?: Record<string, { version: number; enabled: boolean }>
 ) {
   const connection = connectionSchema.parse(rawConnection);
   const rows = z
@@ -36,6 +40,8 @@ export function prepareProviderGroup(
   const collision = current.find((p) => p.id === connection.id && connectionId(p) !== connection.id);
   if (collision) throw new Error('供应商连接编号冲突');
   const group = current.filter((p) => connectionId(p) === connection.id);
+  if (expectedProfiles && (Object.keys(expectedProfiles).length !== group.length || group.some(p => expectedProfiles[p.id]?.version !== p.version || expectedProfiles[p.id]?.enabled !== (p.enabled !== false))))
+    throw new ApplicationError('VERSION_CONFLICT', '此供应商已在另一处修改，请重新选择左侧供应商，载入最新配置后再保存。', ['refresh']);
   const anchor = group.find((p) => p.id === connection.id) ?? group[0];
   if (!replacementKey && anchor?.encryptedKey && !sameEndpoint(connection.baseUrl, anchor.baseUrl))
     throw new Error('API 根地址已改变，请重新填写用于此地址的 API Key');
@@ -52,7 +58,7 @@ export function prepareProviderGroup(
       id,
       model,
       connectionId: connection.id,
-      enabled: true,
+      enabled: row.enabled !== false,
       hasKey: !!encryptedKey,
       version: old?.version ?? 1,
       capabilities: old?.capabilities ?? {}
@@ -65,6 +71,9 @@ export function prepareProviderGroup(
         ? resolveLimits({ ...draft, modelLimits: old?.modelLimits ?? null })
         : trustedModelLimits({ ...draft, modelLimits: old?.modelLimits ?? null })
     );
+    validateReasoning(next);
+    if (old) checkReasoningRevision(next, old);
+    next.reasoningRevision = (old?.reasoningRevision ?? 0) + ((old?.reasoningEffort ?? null) !== (next.reasoningEffort ?? null) ? 1 : 0);
     const changed =
       old &&
       (JSON.stringify({ ...connectionFields(old), ...modelExecutionFields(old) }) !==

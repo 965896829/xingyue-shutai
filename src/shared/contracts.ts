@@ -1,10 +1,13 @@
 import { z } from 'zod';
+import { managementStatusSchema } from './management';
 import { configSchema, profileSchema, protocolSchema, stageIds } from './types';
 import { searchSettingsSchema } from './assistant';
 import { embeddingSettingsSchema, memoryScopeSchema } from './studio';
 import { tagInputSchema } from './tags';
+import { titleStyleProfileSchema } from './title-style';
 import * as schemas from './contract-schemas';
 import { errorCodes } from './errors';
+import { reasoningEffortSchema } from './reasoning';
 
 const text = z.string();
 const key = text.min(1);
@@ -41,6 +44,11 @@ function define<I extends z.ZodType, O extends z.ZodType>(input: I, output: O, a
 }
 
 export const commandContracts = {
+  'management.status': define(empty, managementStatusSchema, 'read', 'global'),
+  'management.open': define(empty, ok, 'system', 'global'),
+  'management.link': define(empty, text.url(), 'system', 'global'),
+  'management.revoke': define(empty, ok, 'system', 'global'),
+  'management.stop': define(empty, ok, 'system', 'global'),
   'history.preview': define(empty, z.object({ dryRun: z.literal(true), deletionEnabled: z.literal(false), objects: integer, bytes: integer, retained: integer, preservedFiles: integer, candidates: z.array(z.object({ version: text, bytes: integer, retained: ok })) })),
   'operation.query': define(identity, z.object({ id: text, kind: text, inputHash: text, status: z.enum(['started', 'complete', 'unknown']), result: z.unknown().optional(), createdAt: text }).nullable()),
   'app.snapshot': define(empty, schemas.snapshotSchema, 'read', 'global'),
@@ -48,8 +56,8 @@ export const commandContracts = {
     projectSessionId: text, eventSeq: integer, runs: z.array(schemas.runSchema).optional(), events: z.array(schemas.runEventSchema).optional(),
     conversations: z.array(schemas.conversationSchema).optional(), chatBusy: ok.optional(), documents: z.array(schemas.documentInfoSchema).optional(), studio: schemas.studioStateSchema.optional()
   })),
-  'app.chooseDirectory': define(z.strictObject({ title: optionalText }), text.nullable(), 'system', 'global'),
-  'app.chooseFile': define(z.strictObject({ save: flag, name: optionalText }), text.nullable(), 'system', 'global'),
+  'app.chooseDirectory': { ...define(z.strictObject({ title: optionalText }), text.nullable(), 'system', 'global'), timeout: 1_830_000 },
+  'app.chooseFile': { ...define(z.strictObject({ save: flag, name: optionalText }), text.nullable(), 'system', 'global'), timeout: 1_830_000 },
   'app.reveal': define(empty, ok, 'system'),
   'app.openUrl': define(z.strictObject({ url: text.url() }), ok, 'system', 'global'),
   'project.create': define(z.strictObject({ parent: key, title: text.max(80).optional(), premise: text, tagInput: tagInputSchema.optional(), creationInput: tagInputSchema.optional(), config: configSchema.optional() }), schemas.snapshotSchema, 'lifecycle', 'global'),
@@ -98,11 +106,13 @@ export const commandContracts = {
   'tags.start': define(z.strictObject({ inputHash: key, requestId: key.max(100), profileId: optionalText, request: optionalText }), text, 'write'),
   'tags.selectDirection': define(z.strictObject({ id: key, reportHash: key, directionId: key, resolutions: z.record(text, key.max(4000)).optional(), acceptAssumptions: z.literal(true).optional() }), text, 'write'),
   'tags.reviseDirection': define(z.strictObject({ id: key, reportHash: key, directionId: key, instruction: key.max(6000) }), text, 'write'),
+  'tags.reroll': define(z.strictObject({ id: key, reportHash: key, keepDirectionIds: z.array(key).max(1), instruction: text.max(6000).optional() }), text, 'write'),
   'tags.diff': define(identity, z.object({ before: schemas.approvedTagsSchema.nullable(), after: schemas.contractCandidateSchema.nullable(), affected: z.array(z.object({ path: text }).passthrough()) }).passthrough()),
   'tags.restoreProjection': define(z.strictObject({ baseHash: text.nullable() }), ok, 'write'),
   'creation.saveDraft': define(z.strictObject({ input: tagInputSchema, expectedRevision: integer }), schemas.bookSpecSchema, 'write'),
   'creation.start': define(z.strictObject({ inputHash: key, requestId: key.max(100), profileId: optionalText, request: optionalText }), text, 'write'),
   'creation.confirmPlan': define(z.strictObject({ id: key, proposalHash: key, warningReason: optionalText }), ok, 'write'),
+  'titles.styleProfile': define(empty, titleStyleProfileSchema, 'read', 'global'),
   'titles.start': define(z.strictObject({ sourceRunId: optionalText, planHash: key, requestId: key.max(100), profileId: optionalText,
     rule: z.enum(['local', 'fanqie_experiment']).optional(), manualTitle: text.trim().min(1).max(80).optional(), instruction: text.max(6000).optional() }), text, 'write'),
   'titles.regenerate': define(z.strictObject({ id: key, batchHash: key, candidateId: key, instruction: key.max(6000) }), text, 'write'),
@@ -112,6 +122,9 @@ export const commandContracts = {
   'snapshot.list': define(empty, z.array(schemas.snapshotRefSchema)),
   'snapshot.page': define(z.strictObject({ before: integer.optional(), watermark: integer.optional(), limit: integer.min(1).max(200).optional() }), z.object({ items: z.array(schemas.snapshotRefSchema), watermark: integer, nextBefore: integer.nullable() })),
   'outbox.retry': define(empty, schemas.studioStateSchema, 'write'),
+  'recovery.preview': define(z.strictObject({ transactionId: key, path: key }), z.strictObject({ path: text, accepted: text, current: text.nullable(), candidate: text })),
+  'recovery.retry': define(z.strictObject({ transactionId: key }), schemas.studioStateSchema, 'write'),
+  'recovery.abandon': define(z.strictObject({ transactionId: key }), schemas.studioStateSchema, 'write'),
   'memory.list': define(z.strictObject({ category: z.enum(['all', 'character', 'injury', 'item', 'hook', 'knowledge', 'obligations']).optional(), offset: integer.optional(), pageSize: integer.min(1).max(100).optional(), scope: memoryScopeSchema.optional() }), retrieval),
   'memory.retrieve': define(z.strictObject({ query: optionalText, scope: memoryScopeSchema.optional() }), retrieval, 'remote'),
   'memory.search': define(z.strictObject({ query: optionalText, chapter: integer.optional() }), retrieval),
@@ -155,9 +168,10 @@ export const commandContracts = {
   'search.settings.save': define(z.strictObject({ search: searchSettingsSchema, apiKey: optionalText, clearKey: flag }), settings, 'write', 'global'),
   'search.test': define(z.strictObject({ profileId: optionalText }), z.object({ ok, results: z.array(z.object({ title: text, url: text, content: text })), query: text, at: text, message: text, credits: z.number().nullable() }), 'remote', 'global'),
   'profiles.save': define(z.strictObject({ profile: profileSchema, apiKey: optionalText }), schemas.profileSchema, 'write', 'global'),
-  'profiles.saveGroup': define(z.strictObject({ connection, models: z.array(model).min(1).max(2000), apiKey: optionalText }), z.array(schemas.profileSchema), 'write', 'global'),
-  'profiles.deleteGroup': define(identity, ok, 'write', 'global'),
-  'profiles.delete': define(identity, ok, 'write', 'global'),
+  'profiles.reasoning': define(z.strictObject({ id: key, effort: reasoningEffortSchema.nullable(), expectedVersion: integer, expectedRevision: integer }), schemas.profileSchema, 'write', 'global'),
+  'profiles.saveGroup': define(z.strictObject({ connection, models: z.array(model).min(1).max(2000), apiKey: optionalText, expectedProfiles: z.record(text, z.strictObject({ version: integer, enabled: ok })).optional() }), z.array(schemas.profileSchema), 'write', 'global'),
+  'profiles.deleteGroup': define(z.strictObject({ id: key, expectedProfiles: z.record(text, z.strictObject({ version: integer, enabled: ok })).optional() }), ok, 'write', 'global'),
+  'profiles.delete': define(z.strictObject({ id: key, expectedVersion: integer.optional() }), ok, 'write', 'global'),
   'profiles.test': define(z.strictObject({ id: key, tools: flag }), z.object({ ok, text }), 'remote', 'global'),
   'profiles.models': define(z.strictObject({ id: optionalText, connection: connection.optional(), apiKey: optionalText }), schemas.modelCatalogSchema, 'remote', 'global'),
   'cover.generate': define(z.strictObject({ profileId: key, prompt: key }), z.object({ dataUrl: text, note: text }), 'remote'),

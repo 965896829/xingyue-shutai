@@ -6,11 +6,11 @@ export const reviewAspects = ['开头有效性', '主角主动性', '人物一�
 const reviewEvidence = z.object({
   proseHash: z.string().regex(/^[a-f0-9]{64}$/),
   checks: z.array(z.object({
-    aspect: z.enum(reviewAspects),
+    aspect: z.string().trim().min(1).max(80),
     verdict: z.enum(['pass', 'warning', 'error']),
     quote: z.string().min(8).max(1200),
     reason: z.string().trim().min(8).max(2000)
-  })).length(reviewAspects.length)
+  })).max(32)
 });
 
 export function checkReviewEvidence(file: string, report: string, prose: string): Issue[] {
@@ -25,8 +25,8 @@ export function checkReviewEvidence(file: string, report: string, prose: string)
   const issues: Issue[] = [];
   if (value.proseHash !== hash(prose))
     issues.push({ code: 'review_evidence_stale', severity: 'error', path: file, message: '审稿对应的正文已经变化，请重新审阅当前稿。' });
-  if (new Set(value.checks.map(check => check.aspect)).size !== reviewAspects.length)
-    issues.push({ code: 'review_evidence_coverage', severity: 'error', path: file, message: '审稿维度重复或遗漏，请补齐开头、主动选择、人物、信息和章末检查。' });
+  if (value.checks.length !== reviewAspects.length || reviewAspects.some(aspect => value.checks.filter(check => check.aspect === aspect).length !== 1))
+    issues.push({ code: 'review_evidence_coverage', severity: 'error', path: file, message: `审稿核验恰好需要“${reviewAspects.join('、')}”五项，且每项只出现一次；当前填写 ${value.checks.length} 项，存在新增、重复或遗漏。其他建议写入中文报告，将 warning/error 归入对应核心维度，不另增维度。` });
   for (const check of value.checks) {
     if (!prose.includes(check.quote))
       issues.push({ code: 'review_evidence_quote', severity: 'error', path: file, message: `“${check.aspect}”引用的文字不在当前正文中，请重新核对。` });

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
+import { Agent, getGlobalDispatcher, setGlobalDispatcher } from 'undici';
 import { invokeModel, RequestError, sse } from '../src/core/provider';
 import { Service } from '../src/core/service';
 import { paths, prosePath } from '../src/core/domain';
@@ -38,6 +39,68 @@ const fragment = JSON.stringify({ type: 'response.output_text.delta', delta: 'un
   0,
   49
 );
+
+test('模型等待时间覆盖底层默认空闲超时，直连与代理均按配置等待响应', async () => {
+  const previous = getGlobalDispatcher();
+  const shortDefault = new Agent({ headersTimeout: 20, bodyTimeout: 20 });
+  setGlobalDispatcher(shortDefault);
+  try {
+    for (const proxy of [false, true]) {
+      const server = http.createServer(async (_req, res) => {
+        await new Promise(resolve => setTimeout(resolve, 80));
+        res.writeHead(200, { 'content-type': 'text/event-stream' });
+        res.write(': thinking\n\n');
+        await new Promise(resolve => setTimeout(resolve, 80));
+        res.end(frame({ type: 'response.completed', response: { status: 'completed', output: [], usage: { input_tokens: 1, output_tokens: 1 } } }));
+      });
+      await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+      const address = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+      try {
+        const result = await invokeModel({ ...profile, baseUrl: proxy ? 'http://127.0.0.1:18443/v1' : `${address}/v1`, proxy: proxy ? address : '', timeoutSeconds: 10 }, '', [], [], new AbortController().signal);
+        assert.equal(result.stop, 'complete');
+      } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+    }
+  } finally { setGlobalDispatcher(previous); await shortDefault.destroy(); }
+});
+
+test('中转断流保留可定位的请求编号和原因，不泄漏上游原文且不自动重发', async () => {
+  let requests = 0;
+  const server = http.createServer((_req, res) => {
+    requests++;
+    res.writeHead(200, { 'content-type': 'text/event-stream', 'x-request-id': 'relay-request-123' });
+    res.end(frame({ type: 'error', code: 'upstream_http2_stream_error', message: 'Bearer private-value' }));
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    await assert.rejects(invokeModel({ ...profile, baseUrl: `http://127.0.0.1:${(server.address() as { port: number }).port}/v1` }, '', [], [], new AbortController().signal), error => {
+      assert.ok(error instanceof RequestError && error.uncertain);
+      assert.match(error.message, /中转.*HTTP\/2.*中断/);
+      assert.doesNotMatch(error.message, /private-value|Bearer/);
+      assert.equal(error.diagnostic?.source, 'upstream');
+      assert.equal(error.diagnostic?.requestId, 'relay-request-123');
+      assert.equal(error.diagnostic?.code, 'upstream_http2_stream_error');
+      assert.ok(error.diagnostic!.elapsedMs! >= 0);
+      return true;
+    });
+    assert.equal(requests, 1);
+  } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+
+test('配置的请求期限和作者取消仍会结束静默响应并释放连接', async () => {
+  for (const cancelled of [false, true]) {
+    const controller = new AbortController();
+    const server = http.createServer((_req, res) => { res.writeHead(200, { 'content-type': 'text/event-stream' }); res.write(': waiting\n\n'); });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    const timer = cancelled ? setTimeout(() => controller.abort(), 60) : undefined;
+    try {
+      await assert.rejects(invokeModel({ ...profile, baseUrl: `http://127.0.0.1:${(server.address() as { port: number }).port}/v1`, timeoutSeconds: cancelled ? 10 : 0.06 }, '', [], [], controller.signal), error => {
+        assert.ok(error instanceof RequestError && error.uncertain);
+        assert.equal(error.diagnostic?.code, cancelled ? 'CANCELLED' : 'REQUEST_TIMEOUT');
+        return true;
+      });
+    } finally { clearTimeout(timer); server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+  }
+});
 test('原生搜索流式进度与引用保存；断流保留已收结果且仅发送一次', async () => {
   for (const interrupted of [false, true]) {
     let requests = 0, text = '';

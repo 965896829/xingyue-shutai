@@ -1,5 +1,21 @@
-import type { Run } from './types';
+import type { Run, ProjectState } from './types';
 import { planningPhaseNames } from './tags';
+
+export function runHasCurrentBasis(run: Run, project: ProjectState) {
+  return (run.basisRevision === undefined ? run.baseRevision : run.basisRevision) === project.revision;
+}
+
+export function visibleRunIssues(run: Run) {
+  return run.issues.filter(issue => !(run.status === 'running' && ['missing_output', 'required_output'].includes(issue.code)));
+}
+
+/** Restore the direction being compared; this does not confirm or adopt it. */
+export function creationDirectionId(run?: Run): string {
+  const planning = run?.planning, report = planning?.report;
+  if (!report) return '';
+  return [planning.selectedDirectionId, planning.regenerate?.directionId, report.recommendedDirectionId]
+    .find(id => report.directions.some(direction => direction.id === id)) ?? '';
+}
 
 export function creationStep(run?: Run): 1 | 2 | 3 {
   const planning = run?.planning;

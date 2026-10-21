@@ -15,6 +15,7 @@ export interface NativeWebSearchState {
   citations: NativeWebCitation[];
 }
 export interface ModelRequestOptions {
+  onActivity?: (phase: import('./generation').GenerationPhase) => void;
   webSearch?: { maxCalls: number; required?: boolean; serverLimit?: boolean };
   onWebSearch?: (call: NativeWebSearchCall) => void;
   onWebCitation?: (citation: NativeWebCitation) => void;

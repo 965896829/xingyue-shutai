@@ -1,0 +1,45 @@
+"use client";
+import { useEffect,useState } from "react";
+import Link from "@reference/router-link";
+import { useQuery } from "@tanstack/react-query";
+import { api,put,formatTime } from "@reference/lib/api";
+import { Spinner,ErrorState } from "./ui";
+import { QualityGovernance } from "./quality-governance";
+import { CompactHeading } from "./reference-ui";
+import { CreationTemplatePanel } from "./creation-template-panel";
+
+const names:Record<string,string>={candidate_count:"每轮故事方案数",retain_count:"保留方向数",max_rounds:"故事方案最多探索轮数",planning_horizon:"近期大纲章数",scene_horizon:"细化场景章数",character_rounds:"人物协调轮数",review_interval:"全书检查间隔（章）",succeeded:"已完成",waiting_author:"等作者确认",running:"运行中",queued:"排队中",failed:"失败",cancelled:"已停止",stale:"依据已变化",paused_budget:"用量不足",paused_policy:"等待处理",pending_reconciliation:"费用待核对",paused_context:"参考内容超限",candidate:"待作者选择",confirmed:"已确认",draft:"正文",review:"检查报告",idea:"故事方案",memory_proposal:"本章新增记录",scene_simulation:"人物行动",book_setup:"开书准备",contract:"本书设定",story_options:"开书方案",profile:"偏好",project_personalization:"本书偏好",cross_project_personalization:"跨书偏好",evaluation:"效果评估",shared_training:"共享训练",title:"名称",goal:"目标",obstruction:"阻碍",action:"行动",cost:"代价",change:"变化",relationship:"人物关系",mechanism:"核心规则与玩法",risk:"风险",choices:"可选行动",inaction:"暂不行动",rounds:"探索记录",retained:"保留方向",candidates:"故事方案",difference:"差异说明",reason:"原因",coverage:"逐项检查结果",review_plan:"检查计划",levels:"检查范围",required_checks:"必查项目",findings:"发现的问题",evidence:"对应原文",reference_evidence:"对照依据",text:"原文",quote:"原文",start:"起始位置",end:"结束位置",complete:"检查完整",status:"状态",semantic_gain:"相比上一轮",selection:"参考内容选择",paragraph_count:"段落数量",source_revision:"来源版本",references:"本次参考内容",content:"内容",L1:"文字表达",L2:"本章情节",L3:"全书安排"};
+Object.assign(names,{story_summary:"前情概括",quality_report:"质量检查报告",summary_sources:"概括对应的正文",summary_current:"原文版本仍有效",summary_checked:"逐条核对通过",claims:"概括内容",checks:"原文核对",conflict:"与原文不符",insufficient:"依据不足",pass:"核对通过",opinions:"合并前的意见",source_rule_ids:"命中的规则",reviewer_sources:"检查来源",review_required_ids:"必要依据",review_scope:"检查范围",summary_navigation:"前情概括索引"});
+const limits:Record<string,[number,number]>={candidate_count:[2,12],retain_count:[2,12],max_rounds:[1,3],planning_horizon:[1,30],scene_horizon:[0,5],character_rounds:[1,2],review_interval:[1,100]};
+const links:Record<string,[string,string]>={E01:["/admin/novel/rules","故事方案提示词"],E02:["/admin/novel/structured","本书规划管理"],E03:["/admin/novel/structured","故事记录与分支"],E04:["/admin/novel/structured","人物档案"],E05:["/admin/knowledge","参考资料与检索"],E06:["/admin/novel/workflows","写作流程"],E07:["/admin/novel/rules","规则回归与发布"],E08:["/admin/novel/evaluations","检查效果评估"],E09:["/admin/novel/evaluations","偏好实验与评估"]};
+
+function ResultTree({value,depth=0}: {value:any;depth?:number}) {
+  if(value===null||value===undefined)return <span>未记录</span>;
+  if(typeof value!=="object")return <span style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{typeof value==="boolean"?(value?"是":"否"):names[String(value)]||String(value)}</span>;
+  const entries=Array.isArray(value)?value.map((v,i)=>[String(i+1),v]):Object.entries(value);
+  if(!entries.length)return <span>暂无记录</span>;
+  return <div style={{paddingLeft:depth?12:0}}>{entries.map(([key,v]:any)=><details key={key} open={depth<1}><summary>{names[key]||key}{typeof v==="object"&&v!==null?` · ${Array.isArray(v)?v.length:Object.keys(v).length} 项`:""}</summary><ResultTree value={v} depth={depth+1}/></details>)}</div>;
+}
+
+export function EngineConsole(){
+  const scheduling=useQuery({queryKey:["engine-scheduling"],queryFn:()=>api("/admin/engines/scheduling"),refetchInterval:10000});
+  const q=useQuery({queryKey:["engine-console"],queryFn:()=>api("/admin/engines"),refetchInterval:10000}),projects=useQuery({queryKey:["engine-projects"],queryFn:()=>api("/admin/engines/projects")});
+  const [selected,setSelected]=useState("E01"),[pid,setPid]=useState(""),[aid,setAid]=useState(""),[defaults,setDefaults]=useState<any>(null),[defaultsVersion,setDefaultsVersion]=useState(0),[editing,setEditing]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
+  useEffect(()=>{if(q.data&&!editing){setDefaults(q.data.defaults);setDefaultsVersion(q.data.version);}},[q.data,editing]);
+  const detail=useQuery({queryKey:["engine-detail",pid,selected],queryFn:()=>api(`/admin/engines/projects/${pid}?engine_key=${selected}`),enabled:!!pid});
+  const artifact=useQuery({queryKey:["engine-result",pid,aid],queryFn:()=>api(`/admin/engines/projects/${pid}/artifacts/${aid}`),enabled:!!pid&&!!aid});
+  if(q.isPending)return <Spinner/>;if(q.error)return <ErrorState error={q.error}/>;
+  return <section><CompactHeading title="九大创作引擎" description="查看运行、结果与依据。统计每 10 秒刷新；同一任务可能关联多个引擎，用量不重复结算。"/>
+    <div className="mw-grid">{q.data.engines.map((e:any)=><button type="button" key={e.key} className="pw-card" aria-pressed={selected===e.key} onClick={()=>{setSelected(e.key);setAid("");}} style={{textAlign:"left",borderColor:selected===e.key?"var(--ui-accent, #789b75)":undefined}}><strong>{e.key} · {e.name}</strong><p>{e.runs} 个关联任务 · {e.credits} 点</p><p>{Object.entries(e.states).map(([s,n])=>`${names[s]||s} ${n}`).join(" · ")||"暂无任务"}</p></button>)}</div>
+    <p><Link href="/admin/agentmanage">32 类内置助手配置</Link> · <Link href={links[selected][0]}>{selected === "E01" ? "共享提示词与规则" : links[selected][1]}</Link> · <Link href="/admin/platform/platforms">模型平台接入</Link> · <Link href="/admin/novel/workflows">写作流程配置</Link></p>
+    <details><summary>平台默认设置</summary><p>作者可以在每次创作时调整；已开始的任务保留当时设置。</p><div className="mw-grid">{defaults&&Object.keys(limits).map(key=><label key={key}>{names[key]}<input type="number" min={limits[key][0]} max={limits[key][1]} value={defaults[key]} disabled={!q.data.can_configure} onChange={e=>{setEditing(true);setDefaults({...defaults,[key]:Number(e.target.value)});}}/></label>)}</div><button className="mw-button" disabled={busy||!q.data.can_configure} onClick={async()=>{setBusy(true);try{await put("/admin/engines/defaults",{expected_version:defaultsVersion,defaults});await q.refetch();setEditing(false);setMessage("默认设置已保存");}catch(e){setMessage((e as Error).message);}finally{setBusy(false);}}}>保存默认设置</button>{editing&&<button className="mw-button" onClick={()=>{setEditing(false);setMessage("");}}>重新载入设置</button>}<p role="status">{message}</p></details>
+    <details><summary>任务排队与模型并发</summary>{scheduling.error?<ErrorState error={scheduling.error}/>:scheduling.data?<><p>所有平台正在调用模型：{scheduling.data.model_calls??"暂时无法读取"} / {scheduling.data.limits.max_model_calls} · 每位作者同时写作：{scheduling.data.limits.max_author_workflows} 项</p><table><thead><tr><th>任务类型</th><th>正在执行</th><th>等待中</th></tr></thead><tbody>{Object.entries(scheduling.data.lanes).map(([lane,data]:any)=><tr key={lane}><td>{{interactive:"短对话与助手测试",writing:"正文与创作",batch:"资料整理与批量任务"}[lane as "interactive"|"writing"|"batch"]}</td><td>{data.running}</td><td>{data.queued}</td></tr>)}</tbody></table><p>短交互保留 {scheduling.data.limits.interactive_slots} 个名额。<Link href="/admin/sys/operationConfig">调整运行限额</Link></p></>:<Spinner/>}</details>
+    <details><summary>数据库隔离状态</summary><p>运行账号隔离：{q.data.isolation.runtime_role_enabled?"已启用":"未启用"}</p><table><thead><tr><th>数据表</th><th>行隔离</th><th>强制执行</th></tr></thead><tbody>{q.data.isolation.tables.map((t:any)=><tr key={t.name}><td>{t.name}</td><td>{t.enabled?"已启用":"未启用"}</td><td>{t.forced?"是":"否"}</td></tr>)}</tbody></table></details>
+    <h3>按作品查看结果</h3><label>选择作品<select value={pid} onChange={e=>{setPid(e.target.value);setAid("");}}><option value="">请选择作品</option>{projects.data?.items.map((p:any)=><option key={p.id} value={p.id}>{p.title}</option>)}</select></label>{projects.error&&<ErrorState error={projects.error}/>}
+    {pid&&detail.isPending&&<Spinner/>}{detail.error&&<p role="alert">查看私稿需要作者授予临时权限。请让作者打开作品，选择“临时协助授权”。</p>}
+    {detail.data&&<><h4>{detail.data.project_title} · {q.data.engines.find((e:any)=>e.key===selected)?.name}</h4>{detail.data.pending_reviews.map((r:string,i:number)=><p key={i}>待检查：{r}</p>)}{!!detail.data.branches.length&&<ResultTree value={{故事写法:detail.data.branches}}/>}{!!detail.data.consents.length&&<ResultTree value={{作者授权:detail.data.consents}}/>}{!!detail.data.executions.length&&<ResultTree value={{执行状态:detail.data.executions}}/>}<table><thead><tr><th>结果</th><th>章节</th><th>状态</th><th>生成时间</th><th>操作</th></tr></thead><tbody>{detail.data.items.map((a:any)=><tr key={a.id}><td>{names[a.kind]||a.kind}</td><td>{a.chapter}</td><td>{names[a.status]||a.status}</td><td>{formatTime(a.created_at)}</td><td><button className="mw-button" onClick={()=>setAid(a.id)}>查看结果与依据</button></td></tr>)}</tbody></table>{!detail.data.items.length&&<p>这部作品还没有此类结果。</p>}</>}
+    {aid&&artifact.isPending&&<Spinner/>}{artifact.error&&<ErrorState error={artifact.error}/>}{artifact.data&&<article className="pw-card"><h3>结果与依据</h3><ResultTree value={selected==="E05"&&artifact.data.kind!=="story_summary"?{references:artifact.data.references}:artifact.data}/></article>}
+    <CreationTemplatePanel/>
+    <QualityGovernance/>
+  </section>;
+}

@@ -1,0 +1,206 @@
+{
+  "instructions": "只抽取原文支持的候选，区分客观事实、人物信念和作者规划；缺证据留空，不补写真相。所有候选仍须作者确认。",
+  "modules": [
+    {
+      "key": "facts",
+      "label": "故事事实",
+      "instructions": "提取故事事实，保留出处；不将推断、未来事件或错误信念当作已发生事实。",
+      "fields": [
+        {
+          "key": "subject",
+          "label": "主体",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "object",
+          "label": "对象",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "characters",
+      "label": "人物与关系",
+      "instructions": "提取人物与关系，保留出处；不将推断、未来事件或错误信念当作已发生事实。",
+      "fields": [
+        {
+          "key": "character",
+          "label": "人物",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "goal",
+          "label": "当前目标",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "relationship",
+          "label": "关系变化",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "knowledge",
+      "label": "人物认知",
+      "instructions": "提取人物认知，保留出处；不将推断、未来事件或错误信念当作已发生事实。",
+      "fields": [
+        {
+          "key": "character",
+          "label": "人物",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "belief",
+          "label": "知道 / 相信 / 怀疑的内容",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "foreshadow",
+      "label": "伏笔与承诺",
+      "instructions": "提取伏笔与承诺，保留出处；不将推断、未来事件或错误信念当作已发生事实。",
+      "fields": [
+        {
+          "key": "promise",
+          "label": "承诺或问题",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "state",
+          "label": "当前状态",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "expected_window",
+          "label": "预期兑现窗口",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "timeline",
+      "label": "事件时间线",
+      "instructions": "提取事件时间线，保留出处；不将推断、未来事件或错误信念当作已发生事实。",
+      "fields": [
+        {
+          "key": "story_time",
+          "label": "故事发生时间",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "reader_chapter",
+          "label": "读者获知章节",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "worldline",
+          "label": "世界线或循环",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "world",
+      "label": "世界规则",
+      "instructions": "提取世界规则，保留出处；不将推断、未来事件或错误信念当作已发生事实。",
+      "fields": [
+        {
+          "key": "scope",
+          "label": "适用范围",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "condition",
+          "label": "触发条件",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "cost",
+          "label": "限制与代价",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "planning",
+      "label": "故事规划",
+      "instructions": "提取故事规划，保留出处；不将推断、未来事件或错误信念当作已发生事实。",
+      "fields": [
+        {
+          "key": "goal",
+          "label": "阶段目标",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "window",
+          "label": "计划窗口",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        },
+        {
+          "key": "certainty",
+          "label": "固定 / 暂定 / 可探索",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "description": ""
+        }
+      ]
+    }
+  ]
+}

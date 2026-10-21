@@ -8,12 +8,15 @@ import { controllerRules } from '../src/core/agent-control';
 import { recordUsage, NarrativeTelemetry } from '../src/core/telemetry';
 import { attempts, callExternal } from '../src/core/runtime/model-gateway';
 import { RequestError } from '../src/core/provider';
-import { paths, id, stageOutputs, hash, activeBatch, batchPath, prosePath, qualityPath } from '../src/core/domain';
+import { paths, id, stageOutputs, hash, activeBatch, batchPath, prosePath, qualityPath, renderProgress, parseConfig, updateConfigDocument } from '../src/core/domain';
+import { compatibleRunBase } from '../src/core/runtime-settings';
+import { contextChanged } from '../src/core/context-compiler';
 import { fakeProfile, fakeResult, isolatedRoot, refactorFixture } from './fixtures/refactor';
 import { fixture as documentFixture } from './fixtures/workflow';
 import type { Caller } from '../src/core/runner';
 import type { ModelResult, Usage } from '../src/shared/types';
-import { documentPreviewText } from '../src/shared/run-presentation';
+import { factSchema } from '../src/shared/types';
+import { documentPreviewText, runHasCurrentBasis } from '../src/shared/run-presentation';
 
 const skill = path.resolve('resources/skill');
 const model = { ...fakeProfile, contextLimit: 200000, outputLimit: 4096, stream: false };
@@ -250,6 +253,8 @@ test('正文审稿缺失时自动修复，未完成不能跳到记忆或被接�
     calls++;
     assert.match(system, /总控优先级与工作模式/);
     assert.match(system, /本阶段为 review/);
+    assert.match(system, /使用 propose_changes 提交完整质量报告候选/);
+    assert.match(system, /json wenxu-review/);
     assert.equal(JSON.parse(messages[0].content).authorization.generate, true);
     return reply('只解释，没有审稿文件');
   });
@@ -280,6 +285,42 @@ test('正文审稿缺失时自动修复，未完成不能跳到记忆或被接�
   } finally { await service.drain(); }
 });
 
+test('恢复正文审核清除旧错误，新请求失败时显示本次错误并保留历史', async () => {
+  let service: Service, runId = '';
+  const previousError = '上次模型连接中断，已保留收到的内容';
+  const currentError = '本次审核请求返回 HTTP 502';
+  const created = await setup(async () => {
+    const current = service.store!.db.run(runId);
+    assert.equal(current.status, 'running');
+    assert.equal(current.error, undefined);
+    throw new RequestError(currentError, true);
+  });
+  service = created.service;
+  try {
+    const p = service.store!.db.project();
+    p.stage = 'S10'; p.revision++;
+    service.store!.commit([service.change(batchPath(activeBatch(p)), documentFixture(p, batchPath(activeBatch(p)), service))], p);
+    const run = service.makeRun('stage', '继续已保留正文的独立审核');
+    runId = run.id;
+    const prose = service.change(prosePath(p.chapter), documentFixture(p, prosePath(p.chapter), service));
+    run.pipeline!.phase = 'review';
+    run.pipeline!.proseHash = hash(prose.content);
+    run.changes = [prose];
+    run.status = 'unknown';
+    run.error = previousError;
+    service.store!.db.saveRun(run);
+    service.store!.db.event(run.id, 'error', previousError);
+    await service.runner!.drive(run.id);
+    const current = service.store!.db.run(run.id);
+    assert.equal(current.status, 'unknown');
+    assert.equal(current.error, currentError);
+    assert.equal(current.pipeline!.phase, 'review');
+    assert.deepEqual(current.changes, [prose]);
+    const errors = service.store!.db.events().filter(event => event.runId === run.id && event.kind === 'error');
+    assert.deepEqual(errors.map(event => event.text), [previousError, currentError]);
+  } finally { await service.drain(); }
+});
+
 test('阅读预览隐藏机器配置，普通 JSON 和作者说明仍保留', () => {
   for (const newline of ['\n', '\r\n']) {
     const content = ['# 项目配置', '', '- 目标字数：300万', '', '## 客户端设置', '```json wenxu-config', '{"stageBudget":null}', '```', '', '## 作者备注', '保留日常场面。', '```json', '{"示例":"小说中的线索"}', '```'].join(newline);
@@ -290,4 +331,313 @@ test('阅读预览隐藏机器配置，普通 JSON 和作者说明仍保留', ()
     assert.match(visible, /小说中的线索/);
     assert.match(content, /stageBudget/);
   }
+});
+
+test('章后人物变化识别已确认称谓和实体，其他人物的事实不能放开未出场角色', async () => {
+  const { service } = await setup();
+  try {
+    const p = service.store!.db.project();
+    p.stage = 'S10'; p.revision++;
+    const role = (name: string, stableId: string, aliases = '') => documentFixture(p, paths.roles, service)
+      .replace('# 角色卡\n', '').replaceAll('阿宁', name) + `\n- 稳定ID：${stableId}。\n- 本名/别名/称谓规则：${aliases || '无已确认别名'}\n`;
+    const roles = '# 角色卡\n' + role('陈舟', 'CHAR-001') + role('早餐摊主', 'CHAR-002', '暂用“摊主”或“早餐摊主”。') + role('师父', 'CHAR-003');
+    service.store!.commit([service.change(paths.roles, roles), service.change(batchPath(activeBatch(p)), documentFixture(p, batchPath(activeBatch(p)), service))], p);
+    const run = service.makeRun('stage', '核对章后人物状态');
+    const prose = service.change(prosePath(p.chapter), documentFixture(p, prosePath(p.chapter), service).replaceAll('阿宁', '陈舟') + '\n摊主将回信交到陈舟手里，纸上写着老人已经离开镇子。');
+    run.pipeline!.phase = 'memory'; run.pipeline!.proseHash = hash(prose.content);
+    const changed = (name: string, extra = '') => roles.replace(`## ${name}`, `## ${name}${extra}`).replace(new RegExp(`(## ${name}[^]*?- 当前目标：)[^\\n]*`), '$1本章实际变化');
+    const check = (content: string) => { run.changes = [prose, service.change(paths.roles, content)]; service.runner!.check(run, p); return run.issues.filter(issue => issue.code === 'unaffected_character'); };
+    assert.deepEqual(check(changed('早餐摊主')), []);
+    assert.ok(check(changed('师父')).some(issue => issue.message.includes('师父')));
+    const fact = factSchema.parse({ id: 'memory-identity', subject: '陈舟', aliases: ['陈舟'], predicate: '收到回信', value: '收到离镇消息', kind: 'event', category: 'character', fromChapter: 1, revealedAt: 1,
+      evidence: [{ path: prose.path, hash: hash(prose.content), quote: '纸上写着老人已经离开镇子。' }] });
+    run.facts = [fact];
+    assert.ok(check(changed('师父')).some(issue => issue.message.includes('师父')));
+    run.facts = [{ ...fact, subject: 'CHAR-003', aliases: [], value: '已离开镇子' }];
+    assert.deepEqual(check(changed('师父')), []);
+    run.facts = [];
+    assert.ok(check(changed('师父').replace('- 稳定ID：CHAR-003。', '- 稳定ID：CHAR-003。\n- 别名：摊主')).some(issue => issue.message.includes('师父')));
+  } finally { await service.drain(); }
+});
+
+async function settingsCandidate(stage: 'S02' | 'S03' = 'S03', caller: Caller = async () => { throw new Error('本地审阅不得调用模型'); }) {
+  const service = new Service(skill, () => {}, caller);
+  service.profiles = [structuredClone(model)];
+  await service.invoke('project.create', { parent: isolatedRoot('settings-candidate'), title: '运行参数验收', premise: '维修员追查停电原因', config: { defaultProfileId: model.id } });
+  const store = service.store!, p = store.db.project();
+  p.stage = stage;
+  p.revision++;
+  store.commit([service.change(paths.progress, renderProgress(p))], p);
+  const run = service.makeRun('stage', '完成当前阶段');
+  run.manifest = service.runner!.previewContext(run, model);
+  run.changes = stageOutputs(stage, p).map(file => service.change(file, documentFixture(p, file, service)));
+  run.rounds = 12;
+  run.status = 'awaiting_review';
+  service.runner!.check(run, p);
+  store.db.saveRun(run);
+  return { service, store, run };
+}
+
+test('提高轮数后直接采纳原候选，不重新调用模型，原指纹与历史保留且只推进一次', async () => {
+  const { service, store, run } = await settingsCandidate();
+  try {
+    const original = structuredClone(run);
+    await service.invoke('project.configure', { config: { ...store.db.project().config, maxRounds: 30 } });
+    await service.invoke('project.configure', { config: { ...store.db.project().config, maxTools: 100, stageBudget: 2 } });
+    assert.equal(compatibleRunBase(store, run), true);
+    assert.equal(contextChanged(store, run.manifest!), false);
+    const checked = await service.invoke('run.revalidate', { id: run.id });
+    assert.equal(checked.proposalHash, original.proposalHash);
+    assert.deepEqual(checked.changes, original.changes);
+    assert.deepEqual(checked.issues, []);
+    assert.equal(checked.baseSnapshotId, original.baseSnapshotId);
+    const revision = store.db.project().revision;
+    await service.invoke('run.accept', { id: run.id, proposalHash: original.proposalHash });
+    assert.equal(store.db.project().stage, 'S04');
+    assert.equal(store.db.project().config.maxRounds, 30);
+    assert.equal(store.db.project().revision, revision + 1);
+    assert.equal(store.readAccepted(paths.world).content, original.changes[0].content);
+    assert.equal(store.db.run(run.id).rounds, 12);
+    await service.invoke('run.accept', { id: run.id, proposalHash: original.proposalHash });
+    assert.equal(store.db.project().revision, revision + 1);
+  } finally { await service.drain(); }
+});
+
+test('S02 采纳配置候选保留作者新预算，不让旧候选把 30 轮覆盖回 12 轮', async () => {
+  const { service, store, run } = await settingsCandidate('S02');
+  try {
+    const original = structuredClone(run.changes);
+    await service.invoke('project.configure', { config: { ...store.db.project().config, maxRounds: 30, maxTools: 100 } });
+    await service.invoke('run.accept', { id: run.id, proposalHash: run.proposalHash });
+    const config = parseConfig(store.readAccepted(paths.config).content, store.db.project().config);
+    assert.equal(config.maxRounds, 30);
+    assert.equal(config.maxTools, 100);
+    assert.deepEqual(store.db.run(run.id).changes, original);
+    assert.equal(store.db.project().stage, 'S03');
+  } finally { await service.drain(); }
+});
+
+test('S02 已确认创作配置同步设置与快照，重启后调整预算不抹掉约束', async () => {
+  const { service, store, run } = await settingsCandidate('S02');
+  try {
+    const original = store.db.project();
+    const creative = { pov: '第三人称有限视角', genre: '都市日常', style: '克制、清晰，选择体现代价', constraints: '主角没有超自然能力；计划不得写成已发生事实。' };
+    const content = updateConfigDocument(run.changes.find(change => change.path === paths.config)!.content,
+      { ...original, config: { ...original.config, ...creative } });
+    const reviewed = await service.invoke('run.update', { id: run.id, path: paths.config, content });
+    assert.equal(store.db.project().config.constraints, original.config.constraints, '候选尚未批准不能改设置');
+    await service.invoke('project.configure', { config: { ...original.config, maxRounds: 30 } });
+    await service.invoke('run.accept', { id: run.id, proposalHash: reviewed.proposalHash });
+    const accepted = store.db.project();
+    for (const key of Object.keys(creative) as (keyof typeof creative)[]) {
+      assert.equal(accepted.config[key], creative[key]);
+      assert.equal(store.db.head()!.project.config[key], creative[key]);
+    }
+    assert.equal(accepted.config.maxRounds, 30);
+    assert.equal(accepted.stage, 'S03');
+    await service.invoke('run.accept', { id: run.id, proposalHash: reviewed.proposalHash });
+    assert.equal(store.db.project().revision, accepted.revision, '重复采纳不能再次修改配置或阶段');
+    service.close();
+    await service.open(accepted.root);
+    await service.invoke('project.configure', { config: { ...service.store!.db.project().config, maxTools: 111 } });
+    const reopened = service.store!.db.project();
+    const saved = parseConfig(service.store!.readAccepted(paths.config).content, reopened.config);
+    for (const key of Object.keys(creative) as (keyof typeof creative)[])
+      assert.equal(saved[key], creative[key], '保存预算后仍保留已确认创作字段');
+    assert.equal(saved.maxTools, 111);
+    assert.equal(reopened.stage, 'S03');
+  } finally { await service.drain(); }
+});
+
+test('轮数耗尽的任务调高预算后原地继续，累计轮数不清零且不产生交接任务', async () => {
+  let calls = 0;
+  const { service, store, run } = await settingsCandidate('S03', async () => { calls++; return reply(); });
+  try {
+    run.rounds = 0;
+    store.db.saveRun(run);
+    await service.runner!.drive(run.id);
+    const paused = store.db.run(run.id);
+    paused.status = 'paused';
+    paused.rounds = 12;
+    paused.error = '已达到本任务轮数上限';
+    store.db.saveRun(paused);
+    await service.invoke('project.configure', { config: { ...store.db.project().config, maxRounds: 30 } });
+    assert.equal(service.runner!.needsFreshContext(store.db.run(run.id)), false);
+    const before = calls;
+    const result = await service.invoke('run.resume', { id: run.id });
+    assert.equal(result, run.id);
+    for (let i = 0; i < 400 && (calls === before || service.runner!.controller); i++)
+      await new Promise(resolve => setTimeout(resolve, 5));
+    assert.equal(calls, before + 1);
+    assert.equal(store.db.run(run.id).rounds, 13);
+    assert.equal(store.db.run(run.id).status, 'awaiting_review');
+    assert.equal(store.db.runs().length, 1);
+  } finally { await service.drain(); }
+});
+
+test('保存相同参数不制造新快照；真实创作变更、回改及外部修改仍阻止旧候选采纳', async () => {
+  const { service, store, run } = await settingsCandidate();
+  try {
+    const initial = store.db.get('headSnapshot');
+    await service.invoke('project.configure', { config: store.db.project().config });
+    assert.equal(store.db.get('headSnapshot'), initial);
+    const style = store.db.project().config.style;
+    await service.invoke('project.configure', { config: { ...store.db.project().config, maxRounds: 30, style: '新的风格要求' } });
+    assert.equal(compatibleRunBase(store, run), false);
+    await assert.rejects(service.invoke('run.accept', { id: run.id, proposalHash: run.proposalHash }), /创作要求已改变/);
+    await service.invoke('project.configure', { config: { ...store.db.project().config, style } });
+    assert.equal(compatibleRunBase(store, run), false, '不能把中途真实改动伪装成仅预算调整');
+    assert.equal(store.db.run(run.id).accepted, false);
+  } finally { await service.drain(); }
+});
+
+test('预算兼容不能绕过未确认的磁盘改稿，也不能伪造候选批准指纹', async () => {
+  const { service, store, run } = await settingsCandidate();
+  try {
+    const originalConfig = store.readAccepted(paths.config).content;
+    await service.invoke('project.configure', { config: { ...store.db.project().config, maxRounds: 30 } });
+    await assert.rejects(service.invoke('run.accept', { id: run.id, proposalHash: 'wrong-hash' }), /重新打开审阅/);
+    fs.writeFileSync(path.join(store.root, paths.config), originalConfig);
+    assert.equal(contextChanged(store, run.manifest!), true, '将磁盘配置倒回旧文件仍属于未确认的外部修改');
+    await assert.rejects(service.invoke('run.accept', { id: run.id, proposalHash: run.proposalHash }), /外部修改/);
+    fs.appendFileSync(path.join(store.root, paths.config), '\n作者新增限制：不能穿越。\n');
+    assert.equal(contextChanged(store, run.manifest!), true);
+    await assert.rejects(service.invoke('run.accept', { id: run.id, proposalHash: run.proposalHash }), /外部修改/);
+    assert.equal(store.db.run(run.id).accepted, false);
+  } finally { await service.drain(); }
+});
+
+test('调高上限自动就地恢复完整候选，重复重查兼容旧界面，费用与轮数保持', async () => {
+  const { service, store, run } = await settingsCandidate();
+  try {
+    run.status = 'paused';
+    run.error = '已达到本任务轮数上限';
+    store.db.saveRun(run);
+    await service.invoke('project.configure', { config: { ...store.db.project().config, maxRounds: 30 } });
+    assert.equal(store.db.run(run.id).status, 'awaiting_review');
+    assert.ok(store.db.events().some(event => event.runId === run.id && event.kind === 'local-recovery'));
+    const checked = await service.invoke('run.revalidate', { id: run.id, reviewSaved: true });
+    assert.equal(checked.status, 'awaiting_review');
+    assert.equal(checked.error, undefined);
+    assert.equal(checked.rounds, 12);
+    assert.deepEqual(checked.usage, run.usage);
+    assert.equal(checked.proposalHash, run.proposalHash);
+  } finally { await service.drain(); }
+});
+
+test('最后一轮提交完整候选即进入审阅，不为结束任务再请求一次模型', async () => {
+  let calls = 0, service: Service;
+  const created = await setup(async () => {
+    calls++;
+    const p = service.store!.db.project();
+    return reply('', stageOutputs('S02', p).map(file => service.change(file, documentFixture(p, file, service))));
+  });
+  service = created.service;
+  try {
+    const run = created.run;
+    run.rounds = service.store!.db.project().config.maxRounds - 1;
+    service.store!.db.saveRun(run);
+    await service.runner!.drive(run.id);
+    const current = service.store!.db.run(run.id);
+    assert.equal(calls, 1);
+    assert.equal(current.rounds, service.store!.db.project().config.maxRounds);
+    assert.equal(current.status, 'awaiting_review', current.error ?? '');
+    assert.deepEqual(current.issues, []);
+    assert.equal(current.accepted, false);
+    assert.equal(service.store!.db.project().stage, 'S02');
+  } finally { await service.drain(); }
+});
+
+test('重启内部核验恢复预算耗尽的完整候选，页面与历史分页共享兼容状态', async () => {
+  const { service, store, run } = await settingsCandidate();
+  try {
+    run.status = 'paused';
+    run.error = '已达到本任务轮数上限';
+    store.db.saveRun(run);
+    const root = store.root;
+    service.close();
+    await service.open(root);
+    assert.equal(service.store!.db.run(run.id).status, 'awaiting_review');
+    await service.invoke('project.configure', { config: { ...service.store!.db.project().config, maxRounds: 31 } });
+    const p = service.store!.db.project();
+    const page = await service.invoke('run.page', {});
+    for (const current of [service.snapshot().runs.find(item => item.id === run.id)!, page.items.find(item => item.id === run.id)!]) {
+      assert.equal(current.baseRevision, run.baseRevision);
+      assert.equal(current.basisRevision, p.revision);
+      assert.equal(runHasCurrentBasis(current, p), true);
+    }
+    await service.invoke('project.configure', { config: { ...p.config, constraints: '新增正式禁区' } });
+    assert.equal(runHasCurrentBasis(service.snapshot().runs.find(item => item.id === run.id)!, service.store!.db.project()), false);
+    assert.equal(service.store!.db.run(run.id).accepted, false);
+  } finally { await service.drain(); }
+});
+
+test('内部恢复不跳过未知请求、作者问题、未执行工具、截断输出及真实资料变化', async () => {
+  const { service, store, run } = await settingsCandidate();
+  try {
+    const cases = [
+      { status: 'unknown' as const },
+      { input: { question: '请确认主角身份' } },
+      { permission: { kind: 'terminal' as const, args: {}, callId: 'pending', status: 'pending' as const } },
+      { messages: [{ role: 'assistant' as const, content: '', calls: [{ id: 'pending', name: 'propose_changes', arguments: '{}' }] }] },
+      { messages: [{ role: 'assistant' as const, content: '', calls: [{ id: 'failed', name: 'propose_changes', arguments: '{}' }] }, { role: 'tool' as const, callId: 'failed', content: '{"error":"候选提交失败"}' }] },
+      { error: '输出达到上限，候选可能不完整，不能自动接受' },
+      { savedCandidateReview: { at: new Date().toISOString(), requestUnknown: true } },
+      { changes: [] }
+    ];
+    for (const changed of cases) {
+      const candidate = { ...structuredClone(run), status: 'needs_repair' as const, ...changed };
+      assert.equal(service.runner!.recoverReadyCandidate(candidate, store.db.project(), 'restore'), false);
+    }
+    store.db.set(`inflight:${run.id}`, true);
+    assert.equal(service.runner!.recoverReadyCandidate({ ...run, status: 'needs_repair' }, store.db.project(), 'restore'), false);
+    store.db.set(`inflight:${run.id}`, false);
+    await service.invoke('project.configure', { config: { ...store.db.project().config, constraints: '不能改变已写事实' } });
+    assert.equal(service.runner!.recoverReadyCandidate({ ...run, status: 'needs_repair' }, store.db.project(), 'restore'), false);
+  } finally { await service.drain(); }
+});
+
+test('章后更新在最后一轮交齐产物，完成必要本地检查后等待统一采纳', async () => {
+  let calls = 0, service: Service, runId = '';
+  const created = await setup(async (_profile, system, _messages, tools) => {
+    calls++;
+    assert.match(system, /本阶段为 memory/);
+    assert.match(system, /结构化事实通过 propose_memory 提交/);
+    const tool = tools.find(item => item.name === 'propose_memory')!;
+    const fact = (tool.parameters as any).properties.facts.items;
+    for (const field of ['id', 'subject', 'predicate', 'value', 'kind', 'category', 'fromChapter', 'revealedAt', 'evidence'])
+      assert.ok(fact.required.includes(field), field);
+    assert.deepEqual(fact.properties.evidence.items.required, ['path', 'hash', 'quote']);
+    assert.ok(fact.properties.kind.enum.includes('belief'));
+    assert.ok(fact.properties.category.enum.includes('promise'));
+    assert.match(tool.description, /待采纳正文/);
+    assert.equal(service.store!.db.run(runId).error, undefined);
+    const p = service.store!.db.project();
+    return reply('', stageOutputs('S11', p).map(file => service.change(file, documentFixture(p, file, service))));
+  });
+  service = created.service;
+  try {
+    const p = service.store!.db.project();
+    p.stage = 'S10'; p.revision++;
+    service.store!.commit([service.change(batchPath(activeBatch(p)), documentFixture(p, batchPath(activeBatch(p)), service))], p);
+    const run = service.makeRun('stage', '完成章后更新');
+    runId = run.id;
+    const prose = service.change(prosePath(p.chapter), documentFixture(p, prosePath(p.chapter), service));
+    run.pipeline!.phase = 'memory';
+    run.pipeline!.proseHash = hash(prose.content);
+    run.changes = [prose, service.change(qualityPath(p.chapter), documentFixture(p, qualityPath(p.chapter), service))];
+    run.rounds = p.config.maxRounds - 1;
+    run.status = 'paused';
+    run.error = '上次请求失败，保留章后更新候选';
+    service.store!.db.saveRun(run);
+    await service.runner!.drive(run.id);
+    const current = service.store!.db.run(run.id);
+    assert.equal(calls, 1);
+    assert.equal(current.status, 'awaiting_review', current.error ?? JSON.stringify(current.issues));
+    assert.equal(current.error, undefined);
+    assert.equal(current.pipeline!.phase, 'ready');
+    assert.equal(current.rounds, p.config.maxRounds);
+    assert.equal(current.accepted, false);
+    assert.equal(service.store!.db.project().stage, 'S10');
+  } finally { await service.drain(); }
 });

@@ -62,8 +62,8 @@ export const titleRules = {
   fanqie_experiment: {
     label: '番茄多书名实验',
     maxCharacters: 15,
-    source: 'https://fanqienovel.com/writer/zone/article/7187613183626969147',
-    checkedAt: '2026-10-16'
+    source: 'https://fanqienovel.com/writer/zone/article/7604697758464753688',
+    checkedAt: '2026-10-19'
   }
 } as const;
 export const titleCandidateSchema = z
@@ -124,6 +124,8 @@ export interface TitlePlanning {
   contractRevision?: number;
   rule: keyof typeof titleRules;
   manualTitle?: string;
+  /** New automatic tasks use six; absent retains the persisted legacy 1–12 contract. */
+  candidateCount?: number;
   instruction: string;
   phase: 'generating' | 'reviewing' | 'ready';
   batch?: TitleBatch;

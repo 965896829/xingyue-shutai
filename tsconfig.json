@@ -11,6 +11,7 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "paths": { "@reference/*": ["./src/admin/reference/*"] },
     "types": ["node", "vite/client"]
   },
   "include": ["src", "electron", "tests", "vite.config.ts"]
