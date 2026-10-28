@@ -14,18 +14,31 @@ import { nativeResponse, nativeText, nativeCall } from './native-search';
 import { AssistantSettings } from '../../src/core/assistant-settings';
 import { planKinds } from '../../src/shared/creation';
 import { titleSource } from '../../src/core/title-naming';
+import { chapterTableFixture, volumeTableFixture, tableEdgeFixture } from './readable-tables';
+import { createPlaybackFixture } from './streaming-playback';
+import { createManuscriptFixture } from './manuscript-studio';
+import { createChapterRetryFixture } from './chapter-retry';
+import { concisePlanningReportSchema } from '../../src/shared/tags';
 
 const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-tag-ui-'));
 const clients = new Set<import('node:http').ServerResponse>();
 // Reusable opening-flow scenarios, isolated from installed data and real models.
 const creationScenario = process.env.CREATION_UI_SCENARIO;
 const failedOnce = new Set<string>();
+let modelRequests = 0;
+const localRequests: Record<string, number> = {};
 const service: Service = new Service(
   path.resolve('resources/skill'),
   (event) => {
     for (const res of clients) res.write(`data: ${JSON.stringify(event)}\n\n`);
   },
   async (_profile, _system, messages, tools, _signal, delta, options): Promise<ModelResult> => {
+    modelRequests++;
+    if (creationScenario === 'task_retry') {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      throw new RequestError('离线验收在新正文请求入口暂停，未连接真实模型。', false);
+    }
+    if (['readable_tables', 'streaming_playback', 'manuscript_studio'].includes(creationScenario ?? '')) throw new Error('显示验收不允许调用模型');
     if (process.env.NATIVE_SEARCH_UI === '1') {
       if (!options?.webSearch) return fakeResult('本轮没有联网，沿用当前已确认资料。');
       options.onWebSearch?.({ id: nativeCall.id, status: 'searching', sources: [] });
@@ -34,6 +47,12 @@ const service: Service = new Service(
       return normalize(_profile, nativeResponse);
     }
     const run = service.store!.db.runs().find((r) => r.status === 'running')!;
+    if (!run && creationScenario === 'context_meter') {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      delta?.('可以直接讨论或提出修改意见。原设定保留，生成内容满意后再保存。');
+      return { ...fakeResult('可以直接讨论或提出修改意见。原设定保留，生成内容满意后再保存。'),
+        usage: { input: 12345, output: 150, cachedInput: 11000, cost: 0, currency: 'USD' } };
+    }
     if (run.naming) {
       const t = run.naming, name = tools[0].name;
       if (creationScenario === 'title_error' && !failedOnce.has(run.id)) {
@@ -53,7 +72,10 @@ const service: Service = new Service(
         batch.recommendedIds = t.regenerate.original.recommendedIds;
       }
       return { ...fakeResult(''), stop: 'tools', calls: [{ id: crypto.randomUUID(), name, arguments: JSON.stringify(name === 'submit_title_candidates' ? batch : {
-        decisions: t.batch!.candidates.map(c => ({ candidateId: c.id, verdict: 'keep', reason: '对应已确认方案，没有新增能力或关系' }))
+        decisions: t.batch!.candidates.map((c, index) => ({ candidateId: c.id,
+          verdict: creationScenario === 'title_partial' && index === 1 ? 'revise' : 'keep',
+          reason: creationScenario === 'title_partial' && index === 1 ? '该候选的承诺需要进一步明确，可选择其他候选或单独修改' : '对应已确认方案，没有新增能力或关系' })),
+        ...(t.editorialVersion === 2 ? { recommendedIds: t.batch!.recommendedIds } : {})
       }) }] };
     }
     if (_system.includes('你独立检查')) {
@@ -107,7 +129,7 @@ const service: Service = new Service(
           openingDecision: '修复水泵还是先救被困的人？',
           firstVolumeChange: '建立一条可持续供水的协作链。',
           longRunRisk: '避免反复故障成为机械任务。',
-          intentChanges: [],
+          intentChanges: creationScenario === 'concise_directions' && i === 1 ? ['原先驻守一个社区，本案改为沿供水线流动维修。'] : [],
           tagCoverage: t.knowledge.options.map((o) => ({
             optionId: o.id,
             implementation: title + '中的有限能力与合作代价。',
@@ -139,7 +161,7 @@ const service: Service = new Service(
             evidenceRef: t.selectedDirectionId
           }
         ],
-        tagCoverage: t.report!.directions.find((d) => d.id === t.selectedDirectionId)!.tagCoverage,
+        tagCoverage: t.knowledge.options.map(o => ({ optionId: o.id, implementation: '维修与协作推动故事。', firstDemonstration: '开篇修复供水。', risk: '避免重复维修任务。' })),
         openQuestions: [],
         ...(t.workflowVersion === 2 ? { plan: {
           statements: Object.keys(planKinds).map((kind, i) => ({ id: 'plan-' + kind, kind,
@@ -150,6 +172,10 @@ const service: Service = new Service(
         } } : {}),
         premiseDocument: t.origin === 'new' ? fixture(service.store!.db.project(), paths.seed, service) : service.store!.readAccepted(paths.seed).content
       };
+    if (name === 'submit_planning_report' && t.directionFormatVersion === 1) {
+      const { diagnosis, marketClaims, unresolvedQuestions, ...report } = value as import('../../src/shared/tags').PlanningReport;
+      value = concisePlanningReportSchema.parse({ ...report, directions: report.directions.map(({ tagCoverage, ...direction }) => direction) });
+    }
     return {
       text: '',
       calls: [{ id: crypto.randomUUID(), name, arguments: JSON.stringify(value) }],
@@ -173,6 +199,46 @@ service.profiles = [
   }
 ];
 const assistantSettings = new AssistantSettings(parent);
+const playback = creationScenario === 'streaming_playback' ? await createPlaybackFixture(service, parent) : undefined;
+if (creationScenario === 'manuscript_studio') await createManuscriptFixture(service, parent, process.env.MANUSCRIPT_FIXTURE_PATH);
+if (creationScenario === 'task_retry') await createChapterRetryFixture(service, parent, 'fixture');
+if (creationScenario === 'readable_tables') {
+  await service.invoke('project.create', { parent, title: '横向表格显示验收', premise: '仅用于本地界面验收的合成数据。', config: { defaultProfileId: 'fixture', expressionRules: { enabled: false } } });
+  const store = service.store!, project = store.db.project();
+  project.stage = 'S06'; project.revision++;
+  const content = `${chapterTableFixture}\n\n${volumeTableFixture}\n\n${tableEdgeFixture}`;
+  store.commit([{ path: paths.outline, baseHash: store.db.document(paths.outline)?.hash ?? null, content },
+    { path: paths.volumes, baseHash: store.db.document(paths.volumes)?.hash ?? null, content: volumeTableFixture }], project);
+  const run = service.makeRun('stage', '生成本批次章节总纲', 'fixture');
+  run.changes = [{ path: paths.outline, baseHash: store.db.document(paths.outline)!.hash, content }];
+  run.responseText = '章节总纲已生成，包含 30 章。可以直接查看内容并提出修改意见。';
+  store.db.saveRun(run);
+  const conversations = [service.snapshot().conversations![0], service.chat!.records.create('章节总纲 · 任务对话', false, run.id)];
+  for (const conversation of conversations) {
+    const at = new Date().toISOString(), turnId = `table-turn-${conversation.id}`, messageId = `table-message-${conversation.id}`;
+    service.chat!.records.save('conversation_turns', { id: turnId, conversationId: conversation.id, messageId,
+      profileId: 'fixture', profileVersion: 1, status: 'complete', createdAt: at, updatedAt: at, rules: [], citations: [], messages: [],
+      usage: { input: 0, output: 0, cost: 0, currency: 'USD' }, calls: [], budgets: [], kind: 'discussion', request: '展示已生成内容' });
+    service.chat!.records.save('conversation_messages', { id: messageId, conversationId: conversation.id, turnId, role: 'assistant',
+      content, createdAt: at, status: 'complete', citations: [] });
+  }
+}
+if (creationScenario === 'context_meter') {
+  service.profiles[0].contextLimit = 128000;
+  service.profiles.push({ ...structuredClone(service.profiles[0]), id: 'fixture-large', name: '大上下文模型（模拟）', model: 'fixture-large', contextLimit: 512000 });
+  await service.invoke('project.create', { parent, title: '上下文与内容交互验收', premise: '事故调查员持有自己的死亡权。', config: { defaultProfileId: 'fixture', expressionRules: { enabled: false } } });
+  const conversation = service.snapshot().conversations![0];
+  for (let i = 0; i < 25; i++) {
+    const at = new Date(Date.now() - 100000 + i).toISOString();
+    service.chat!.records.save('conversation_turns', { id: `history-turn-${i}`, conversationId: conversation.id, messageId: `history-${i}`,
+      profileId: 'fixture', profileVersion: 1, status: 'complete', createdAt: at, updatedAt: at, rules: [], citations: [], messages: [],
+      usage: { input: 0, output: 0, cost: 0, currency: 'USD' }, calls: [], budgets: [], kind: 'discussion', request: '历史讨论' });
+    service.chat!.records.save('conversation_messages', {
+      id: `history-${i}`, conversationId: conversation.id, turnId: `history-turn-${i}`, role: i % 2 ? 'assistant' : 'user',
+      content: '这是未采纳的讨论，原设定保持不变。'.repeat(30) + i, createdAt: at, status: 'complete', citations: []
+    });
+  }
+}
 if (process.env.NATIVE_SEARCH_UI === '1') {
   service.profiles[0].protocol = 'responses';
   service.profiles[0].hasKey = true;
@@ -211,7 +277,7 @@ const server = await createServer({
             async invoke(command, args = {}) {
               const response = await fetch('/__test/rpc', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command, args }) });
               const data = await response.json();
-              return data.error ? { ok: false, error: { code: 'VALIDATION_ERROR', message: data.error, actions: [] } } : { ok: true, result: data.value };
+              return data.error ? { ok: false, error: { code: 'VALIDATION_ERROR', message: data.error, traceId: crypto.randomUUID(), actions: [] } } : { ok: true, result: data.value };
             },
             cancelWait() {},
             onEvent(listener) {
@@ -223,6 +289,8 @@ const server = await createServer({
         ` }];
       },
       configureServer(vite) {
+        vite.middlewares.use('/__test/metrics', (_req, res) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ modelRequests, localRequests, playback: playback?.metrics() })); });
+        vite.middlewares.use('/__test/playback', (req, res) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(req.url?.includes('stop') ? playback?.stop() ?? {} : playback?.start() ?? {})); });
         vite.middlewares.use('/__test/events', (req, res) => {
           res.writeHead(200, {
             'Content-Type': 'text/event-stream',
@@ -241,6 +309,11 @@ const server = await createServer({
               command: Command;
               args: Record<string, unknown>;
             };
+            localRequests[command] = (localRequests[command] ?? 0) + 1;
+            if (creationScenario === 'task_retry' && command === 'proposal.confirm' && process.env.RETRY_UI_FAIL_ONCE === '1' && !failedOnce.has('proposal-confirm')) {
+              failedOnce.add('proposal-confirm');
+              throw new Error('模拟启动失败：请再次点击，验证错误提示与按钮位于同一张卡片。');
+            }
             if (command === 'assistant.settings') {
               res.end(JSON.stringify({ value: assistantSettings.settings() })); return;
             }
@@ -254,7 +327,7 @@ const server = await createServer({
               return;
             }
             if (command === 'project.create')
-              args.config = { defaultProfileId: 'fixture', expressionRules: { enabled: false } };
+              args.config = { ...(args.config as object ?? {}), defaultProfileId: 'fixture', expressionRules: { enabled: false } };
             const value = await service.invoke(command, args);
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ value }));

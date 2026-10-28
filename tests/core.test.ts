@@ -15,14 +15,13 @@ import {
   updateConfigDocument,
   paths,
   renderConfig,
-  stageOutputs,
   prosePath,
   batchPath,
   rhythmPath,
   worldRequiredFields,
   behaviorRequiredFields
 } from '../src/core/domain';
-import { profileSchema, factSchema, type SecretProfile, type ModelResult } from '../src/shared/types';
+import { profileSchema, factSchema } from '../src/shared/types';
 import { templates, initialFiles, systemPrompt } from '../src/core/skill';
 import { validateCandidate, checkFields, checkWorldFields, validateCoverage } from '../src/core/validation';
 import {
@@ -412,9 +411,10 @@ test('章节总纲校验限定主表，附表提及章节不被误判为缺列�
   const p = newProject('当前三章', 'unused', { targetWords: 30000, batchSize: 3 });
   const header = '| 章节 | 类型 | 强度 | 承接上章 | 前300字入口 | 核心场面 | 主角动作 | 外部推动 | 状态变化 | 设定揭示 | 阅读回报 | 人物记忆变化 | 章末牵引 |';
   const row = (n: number) => `| 第00${n}章 | 推进 | 3 | ${Array(10).fill('具体安排').join(' | ')} |`;
-  const main = [header, '|' + Array(13).fill(' --- ').join('|') + '|', row(1), row(2), row(3)].join('\n');
+  const main = ['# 章节总纲', '', header, '|' + Array(13).fill(' --- ').join('|') + '|', row(1), row(2), row(3)].join('\n');
   const check = (content: string) => validateCandidate('S06', p, [{ path: paths.outline, content, baseHash: null }], skill);
-  assert.deepEqual(check(main + '\n\n## 成本追踪\n\n| 事项 | 影响 |\n| --- | --- |\n| 第001章陈舟自付租金 | 钱少了 |\n| 第001章 | 留下等待成本 |'), []);
+  const appendix = check(main + '\n\n## 成本追踪\n\n| 事项 | 影响 |\n| --- | --- |\n| 第001章陈舟自付租金 | 钱少了 |\n| 第001章 | 留下等待成本 |');
+  assert.deepEqual(appendix.map(issue => issue.code), ['template_extra_section'], '只提示并回原字段，附表章号不能污染主表覆盖检查');
   assert.deepEqual(check(main.replace(row(1), '\n' + row(1)) + '\n\n| 事项 | 影响 |\n| --- | --- |\n| 第001章 | 附表说明 |'), []);
   assert.ok(check(main.replace(row(2), '')).some(i => i.code === 'chapter_coverage'));
   assert.ok(check(main + '\n' + row(2)).some(i => i.code === 'chapter_coverage'));
@@ -542,11 +542,11 @@ test('阶段请求必须显式发起，候选拒绝不写正式稿，接受幂�
       startNext: false
     });
     assert.equal(service.store!.db.project().stage, 'S02');
-    assert.equal(calls, 2);
+    assert.equal(calls, 1);
     const revision = service.store!.db.project().revision;
     await service.invoke('run.accept', { id: rid, startNext: true });
     assert.equal(service.store!.db.project().revision, revision);
-    assert.equal(calls, 2);
+    assert.equal(calls, 1);
   } finally {
     service.close();
   }

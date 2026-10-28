@@ -86,6 +86,30 @@ test('中转断流保留可定位的请求编号和原因，不泄漏上游原�
   } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
 });
 
+test('HTTP断流记录响应阶段和最后生成事件，不把工具参数当作未生成', async () => {
+  const server = http.createServer(async (_req, res) => {
+    res.writeHead(200, { 'content-type': 'text/event-stream' });
+    res.write(frame({ type: 'response.created', response: { id: 'resp_audit_1' } }));
+    res.write(frame({ type: 'response.function_call_arguments.delta', delta: '{"content":"部分工具参数' }));
+    await new Promise(resolve => setTimeout(resolve, 70));
+    res.end(failed);
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    await assert.rejects(invokeModel({ ...profile, baseUrl: `http://127.0.0.1:${(server.address() as { port: number }).port}/v1` }, '', [], [], new AbortController().signal), error => {
+      assert.ok(error instanceof RequestError);
+      assert.equal(error.diagnostic?.responseId, 'resp_audit_1');
+      assert.equal(error.diagnostic?.eventCount, 3);
+      assert.equal(error.diagnostic?.lastEventType, 'response.function_call_arguments.delta');
+      assert.ok(error.diagnostic!.headersMs! >= 0);
+      assert.ok(error.diagnostic!.firstEventMs! >= error.diagnostic!.headersMs!);
+      assert.ok(error.diagnostic!.idleMs! >= 40);
+      assert.doesNotMatch(JSON.stringify(error.diagnostic), /部分工具参数/);
+      return true;
+    });
+  } finally { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+
 test('配置的请求期限和作者取消仍会结束静默响应并释放连接', async () => {
   for (const cancelled of [false, true]) {
     const controller = new AbortController();
@@ -263,12 +287,14 @@ async function finish(service: Service) {
   }
 }
 
-test('完成候选后的断流可转入本地审阅，费用保持未知、重开不重发、接受仍由作者决定', async () => {
+test('修订候选后的断流可转入本地审阅，费用保持未知、重开不重发、接受仍由作者决定', async () => {
   const { service, requests } = await setup();
   try {
     const root = service.store!.root;
     const original = service.store!.read(paths.seed).content;
-    await service.invoke('run.start', { request: '完成设定拆解' });
+    // Revision deliberately retains its follow-up reasoning turn; ordinary stage
+    // candidates now finish locally and therefore no longer exercise a later outage.
+    await service.invoke('run.start', { mode: 'revision', request: '修订设定拆解，保留原有主线' });
     await finish(service);
     const run = service.store!.db.runs()[0];
     assert.equal(run.status, 'unknown');
@@ -293,7 +319,7 @@ test('完成候选后的断流可转入本地审阅，费用保持未知、重�
     assert.equal(service.store!.db.run(run.id).status, 'awaiting_review');
     assert.equal(requests(), 2);
     await service.invoke('run.accept', { id: run.id, proposalHash: checked.proposalHash, startNext: false });
-    assert.equal(service.store!.db.project().stage, 'S02');
+    assert.equal(service.store!.db.project().stage, 'S01');
     assert.equal(service.store!.read(paths.seed).content, run.changes[0].content);
     assert.equal(requests(), 2);
   } finally {

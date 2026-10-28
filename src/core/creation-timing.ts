@@ -37,7 +37,7 @@ function profileKey(profile: Profile, run: Run) {
     proxy: effective.proxy, effort: effective.reasoningEffort ?? null, outputLimit: effective.outputLimit };
 }
 
-/** Records whole uninterrupted generation + review cycles, excluding time waiting for the author. */
+/** Records uninterrupted phase execution, excluding time waiting for the author. */
 export class CreationTimings {
   private active = new Map<string, Measurement>();
 
@@ -48,15 +48,17 @@ export class CreationTimings {
     const kind = naming ? 'titles' : planning && ['contract', 'reviewing_contract', 'ready'].includes(planning.phase) ? 'plan' : 'directions';
     if (['ready', 'awaiting_direction'].includes(task.phase)) return;
     const writer = profiles.find(profile => profile.id === run.profileId);
-    const reviewer = profiles.find(profile => profile.id === (project.config.modelRouting.review || run.profileId));
-    if (!writer || !reviewer) return;
+    const reviewer = kind === 'directions' ? undefined : profiles.find(profile => profile.id === (project.config.modelRouting.review || run.profileId));
+    if (!writer || kind !== 'directions' && !reviewer) return;
     const failedReview = naming ? naming.review?.result.decisions.every(decision => decision.verdict !== 'keep')
-      : (kind === 'plan' ? planning?.contractReview : planning?.reportReview)?.result.issues.some(issue => issue.severity !== 'minor');
-    const eligible = ['planning', 'contract', 'generating'].includes(task.phase) && !run.messages.length && !failedReview;
+      : kind === 'plan' && planning?.contractReview?.result.issues.some(issue => issue.severity !== 'minor');
+    const legacyDirectionRepair = kind === 'directions' && planning?.repair?.phase === 'planning';
+    const eligible = ['planning', 'contract', 'generating'].includes(task.phase) && !run.messages.length && !failedReview && !legacyDirectionRepair;
     const scope = naming ? (naming.manualTitle ? 'manual' : naming.regenerate ? 'single' : `batch:${naming.candidateCount ?? 'legacy'}`)
       : kind === 'directions' ? (planning?.regenerate ? `replace:${planning.regenerate.keepDirectionIds ? 3 - planning.regenerate.keepDirectionIds.length : 1}` : 'initial') : 'plan';
-    const key = hash(JSON.stringify({ version: 1, kind, scope, workflow: planning?.workflowVersion,
-      origin: planning?.origin, rule: naming?.rule, writer: profileKey(writer, run), reviewer: profileKey(reviewer, run) }));
+    // Single-pass directions must not inherit old generation + review estimates.
+    const key = hash(JSON.stringify({ version: kind === 'directions' ? 2 : 1, kind, scope, workflow: planning?.workflowVersion,
+      origin: planning?.origin, rule: naming?.rule, writer: profileKey(writer, run), reviewer: reviewer ? profileKey(reviewer, run) : undefined }));
     const recent = samples(store, at).filter(value => value.key === key).slice(-20).map(value => value.seconds).sort((a, b) => a - b);
     const view: CreationTiming = { startedAt: new Date(at).toISOString(), samples: recent.length,
       unavailable: eligible ? 'history' : 'resumed' };

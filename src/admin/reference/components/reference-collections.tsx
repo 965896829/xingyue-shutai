@@ -16,7 +16,6 @@ import {
   Globe,
   Cpu,
   Building2,
-  Eye,
   SlidersHorizontal,
 } from "lucide-react";
 import {
@@ -26,7 +25,6 @@ import {
   type PageSpec,
   type DataRecord,
   label,
-  formatTime,
 } from "@reference/lib/api";
 import { Spinner, ErrorState, Status, useToast } from "./ui";
 import {

@@ -1,0 +1,147 @@
+.markdown-content,
+.markdown-rendered {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.markdown-rendered img { max-width: 100%; height: auto; }
+.markdown-stream-block { display: contents; }
+.markdown-reading-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.markdown-reading-tools button,
+.markdown-reading-heading button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.markdown-table-viewport {
+  max-width: 100%;
+  max-height: min(65vh, 640px);
+  overflow: auto;
+  position: relative;
+  isolation: isolate;
+  margin: 16px 0 24px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  scrollbar-width: auto;
+  scrollbar-color: var(--scrollbar) var(--inset);
+  overscroll-behavior-x: contain;
+}
+.markdown-table-viewport:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.markdown-content .readable-table {
+  display: table;
+  table-layout: fixed;
+  width: max(100%, var(--table-reading-width));
+  max-width: none;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: visible;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.75;
+  text-align: left;
+}
+.markdown-content .readable-table :is(th, td) {
+  padding: 14px 16px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  background: var(--panel);
+}
+.markdown-content .readable-table th {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--raised);
+}
+.markdown-content .readable-table th:not([align]) { text-align: left; }
+.markdown-content .readable-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.markdown-content .readable-table tbody tr:nth-child(even) > td {
+  background: var(--inset);
+}
+.markdown-content .readable-table tbody tr:hover > td {
+  background: var(--raised);
+}
+.markdown-content .readable-table tr > :last-child { border-right: 0; }
+.markdown-content .readable-table tbody > tr:last-child > td { border-bottom: 0; }
+.markdown-content .readable-table-sticky tr > :first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  box-shadow: 1px 0 0 var(--line-strong);
+  font-variant-numeric: tabular-nums;
+}
+.markdown-content .readable-table-sticky thead tr > :first-child { z-index: 3; }
+.markdown-content .readable-table :is(p, ul, ol) { margin-top: 0; margin-bottom: 8px; }
+.markdown-content .readable-table :is(p, ul, ol):last-child { margin-bottom: 0; }
+.markdown-content .readable-table caption {
+  padding: 14px 16px;
+  text-align: left;
+  color: var(--soft);
+  background: var(--panel);
+}
+.markdown-reading-dialog {
+  width: calc(100vw - 48px);
+  height: calc(100dvh - 48px);
+  max-width: 1920px;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 20px 80px var(--shadow);
+  text-align: left;
+}
+.markdown-reading-dialog[open] { display: flex; flex-direction: column; }
+.markdown-reading-dialog::backdrop { background: var(--scrim); }
+.markdown-reading-heading {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.markdown-reading-dialog .markdown-reading-heading > div { display: block; min-width: 0; }
+.markdown-reading-heading strong { display: block; font-size: 15px; overflow-wrap: anywhere; }
+.markdown-reading-heading span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+.markdown-reading-body {
+  flex: 1;
+  min-height: 0;
+  padding: 24px;
+  overflow: auto;
+  font-size: 14px;
+  line-height: 1.9;
+}
+.markdown-reading-body .markdown-table-viewport { max-height: min(60dvh, 640px); }
+@media (max-width: 640px) {
+  .markdown-reading-dialog { width: calc(100vw - 16px); height: calc(100dvh - 16px); }
+  .markdown-reading-heading, .markdown-reading-body { padding: 16px; }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
 import { markdown } from '@codemirror/lang-markdown';
 import { MergeView } from '@codemirror/merge';
@@ -91,10 +91,16 @@ export function Editor({
     });
     return () => view.current?.destroy();
   }, [readOnly]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const v = view.current;
-    if (v && v.state.doc.toString() !== value)
-      v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: value } });
+    if (!v) return;
+    const previous = v.state.doc.toString();
+    if (previous === value) return;
+    // Preserve the already laid-out prefix, selection and history during streaming.
+    let from = 0, oldEnd = previous.length, newEnd = value.length;
+    while (from < oldEnd && from < newEnd && previous[from] === value[from]) from++;
+    while (oldEnd > from && newEnd > from && previous[oldEnd - 1] === value[newEnd - 1]) { oldEnd--; newEnd--; }
+    v.dispatch({ changes: { from, to: oldEnd, insert: value.slice(from, newEnd) } });
   }, [value]);
   useEffect(() => {
     if (!highlight || !view.current) return;

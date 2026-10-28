@@ -24,11 +24,10 @@ import {
   post,
   type PageSpec,
   type DataRecord,
-  type Field,
   label,
 } from "@reference/lib/api";
 import { Spinner, ErrorState, useToast, Status } from "./ui";
-import { Modal, CompactHeading } from "./reference-ui";
+import { Modal } from "./reference-ui";
 import { FieldControl } from "./resource-page";
 import { BrandImageUpload } from "./admin-parity-tools";
 import { ReferenceRecordForm } from "./reference-record-form";
@@ -180,7 +179,7 @@ export function ReferenceSettings({ page }: { page: PageSpec }) {
   if (q.error) return <ErrorState error={q.error} retry={() => q.refetch()} />;
   const cards =
     page.key === "page-display" ? displaySections : operationSections;
-  const createChannel = (provider: string, name: string) => {
+  const createChannel = (provider: string, _name: string) => {
     const existing = items.find((r) => r.data.provider === provider);
     setChannel(provider);
     setRecordForm(existing || null);
@@ -199,7 +198,7 @@ export function ReferenceSettings({ page }: { page: PageSpec }) {
         <div
           className={`ref-setting-cards ${page.key === "operation-settings" ? "four" : ""}`}
         >
-          {cards.map((s, i) => {
+          {cards.map((s) => {
             const Icon = s.icon || Settings2;
             return (
               <section className="ref-setting-tile" key={s.title}>

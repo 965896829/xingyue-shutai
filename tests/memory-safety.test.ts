@@ -27,6 +27,10 @@ const later = '# 第二章\n\n阿宁右臂骨折，尚未治疗。';
 
 const caller: Caller = async (_profile, system, messages) => {
   const input = JSON.parse(messages[0].content);
+  if (system.includes('你独立核对本章实际正文')) return fakeResult(JSON.stringify({ decisions: input.plans.map((plan: any) => ({
+    path: plan.path, verdict: 'needs_review', reason: '离线夹具保守保留待同步计划，仍需核对康复后的行动安排',
+    planQuote: plan.content.slice(0, 24), proseQuote: input.prose.content.slice(0, 24)
+  })) }));
   if (system.includes('你独立检查')) return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => {
     const source = input.sources.find((source: any) => source.path === (item.path ?? item.fact.evidence[0].path));
     return { id: item.id, verdict: 'supported', reason: '离线夹具逐条比对原文', evidence: [{ path: source.path, quote: source.content.slice(0, 24) }] };
@@ -261,6 +265,8 @@ test('正常章后采纳状态变化会先核对未来计划，不使已完成�
     run.facts = [{ ...facts[1], id: 'recovered-3', fromChapter: 3, toChapter: null, revealedAt: 3, supersedes: facts[1].id,
       value: '已经完全痊愈', replacementReason: '第三章治疗后康复', reviewStatus: 'candidate', evidence: [{ path: prosePath(3), hash: hash(content), quote: '阿宁右臂已经完全痊愈。' }] }];
     await (service.runner as any).auditMemory(run, p, profile, new AbortController().signal);
+    assert.ok(run.futurePlanReview?.decisions.length);
+    assert.ok(run.futurePlanReview.decisions.every(item => item.verdict === 'needs_review'));
     run.status = 'awaiting_review';
     store.db.saveRun(run);
     const result = await service.invoke('run.accept', { id: run.id, proposalHash: proposalHash(run), startNext: true, warningReason: '离线流程验收' });

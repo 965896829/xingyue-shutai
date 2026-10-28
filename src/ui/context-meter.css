@@ -1,0 +1,21 @@
+.context-meter { display: inline-flex; align-items: center; justify-content: center; gap: 3px; padding: 4px 6px; min-height: 32px; border: 0; background: transparent; color: var(--muted, #9ba3b5); font-size: 11px; flex-shrink: 0; }
+.context-meter svg { width: 27px; height: 27px; overflow: visible; }
+.context-meter circle { fill: none; stroke-width: 2.4; }
+.context-meter-track { stroke: currentColor; opacity: .22; }
+.context-meter-fill { stroke: currentColor; transform: rotate(-90deg); transform-origin: center; stroke-linecap: round; }
+.context-meter svg text { fill: currentColor; font-size: 12px; }
+.context-meter-high { color: var(--warning, #b0873b); }
+.context-meter:focus-visible { outline: 2px solid var(--accent, #8a7ade); outline-offset: 2px; }
+.context-meter-popover { position: fixed; z-index: 1200; width: min(310px, calc(100vw - 16px)); box-sizing: border-box; padding: 16px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--ink); box-shadow: 0 12px 35px #0004; max-height: 70vh; overflow: auto; font-size: 12px; line-height: 1.6; }
+.context-meter-popover p { margin: 8px 0; overflow-wrap: anywhere; }
+.context-meter-popover dl { display: grid; grid-template-columns: 1fr auto; gap: 7px 10px; }
+.context-meter-popover dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+.context-compaction { color: var(--muted, #9ba3b5); font-size: 12px; margin: 10px 0; padding: 6px 0; line-height: 1.6; }
+.context-compaction summary { cursor: pointer; }
+.context-compaction p { margin: 6px 0; }
+.message-actions > summary { list-style: none; cursor: pointer; font-size: 18px; line-height: 1; width: 32px; padding: 5px 0; text-align: center; }
+.message-actions > summary::-webkit-details-marker { display: none; }
+.message-actions { margin: 6px 0; }
+.composer-extra-tools { position: relative; }
+.composer-extra-tools > summary { cursor: pointer; list-style: none; padding: 5px 10px; font-size: 20px; }
+.composer-extra-tools[open] > div { display: grid; gap: 8px; position: absolute; bottom: 100%; left: 0; z-index: 10; padding: 12px; min-width: 210px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--panel); }

@@ -10,12 +10,14 @@ import {
   planningSystemPrompt,
   titleCandidateCount,
   titleHistoryDigest,
-  titleSystemPrompt
+  titleSystemPrompt,
+  titleEditorialResources
 } from '../src/core/creation-prompts';
 import { systemPrompt } from '../src/core/skill';
 import { SkillRegistry } from '../src/core/skill-registry';
 import { hash, newProject } from '../src/core/domain';
-import { tagHash } from '../src/core/tags';
+import { tagHash, tagBundle } from '../src/core/tags';
+import { planningRulesHash } from '../src/core/tag-planning';
 import { namingRulesHash, validateTitleBatch, type titleSource } from '../src/core/title-naming';
 import { loadTitleStyleProfile } from '../src/core/title-style';
 import { planKinds, type TitleBatch, type TitlePlanning } from '../src/shared/creation';
@@ -96,6 +98,50 @@ test('书名风格样本有日期和官方出处，资源修改须过锁且改�
   } finally { fs.rmSync(temp, { recursive: true, force: true }); }
 });
 
+test('书名编辑规则独立版本化：不使旧命名、已确认方案或标签知识失效', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'xingyue-title-editor-'));
+  fs.cpSync(root, temp, { recursive: true });
+  try {
+    const p = newProject('独立编辑版本', 'unused', {}), old = naming();
+    const next = { ...old, editorialVersion: 1 as const };
+    const before = { old: namingRulesHash(temp, p, old), next: namingRulesHash(temp, p, next),
+      planning: planningRulesHash(temp, p), knowledge: tagBundle(temp).version };
+    const relative = 'writer.system.md', file = path.join(temp, 'title-editing', relative);
+    fs.appendFileSync(file, '\n附加书名编辑要求。');
+    assert.throws(() => titleEditorialResources(temp), /完整性/);
+    const lockFile = path.join(temp, 'title-editing/resources.lock.json');
+    const lock = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
+    lock[relative] = hash(fs.readFileSync(file));
+    fs.writeFileSync(lockFile, JSON.stringify(lock));
+    assert.equal(namingRulesHash(temp, p, old), before.old);
+    assert.notEqual(namingRulesHash(temp, p, next), before.next);
+    assert.equal(planningRulesHash(temp, p), before.planning);
+    assert.equal(tagBundle(temp).version, before.knowledge);
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
+
+test('番茄命名新版资源不使0.4.66命名、旧命名和已确认方案失效', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'xingyue-title-market-'));
+  fs.cpSync(root, temp, { recursive: true });
+  try {
+    const p = newProject('新版资源兼容', 'unused', {});
+    const versions = [naming(), { ...naming(), editorialVersion: 1 as const }, { ...naming(), editorialVersion: 2 as const }];
+    const before = versions.map(t => namingRulesHash(temp, p, t));
+    const planningBefore = planningRulesHash(temp, p), knowledgeBefore = tagBundle(temp).version;
+    const relative = 'writer.system.md', file = path.join(temp, 'title-market-editing', relative);
+    fs.appendFileSync(file, '\n补充本版商业书名策略。');
+    assert.throws(() => titleEditorialResources(temp, 2), /完整性/);
+    const lockFile = path.join(temp, 'title-market-editing/resources.lock.json');
+    const lock = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
+    lock[relative] = hash(fs.readFileSync(file)); fs.writeFileSync(lockFile, JSON.stringify(lock));
+    assert.equal(namingRulesHash(temp, p, versions[0]), before[0]);
+    assert.equal(namingRulesHash(temp, p, versions[1]), before[1]);
+    assert.notEqual(namingRulesHash(temp, p, versions[2]), before[2]);
+    assert.equal(planningRulesHash(temp, p), planningBefore);
+    assert.equal(tagBundle(temp).version, knowledgeBefore);
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
+
 test('三案、单案修订与保留一案只改变数据范围，不改变相位提示词哈希', () => {
   const resources = creationPromptResources(root);
   const t = planning();
@@ -132,12 +178,14 @@ test('历史比较限定当前作品与输入版本，并保留近期不同机�
   const t = planning();
   t.report = report('当前');
   t.history.push({ kind: 'report', value: report('上一批') });
+  t.history.push({ kind: 'reroll_request', value: { instruction: '换一批' } });
   const current = run('current', { planning: t });
   const same = run('same', { planning: { ...planning(), report: report('更早') } });
   const other = run('other', { planning: { ...planning(), spec: { ...t.spec, projectId: 'another' }, report: report('他书') } });
   const changed = run('changed', { planning: { ...planning(), spec: { ...t.spec, inputHash: 'b'.repeat(64) }, report: report('旧输入') } });
-  const history = planningHistoryDigest(current, [other, changed, same], 8);
-  assert.equal(history.length, 8);
+  const history = planningHistoryDigest(current, [other, changed, same], 5);
+  assert.equal(history.length, 5);
+  assert.ok(history.every(h => !h.title.startsWith('当前')));
   assert.ok(history.some(h => h.sourceRunId === 'current' && h.title.startsWith('上一批')));
   assert.ok(history.every(h => h.sourceRunId === 'current' || h.sourceRunId === 'same'));
 });
@@ -165,10 +213,11 @@ test('同方案历史去重不阻止冻结书名、手填原名或审核修复',
   t.batch = prior;
   const r = run('title-run', { naming: t });
   const unrelated = run('other', { naming: { ...naming(), sourceHash: 'b'.repeat(64), batch: batch() } });
+  assert.deepEqual(titleHistoryDigest(r, [unrelated]), [], '当前候选不能成为自身的历史重复项');
+  t.regenerate = { candidateId: 'title-0', instruction: '改名', original: prior };
   const history = titleHistoryDigest(r, [unrelated]);
   assert.equal(history.length, 6);
   assert.ok(history.every(h => h.sourceRunId === r.id));
-  t.regenerate = { candidateId: 'title-0', instruction: '改名', original: prior };
   const replacement = structuredClone(prior);
   replacement.candidates[0].title = '  清水之城０！';
   assert.throws(() => validateTitleBatch(replacement, r, source, history), /历史候选重复/);
@@ -195,7 +244,7 @@ test('正文只输出正文，独立审核和记忆阶段携带实际工具提�
   assert.doesNotMatch(review, /不提议阶段文件|只返回本轮给定审阅结构/);
   const memory = systemPrompt(root, p, 'S11', undefined, undefined, { outputMode: 'memory' });
   assert.match(memory, /使用 propose_changes 提交本章记忆更新/);
-  assert.match(memory, /结构化事实通过 propose_memory 提交/);
+  assert.match(memory, /结构化事实优先与最后一批文件一起/);
   assert.match(memory, /角色卡在既有角色二级标题下更新本章变化的当前字段/);
   assert.match(memory, /08_章后更新\/第001章记忆更新\.md/);
   assert.match(memory, /原文件 baseHash/);

@@ -1,3 +1,6 @@
 resources/skill/runtime/** -text -whitespace
 resources/skill/expression/** -text -whitespace
 resources/skill/tags/** -text -whitespace
+resources/skill/direction-planning/** -text -whitespace
+resources/skill/title-editing/** -text -whitespace
+resources/skill/title-market-editing/** -text -whitespace

@@ -27,7 +27,6 @@ import {
   Brain,
   Users,
   BriefcaseBusiness,
-  X,
 } from "lucide-react";
 import {
   api,
@@ -36,16 +35,13 @@ import {
   put,
   type DataRecord,
   type PageSpec,
-  formatTime,
   label,
 } from "@reference/lib/api";
-import { Spinner, ErrorState, useToast, Status } from "./ui";
+import { Spinner, ErrorState, useToast } from "./ui";
 import {
   Modal,
   SearchBox,
-  RefTabs,
   RefEmpty,
-  RefPagination,
 } from "./reference-ui";
 
 export function AgentPage({ page }: { page: PageSpec }) {
@@ -53,7 +49,6 @@ export function AgentPage({ page }: { page: PageSpec }) {
       queryKey: ["records", "agents", "all"],
       queryFn: () => recordCollection("agents"),
     }),
-    toast = useToast(),
     cache = useQueryClient();
   const [search, setSearch] = useState(""),
     [tag, setTag] = useState(""),

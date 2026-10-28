@@ -4,8 +4,9 @@ import { z } from 'zod';
 import { hash } from './domain';
 import type { ProjectConfig, Run } from '../shared/types';
 import type { ExpressionBinding, ExpressionCatalog, ExpressionMode } from '../shared/expression';
+import { sharedRuleBlock } from './runtime/prompt-cache';
 
-const policyVersion = 'natural-expression-2';
+const policyVersion = 'natural-expression-4';
 const ruleSchema = z.object({
   id: z.string().regex(/^[A-Z]+-\d{3}$/),
   version: z.literal('3.1.0'),
@@ -102,6 +103,10 @@ const adapters: Record<ExpressionMode, string> = {
     '当前是作者确认的自由试写。对小说片段遵循正文规则，保留试写边界和本书声线；不要夹带助手开场、创作说明、结尾邀约或未经授权的剧情改动。',
   planning:
     '当前是创作规划。用具体的人物目标、行动、阻力、后果表达计划，避免抽象术语互相解释。严格保留当前阶段的模板和必需字段；正文专属规则只约束拟写的正文例子，不能删除大纲结构、必要分析或记录。',
+  title:
+    '当前只做书名编辑，下面的语言规则按短题面适用，不审查章节正文。允许留白、比喻、口语、节奏和情绪，不必把具体对象、行动、因果全写进书名，更不能改成方案摘要。没有章节场景、对白或人物弧光就不触发相应正文规则。事实边界按方案核对，题面效果按书名编辑要求判断，审美建议不能自动阻断。说明文字简短，不展示自检或合格证明。',
+  title_market:
+    '当前是番茄对应题材的商业书名编辑。书名是给目标读者识别题材和看点的入口，语言规则服从本轮命名目标与作者明确要求。直白亮出能力、利益、反转或人物冲突是有效类型表达；冒号、转折、两段式和较长名称本身不构成AI味。留白与简短只有在保留类型识别、核心卖点和阅读期待时才有价值；不能用文学散文标准稀释商业吸引力。下面规则中的段落、对白密度、全书声线和场景要求只在相应上下文存在时适用，不逐字处罚书名。风格建议只影响推荐，不自动阻断或增加修复轮；事实和权限边界不变。',
   prose:
     '当前只生成小说正文。人物通过选择、行动、对白和具体后果推进场景；依视角、人物声线和情境组织句段。保留有效留白与必要解释，不额外附带规则说明、审校报告或助手话语。',
   revision:
@@ -162,7 +167,7 @@ export function expressionPack(
   if (config.expressionRules?.enabled === false) return { prompt: '', fingerprint: 'expression-disabled' };
   validateExpressionSelection(root, config);
   const library = expressionLibrary(root);
-  const languageOnly = mode === 'discussion' || mode === 'record' || mode === 'planning';
+  const languageOnly = mode === 'discussion' || mode === 'record' || mode === 'planning' || mode === 'title' || mode === 'title_market';
   const modules = new Set(
     languageOnly
       ? ['LEX', 'SYN', 'IMG', 'VOICE']
@@ -171,7 +176,16 @@ export function expressionPack(
   if (mode === 'revision' || mode === 'review') modules.add('EDIT');
   if (mode !== 'record') for (const id of config.expressionRules?.modules ?? []) modules.add(id);
   const rules = library.rules.filter((r) => modules.has(r.module_id));
-  const prompt = `\n\n<expression_rules version="${library.version}" mode="${mode}">\n${commonPolicy}\n${adapters[mode]}\n本轮生效规则（保留全部触发、处理、例外及共同约束）：\n${formatRules(rules)}\n</expression_rules>`;
+  const baseModules = new Set(['LEX', 'SYN', 'IMG', 'VOICE']);
+  const base = rules.filter(r => baseModules.has(r.module_id));
+  const additional = rules.filter(r => !baseModules.has(r.module_id) && r.module_id !== 'EDIT');
+  const editing = rules.filter(r => r.module_id === 'EDIT');
+  const shared = sharedRuleBlock('expression-base', `${commonPolicy}\n本轮生效基础规则（保留全部触发、处理、例外及共同约束）：\n${formatRules(base)}`);
+  const extra = additional.length ? sharedRuleBlock('expression-additional',
+    `本轮生效补充规则（与基础规则一起按当前模式适用，保留全部触发、处理、例外及共同约束）：\n${formatRules(additional)}`) : '';
+  const edit = editing.length ? sharedRuleBlock('expression-edit',
+    `本轮生效编辑规则（与基础及补充规则一起按当前模式适用，保留全部触发、处理、例外及共同约束）：\n${formatRules(editing)}`) : '';
+  const prompt = `\n\n<expression_rules version="${library.version}" mode="${mode}">\n${adapters[mode]}\n本轮生效规则由基础部分及存在时的补充、编辑部分组成，均按本模式和原适用条件执行。\n${shared}${extra}${edit}\n</expression_rules>`;
   return {
     prompt,
     fingerprint: expressionFingerprint(root, config),

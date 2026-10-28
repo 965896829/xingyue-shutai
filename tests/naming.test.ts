@@ -162,14 +162,14 @@ test('真实执行器完成规则工具续轮和候选提交，正式稿保持�
     const old = service.store!.read(paths.seed);
     const id = await start(service);
     const run = service.store!.db.run(id);
-    assert.equal(count, 3);
+    assert.equal(count, 2);
     assert.equal(run.status, 'awaiting_review', run.error ?? JSON.stringify(run.issues));
     assert.equal(run.changes.length, 1);
     assert.equal(run.accepted, false);
     assert.deepEqual(service.store!.read(paths.seed), old);
     fs.appendFileSync(path.join(root, 'references/naming-system.md'), '\n未预载修订测试。\n');
     await service.runner!.drive(id);
-    assert.equal(count, 3);
+    assert.equal(count, 2);
     assert.match(service.store!.db.run(id).error!, /规则或工具契约发生变化/);
     assert.deepEqual(service.store!.read(paths.seed), old);
   } finally {

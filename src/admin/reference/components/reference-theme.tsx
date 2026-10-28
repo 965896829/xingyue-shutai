@@ -12,9 +12,7 @@ import {
   ArrowUp,
   ArrowDown,
   Layout,
-  FileText,
   Type,
-  BookOpen,
   Folder,
 } from "lucide-react";
 import { api, post, formatTime, type DataRecord } from "@reference/lib/api";

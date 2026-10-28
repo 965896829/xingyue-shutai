@@ -4,21 +4,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { Service } from '../src/core/service';
-import { templates } from '../src/core/skill';
-import { profileSchema, type ProjectState, type ModelResult } from '../src/shared/types';
+import { profileSchema } from '../src/shared/types';
 import {
   paths,
   stageOutputs,
   activeBatch,
-  batchPath,
-  rhythmPath,
-  taskPath,
-  detailPath,
   prosePath,
-  updatePath,
   qualityPath,
-  renderConfig,
-  countWords,
   archivePath
 } from '../src/core/domain';
 import { importLegacy, previewLegacy } from '../src/core/migration';
@@ -133,10 +125,14 @@ for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正
     assert.equal(service.store!.scan().length, 25);
     let stages = 0;
     while (!service.store!.db.project().finished) {
-      const p = service.store!.db.project(),
-        id = await service.invoke('run.start', { request: `执行 ${p.stage}`, profileId: 'mock' });
+      const p = service.store!.db.project();
+      if (p.stage === 'S03' && !restartWithSettings) {
+        p.titleReviewRequired = true;
+        service.store!.commit([service.change(paths.progress, service.store!.readAccepted(paths.progress).content)], p);
+      }
+      const id = await service.invoke('run.start', { request: `执行 ${p.stage}`, profileId: 'mock' });
       while (service.runner!.controller) await new Promise((r) => setTimeout(r, 10));
-      const r = service.store!.db.run(id);
+      let r = service.store!.db.run(id);
       assert.equal(r.status, 'awaiting_review', `${r.stage}: ${JSON.stringify(r.issues)} ${r.error}`);
       if (restartWithSettings) {
         await service.invoke('project.configure', { config: { ...p.config, maxRounds: 30 + stages, maxTools: 100 + stages } });
@@ -148,6 +144,18 @@ for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正
         assert.equal(visible.proposalHash, r.proposalHash, '只改预算和重启不能改变候选批准指纹');
       }
       if (r.pipeline) {
+        if (p.chapter === 1 && !restartWithSettings) {
+          const rounds = r.rounds, epoch = r.pipeline.epoch;
+          const before = service.store!.readAccepted(prosePath(p.chapter)).content;
+          await service.invoke('run.recover', { id, instruction: '修改本章结尾的悬念，保留人物与主线' });
+          while (service.runner!.controller) await new Promise(resolve => setTimeout(resolve, 10));
+          r = service.store!.db.run(id);
+          assert.equal(r.status, 'awaiting_review', `${JSON.stringify(r.issues)} ${r.error}`);
+          assert.equal(r.pipeline!.phase, 'ready');
+          assert.notEqual(r.pipeline!.epoch, epoch);
+          assert.ok(r.rounds >= rounds + 3, '修改正文之后必须重新审稿并提取记忆');
+          assert.equal(service.store!.readAccepted(prosePath(p.chapter)).content, before, '修改候选不能覆盖正式稿');
+        }
         assert.ok(r.expressionRules?.prose?.ruleIds.includes('META-001'));
         assert.ok(r.expressionRules?.review?.ruleIds.includes('EDIT-001'));
         assert.equal(r.expressionRules?.record?.mode, 'record');
@@ -158,8 +166,7 @@ for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正
       const acceptance = {
         id,
         proposalHash: r.proposalHash,
-        startNext: false,
-        warningReason: '测试夹具：仅验证结构与状态，不代表文学质量'
+        startNext: false
       };
       if (p.stage === 'S01') {
         const before = service.store!.db.get('headSnapshot');

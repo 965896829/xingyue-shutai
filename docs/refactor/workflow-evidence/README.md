@@ -1,5 +1,7 @@
 # 0.4.4 验证证据
 
+> 历史验收记录：本文保存的是当时的结果和命令，不代表当前版本通过验收。其中依赖旧界面、旧基线的一次性脚本已退役；当前入口与归档说明见 [2026-10-28 清理记录](../../maintenance/repository-cleanup-2026-10-28.md)。
+
 日期2026-10-11。`tests.log`为完整210项回归，`targeted-tests.log`为18项策划测试，`build.log`和`package.log`对应最终包。最后的辅助按钮分组与提示文案调整已重新构建，并通过`final-desktop.json`所记实际客户端复测。
 
 `electron-smoke.json`记录首个隔离样本的输入保存、集中确认、旧结果保护、继续和暂停；`final-desktop.json`记录最终包的第二个全新样本。`mock-requests.json`与`final-mock-requests.json`仅含本地合成请求元数据，均为8次本机调用；不包含真实作者文本或密钥。截图是合成内容，不能作为文学质量示例。

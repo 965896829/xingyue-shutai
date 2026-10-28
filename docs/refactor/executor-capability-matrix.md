@@ -1,4 +1,29 @@
-# 执行器准入
+# 执行器准入（0.4.78）
+
+新任务和新聊天使用 `@earendil-works/pi-agent-core` 1.4.0。旧任务按记录中的执行器恢复；未写执行器的旧记录视为 Legacy，不更改其候选、次数或模型。旧 0.73.1 实验检查点仍只读保留。
+
+完成结果：763 项完整测试通过，安装包工作进程隔离验证通过，167 个 Skill 文件与源码字节一致。详见[0.4.78 交付记录](pi-integration-0.4.78.md)。
+
+Pi 实际运行 `runAgentLoop`，统一安排模型轮次、顺序执行工具和结束任务。客户端继续提供 Skill 阶段、上下文编译、模型/工具网关、持久化、预算和恢复规则。没有引入 Pi coding-agent 的命令行、第二套会话库或默认模型传输，也没有外层监督模型。
+
+| 门槛 | 实现与离线覆盖 | 证据 |
+|---|---|---|
+| 原模型网关 | Pi streamFn 调用原网关；模型和协议配置不变 | refactor-pi、provider、responses、assistant 测试 |
+| 不隐藏重试 | Pi maxRetries=0；未知请求原样保存，恢复检查不联网 | refactor-pi、refactor-runtime、network-recovery 测试 |
+| 四协议保真 | 原始消息/native/工具参数始终由宿主保存和发出；Pi 仅持有调度投影 | refactor-pi 四协议续轮，以及原协议测试 |
+| 关键写入等待 | 保存模型结果后才能执行工具；失败即停止 | refactor-pi 检查点门闩、截断输出测试 |
+| 工具与正式稿边界 | 仅宿主工具网关校验原始参数；不重复套 Pi schema，不增加正式写权限 | refactor-tools、workflow、assistant 测试 |
+| 取消与切换 | 沿用同一个 AbortSignal、排空与项目锁；迟到结果不执行工具 | refactor-pi、assistant、refactor-runtime 测试 |
+| 累计预算 | 调度前沿用轮数/工具数/费用检查；结束完整候选不补发收尾请求 | refactor-pi、budget、planning-completion 测试 |
+| 单一数据来源 | Pi 的临时投影不写回正式消息；两个适配器共享记录生命周期 | task-loop、executor-router、旧任务恢复测试 |
+| Windows 交付 | 构建和打包完整性、隔离的本地模拟服务验证 | 本次交付记录，不代表覆盖安装验收 |
+| 依赖许可 | 新作用域固定版本；MIT 文本绑定 v1.4.0 提交；生产依赖审计结果单独保存 | resources/licenses、audit-production-final.json |
+
+本轮未调用真实模型。阶段结构、文件字段和错误/恢复行为由测试验证；真实文学质量、生成耗时和缓存率没有重新测量，不能用本地模拟服务结果替代。
+
+实现入口：[task-loop](../../src/core/runtime/task-loop.ts)、[路由](../../src/core/runtime/executor-router.ts)、[版本决策](architecture-decisions/ADR-007.md)。测试和交付原始记录位于 `output/pi-integration-0.4.78-20261028/`。
+
+## 历史：0.73.1 实验未准入（以下不代表 0.4.78）
 
 生产默认 LegacyAdapter；Pi 开关关闭，且准入标志固定为 false。即使请求 Pi，也不会自动接入未准入路径；既有未知 Pi checkpoint 只读保留。
 

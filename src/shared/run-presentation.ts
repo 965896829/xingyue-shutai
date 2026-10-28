@@ -1,12 +1,14 @@
 import type { Run, ProjectState } from './types';
 import { planningPhaseNames } from './tags';
+import { recoveryDecision } from './recovery';
 
 export function runHasCurrentBasis(run: Run, project: ProjectState) {
   return (run.basisRevision === undefined ? run.baseRevision : run.basisRevision) === project.revision;
 }
 
+export const pendingOutputCodes = ['missing_output', 'required_output', 'document_draft_pending', 'pipeline_pending'];
 export function visibleRunIssues(run: Run) {
-  return run.issues.filter(issue => !(run.status === 'running' && ['missing_output', 'required_output'].includes(issue.code)));
+  return run.issues.filter(issue => !(run.status === 'running' && pendingOutputCodes.includes(issue.code)));
 }
 
 /** Restore the direction being compared; this does not confirm or adopt it. */
@@ -52,7 +54,7 @@ export function creationTaskState(run: Run) {
   if (run.status === 'running')
     return {
       title: activeTitle,
-      detail: '完成后会在这里等你确认。',
+      detail: '完成后在这里查看结果，满意就继续，不满意可以直接修改。',
       tone: 'active',
       recovery: null
     } as const;
@@ -65,14 +67,22 @@ export function creationTaskState(run: Run) {
       recovery: 'resume'
     } as const;
   if (['paused', 'failed', 'needs_repair', 'stale'].includes(run.status)) {
-    if (/预算|轮数上限|调用上限|额度.*用完/.test(run.error ?? ''))
+    const decision = recoveryDecision(run);
+    if (decision.kind === 'settings')
       return {
-        title: '任务已达到当前限额',
-        detail: '已有内容已保留。查看任务记录并调整限额后再继续。',
+        title: '需要核对运行设置',
+        detail: decision.detail,
         tone: 'attention',
         recovery: 'review'
       } as const;
-    const review = planning?.phase === 'reviewing_report' ? planning.reportReview : planning?.contractReview;
+    if (planning?.report && (['reviewing_report', 'awaiting_direction'].includes(planning.phase) || planning.phase === 'planning' && planning.repair?.phase === 'planning'))
+      return {
+        title: '已有三个方向可继续查看',
+        detail: '恢复后将直接展示已保存的方向，不再追加方向检查或自动修订。',
+        tone: 'attention',
+        recovery: 'resume'
+      } as const;
+    const review = planning?.contractReview;
     if (
       run.status === 'needs_repair' &&
       planning &&
@@ -81,11 +91,11 @@ export function creationTaskState(run: Run) {
     )
       return {
         title: '方案有需要调整的内容',
-        detail: '请根据下方检查结果补充或修改想法，再重新策划。已有方案可继续查看。',
+        detail: '已有方案已保留。可恢复局部修复，或根据检查结果调整想法。',
         tone: 'attention',
-        recovery: 'edit'
+        recovery: 'resume'
       } as const;
-    if (/HTTP 50[234]|服务或中转.*异常/.test(run.error ?? ''))
+    if (decision.code === 'NETWORK_UNAVAILABLE')
       return {
         title: '模型服务暂时不可用',
         detail: '当前步骤已停止，前面的结果已保留。服务恢复后可从这里继续，也可以换模型。',
@@ -121,6 +131,7 @@ export function documentPreviewText(content: string) {
       ''
     )
     .replace(/^```json wenxu-review[\t ]*\r?\n[\s\S]*?^```[\t ]*\r?$(?:\n)?/gm, '')
+    .replace(/^(?:## 可追溯事实记录[\t ]*\r?\n(?:[\t ]*\r?\n)*)?<!-- wenxu-facts:v1 -->[\t ]*\r?\n(?:[\t ]*\r?\n)*```json[\t ]*\r?\n[\s\S]*?^```[\t ]*\r?$(?:\n)?/gm, '')
     .trim();
 }
 

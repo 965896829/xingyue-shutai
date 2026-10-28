@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { syncGeneration } from '../shared/generation';
 import { id, now, hash } from './domain';
-import { atomicWrite, fileHash, FileStore, safePath } from './storage';
+import { fileHash, FileStore, safePath } from './storage';
 import { preserveAndMaterialize } from './materialization';
 import type {
   Conversation,

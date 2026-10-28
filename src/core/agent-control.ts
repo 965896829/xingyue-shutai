@@ -1,6 +1,7 @@
 import type { Run } from '../shared/types';
 import type { FileStore } from './storage';
 import { SkillRegistry, stageSkills } from './skill-registry';
+import { stageOutputs, qualityPath } from './domain';
 
 export const automaticRepairLimit = 2;
 
@@ -16,7 +17,7 @@ export function assertControllerRules(root: string, expected: string) {
 export function taskEnvelope(
   store: FileStore,
   root: string,
-  owner: Pick<Run, 'id'> & Partial<Pick<Run, 'stage' | 'chapter' | 'mode' | 'manifest' | 'baseRevision' | 'skillId' | 'skillHash' | 'parentRunId' | 'continuity'>>,
+  owner: Pick<Run, 'id'> & Partial<Pick<Run, 'stage' | 'chapter' | 'mode' | 'manifest' | 'baseRevision' | 'skillId' | 'skillHash' | 'parentRunId' | 'continuity' | 'pipeline'>>,
   mode: string = owner.mode ?? 'discussion'
 ) {
   const p = store.db.project();
@@ -32,6 +33,12 @@ export function taskEnvelope(
     stage: owner.stage ?? p.stage,
     chapter_no: owner.chapter ?? p.chapter,
     expected_revision: owner.baseRevision ?? p.revision,
+    ...(owner.mode === 'stage' ? {
+      output_versions: [...new Set([...stageOutputs(owner.stage ?? p.stage, p),
+        ...(owner.pipeline ? [...stageOutputs('S11', p), qualityPath(owner.chapter ?? p.chapter)] : [])])]
+        .map(path => ({ path, baseHash: store.db.document(path)?.hash ?? null })),
+      reading_policy: 'output_versions给出本轮目标的正式baseHash；sources中mode:full已包含该版本全文，无需为确认或获取同一哈希再读一次。mode:excerpt只含片段；修改现有文件须先取得未提供的完整正文，保留未变化内容。提交时仍由宿主核对磁盘版本和实际权限。'
+    } : {}),
     ...(owner.continuity ? { story_change_scope: { ...owner.continuity, instruction: owner.continuity.mode === 'forward'
       ? '只调整生效章节及其后的未写计划和作者约束，保留已有正文及此前章节设计。先同步大纲，再同步细纲。未发生内容只能记为计划，不能登记为事实。'
       : owner.continuity.mode === 'extraction' ? '依据已有原文纠正记忆，不修改正文或大纲以迎合错误记录。'
@@ -40,6 +47,7 @@ export function taskEnvelope(
       mode,
       generate: !['discussion', 'assessment'].includes(mode),
       accepted_stages: p.completed,
+      accepted_design_policy: 'accepted_stages 是宿主实际采纳记录，须结合 context_manifest 的当前正式来源版本使用。已采纳版本中明确选定的创作方案可作为后续设计和正文依据；草稿阶段通用的“候选/待确认”措辞不另产生一次批准要求。作者本轮明确修订优先；没有该修订时，authorPremise 中的原始要求优先于生成的规划和摘要，阶段采纳不能把与原始要求冲突的模型建议变成作者硬约束。作者明确保留的决定、仍未选择的互斥方案、实际缺失条件或硬约束冲突仍须处理。计划被采纳不表示事件已经发生，本轮新候选也未因此被采纳。',
       can_approve: false,
       can_commit: false,
       can_publish: false,

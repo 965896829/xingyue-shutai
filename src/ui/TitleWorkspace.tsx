@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { invokeCommand as invoke } from '../shared/client';
-import { approvedCreation, payoffStages, titleRules } from '../shared/creation';
+import { approvedCreation, payoffStages, titleRules, recommendedTitleIds } from '../shared/creation';
 import type { Snapshot } from '../shared/types';
 import type { TitleStyleProfile } from '../shared/title-style';
 import { CreationTaskStatus } from './CreationTaskStatus';
 import { runHasCurrentBasis } from '../shared/run-presentation';
+import { useWorkspaceAction } from './useWorkspaceAction';
+import { TitleMarketEvidence } from './TitleMarketEvidence';
 
 export function TitleWorkspace({
   snapshot,
@@ -12,6 +14,7 @@ export function TitleWorkspace({
   profileId,
   refresh,
   onReview,
+  onSelected,
   disabled = false
 }: {
   snapshot: Snapshot;
@@ -19,6 +22,7 @@ export function TitleWorkspace({
   profileId: string;
   refresh: () => Promise<void>;
   onReview: (id: string) => void;
+  onSelected?: () => Promise<void>;
   disabled?: boolean;
 }) {
   const p = snapshot.project!,
@@ -36,13 +40,13 @@ export function TitleWorkspace({
       !['discarded', 'stale'].includes(r.status)
   );
   const t = run?.naming;
+  const recommendations = t ? recommendedTitleIds(t) : [];
   const selected = sourceRunId ? parent?.planning?.titleSelection : p.titleBinding;
   const [manual, setManual] = useState(sourceRunId && parent?.planning?.origin !== 'new' ? p.title : '');
   const [rule, setRule] = useState<keyof typeof titleRules>('local');
   const [instruction, setInstruction] = useState(''),
     [rework, setRework] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState('');
+  const { busy, error, act } = useWorkspaceAction(refresh);
   const [styleProfile, setStyleProfile] = useState<TitleStyleProfile | null>(null);
   const [styleError, setStyleError] = useState('');
   useEffect(() => {
@@ -53,35 +57,89 @@ export function TitleWorkspace({
     return () => { active = false; };
   }, []);
   const running = snapshot.chatBusy || snapshot.runs.some((r) => r.status === 'running');
-  const act = async (fn: () => Promise<unknown>) => {
-    setBusy(true);
-    setError('');
-    try {
-      await fn();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      try {
-        await refresh();
-      } catch (e) {
-        setError((previous) => previous || (e as Error).message);
-      }
-      setBusy(false);
-    }
-  };
+  const optionsRef = useRef<HTMLElement>(null);
   if (!plan || !planHash) return null;
+  const options = (
+      <section ref={optionsRef} className="title-options" aria-label="书名修改与生成">
+        <h3>不满意就告诉我怎么改，也可以自己取名</h3>
+        <div className="title-settings">
+          <label>
+            命名场景
+            <select
+              aria-label="命名场景"
+              value={rule}
+              disabled={busy || running || disabled}
+              onChange={(e) => setRule(e.target.value as keyof typeof titleRules)}
+            >
+              {Object.entries(titleRules).map(([id, value]) => (
+                <option key={id} value={id}>
+                  {value.label} · 最多{value.maxCharacters}字符
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            我已有书名（选填）
+            <input
+              aria-label="我已有书名"
+              maxLength={80}
+              value={manual}
+              disabled={busy || running || disabled}
+              placeholder="填写你想用的书名，点击下方检查；留空则生成候选"
+              onChange={(e) => setManual(e.target.value)}
+            />
+          </label>
+          <label>
+            书名修改要求（选填）
+            <textarea
+              aria-label="补充命名要求"
+              value={instruction}
+              maxLength={6000}
+              onChange={(e) => setInstruction(e.target.value)}
+              disabled={busy || running || disabled}
+              placeholder="例如：读起来像一句人话，有悬念，不要剧情摘要；也可补充喜欢的书名风格"
+            />
+          </label>
+        </div>
+        <button
+          className={!run ? 'primary' : undefined}
+          disabled={busy || running || disabled || !profileId}
+          onClick={() =>
+            void act(() =>
+              invoke('titles.start', {
+                sourceRunId,
+                planHash,
+                profileId,
+                rule,
+                requestId: crypto.randomUUID(),
+                instruction,
+                ...(manual.trim() ? { manualTitle: manual.trim() } : {})
+              })
+            )
+          }
+        >
+          {manual.trim() ? '检查我填写的书名' : t ? '按要求重新生成书名' : '生成书名候选'}
+        </button>
+        <p className="muted">未进行平台全站查重。15 字符限制仅适用于“番茄多书名实验”场景。</p>
+      </section>
+  );
   return (
     <section className="title-workspace" aria-label="独立命名">
       <h2>{sourceRunId ? '为这个故事选一个书名' : '作品书名'}</h2>
       <p className="muted">
         {sourceRunId
-          ? '书名根据已确认的方案生成。选好后，在下方保存作品。'
-          : '根据当前作品方案生成或核对书名。'}
-        每轮生成六个候选；再次生成时参考同一方案的命名历史。
+          ? '选择喜欢的书名即可保存作品；不满意就填写修改要求。'
+          : '根据当前作品方案生成书名；选中喜欢的，不满意就写修改意见。'}
+        按番茄对应题材的书名风格生成。
       </p>
-      {styleProfile && (
+      {run && <button className="text-button" onClick={() => {
+        optionsRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        optionsRef.current?.querySelector('textarea')?.focus({ preventScroll: true });
+      }}>自己取名或修改要求</button>}
+      <TitleMarketEvidence research={t?.marketResearch} />
+      {styleProfile && t?.marketResearch?.status !== 'ready' && (
         <details className="title-style-reference">
-          <summary>番茄命名参考 · {styleProfile.verifiedAt}</summary>
+          <summary>离线命名参考 · {styleProfile.verifiedAt}</summary>
           <p className="muted">{styleProfile.scope}</p>
           {styleProfile.examples.map(example => (
             <p key={example.url}>
@@ -94,7 +152,7 @@ export function TitleWorkspace({
       {styleError && <p role="alert" className="creation-action-error">命名参考加载失败：{styleError}</p>}
       {p.titleReviewRequired && !sourceRunId && (
         <p className="inline-warning" role="status">
-          作品方案已改变，请核对当前书名「{p.title}」是否仍与内容一致。可以填写原书名进行核对，无需一定改名。
+          作品方案已改变。你可以继续使用「{p.title}」写作，也可以在这里调整或重新检查书名。
         </p>
       )}
       {selected && (
@@ -127,68 +185,7 @@ export function TitleWorkspace({
             从正式命名记录恢复展示文件
           </button>
         )}
-      <details className="title-options" open={!run && !selected}>
-        <summary>{run || selected ? '自己取名、调整要求或再生成一组' : '书名与生成要求'}</summary>
-        <div className="title-settings">
-          <label>
-            命名场景
-            <select
-              aria-label="命名场景"
-              value={rule}
-              disabled={busy || running || disabled}
-              onChange={(e) => setRule(e.target.value as keyof typeof titleRules)}
-            >
-              {Object.entries(titleRules).map(([id, value]) => (
-                <option key={id} value={id}>
-                  {value.label} · 最多{value.maxCharacters}字符
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            我已有书名（选填）
-            <input
-              aria-label="我已有书名"
-              maxLength={80}
-              value={manual}
-              disabled={busy || running || disabled}
-              placeholder="填写后核对这个名字；留空则生成候选"
-              onChange={(e) => setManual(e.target.value)}
-            />
-          </label>
-          <details>
-            <summary>补充命名要求</summary>
-            <textarea
-              aria-label="补充命名要求"
-              value={instruction}
-              maxLength={6000}
-              onChange={(e) => setInstruction(e.target.value)}
-              disabled={busy || running || disabled}
-              placeholder="例如：优先短书名，突出职业与行动"
-            />
-          </details>
-        </div>
-        <button
-          className={!run ? 'primary' : undefined}
-          disabled={busy || running || disabled || !profileId}
-          onClick={() =>
-            void act(() =>
-              invoke('titles.start', {
-                sourceRunId,
-                planHash,
-                profileId,
-                rule,
-                requestId: crypto.randomUUID(),
-                instruction,
-                ...(manual.trim() ? { manualTitle: manual.trim() } : {})
-              })
-            )
-          }
-        >
-          {manual.trim() ? '核对这个书名' : t ? '再生成一组书名' : '生成书名候选'}
-        </button>
-        <p className="muted">未进行平台全站查重。15 字符限制仅适用于“番茄多书名实验”场景。</p>
-      </details>
+      {!run && options}
       {run && t && (
         <>
           <CreationTaskStatus
@@ -210,24 +207,23 @@ export function TitleWorkspace({
                 >
                   <h3>
                     {c.title}
-                    {t.batch!.recommendedIds.includes(c.id) ? ' · 推荐' : ''}
+                    {recommendations.includes(c.id) ? ' · 推荐' : ''}
                   </h3>
                   <p>
                     {c.angle} · {payoffStages[c.payoffStage]}
                   </p>
                   <p>{c.readerPromise}</p>
-                  {decision && (
-                    <p className={checked ? 'muted' : 'title-review-note'}>
-                      {decision.verdict === 'keep'
-                        ? '保留'
-                        : decision.verdict === 'revise'
+                  {decision && !checked && (
+                    <p className="title-review-note">
+                      {decision.verdict === 'revise'
                           ? '需修改'
-                          : '淘汰'}
+                          : decision.verdict === 'reject' ? '淘汰' : '核对中'}
                       ：{decision.reason}
                     </p>
                   )}
                   <details>
                     <summary>方案依据与命名建议</summary>
+                    {decision?.verdict === 'keep' && <p>{decision.reason}</p>}
                     {c.riskNotes.map((note, index) => (
                       <p key={index}>{note}</p>
                     ))}
@@ -244,19 +240,20 @@ export function TitleWorkspace({
                     }
                     disabled={!checked || busy || running || disabled}
                     onClick={() =>
-                      void act(() =>
-                        invoke('titles.select', { id: run.id, batchHash: t.review!.hash, candidateId: c.id })
-                      )
+                      void act(async () => {
+                        await invoke('titles.select', { id: run.id, batchHash: t.review!.hash, candidateId: c.id });
+                        await onSelected?.();
+                      })
                     }
                   >
                     {sourceRunId
                       ? selected?.candidate.id === c.id && selected.batchRunId === run.id
                         ? '已选这个书名'
-                        : '选用这个书名'
-                      : '确认并保存这个书名'}
+                        : onSelected ? '用这个书名并保存' : '选用这个书名'
+                      : '用这个书名'}
                   </button>
                   <details>
-                    <summary>只重做这个书名</summary>
+                    <summary>修改这个书名</summary>
                     <textarea
                       aria-label={`修改「${c.title}」的要求`}
                       value={rework[c.id] ?? ''}
@@ -276,13 +273,14 @@ export function TitleWorkspace({
                         )
                       }
                     >
-                      按要求重做并审核
+                      按意见修改
                     </button>
                   </details>
                 </article>
               );
             })}
           </div>
+          {options}
           <details>
             <summary>命名任务与历史</summary>
             <button onClick={() => onReview(run.id)}>查看任务、用量与恢复记录</button>

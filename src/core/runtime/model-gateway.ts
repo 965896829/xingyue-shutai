@@ -5,6 +5,10 @@ import { ApplicationError } from '../../shared/errors';
 import { fingerprint } from './canonical';
 import { assertRequestFits } from '../context-budget';
 import { withTaskReasoning } from '../../shared/reasoning';
+import { canRecoverRequest, recoveryDelay, cancellableDelay } from './network-recovery';
+import { normalizeToolArguments } from '../output-normalization';
+import { prepareCacheSession } from './cache-session';
+import type { GenerationPhase } from '../../shared/generation';
 
 export interface Attempt {
   version: 1; id: string; runId: string; purpose: string; parentRunId: string;
@@ -12,10 +16,10 @@ export interface Attempt {
   provider: string; model: string; configVersion: number; configHash: string; pricingVersion: string;
   currency: string; reservedUnits: string | null; settledUnits: string | null;
   usageState: 'pending' | 'known' | 'unknown'; usage?: Usage;
-  requestHash: string; requestRef?: string; responseRef?: string; createdAt: string; completedAt?: string;
+  requestHash: string; requestRef?: string; responseRef?: string; partialResponseRef?: string; createdAt: string; completedAt?: string;
   failure?: RequestDiagnostic;
 }
-export type AttemptOwner = Pick<Run, 'id' | 'usage' | 'parentRunId' | 'reasoningEfforts'>;
+export type AttemptOwner = Pick<Run, 'id' | 'usage' | 'parentRunId' | 'reasoningEfforts' | 'contextUsage'> & { rounds?: number; networkRetries?: number; budgets?: { round: number }[] };
 export function moneyUnits(value: number): bigint {
   if (!Number.isFinite(value) || value < 0) throw new Error('无效金额');
   const [digits, exponent = '0'] = value.toString().toLowerCase().split('e');
@@ -99,7 +103,11 @@ export async function callExternal<T>(
     attempt.status = error instanceof RequestError && !error.uncertain ? 'not_sent' : 'unknown';
     attempt.usageState = attempt.status === 'not_sent' ? 'known' : 'unknown';
     attempt.completedAt = new Date().toISOString();
-    try { save(store, attempt); }
+    try {
+      if (error instanceof RequestError && error.partial)
+        attempt.partialResponseRef = store.putObject(JSON.stringify(error.partial));
+      save(store, attempt);
+    }
     catch { throw new RequestError('请求结果未能持久化，已停止后续工具执行，请查询原请求', true); }
     throw error instanceof RequestError ? error : new RequestError('请求结果未知，未自动重发：' + (error instanceof Error ? error.message : '未知错误'), true);
   }
@@ -112,22 +120,98 @@ export async function callModel(
   const [profile, system, messages, tools, signal, , options] = args;
   const bound = withTaskReasoning(profile, owner);
   args[0] = bound;
-  const body = requestBody(bound, system, messages, tools, options).body;
-  const sizing = assertRequestFits(profile, body, tools.length + (options?.webSearch ? 1 : 0));
+  const delta = args[5];
+  let partial = false;
+  // Persist and send the same cache identity across stages, retries and restarts.
+  // Partition projects/providers; prompt matching still checks the actual bytes.
+  const requestOptions = { ...options,
+    ...('mode' in owner && owner.mode === 'stage' ? { reasoningContext: 'current_turn' as const } : {}),
+    onActivity: (phase: GenerationPhase) => {
+    if (['responding', 'tool_input', 'thinking'].includes(phase)) partial = true;
+    options?.onActivity?.(phase);
+  }, promptCacheKey: `wenxu-v1-${fingerprint({
+    project: store.db.project().id, profile: bound.id, endpoint: bound.baseUrl,
+    model: bound.model, protocol: bound.protocol, reasoning: bound.reasoningEffort
+  }).slice(0, 48)}` };
+  args[6] = requestOptions;
+  let body = requestBody(bound, system, messages, tools, requestOptions).body;
+  const session = 'changes' in owner && 'messages' in owner
+    ? prepareCacheSession(store, owner as Run, bound, body, messages, tools.length, purpose, () => options?.onActivity?.('compacting')) : undefined;
+  if (session) {
+    args[6] = { ...requestOptions, responsesInput: session.input };
+    body = { ...body, input: session.input };
+  }
+  const sizing = session?.sizing ?? assertRequestFits(profile, body, tools.length + (options?.webSearch ? 1 : 0));
+  owner.contextUsage = {
+    requestId: crypto.randomUUID(), at: new Date().toISOString(), profileId: bound.id, profileVersion: bound.version,
+    model: bound.model, protocol: bound.protocol, contextLimit: bound.contextLimit,
+    inputLimit: sizing.effectiveInputLimit, availableInput: sizing.availableInput, outputReserve: sizing.outputReserve,
+    estimatedInput: sizing.tokens, method: session?.measuredPrefixTokens ? 'measured_prefix_upper_bound' : sizing.method, status: 'not_sent'
+  };
   const pricing = { input: profile.inputPrice, output: profile.outputPrice, currency: profile.currency };
   if (options?.webSearch && store.db.project()?.config.stageBudget !== null && store.db.project()?.config.stageBudget !== undefined)
     throw new ApplicationError('BUDGET_UNCONFIRMED', '原生联网搜索包含额外工具费用，当前无法保证费用上限；请关闭联网或调整预算设置后重试');
   const reserved = options?.webSearch || profile.inputPrice === null || profile.outputPrice === null ? null : estimatedUnits(sizing.tokens + sizing.providerReserve + sizing.safetyReserve, profile.outputLimit, profile.inputPrice, profile.outputPrice);
-  return callExternal(store, owner, purpose, {
-    provider: profile.protocol, model: profile.model, version: profile.version,
-    identity: { id: profile.id, version: profile.version, baseUrl: profile.baseUrl, model: profile.model, protocol: profile.protocol, reasoningEffort: bound.reasoningEffort },
-    pricing, currency: profile.currency
-  }, body, reserved, signal, async () => {
-    options?.onActivity?.('waiting');
-    const delta = args[5];
-    args[5] = text => { options?.onActivity?.('responding'); delta?.(text); };
-    const result = await caller(...args);
-    if (!signal.aborted) options?.onActivity?.('checking');
-    return result;
-  }, (result) => result.usage);
+  args[5] = text => { if (text) partial = true; requestOptions.onActivity('responding'); delta?.(text); };
+  for (let retry = 0; ; retry++) {
+    try {
+      owner.contextUsage.status = 'pending';
+      const result = await callExternal(store, owner, purpose, {
+        provider: profile.protocol, model: profile.model, version: profile.version,
+        identity: { id: profile.id, version: profile.version, baseUrl: profile.baseUrl, model: profile.model, protocol: profile.protocol, reasoningEffort: bound.reasoningEffort, networkRecovery: profile.networkRecovery ?? { maxRetries: 2, retryUnknown: false } },
+        pricing, currency: profile.currency
+      }, body, reserved, signal, async () => {
+        options?.onActivity?.('waiting');
+        return caller(...args);
+      }, (result) => result.usage);
+      for (const call of result.calls) {
+        const normalized = normalizeToolArguments(call.arguments);
+        if (normalized !== call.arguments) {
+          store.db.event(owner.id, 'format-normalized', '已去除工具参数的完整 Markdown 包装', { callId: call.id });
+          call.arguments = normalized;
+        }
+      }
+      session?.complete(result.usage, result.native);
+      Object.assign(owner.contextUsage, { status: 'complete', inputTokens: result.usage.input,
+        cachedInputTokens: result.usage.cachedInput, outputTokens: result.usage.output });
+      if (!signal.aborted) options?.onActivity?.('checking');
+      return result;
+    } catch (error) {
+      owner.contextUsage.status = error instanceof RequestError ? error.uncertain ? 'unknown' : 'not_sent'
+        : error instanceof ApplicationError ? 'not_sent' : 'unknown';
+      if (!canRecoverRequest(error, profile, retry + 1, partial, signal)) throw error;
+      const uncertain = error instanceof RequestError && error.uncertain;
+      // An unknown bill cannot be squeezed into a hard monetary budget.
+      if (uncertain && store.db.project()?.config.stageBudget != null) throw error;
+      const limit = store.db.project()?.config.maxRounds ?? 12;
+      const calls = owner.rounds ?? ((owner.budgets?.length ?? 0) + (owner.networkRetries ?? 0));
+      if (calls >= limit) throw error;
+      const delayMs = recoveryDelay(retry + 1, (error as RequestError).diagnostic?.retryAfterMs);
+      store.db.event(owner.id, 'network-retry-scheduled', `连接恢复 ${retry + 1}/${profile.networkRecovery?.maxRetries ?? 2}，等待 ${Math.ceil(delayMs / 1000)} 秒`, { retry: retry + 1, delayMs, code: (error as RequestError).diagnostic?.code, uncertain });
+      if (uncertain) {
+        owner.usage = { ...owner.usage, input: null, output: null, cost: null };
+        const ledger = store.db.get<{ usage: Usage; steps: unknown[] }>(`chapterUsage:${owner.id}`);
+        if (ledger) store.db.set(`chapterUsage:${owner.id}`, { ...ledger, usage: owner.usage });
+      }
+      options?.onActivity?.('retrying');
+      if (!await cancellableDelay(delayMs, signal)) {
+        if (uncertain) throw error;
+        throw new RequestError('已停止连接恢复，当前候选和任务记录已保留', false, { source: 'client', code: 'CANCELLED' });
+      }
+      if (calls >= (store.db.project()?.config.maxRounds ?? 12)) throw error;
+      owner.networkRetries = (owner.networkRetries ?? 0) + 1;
+      if (owner.rounds !== undefined) owner.rounds++;
+      // Persist counters before a retry can leave this process. Restart never replays it.
+      if ('changes' in owner) store.db.saveRun(owner as Run);
+      else if ('budgets' in owner) {
+        const row = store.db.sql.prepare('SELECT data FROM conversation_turns WHERE id=?').get(owner.id);
+        if (row) {
+          const saved = { ...JSON.parse(String(row.data)), networkRetries: owner.networkRetries, usage: owner.usage };
+          store.db.sql.prepare('UPDATE conversation_turns SET data=? WHERE id=?').run(JSON.stringify(saved), owner.id);
+        }
+      }
+      store.db.event(owner.id, 'network-retry-started', '正在重新连接模型服务', { retry: retry + 1, purpose });
+      owner.contextUsage.status = 'pending';
+    }
+  }
 }

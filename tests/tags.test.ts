@@ -7,7 +7,6 @@ import { Service } from '../src/core/service';
 import {
   profileSchema,
   stageIds,
-  factSchema,
   type ModelResult,
   type SecretProfile
 } from '../src/shared/types';
@@ -32,12 +31,157 @@ import { createBackup, restoreBackup } from '../src/core/documents';
 import { fixture } from './fixtures/workflow';
 import type { Caller } from '../src/core/runner';
 import { emptyTagInput } from '../src/shared/tags';
-import { approvedCreation, planKinds, type CreationPlan } from '../src/shared/creation';
+import { approvedCreation, planKinds, recommendedTitleIds, type CreationPlan } from '../src/shared/creation';
 import { validateTitleBatch, titleSource, titlePath, namingBinding } from '../src/core/title-naming';
 import { loadTitleStyleProfile } from '../src/core/title-style';
 import { titleStyleProfileSchema, type TitleStyleProfile } from '../src/shared/title-style';
 import { creationDirectionId, runHasCurrentBasis } from '../src/shared/run-presentation';
+import { runSchema } from '../src/shared/contract-schemas';
+import { PublicSearch } from '../src/core/search';
+import { prepareTitleMarketResearch } from '../src/core/title-market-research';
 const skill = path.resolve('resources/skill');
+const searchedTitleSources = [
+  { title: '七夜巡查员', url: 'https://fanqienovel.com/page/10000000001' },
+  { title: '最后一口井', url: 'https://fanqienovel.com/page/10000000002' }
+];
+const titleResearchReply = (): ModelResult => ({ ...plainResult('只比较题面表达，不冒充榜单。'),
+  webSearch: { calls: [{ id: 'ws-title-fixture', status: 'completed', action: { type: 'search', queries: ['site:fanqienovel.com/page/ 都市'] }, sources: searchedTitleSources }], citations: searchedTitleSources } });
+
+test('书名实时检索仅一次：部分候选不合格不拖延可用候选，重新打开共用官方来源', async () => {
+  let searches = 0, titleCalls = 0, reviews = 0;
+  const { service } = await setup({ unified: true, config: { expressionRules: { enabled: true, modules: [] } }, caller: standard => async (...args) => {
+    if (args[6]?.webSearch) {
+      searches++;
+      assert.equal(args[3].length, 0, '搜索请求不携带候选提交工具');
+      assert.equal(args[6].webSearch.required, true);
+      assert.deepEqual(args[6].webSearch.allowedDomains, ['fanqienovel.com']);
+      assert.doesNotMatch(args[2][0].content, /维修师建立供水网络|主角是维修师/);
+      args[6].onWebSearch?.({ id: 'ws-title-fixture', status: 'searching', sources: [] });
+      return titleResearchReply();
+    }
+    const reply = await standard(...args);
+    if (args[3][0].name.startsWith('submit_title_')) {
+      titleCalls++;
+      const data = JSON.parse(args[2][0].content);
+      assert.equal(data.marketResearch.status, 'ready');
+      assert.deepEqual(data.marketResearch.sources, searchedTitleSources);
+      assert.equal(data.marketResearch.styleBrief, titleResearchReply().text, '研究结论要真正传给生成与审核，不能只留链接');
+      assert.match(args[1], /mode="title_market"/);
+      assert.doesNotMatch(args[1], /\[EDIT-001\]/, '短书名不加载整套正文审稿规则');
+      assert.equal(data.styleProfile, undefined, '取得本批来源后，不重复塞入跨题材离线样本');
+      assert.equal(args[6]?.webSearch, undefined);
+      if (args[3][0].name === 'submit_title_review') {
+        reviews++;
+        if (reviews === 1) {
+          const review = JSON.parse(reply.calls[0].arguments);
+          review.decisions[0] = { ...review.decisions[0], verdict: 'revise', reason: '这一项改用具体处境，其他项可保留' };
+          reply.calls[0].arguments = JSON.stringify(review);
+        }
+      }
+    }
+    return reply;
+  } });
+  try {
+    const planning = await confirmPlan(service, await select(service, (await start(service)).id));
+    service.profiles[0].protocol = 'responses';
+    const run = await namePlan(service, planning.id);
+    assert.equal(run.status, 'awaiting_review', run.error ?? '');
+    assert.equal(searches, 1); assert.equal(titleCalls, 2);
+    assert.equal(run.rounds, 3); assert.equal(run.toolCount, 3);
+    assert.equal(run.naming!.formatRepairs, 0);
+    assert.equal(run.naming!.batch!.candidates.length, 6);
+    assert.deepEqual(runSchema.parse(run).naming!.marketResearch!.sources, searchedTitleSources);
+    assert.equal(runSchema.parse(run).naming!.editorialVersion, 2);
+    assert.equal(runSchema.parse(run).expressionRules!.title_market!.mode, 'title_market');
+    const root = service.store!.root;
+    await service.open(root);
+    assert.equal(service.store!.db.run(run.id).naming!.marketResearch!.status, 'ready');
+    assert.equal(service.store!.db.run(run.id).naming!.marketResearch!.styleBrief, titleResearchReply().text);
+    assert.equal(searches, 1);
+    // Simulate upgrading a 0.4.65 record whose researcher answered but whose brief was dropped.
+    const reopened = service.store!.db.run(run.id);
+    delete reopened.naming!.marketResearch!.styleBrief;
+    service.store!.db.saveRun(reopened);
+    const source = titleSource(service.store!, planning.id);
+    await prepareTitleMarketResearch({ store: service.store!, root: skill, run: reopened,
+      project: service.store!.db.project(), profile: service.profiles[0], spec: source.spec, genre: source.currentPreferences.genre,
+      plan: source.plan, settings: service.assistant.search, caller: async () => { throw new Error('不能为了取回旧分析再次联网'); },
+      signal: new AbortController().signal, save: () => service.store!.db.saveRun(reopened), event: () => {} });
+    assert.equal(reopened.naming!.marketResearch!.styleBrief, titleResearchReply().text);
+    assert.equal(searches, 1);
+  } finally { service.close(); }
+});
+
+test('搜索已明确失败只降级一次，不伪造来源、不触发格式修复，也不再重试搜索', async () => {
+  let searches = 0, writes = 0;
+  const { service } = await setup({ unified: true, caller: standard => async (...args) => {
+    if (args[6]?.webSearch) { searches++; throw new RequestError('该中转不支持 web_search', false); }
+    if (args[3][0].name === 'submit_title_candidates') {
+      writes++;
+      const input = JSON.parse(args[2][0].content);
+      assert.equal(input.marketResearch.status, 'unavailable');
+      assert.deepEqual(input.marketResearch.sources, []);
+      assert.ok(input.styleProfile);
+    }
+    return standard(...args);
+  } });
+  try {
+    const planning = await confirmPlan(service, await select(service, (await start(service)).id));
+    service.profiles[0].protocol = 'responses';
+    service.profiles[0].networkRecovery = { maxRetries: 0, retryUnknown: false };
+    const run = await namePlan(service, planning.id);
+    assert.equal(run.status, 'awaiting_review', run.error ?? '');
+    assert.equal(searches, 1); assert.equal(writes, 1);
+    assert.equal(run.naming!.formatRepairs, 0);
+  } finally { service.close(); }
+});
+
+test('搜索结果未知仍要求明确恢复；作者恢复后不重发搜索，手填书名也不额外检索', async () => {
+  let searches = 0;
+  const { service } = await setup({ unified: true, caller: standard => async (...args) => {
+    if (args[6]?.webSearch) { searches++; throw new RequestError('搜索请求断流，上游完成情况未知', true); }
+    return standard(...args);
+  } });
+  try {
+    const planning = await confirmPlan(service, await select(service, (await start(service)).id));
+    service.profiles[0].protocol = 'responses';
+    service.profiles[0].networkRecovery = { maxRetries: 0, retryUnknown: false };
+    const manual = await namePlan(service, planning.id, '作者原来的名字');
+    assert.equal(manual.status, 'awaiting_review', manual.error ?? '');
+    assert.equal(searches, 0);
+    const interrupted = await namePlan(service, planning.id);
+    assert.equal(interrupted.status, 'unknown', interrupted.error ?? ''); assert.equal(searches, 1);
+    await assert.rejects(service.invoke('run.resume', { id: interrupted.id }), /未知/);
+    await service.invoke('run.resume', { id: interrupted.id, retryUnknown: true });
+    await settled(service);
+    const resumed = service.store!.db.run(interrupted.id);
+    assert.equal(resumed.status, 'awaiting_review', resumed.error ?? '');
+    assert.equal(resumed.naming!.marketResearch!.status, 'unavailable');
+    assert.equal(searches, 1);
+  } finally { service.close(); }
+});
+
+test('第三方搜索复用已有配置，只取一次公开结果；不增加研究模型请求', async () => {
+  let searches = 0, titleRequests = 0;
+  const { service } = await setup({ unified: true, caller: standard => async (...args) => {
+    if (args[3][0].name.startsWith('submit_title_')) { titleRequests++; assert.equal(args[6]?.webSearch, undefined); }
+    return standard(...args);
+  } });
+  try {
+    const planning = await confirmPlan(service, await select(service, (await start(service)).id));
+    service.assistant.search.provider = 'tavily';
+    service.runner!.research = (signal, run) => {
+      const search = new PublicSearch(service.assistant.search, 'fixture-only', true, signal, { store: service.store!, owner: run });
+      search.search = async query => { searches++; return { query, at: new Date().toISOString(), results: searchedTitleSources.map(row => ({ ...row, content: '同题材测试简介' })), message: 'fixture', credits: 1 }; };
+      return search;
+    };
+    const run = await namePlan(service, planning.id);
+    assert.equal(run.status, 'awaiting_review', run.error ?? '');
+    assert.equal(searches, 1); assert.equal(titleRequests, 2); assert.equal(run.rounds, 2);
+    assert.equal(run.naming!.marketResearch!.provider, 'public');
+    assert.equal(run.naming!.marketResearch!.sources.length, 2);
+  } finally { service.close(); }
+});
 const input: TagInput = {
   selection: {
     reading: { main: 'reading.main.003', theme: [], role: [], plot: ['reading.plot.078'] },
@@ -104,6 +248,142 @@ function reportFor(t: TagPlanning): PlanningReport {
     unresolvedQuestions: []
   };
 }
+
+test('作者重做一案只发生成请求，禁止改写另外两案，结构错误仍有针对性纠正', async () => {
+  let writes = 0, reviews = 0;
+  let original: PlanningReport | undefined;
+  const { service } = await setup({ caller: standard => async (...args) => {
+    const name = args[3][0].name;
+    if (name === 'submit_planning_review') { reviews++; throw new Error('三案不应触发独立审核'); }
+    const reply = await standard(...args);
+    if (name === 'submit_planning_report') {
+      const value = JSON.parse(reply.calls[0].arguments) as PlanningReport;
+      writes++;
+      if (writes === 1) original = structuredClone(value);
+      else {
+        value.directions[1].storyEngine = '维修恢复供水后，需要承担新社区的维护与调度责任';
+        if (writes === 2) value.directions[0].title = '不应该重新生成第一案';
+        assert.deepEqual(JSON.parse(args[2][0].content).regenerationScope.frozenDirectionIds, ['direction-1', 'direction-3']);
+      }
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    return reply;
+  } });
+  try {
+    let run = await start(service);
+    assert.equal(writes, 1); assert.equal(reviews, 0); assert.equal(run.rounds, 1);
+    assert.equal(run.planning!.reportReview, undefined);
+    await service.invoke('tags.reviseDirection', { id: run.id, reportHash: run.planning!.reportHash,
+      directionId: 'direction-2', instruction: '第二案补充维修后的新责任，保留其他方向' });
+    await settled(service);
+    run = service.store!.db.run(run.id);
+    assert.equal(run.status, 'awaiting_input', run.error ?? '');
+    assert.equal(writes, 3); assert.equal(reviews, 0);
+    assert.deepEqual(run.planning!.report!.directions[0], original!.directions[0]);
+    assert.deepEqual(run.planning!.report!.directions[2], original!.directions[2]);
+    assert.notEqual(run.planning!.report!.directions[1].storyEngine, original!.directions[1].storyEngine);
+    assert.equal(run.planning!.formatRepairs, 1);
+    assert.equal(service.store!.db.project().stage, 'S01');
+    assert.equal(service.store!.db.project().tags, undefined);
+  } finally { service.close(); }
+});
+
+test('六个书名有合格项立即交付，未通过项不可采纳，可按作者要求单独修改，手填名不自动重写', async () => {
+  let titleReviews = 0, titleWrites = 0;
+  let original: import('../src/shared/creation').TitleBatch | undefined;
+  const { service } = await setup({ unified: true, config: { maxRounds: 24 }, caller: standard => async (...args) => {
+    const reply = await standard(...args), name = args[3][0].name;
+    if (name === 'submit_title_candidates') {
+      titleWrites++;
+      const value = JSON.parse(reply.calls[0].arguments);
+      if (titleWrites === 1) original = structuredClone(value);
+      else if (value.candidates.length === 6) value.candidates[1].title = '修泵之后再建家园';
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    if (name === 'submit_title_review') {
+      titleReviews++;
+      const value = JSON.parse(reply.calls[0].arguments);
+      if (titleReviews === 1 || value.decisions.length === 1) value.decisions[value.decisions.length === 1 ? 0 : 1].verdict = 'revise';
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    return reply;
+  } });
+  try {
+    const planning = await confirmPlan(service, await select(service, (await start(service)).id));
+    const run = await namePlan(service, planning.id);
+    assert.equal(run.status, 'awaiting_review', run.error ?? ''); assert.equal(titleWrites, 1); assert.equal(titleReviews, 1);
+    assert.equal(run.naming!.semanticRevisions, 0);
+    await assert.rejects(service.invoke('titles.select', { id: run.id, batchHash: run.naming!.review!.hash, candidateId: original!.candidates[1].id }), /审核|检查|候选/);
+    for (const [i, candidate] of run.naming!.batch!.candidates.entries()) if (i !== 1) assert.deepEqual(candidate, original!.candidates[i]);
+    await service.invoke('titles.regenerate', { id: run.id, batchHash: run.naming!.review!.hash, candidateId: original!.candidates[1].id, instruction: '改用修泵建立家园的卖点' });
+    await settled(service);
+    const revised = service.store!.db.run(run.id);
+    assert.equal(revised.naming!.batch!.candidates[1].title, '修泵之后再建家园');
+    assert.equal(titleWrites, 2); assert.equal(titleReviews, 2);
+    for (const [i, candidate] of revised.naming!.batch!.candidates.entries()) if (i !== 1) assert.deepEqual(candidate, original!.candidates[i]);
+    const manual = await namePlan(service, planning.id, '作者手填名称');
+    assert.equal(titleWrites, 3); assert.equal(manual.naming!.batch!.candidates[0].title, '作者手填名称');
+    assert.equal(manual.naming!.semanticRevisions, 0);
+  } finally { service.close(); }
+});
+for (const change of [false, true]) test(`没有可用书名时保留一次修订；${change ? '实际改动后独立检查' : '无变化不重复检查且负面结论保留'}`, async () => {
+  let writes = 0, reviews = 0;
+  const { service } = await setup({ unified: true, caller: standard => async (...args) => {
+    const reply = await standard(...args), name = args[3][0].name;
+    if (name === 'submit_title_candidates') {
+      const value = JSON.parse(reply.calls[0].arguments);
+      if (++writes === 2 && change) value.candidates[0].title = '修好水泵再建家园';
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    if (name === 'submit_title_review' && ++reviews === 1) {
+      const value = JSON.parse(reply.calls[0].arguments);
+      value.decisions.forEach((d: any) => { d.verdict = 'revise'; d.reason = '当前承诺需要调整'; });
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    return reply;
+  } });
+  try {
+    const plan = await confirmPlan(service, await select(service, (await start(service)).id));
+    const run = await namePlan(service, plan.id);
+    assert.equal(run.status, 'awaiting_review', run.error ?? '');
+    assert.equal(writes, 2); assert.equal(reviews, change ? 2 : 1);
+    assert.equal(run.naming!.semanticRevisions, 1);
+    assert.equal(run.naming!.phase, 'ready');
+    if (!change) {
+      assert.ok(run.naming!.review!.result.decisions.every(d => d.verdict === 'revise'));
+      await assert.rejects(service.invoke('titles.select', { id: run.id, batchHash: run.naming!.review!.hash, candidateId: 'title-1' }), /审核|检查|候选/);
+    }
+  } finally { await service.drain(); }
+});
+
+test('作者指定单个书名重做时，其余可用候选不能掩盖目标失败，修订仅限目标', async () => {
+  let writes = 0, reviews = 0;
+  const { service } = await setup({ unified: true, caller: standard => async (...args) => {
+    const reply = await standard(...args), name = args[3][0].name;
+    if (name === 'submit_title_candidates') {
+      const value = JSON.parse(reply.calls[0].arguments);
+      if (++writes > 1) value.candidates[0].title = writes === 2 ? '先修水泵再建家园' : '一口清水养活全城';
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    if (name === 'submit_title_review' && ++reviews === 2) {
+      const value = JSON.parse(reply.calls[0].arguments); value.decisions[0].verdict = 'revise';
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    return reply;
+  } });
+  try {
+    const plan = await confirmPlan(service, await select(service, (await start(service)).id));
+    const run = await namePlan(service, plan.id);
+    await service.invoke('titles.regenerate', { id: run.id, batchHash: run.naming!.review!.hash, candidateId: 'title-1', instruction: '突出水源生存问题' });
+    await settled(service);
+    const revised = service.store!.db.run(run.id);
+    assert.equal(revised.status, 'awaiting_review', revised.error ?? '');
+    assert.equal(writes, 3); assert.equal(reviews, 3);
+    assert.equal(revised.naming!.batch!.candidates[0].title, '一口清水养活全城');
+    assert.deepEqual(revised.naming!.batch!.candidates.slice(1), run.naming!.batch!.candidates.slice(1));
+  } finally { await service.drain(); }
+});
+
 function result(name: string, value: unknown): ModelResult {
   return {
     text: '',
@@ -150,7 +430,8 @@ async function setup(overrides?: {
             readerPromise: '维修供水与家园建设', supportingClaimIds: [source.plan.statements[0].id], payoffStage: 'ongoing', riskNotes: [] })),
         recommendedIds: naming.manualTitle ? ['manual'] : ['title-1', 'title-2', 'title-3'] });
     }
-    if (name === 'submit_title_review') return result(name, { decisions: r.naming!.batch!.candidates.map(c => ({ candidateId: c.id, verdict: 'keep', reason: '承诺有方案依据，没有新增设定' })) });
+    if (name === 'submit_title_review') return result(name, { decisions: r.naming!.batch!.candidates.map(c => ({ candidateId: c.id, verdict: 'keep', reason: '承诺有方案依据，没有新增设定' })),
+      ...(r.naming!.editorialVersion === 2 ? { recommendedIds: r.naming!.batch!.recommendedIds } : {}) });
     if (name === 'submit_planning_report') return result(name, reportFor(t));
     if (name === 'submit_planning_review') return result(name, { issues: [] });
     if (name === 'submit_creation_contract')
@@ -189,6 +470,9 @@ async function settled(s: Service) {
     if (n > 1500) throw new Error('timeout');
     await new Promise((r) => setTimeout(r, 5));
   }
+  // A local-only checkpoint can finish before launch returns. Let the scheduler
+  // release its foreground job before another user action is submitted.
+  await new Promise<void>(resolve => setImmediate(resolve));
 }
 async function start(s: Service, key: string = crypto.randomUUID()) {
   const id = await s.invoke('tags.start', {
@@ -211,6 +495,117 @@ async function select(s: Service, id: string, directionId = 'direction-2') {
   return s.store!.db.run(id);
 }
 
+test('创意三案首轮只请求一次，不依赖审核配置，结构不变且重复点击不重发', async () => {
+  const calls: string[] = [];
+  let submitted: PlanningReport | undefined;
+  const { service } = await setup({ unified: true, idea: true, config: { modelRouting: { review: 'unavailable-reviewer' } },
+    caller: standard => async (...args) => {
+      calls.push(args[3][0].name);
+      assert.equal(JSON.parse(args[2][0].content).reviewFeedback, undefined);
+      const reply = await standard(...args);
+      submitted = JSON.parse(reply.calls[0].arguments);
+      return reply;
+    } });
+  try {
+    const inputHash = service.snapshot().tagDraft!.inputHash;
+    const args = { inputHash, profileId: model.id, requestId: 'one-pass-directions' };
+    const id = await service.invoke('creation.start', args);
+    await settled(service);
+    const run = service.store!.db.run(id);
+    assert.equal(run.status, 'awaiting_input', run.error ?? '');
+    assert.equal(run.rounds, 1); assert.equal(run.toolCount, 1);
+    assert.deepEqual(calls, ['submit_planning_report']);
+    assert.deepEqual(run.planning!.report, submitted);
+    assert.equal(run.planning!.report!.directions.length, 3);
+    assert.equal(run.planning!.reportReview, undefined);
+    assert.equal(run.modelBindings?.tag_reviewer, undefined);
+    assert.equal(run.planning!.semanticRevisions, 0); assert.equal(run.planning!.formatRepairs, 0);
+    assert.equal(await service.invoke('creation.start', args), id);
+    await settled(service);
+    assert.equal(calls.length, 1);
+    assert.equal(service.store!.db.project().stage, 'S01');
+    assert.equal(service.store!.db.project().creation, undefined);
+  } finally { await service.drain(); }
+});
+
+for (const phase of ['reviewing_report', 'planning'] as const) {
+  test(`旧版三案 ${phase} 检查或修订断点仅复用已有报告，达到预算也不追加请求`, async () => {
+    let calls = 0;
+    const { service } = await setup({ caller: standard => async (...args) => { calls++; return standard(...args); } });
+    try {
+      const run = await start(service), t = run.planning!;
+      run.status = 'running'; service.store!.db.saveRun(run);
+      const original = structuredClone(t.report);
+      t.phase = phase; t.semanticRevisions = 1;
+      t.reportReview = { hash: t.reportHash!, binding: t.binding, result: { issues: [{ code: 'legacy-advice', severity: 'major',
+        jsonPointer: '/directions/0/storyEngine', explanation: '旧版建议补充代价', suggestedFix: '完善维修责任' }] } };
+      if (phase === 'planning') t.repair = { phase: 'planning', original: structuredClone(t.report!), pointers: ['/directions/0'] };
+      run.status = 'needs_repair'; run.error = '本轮局部修复后仍有待核对事项';
+      run.rounds = service.store!.db.project().config.maxRounds;
+      service.store!.db.saveRun(run);
+      await service.invoke('run.recover', { id: run.id });
+      await settled(service);
+      const resumed = service.store!.db.run(run.id);
+      assert.equal(calls, 1); assert.equal(resumed.rounds, run.rounds);
+      assert.equal(resumed.planning!.phase, 'awaiting_direction', resumed.error ?? '');
+      assert.equal(resumed.status, 'awaiting_input');
+      assert.deepEqual(resumed.issues, [], '完整方案尚未生成，不应把其缺失提示带到方向选择');
+      assert.deepEqual(resumed.planning!.report, original);
+      assert.deepEqual(resumed.planning!.reportReview, t.reportReview, '保留真实历史，不伪造通过的审核回执');
+      assert.equal(resumed.planning!.repair, undefined);
+    } finally { await service.drain(); }
+  });
+}
+
+test('旧版方向审核断流保留未知结果保护，明确恢复后不重发；旧意见不再阻断选择', async () => {
+  let calls = 0;
+  const { service } = await setup({ caller: standard => async (...args) => { calls++; return standard(...args); } });
+  try {
+    const run = await start(service), t = run.planning!;
+    run.status = 'running'; service.store!.db.saveRun(run);
+    t.phase = 'reviewing_report';
+    t.reportReview = { hash: t.reportHash!, binding: t.binding, result: { issues: [{ code: 'legacy-advice', severity: 'major',
+      jsonPointer: '/directions/0/storyEngine', explanation: '旧版意见', suggestedFix: '补充代价' }] } };
+    run.status = 'unknown'; run.error = '上次请求结果与费用未知';
+    service.store!.db.saveRun(run);
+    await assert.rejects(service.invoke('run.recover', { id: run.id }), /未知/);
+    assert.equal(calls, 1);
+    await service.invoke('run.recover', { id: run.id, retryUnknown: true });
+    await settled(service);
+    assert.equal(calls, 1);
+    const selected = await select(service, run.id);
+    assert.equal(selected.status, 'awaiting_review', selected.error ?? '');
+    assert.equal(selected.rounds, 3); assert.equal(calls, 3);
+    assert.ok(selected.planning!.contractReview);
+    await service.invoke('run.accept', { id: selected.id, proposalHash: selected.proposalHash });
+    assert.equal(service.store!.db.project().tags!.contract.directionId, 'direction-2');
+  } finally { await service.drain(); }
+});
+
+test('旧规则升级时尚无三案只补一次生成，已生成三案的暂停点直接展示', async () => {
+  const calls: string[] = [];
+  const { service } = await setup({ caller: standard => async (...args) => { calls.push(args[3][0].name); return standard(...args); } });
+  try {
+    const run = service.makeRun('stage', '继续生成三个方向');
+    run.planning!.phase = 'reviewing_report';
+    run.status = 'paused'; service.store!.db.saveRun(run);
+    await service.invoke('run.recover', { id: run.id });
+    await settled(service);
+    const generated = service.store!.db.run(run.id);
+    assert.equal(generated.status, 'awaiting_input', generated.error ?? '');
+    assert.deepEqual(calls, ['submit_planning_report']);
+    generated.status = 'paused'; generated.rounds = service.store!.db.project().config.maxRounds;
+    service.store!.db.saveRun(generated);
+    await service.invoke('run.recover', { id: run.id });
+    await settled(service);
+    const resumed = service.store!.db.run(run.id);
+    assert.equal(resumed.status, 'awaiting_input', resumed.error ?? '');
+    assert.deepEqual(resumed.issues, []);
+    assert.deepEqual(resumed.planning!.report, generated.planning!.report);
+    assert.equal(resumed.rounds, generated.rounds); assert.equal(calls.length, 1);
+  } finally { await service.drain(); }
+});
+
 async function confirmPlan(s: Service, run: ReturnType<Service['makeRun']>) {
   await s.invoke('creation.confirmPlan', { id: run.id, proposalHash: s.store!.db.run(run.id).proposalHash!, warningReason: '审阅合成方案，验证业务约束' });
   return s.store!.db.run(run.id);
@@ -225,6 +620,43 @@ async function chooseTitle(s: Service, run: ReturnType<Service['makeRun']>, cand
   const t = s.store!.db.run(run.id).naming!;
   return s.invoke('titles.select', { id: run.id, batchHash: t.review!.hash, candidateId: candidateId ?? t.batch!.candidates[0].id });
 }
+
+test('作者直接修改作品方案：复用已选方向，仅重写方案和自动审核，不重跑选方向或沿用旧书名授权', async () => {
+  const requests: string[] = [], revisionInputs: unknown[] = [];
+  const { service } = await setup({ unified: true, caller: standard => async (...args) => {
+    requests.push(args[3][0].name);
+    if (args[3][0].name === 'submit_creation_contract') revisionInputs.push(JSON.parse(args[2][0].content).authorRevision);
+    return standard(...args);
+  } });
+  try {
+    let run = await confirmPlan(service, await select(service, (await start(service)).id));
+    const naming = await namePlan(service, run.id);
+    await chooseTitle(service, naming);
+    run = service.store!.db.run(run.id);
+    const beforeRounds = run.rounds, beforeCalls = requests.length, report = structuredClone(run.planning!.report);
+    const instruction = '保留维修供水的主线，强调协作关系';
+    await service.invoke('creation.revisePlan', { id: run.id, proposalHash: run.proposalHash!, instruction });
+    await settled(service);
+    const revised = service.store!.db.run(run.id);
+    assert.equal(revised.status, 'awaiting_review', revised.error ?? JSON.stringify(revised.issues));
+    assert.equal(revised.rounds, beforeRounds + 2);
+    assert.deepEqual(requests.slice(beforeCalls), ['submit_creation_contract', 'submit_planning_review']);
+    assert.deepEqual(revised.planning!.report, report);
+    assert.equal(revised.planning!.selectedDirectionId, run.planning!.selectedDirectionId);
+    assert.equal(revised.planning!.planApproval, undefined);
+    assert.equal(revised.planning!.titleSelection, undefined);
+    assert.deepEqual(revisionInputs.at(-1), { instruction, original: run.planning!.candidate });
+    assert.equal(service.store!.db.project().stage, 'S01');
+    await assert.rejects(service.invoke('creation.revisePlan', { id: run.id, proposalHash: 'old-version', instruction }), /已改变/);
+    await confirmPlan(service, revised);
+    const freshNaming = await namePlan(service, run.id, '维修师的新家园');
+    assert.equal(freshNaming.status, 'awaiting_review', freshNaming.error ?? JSON.stringify(freshNaming.issues));
+    await chooseTitle(service, freshNaming);
+    const fresh = service.store!.db.run(run.id);
+    await service.invoke('run.accept', { id: run.id, proposalHash: fresh.proposalHash! });
+    assert.equal(service.store!.db.project().stage, 'S02');
+  } finally { await service.drain(); }
+});
 
 test('开书一般审核建议保留在审查记录，确认方案和最终采纳无需填写豁免理由', async () => {
   const { service } = await setup({ unified: true, caller: standard => async (...args) =>
@@ -565,6 +997,62 @@ test('书名局部重做只修改指定候选，旧选择失效而方案确认�
   } finally { service.close(); }
 });
 
+test('番茄风格复核替换推荐而不新增请求；空推荐可选择，局部重做复用检索并精简旧名上下文', async () => {
+  let searches = 0, titleCalls = 0, reroll = false;
+  const seenHistories: unknown[][] = [];
+  const { service } = await setup({ unified: true, idea: true, caller: standard => async (...args) => {
+    if (args[6]?.webSearch) { searches++; return titleResearchReply(); }
+    const tool = args[3][0].name;
+    const reply = await standard(...args);
+    if (tool !== 'submit_title_candidates' && tool !== 'submit_title_review') return reply;
+    titleCalls++;
+    const input = JSON.parse(args[2][0].content);
+    assert.equal(input.marketTarget.platform, 'fanqie');
+    assert.equal(input.marketTarget.genre, input.marketResearch.genre);
+    assert.equal(input.marketResearch.styleBrief, titleResearchReply().text);
+    assert.equal(input.rule.label, '本地作品名', '保存场景与市场目标分别传递');
+    if (tool === 'submit_title_candidates') {
+      seenHistories.push(input.history);
+      for (const old of input.history) assert.deepEqual(Object.keys(old).sort(), ['candidateId', 'sourceRunId', 'title']);
+    } else {
+      assert.equal(input.history, undefined, '审查当前候选无需再次发送旧候选历史');
+      assert.equal(input.reviewFeedback, undefined);
+      assert.equal(input.regenerate?.original, undefined, '审查不重复装载整批旧候选');
+    }
+    const value = JSON.parse(reply.calls[0].arguments);
+    if (tool === 'submit_title_candidates' && reroll) value.candidates[0].title = '末世供水，先让这座城活下来';
+    if (tool === 'submit_title_review') {
+      value.decisions[0].reason = '事实成立，但题面只剩抒情，弱化了本书的供水求生看点，不推荐。';
+      value.recommendedIds = reroll ? [] : ['title-4', 'unknown-id', 'title-4'];
+    }
+    reply.calls[0].arguments = JSON.stringify(value);
+    return reply;
+  } });
+  try {
+    const plan = await confirmPlan(service, await select(service, (await start(service)).id));
+    service.profiles[0].protocol = 'responses';
+    const named = await namePlan(service, plan.id);
+    assert.equal(named.status, 'awaiting_review', named.error ?? '');
+    assert.equal(searches, 1); assert.equal(titleCalls, 2); assert.equal(named.rounds, 3);
+    assert.equal(named.naming!.formatRepairs, 0); assert.equal(named.naming!.semanticRevisions, 0);
+    assert.deepEqual(named.naming!.batch!.recommendedIds, ['title-1', 'title-2', 'title-3'], '生成器原输出保留以供审计');
+    assert.deepEqual(named.naming!.review!.result.recommendedIds, ['title-4'], '无效与重复推荐在本地过滤，不重发');
+    assert.deepEqual(recommendedTitleIds(named.naming!), ['title-4'], '显示审核的推荐而非生成器原推荐');
+    reroll = true;
+    await service.invoke('titles.regenerate', { id: named.id, batchHash: named.naming!.review!.hash, candidateId: 'title-1', instruction: '按番茄末世求生书名表达' });
+    await settled(service);
+    const revised = service.store!.db.run(named.id);
+    assert.equal(revised.status, 'awaiting_review', revised.error ?? '');
+    assert.equal(searches, 1); assert.equal(titleCalls, 4); assert.equal(revised.rounds, 5);
+    assert.equal(revised.naming!.formatRepairs, 0); assert.equal(revised.naming!.semanticRevisions, 0);
+    assert.deepEqual(recommendedTitleIds(revised.naming!), []);
+    assert.ok(seenHistories.some(history => history.length > 0));
+    assert.deepEqual(revised.naming!.batch!.candidates.slice(1), named.naming!.batch!.candidates.slice(1));
+    await service.invoke('titles.select', { id: revised.id, batchHash: revised.naming!.review!.hash, candidateId: 'title-5' });
+    assert.equal(service.store!.db.run(plan.id).planning!.titleSelection!.candidate.id, 'title-5', '没有推荐不阻断作者选择事实合格的候选');
+  } finally { service.close(); }
+});
+
 test('完整备份恢复包含统一方案、作者确认、命名候选与书名绑定', async () => {
   const { service, parent } = await setup({ unified: true, idea: true });
   try {
@@ -794,7 +1282,7 @@ test('策划正文泄漏内部字段时在现有修复预算内重写，结构�
   } finally { service.close(); }
 });
 
-test('连续泄漏内部字段达到原有修复上限后停止，不增加无界调用或采纳候选', async () => {
+test('已知内部字段本地转换为中文说明，不请求模型重写或自动采纳候选', async () => {
   let contractCalls = 0;
   const { service } = await setup({ caller: standard => async (...args) => {
     const reply = await standard(...args);
@@ -802,6 +1290,30 @@ test('连续泄漏内部字段达到原有修复上限后停止，不增加无�
       contractCalls++;
       const value = JSON.parse(reply.calls[0].arguments);
       value.openQuestions = ['mustAvoid是否为空？'];
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    return reply;
+  } });
+  try {
+    const before = service.store!.readAccepted(paths.seed).content;
+    const started = await start(service), ready = await select(service, started.id);
+    assert.equal(contractCalls, 1);
+    assert.equal(ready.status, 'awaiting_review');
+    assert.equal(ready.planning!.formatRepairs, 0);
+    assert.deepEqual(ready.planning!.candidate!.openQuestions, ['不能出现是否为空？']);
+    assert.equal(service.store!.db.project().tags, undefined);
+    assert.equal(service.store!.readAccepted(paths.seed).content, before);
+  } finally { service.close(); }
+});
+
+test('未知内部引用达到原有修复上限后停止，不增加无界调用或采纳候选', async () => {
+  let contractCalls = 0;
+  const { service } = await setup({ caller: standard => async (...args) => {
+    const reply = await standard(...args);
+    if (args[3][0].name === 'submit_creation_contract') {
+      contractCalls++;
+      const value = JSON.parse(reply.calls[0].arguments);
+      value.openQuestions = ['A_UNKNOWN_RULE是否成立？'];
       reply.calls[0].arguments = JSON.stringify(value);
     }
     return reply;
@@ -1066,7 +1578,7 @@ test('局部重做保留其他方向、预算不重置，关键假设不能跳�
     });
     await settled(s);
     r = s.store!.db.run(r.id);
-    assert.equal(r.rounds, 4);
+    assert.equal(r.rounds, 2);
     assert.equal(creationDirectionId(r), 'direction-2');
     assert.deepEqual(r.planning!.report!.directions[0], original.directions[0]);
     const bad = structuredClone(original);
@@ -1108,7 +1620,7 @@ for (const keepDirectionIds of [[], ['direction-2']]) {
       const next = s.store!.db.run(first.id);
       assert.equal(next.planning!.phase, 'awaiting_direction', next.error ?? '');
       assert.equal(next.planning!.report!.directions.length, 3);
-      assert.equal(next.rounds, oldRounds + 2);
+      assert.equal(next.rounds, oldRounds + 1);
       assert.notEqual(next.planning!.reportHash, oldHash);
       assert.ok(next.planning!.history.some(h => h.kind === 'report' && tagHash(h.value) === tagHash(original)));
       assert.ok(submittedHistory.length > 0);
@@ -1137,7 +1649,73 @@ for (const keepDirectionIds of [[], ['direction-2']]) {
   });
 }
 
-test('独立审核最多一次语义修订，不能因暂停续跑重置预算', async () => {
+test('三案一次生成，完整方案仍独立检查并只修复关联设定，总预算不变', async () => {
+  let reportReviews = 0, contractReviews = 0, contractWrites = 0;
+  const { service } = await setup({ unified: true, config: { maxRounds: 12 }, caller: standard => async (...args) => {
+    const input = JSON.parse(args[2][0].content), name = args[3][0].name;
+    if (name === 'submit_planning_review') {
+      const contract = !!input.candidate;
+      const first = contract ? ++contractReviews === 1 : ++reportReviews === 1;
+      return result(name, { issues: first ? [{ code: 'causality', severity: 'major',
+        jsonPointer: contract ? '/constraints/0/text' : '/directions/0/storyEngine',
+        explanation: '维修供水的代价需要与开篇一致', suggestedFix: '同步已有因果说明' }] : [] });
+    }
+    const reply = await standard(...args);
+    if (name === 'submit_creation_contract') {
+      const value = JSON.parse(reply.calls[0].arguments);
+      value.plan.statements[8].sourceRefs = [value.constraints[0].id];
+      if (++contractWrites === 2) {
+        assert.deepEqual(input.repairScope.allowedPointers, ['/constraints/0', '/plan/statements/8', '/premiseDocument']);
+        assert.equal(input.repairScope.original, undefined, '原候选已经在candidate中，不重复装入');
+        value.constraints[0].text += '，先修复现有水泵';
+        value.plan.statements[8].text += '，先修复现有水泵';
+        value.premiseDocument += '\n开篇因果补充：先修复现有水泵，有限零件仍是代价。\n';
+      }
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    return reply;
+  } });
+  try {
+    const directions = await start(service);
+    assert.equal(directions.rounds, 1); assert.equal(reportReviews, 0);
+    const done = await select(service, directions.id);
+    assert.equal(done.status, 'awaiting_review', done.error ?? JSON.stringify(done.issues));
+    assert.equal(done.rounds, 5); assert.equal(contractWrites, 2); assert.equal(contractReviews, 2);
+    assert.equal(done.planning!.semanticRevisions, 1); assert.equal(done.planning!.formatRepairs, 0);
+    assert.equal(service.store!.db.project().config.maxRounds, 12);
+    assert.equal(service.store!.db.project().stage, 'S01'); assert.equal(done.accepted, false);
+  } finally { await service.drain(); }
+});
+
+test('命名工具枚举真实方案编号，引用错误保留失败记录且不取消独立审核', async () => {
+  let writes = 0, reviews = 0;
+  const { service } = await setup({ unified: true, caller: standard => async (...args) => {
+    const name = args[3][0].name, input = JSON.parse(args[2][0].content);
+    const reply = await standard(...args);
+    if (name === 'submit_title_candidates') {
+      const schema = args[3][0].parameters as any;
+      assert.deepEqual(schema.properties.candidates.items.properties.supportingClaimIds.items.enum,
+        input.confirmedPlan.plan.statements.map((v: { id: string }) => v.id));
+      const value = JSON.parse(reply.calls[0].arguments);
+      if (++writes === 1) value.candidates[0].supportingClaimIds.push(value.candidates[0].supportingClaimIds[0]);
+      else assert.match(args[2].find(m => m.role === 'tool')!.content, /plan.statements.id/);
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    if (name === 'submit_title_review') { reviews++; assert.equal(input.history, undefined); }
+    return reply;
+  } });
+  try {
+    const plan = await confirmPlan(service, await select(service, (await start(service)).id));
+    const done = await namePlan(service, plan.id);
+    assert.equal(done.status, 'awaiting_review', done.error ?? '');
+    assert.equal(done.rounds, 3); assert.equal(writes, 2); assert.equal(reviews, 1);
+    const tickets = service.store!.db.sql.prepare('SELECT data FROM tool_executions WHERE run_id=?').all(done.id)
+      .map(row => JSON.parse(String(row.data)));
+    assert.ok(tickets.some(t => t.result && JSON.parse(t.result).ok === false));
+  } finally { await service.drain(); }
+});
+
+test('完整方案独立审核最多一次自动语义修订', async () => {
   const { service: s, parent } = await setup({
     caller:
       (standard) =>
@@ -1148,7 +1726,7 @@ test('独立审核最多一次语义修订，不能因暂停续跑重置预算',
                 {
                   code: 'conflict',
                   severity: 'major',
-                  jsonPointer: '/directions/0',
+                  jsonPointer: '/constraints/0/text',
                   explanation: '机制不持续',
                   suggestedFix: '补充持续难题'
                 }
@@ -1157,16 +1735,43 @@ test('独立审核最多一次语义修订，不能因暂停续跑重置预算',
           : standard(...a)
   });
   try {
-    const r = await start(s);
+    const r = await select(s, (await start(s)).id);
     assert.equal(r.status, 'needs_repair');
     assert.equal(r.planning!.semanticRevisions, 1);
-    assert.equal(r.rounds, 4);
+    assert.equal(r.rounds, 4, '无变化的自动修订不重复审核，也不消除原问题');
     assert.equal(s.snapshot().project!.stage, 'S01');
   } finally {
     s.close();
     fs.rmSync(parent, { recursive: true, force: true });
   }
 });
+test('审核修复耗尽后统一恢复当前范围，保留总调用预算和原方案历史', async () => {
+  let resume = false;
+  const { service } = await setup({ caller: standard => async (...args) => {
+    if (args[3][0].name === 'submit_planning_review') return result('submit_planning_review', { issues: resume ? [] : [{ code: 'mechanism', severity: 'major', jsonPointer: '/constraints/0/text', explanation: '持续冲突待完善', suggestedFix: '完善维修代价' }] });
+    const reply = await standard(...args);
+    if (resume && args[3][0].name === 'submit_creation_contract') {
+      const value = JSON.parse(reply.calls[0].arguments); value.constraints[0].text += '，持续维修需要补充零件';
+      reply.calls[0].arguments = JSON.stringify(value);
+    }
+    return reply;
+  } });
+  try {
+    const run = await select(service, (await start(service)).id);
+    assert.equal(run.status, 'needs_repair'); assert.equal(run.rounds, 4);
+    const directions = structuredClone(run.planning!.report!.directions);
+    resume = true;
+    const resumed = await service.invoke('run.recover', { id: run.id });
+    await settled(service);
+    const current = service.store!.db.run(resumed);
+    assert.equal(resumed, run.id); assert.equal(current.rounds, 6);
+    assert.equal(current.status, 'awaiting_review', current.error ?? '');
+    assert.deepEqual(current.planning!.report!.directions.slice(1), directions.slice(1));
+    assert.equal(current.planning!.history.length, 2);
+    assert.equal(service.store!.db.project().stage, 'S01'); assert.equal(current.accepted, false);
+  } finally { service.close(); }
+});
+
 test('取消后迟到模型结果不成为报告，事件分页只返回本任务', async () => {
   let release!: () => void;
   const wait = new Promise<void>((r) => {
@@ -1265,7 +1870,7 @@ test('重启、模型交接保留策划及预算；未知请求需明确重试',
       }
   });
   try {
-    let r = await start(s);
+    let r = await select(s, (await start(s)).id, 'direction-3');
     assert.equal(r.status, 'unknown');
     assert.ok(r.planning!.report);
     assert.equal(r.usage.cost, null);
@@ -1278,12 +1883,10 @@ test('重启、模型交接保留策划及预算；未知请求需明确重试',
     const id = await s.invoke('run.handoff', { id: r.id, profileId: changed.id, retryUnknown: true });
     await settled(s);
     r = s.store!.db.run(id);
-    assert.equal(r.planning!.phase, 'awaiting_direction');
-    assert.equal(r.rounds, 3);
+    assert.equal(r.planning!.phase, 'ready');
+    assert.equal(r.rounds, 4);
     assert.equal(r.usage.cost, null);
     assert.equal(s.store!.db.runs().find((v) => v.id !== id)!.status, 'discarded');
-    r = await select(s, id, 'direction-3');
-    assert.equal(r.planning!.phase, 'ready');
     await s.invoke('run.accept', { id, proposalHash: r.proposalHash });
     assert.equal(s.store!.db.project().tags!.contract.directionId, 'direction-3');
   } finally {
@@ -1300,11 +1903,28 @@ test('标签约束贯穿聊天与完整工作流，正文证据随一次采纳�
     caller:
       (standard) =>
       async (...args) => {
-        const [profile, system, messages, tools, , onDelta] = args;
+        const [, system, messages, tools, , onDelta] = args;
         if (tools[0]?.name.startsWith('submit_')) return standard(...args);
         const p = s.store!.db.project();
         assert.match(system, /禁止后宫/);
         assert.doesNotMatch(system, /恰好三个/);
+        if (system.includes('本次独立章后核对包含两个检查')) {
+          const input = JSON.parse(messages[0].content);
+          const source = (file: string) => input.sources.find((s: any) => s.path === file).content;
+          return { text: JSON.stringify({
+            memory: { decisions: input.items.map((item: any) => ({ id: item.id, verdict: 'supported', reason: '合成原文支持该记录',
+              evidence: [{ path: item.fact.evidence[0].path, quote: source(item.fact.evidence[0].path).slice(-12) }] })) },
+            plans: { decisions: input.plans.map((plan: any) => ({ path: plan.path, verdict: 'consistent',
+              reason: '本章兑现既有标签承诺，未改变后续安排的行动条件', planQuote: source(plan.path).slice(0, 24), proseQuote: source(input.prose.path).slice(0, 24) })) }
+          }), calls: [], native: {}, usage: { input: 1, output: 1, cost: 0, currency: 'USD' }, stop: 'complete' };
+        }
+        if (system.includes('你独立核对本章实际正文')) {
+          const input = JSON.parse(messages[0].content);
+          return { text: JSON.stringify({ decisions: input.plans.map((plan: any) => ({
+            path: plan.path, verdict: 'consistent', reason: '本章兑现既有标签承诺，未改变后续安排的行动条件',
+            planQuote: plan.content.slice(0, 24), proseQuote: input.prose.content.slice(0, 24)
+          })) }), calls: [], native: {}, usage: { input: 1, output: 1, cost: 0, currency: 'USD' }, stop: 'complete' };
+        }
         if (system.includes('你独立检查')) {
           const input = JSON.parse(messages[0].content);
           return { text: JSON.stringify({ decisions: input.items.map((item: any) => {

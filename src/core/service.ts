@@ -1,6 +1,8 @@
-import { contextChanged } from './context-compiler';
+import { compileContext, contextChanged } from './context-compiler';
+import { needsNewChapterCandidate } from '../shared/task-revision';
+import { readNarrativeData } from './narrative-curves';
 import { candidateChangesForCurrentSettings, compatibleRunBase, compatibleSettingsSnapshot } from './runtime-settings';
-import { planningRulesHash } from './tag-planning';
+import { planningRulesHash, hasSavedDirectionCheckpoint } from './tag-planning';
 import { captureReasoning } from '../shared/reasoning';
 import { ProseIndexer } from './prose-index';
 import { setRunStatus } from './runtime/run-state';
@@ -14,6 +16,7 @@ import {
   planningBinding,
   planningFingerprint,
   tagHash,
+  validateReport,
   contractPath,
   approveTags,
   tagImpact,
@@ -24,6 +27,7 @@ import {
   assertPlanApproval
 } from './tags';
 import { approvedCreation, type TitleSelection } from '../shared/creation';
+import { upgradesVolumeNaming } from './volume-market-research';
 import { titleSource, namingBinding, namingRulesHash, validateBookTitle, assertTitleSelection, titlePath, renderTitle } from './title-naming';
 import { loadTitleStyleProfile } from './title-style';
 import { tagInputSchema, type BookSpec } from '../shared/tags';
@@ -41,7 +45,9 @@ import { ResourceScheduler } from './runtime/scheduler';
 import { callExternal, callModel, estimatedUnits } from './runtime/model-gateway';
 import { garbageCollectionPreview, verifyObjects } from './integrity';
 import { ProjectWatcher } from './project-watcher';
-import { LegacyExecutorAdapter, chooseExecutor } from './runtime/executor';
+import { chooseExecutor } from './runtime/executor';
+import { ExecutorRouter } from './runtime/executor-router';
+import { piExecutorVersion } from './runtime/task-loop';
 import { ExecutionRecords } from './runtime/execution-records';
 import path from 'node:path';
 import { z } from 'zod';
@@ -57,6 +63,7 @@ import {
 } from '../shared/types';
 import { FileStore, safePath, fileHash, proposalHash } from './storage';
 import { retrieveMemory, traceSource, characterState, syncEntities } from './memory-studio';
+import { readManuscriptView } from './manuscript-view';
 import {
   memoryScopeSchema,
   embeddingSettingsSchema,
@@ -78,7 +85,6 @@ import {
   stageNames,
   paths,
   renderProgress,
-  renderConfig,
   parseConfig,
   updateConfigDocument,
   reconfigure,
@@ -87,6 +93,8 @@ import {
   archivePath
 } from './domain';
 import { initialFiles, renderIndex } from './skill';
+import { materializeAftermathStatus, batchSummaryProgress } from './aftermath-status';
+import { confirmedAlignedPlans } from './future-plan-review';
 import { AgentRunner, type Caller } from './runner';
 import {
   rebuildMemory,
@@ -99,7 +107,10 @@ import {
 import { createBackup, restoreBackup, importDocument, exportDocument } from './documents';
 import { checkPublication } from './manuscript-check';
 import { invokeModel } from './provider';
-import { retryNeedsConfirmation } from '../shared/run-presentation';
+import { retryNeedsConfirmation, documentPreviewText } from '../shared/run-presentation';
+import { recoveryDecision } from '../shared/recovery';
+import { prepareRunRecovery, prepareAuthorRevision } from './runtime/run-recovery';
+import { taskRunHash } from './task-discussion';
 import { prepareMemoryRepair, memoryRepairScope } from './memory-repair';
 import { sameStoryText } from './memory-source';
 import { changedStoryStates, futurePlanTargets, makeStoryImpact, nextUnwrittenChapter, resolveStoryImpacts } from './story-impact';
@@ -108,7 +119,7 @@ import { importLegacy, previewLegacy } from './migration';
 import { ProjectRecycleBin, isRecyclePath, samePath } from './recycle-bin';
 import { ConversationRunner, type AssistantRuntime } from './conversation-runner';
 import { builtInRoles } from './assistant-settings';
-import { searchSettingsSchema, type ActionProposal } from '../shared/assistant';
+import { searchSettingsSchema } from '../shared/assistant';
 import { PublicSearch } from './search';
 import { nativeServerLimit, usesNativeSearch } from '../shared/web-search';
 import { nativeSearchSources } from './native-web-search';
@@ -139,7 +150,7 @@ export class Service {
   private proseIndexer: ProseIndexer | null = null;
   runner: AgentRunner | null = null;
   chat: ConversationRunner | null = null;
-  executor: LegacyExecutorAdapter | null = null;
+  executor: ExecutorRouter | null = null;
   assistant: AssistantRuntime = {
     roles: builtInRoles(),
     search: searchSettingsSchema.parse({}),
@@ -331,7 +342,7 @@ export class Service {
         this.emit,
         this.caller
       );
-      this.executor = new LegacyExecutorAdapter(store, this.runner, this.chat);
+      this.executor = new ExecutorRouter(store, this.runner, this.chat);
       this.chat.records.recover();
       if (!this.chat.records.all('conversations').length)
         this.chat.records.create('创作讨论', this.assistant.search.enabled);
@@ -389,14 +400,14 @@ export class Service {
   makeRun(mode: Run['mode'], request: string, profileId?: string): Run {
     const { p } = this.require(),
       profile = this.profiles.find(
-        (v) => v.id === (profileId ?? p.config.stageProfiles[p.stage] ?? p.config.defaultProfileId)
+        (v) => v.id === (profileId || p.config.stageProfiles[p.stage] || p.config.defaultProfileId)
       );
     const run: Run = {
       id: id(),
       projectId: p.id,
       operationId: this.operations.currentId(),
-      executorId: chooseExecutor('legacy'),
-      executorVersion: '1',
+      executorId: chooseExecutor('pi'),
+      executorVersion: piExecutorVersion,
       checkpointVersion: 1,
       candidateFormat: 2,
       baseSnapshotId: this.store!.db.get<string>('headSnapshot'),
@@ -406,6 +417,7 @@ export class Service {
           ? { phase: 'prose', epoch: id(), version: 0, previewCalls: 0 }
           : undefined,
       stage: p.stage,
+      ...(mode === 'stage' && p.stage === 'S05' ? { volumeNaming: { version: 1 as const } } : {}),
       chapter: p.chapter,
       batch: activeBatch(p),
       mode,
@@ -453,6 +465,7 @@ export class Service {
       throw new Error('项目参数已改变，请重新保存标签输入');
     run.planning = {
       ...((unified ?? p.creationWorkflow === 2) ? { workflowVersion: 2 as const } : {}),
+      directionFormatVersion: 1,
       binding: '',
       promptHashes: {},
       spec: structuredClone(draft),
@@ -495,13 +508,15 @@ export class Service {
     });
     return r.id;
   }
-  rebuildRun(old: Run, profileId: string, instruction = '') {
+  rebuildRun(old: Run, profileId: string, instruction = '', authorRevision = false) {
     const { s, p, runner } = this.require();
     if (runner.controller || this.chat?.controller || this.coverController) throw new Error('请先停止当前任务');
     if (old.accepted || ['discarded', 'running', 'committing'].includes(old.status)) throw new Error('此任务不能重建上下文');
     if (old.mode === 'stage' && (old.stage !== p.stage || old.chapter !== p.chapter)) throw new Error('作品已进入其他阶段，请从当前阶段继续，旧任务保留供查阅');
     const r = this.makeRun(old.mode, `${old.request}\n\n作者要求：${instruction || '继续当前任务'}\n按当前规则与正式资料重新核对已有候选后继续。候选尚未接受，不能据此跳过确认。之前错误：${old.error ?? '无'}。`, profileId);
     r.skillId = old.skillId;
+    r.volumeNaming = upgradesVolumeNaming(old, instruction)
+      ? { version: 1, authorRevision: true } : structuredClone(old.volumeNaming);
     r.parentRunId = old.parentRunId ?? old.id;
     r.executionId = old.executionId;
     r.rounds = old.rounds;
@@ -509,7 +524,11 @@ export class Service {
     r.usage = structuredClone(old.usage);
     r.steps = structuredClone(old.steps);
     r.repairAttempts = structuredClone(old.repairAttempts);
+    r.repairScope = structuredClone(old.repairScope);
+    r.proseReviewFeedback = structuredClone(old.proseReviewFeedback);
+    r.networkRetries = old.networkRetries;
     r.candidateWrites = structuredClone(old.candidateWrites);
+    r.documentDrafts = structuredClone(old.documentDrafts);
     r.changes = candidateChangesForCurrentSettings(s, old);
     r.facts = structuredClone(old.facts);
     r.factRetractions = structuredClone(old.factRetractions);
@@ -523,6 +542,8 @@ export class Service {
         r.baseSnapshotId = old.baseSnapshotId;
         r.changes = structuredClone(old.changes);
         r.memoryReview = structuredClone(old.memoryReview);
+        r.memoryCompletionHash = old.memoryCompletionHash;
+        r.futurePlanReview = structuredClone(old.futurePlanReview);
       } else {
         r.changes = [];
         r.facts = [];
@@ -533,6 +554,9 @@ export class Service {
       const prose = old.changes.find(change => change.path === prosePath(old.chapter));
       if (prose && hash(prose.content) === old.pipeline.proseHash) {
         r.pipeline = { ...old.pipeline, phase: 'review', epoch: id(), version: old.pipeline.version + 1 };
+        if (old.pipeline.narrative?.epoch === old.pipeline.epoch)
+          r.pipeline.narrative = { ...structuredClone(old.pipeline.narrative), epoch: r.pipeline.epoch };
+        else r.pipeline.narrative = undefined;
         r.changes = [structuredClone(prose)];
         r.facts = [];
         r.sourceProseHash = old.pipeline.proseHash;
@@ -545,7 +569,7 @@ export class Service {
       r.baseSnapshotId = old.baseSnapshotId;
       r.planning = structuredClone(old.planning);
       r.planning.promptHashes = {};
-      if (old.skillHash && old.skillHash !== planningRulesHash(this.skillRoot, p)) {
+      if (old.skillHash && old.skillHash !== planningRulesHash(this.skillRoot, p, old.planning)) {
         r.planning.phase = 'reviewing_report';
         r.planning.reportReview = undefined;
         r.planning.contractReview = undefined;
@@ -558,10 +582,22 @@ export class Service {
       r.baseRevision = old.baseRevision;
       r.baseSnapshotId = old.baseSnapshotId;
       r.naming = structuredClone(old.naming);
-      if (old.skillHash && old.skillHash !== namingRulesHash(this.skillRoot, p) && r.naming.batch) {
+      if (old.skillHash && old.skillHash !== namingRulesHash(this.skillRoot, p, r.naming) && r.naming.batch) {
         r.naming.phase = 'reviewing';
         r.naming.review = undefined;
       }
+    }
+    if (authorRevision) {
+      // A confirmed new candidate gets its own execution limit, while its old
+      // candidate, attempts and shared monetary budget remain in the lineage.
+      if (!needsNewChapterCandidate(old, p.config)) throw new Error('当前任务无需建立新的章节候选');
+      r.executionId = undefined;
+      r.rounds = 0;
+      r.toolCount = 0;
+      r.networkRetries = 0;
+      r.steps = [];
+      r.request = `${old.request}\n\n作者要求生成新的章节候选：${instruction}`;
+      prepareAuthorRevision(r, '');
     }
     const namingChildren = r.planning?.planApproval
       ? [...s.db.allRuns()].filter(child => child.naming?.sourceRunId === old.id && !child.accepted && !['discarded', 'stale'].includes(child.status))
@@ -584,6 +620,10 @@ export class Service {
       setRunStatus(old, 'discarded');
       old.error = `已交接至 ${r.id}，原始任务和请求记录保留`;
       s.db.saveRun(old);
+      if (authorRevision) s.db.event(r.id, 'candidate-restarted', '按作者要求生成新一版，原候选与请求记录已保留', {
+        previousRunId: old.id, previousRounds: old.rounds, previousTools: old.toolCount,
+        maxRounds: p.config.maxRounds, maxTools: p.config.maxTools, monetaryBudgetRetained: true
+      });
       for (const conversation of this.chat!.records.all('conversations').filter(item => item.runId === old.id)) {
         this.chat!.records.save('conversations', { ...conversation, runId: r.id });
         for (const proposal of this.chat!.records.all('action_proposals', conversation.id).filter(item => item.status === 'pending'))
@@ -596,9 +636,21 @@ export class Service {
     const { s } = this.require();
     return { path: relative, content, baseHash: s.db.document(relative)?.hash ?? null };
   }
-  startMemoryRepair(profileId?: string, receipt?: { count: number; issues: string[] }) {
+  private needsMemoryRepair(request: string, profileId?: string) {
     const { s, p } = this.require();
-    if (p.titleReviewRequired) throw new Error('请先在独立命名中核对当前书名，再同步后续计划');
+    if (p.stale.length) return true;
+    if (!(s.db.get<string[]>('memoryIssues') ?? []).length) return false;
+    const profile = this.profiles.find(item => item.id === (profileId || p.config.stageProfiles[p.stage] || p.config.defaultProfileId));
+    if (!profile) return true;
+    let blocked = true;
+    try {
+      compileContext(s, p, p.stage, request, profile, { allowConflicts: true, deferBudgetCheck: true,
+        onMemoryDiagnostics: result => { blocked = result.blocking.length > 0; } });
+    } catch { return true; }
+    return blocked;
+  }
+  startMemoryRepair(profileId?: string, receipt?: { count: number; issues: string[] }) {
+    const { s } = this.require();
     const existing = s.db.runs().find(run => run.memoryRepair && !run.accepted && !['discarded', 'stale', 'failed'].includes(run.status) && compatibleRunBase(s, run));
     if (existing) return existing.id;
     const run = this.makeRun('revision', '核对并同步前文修改影响的记忆与后续资料，保留无关内容，汇总为一次审阅。', profileId);
@@ -844,7 +896,6 @@ export class Service {
       );
       if (toolTest) {
         if (!result.calls.length) throw new Error('文字返回正常，但模型未执行工具调用');
-        const c = result.calls[0];
         const end = await callModel(journal, owner, 'management-profile-tool-test', invokeModel,
           profile,
           'Protocol connectivity test.',
@@ -947,12 +998,36 @@ export class Service {
       runner.check(r, p);
       if (r.issues.some(v => v.severity === 'error')) throw new Error('请先完成方案校验与独立审核');
       if (a.proposalHash !== proposalHash(r)) throw new Error('作品方案已改变，请重新查看');
-      if (r.issues.some(v => v.severity === 'warning') && !String(a.warningReason ?? '').trim()) throw new Error('请填写保留方案提醒的理由');
       r.planning.planApproval = { hash: planCandidateHash(r), planHash: tagHash(r.planning.candidate!.plan), binding: r.planning.binding, at: now() };
       if (a.warningReason) s.db.event(r.id, 'plan-warning-review', String(a.warningReason));
-      r.responseText = '作品方案已确认。现在可以独立生成书名；正式采纳前保持在当前阶段。';
+      r.responseText = '作品方案已选定。选好书名后即可保存；已有书名的作品可以直接保存。';
       s.db.saveRun(r);
       return true;
+    }
+    if (command === 'creation.revisePlan') {
+      idle();
+      const r = s.db.run(str(a.id));
+      planningBinding(s, r);
+      const t = r.planning!;
+      if (r.accepted || !['awaiting_review', 'needs_repair'].includes(r.status) || !t.candidate || !['ready', 'reviewing_contract'].includes(t.phase)) throw new Error('请等待当前作品方案生成完成后再修改');
+      if (a.proposalHash !== proposalHash(r)) throw new Error('作品方案已改变，请查看最新结果后再修改');
+      if (retryNeedsConfirmation(r)) throw new Error('上次请求结果与费用未知，请先核对这次请求');
+      if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools) throw new Error('已达到当前任务调用上限，请先在运行设置中调整限额');
+      t.history.push({ kind: 'author-revision', value: { candidate: structuredClone(t.candidate), instruction: str(a.instruction) } });
+      t.authorRevision = { instruction: str(a.instruction), original: structuredClone(t.candidate) };
+      t.phase = 'contract';
+      t.planApproval = undefined;
+      t.titleSelection = undefined;
+      t.contractReview = undefined;
+      t.promptHashes = {};
+      t.repair = undefined;
+      t.semanticRevisions = 0;
+      t.consecutiveFormatFailures = 0;
+      r.messages = [];
+      r.candidateWrites = {};
+      s.db.event(r.id, 'author-revision', '按作者意见修改当前作品方案，完成后自动检查', { instruction: a.instruction });
+      s.db.saveRun(r);
+      return this.launch(r);
     }
     if (command === 'titles.restoreProjection') {
       idle();
@@ -983,7 +1058,7 @@ export class Service {
       r.parentRunId = sourceRunId;
       r.naming = { sourceRunId, planHash, sourceHash: source.sourceHash, inputHash: source.inputHash,
         contractRevision: source.contractRevision, rule, manualTitle, instruction: String(a.instruction ?? ''),
-        candidateCount: manualTitle ? 1 : 6,
+        candidateCount: manualTitle ? 1 : 6, marketResearchVersion: 1, editorialVersion: 2,
         phase: 'generating', history: [], formatRepairs: 0, semanticRevisions: 0 };
       s.db.saveRun(r);
       s.db.set(`titleRequest:${requestId}`, { id: r.id, fingerprint });
@@ -1001,6 +1076,8 @@ export class Service {
       t.regenerate = { candidateId, instruction: str(a.instruction), original: structuredClone(t.batch!) };
       t.candidateCount = t.batch!.candidates.length;
       t.manualTitle = undefined;
+      if (!t.marketResearchVersion) { t.marketResearchVersion = 1; r.skillHash = undefined; }
+      if (t.editorialVersion !== 2) { t.editorialVersion = 2; r.skillHash = undefined; }
       t.phase = 'generating';
       t.review = undefined;
       r.messages = [];
@@ -1059,9 +1136,9 @@ export class Service {
       planningBinding(s, r);
       const t = r.planning!;
       if (r.accepted || ['discarded', 'stale'].includes(r.status) || t.phase !== 'awaiting_direction' ||
-          !t.report || a.reportHash !== tagHash(t.report) || t.reportReview?.hash !== tagHash(t.report) ||
-          t.reportReview.binding !== t.binding)
-        throw new Error('三个方向已改变或尚未完成审核，请刷新后再生成');
+          !t.report || a.reportHash !== tagHash(t.report) || t.reportHash !== tagHash(t.report))
+        throw new Error('三个方向已改变或尚未生成完成，请刷新后再生成');
+      validateReport(t.report, t);
       const keepDirectionIds = z.array(z.string().min(1)).max(1).parse(a.keepDirectionIds);
       if (keepDirectionIds.some(value => !t.report!.directions.some(direction => direction.id === value)))
         throw new Error('要保留的方向不存在');
@@ -1082,6 +1159,7 @@ export class Service {
       t.resolutions = {};
       t.formatRepairs = 0;
       t.semanticRevisions = 0;
+      t.repair = undefined;
       r.messages = [];
       r.changes = [];
       r.error = undefined;
@@ -1098,12 +1176,11 @@ export class Service {
         ['discarded', 'stale'].includes(r.status) ||
         t.phase !== 'awaiting_direction' ||
         !t.report ||
-        t.reportReview?.hash !== tagHash(t.report) ||
-        t.reportReview.binding !== t.binding ||
-        t.reportReview.result.issues.some((i) => i.severity !== 'minor')
+        t.reportHash !== tagHash(t.report)
       )
-        throw new Error('请先完成策划审核');
-      if (a.reportHash !== tagHash(t.report)) throw new Error('策划报告已改变，请重新审阅');
+        throw new Error('三个方向已改变或尚未生成完成，请刷新后再选择');
+      if (a.reportHash !== tagHash(t.report)) throw new Error('策划报告已改变，请重新查看');
+      validateReport(t.report, t);
       const directionId = str(a.directionId);
       if (!t.report.directions.some((d) => d.id === directionId)) throw new Error('方向不存在');
       t.planApproval = undefined;
@@ -1136,6 +1213,10 @@ export class Service {
         t.resolutions = resolutions;
         t.phase = 'contract';
       }
+      // Author selection starts a new subphase. Its first repair must not be
+      // consumed by the earlier directions; total model/tool budgets stay intact.
+      t.semanticRevisions = 0;
+      t.repair = undefined;
       r.messages = [];
       r.changes = [];
       r.error = undefined;
@@ -1161,6 +1242,7 @@ export class Service {
       this.emit({ type: 'snapshot' });
       return true;
     }
+    if (command === 'manuscript.read') return readManuscriptView(s, p.chapter, typeof a.runId === 'string' ? a.runId : undefined, a.includeDraft !== false);
     if (command === 'studio.read') return { ...this.studio(), entities: syncEntities(s) };
     if (command === 'embedding.reindex') {
       void this.track(this.scheduler.run(id(), ['index'], 1, () => this.index!.rebuild())).catch((e) => this.emit({ type: 'error', text: (e as Error).message }));
@@ -1371,11 +1453,33 @@ export class Service {
         typeof a.profileId === 'string' ? a.profileId : (old?.profileId ?? p.config.defaultProfileId),
         'discussion', undefined, (prepared) => {
           prepared.displayedError = old?.displayedError ?? (typeof a.displayedError === 'string' ? a.displayedError : undefined);
+          if (command === 'run.discuss' && a.allowCandidateEdits === true || old?.candidateEdit) {
+            const task = s.db.run(old?.candidateEdit?.runId ?? str(a.id));
+            if ((!old?.candidateEdit || old.candidateEdit.runHash === taskRunHash(task)) && !task.accepted && !task.planning && !task.naming && !task.memoryRepair && ['stage', 'revision'].includes(task.mode) && ['awaiting_review', 'needs_repair'].includes(task.status) && !retryNeedsConfirmation(task))
+              prepared.candidateEdit = { runId: task.id, runHash: taskRunHash(task) };
+          }
           records.save('conversation_turns', prepared);
           this.operations.complete(prepared.id);
         }
       );
-      void this.track(this.scheduler.run(turn.id, ['foreground'], 10, () => this.executor!.execute({ id: turn.id, kind: 'conversation', referenceChats: allowed })));
+      const session = this.projectSessionId;
+      void this.track(this.scheduler.run(turn.id, ['foreground'], 10, () => this.executor!.execute({ id: turn.id, kind: 'conversation', referenceChats: allowed })).then(async () => {
+        if (this.store !== s || this.projectSessionId !== session || this.draining) return;
+        const finished = records.get('conversation_turns', turn.id);
+        if (finished.status !== 'complete' || !finished.candidateEdit) return;
+        const proposed = records.all('action_proposals', turn.conversationId).filter(proposal => proposal.turnId === turn.id && proposal.executionSource === 'author_message' && proposal.status === 'pending');
+        if (proposed.length !== 1) return;
+        const proposal = proposed[0];
+        try {
+          // Separate idempotency receipt: never replace the conversation's operation result.
+          await this.invoke('proposal.confirm', { id: proposal.id, version: proposal.version }, { operationId: `candidate-edit:${turn.id}`, projectSessionId: session });
+        } catch (error) {
+          const current = records.get('action_proposals', proposal.id);
+          current.executionError = (error as Error).message;
+          records.save('action_proposals', current);
+          this.emit({ type: 'snapshot', resource: 'chat', resourceId: turn.conversationId });
+        }
+      }));
       return turn.id;
     }
     if (command === 'proposal.create')
@@ -1411,14 +1515,15 @@ export class Service {
         if (current.accepted || current.planning || !['awaiting_review', 'needs_repair', 'paused', 'unknown', 'failed'].includes(current.status)) throw new Error('任务状态已变化，请重新讨论修复方案');
         if (retryNeedsConfirmation(current) && a.retryUnknown !== true) throw new Error('上次请求结果与费用未知，需明确选择重新请求');
         this.executor!.restore({ runId: current.id, executorId: current.executorId ?? 'legacy', executorVersion: current.executorVersion ?? '1', checkpointVersion: current.checkpointVersion ?? 1 });
+        const newCandidate = needsNewChapterCandidate(current, p.config);
+        if (!newCandidate && (current.rounds >= p.config.maxRounds || current.toolCount >= p.config.maxTools)) throw new Error('已达到当前任务调用上限，请先在运行设置中调整限额');
         const instruction = `${proposal.request}\n范围：${proposal.scope}`;
-        if (runner.needsFreshContext(current)) current = this.rebuildRun(current, proposal.profileId, instruction);
-        else {
-          if (current.messages.length) current.messages.push({ role: 'user', content: instruction });
-          else current.request += `\n\n作者补充：${instruction}`;
-          current.candidateWrites = {};
-        }
         records.transaction(() => {
+          if (newCandidate) current = this.rebuildRun(current, proposal.profileId, instruction, true);
+          else if (runner.needsFreshContext(current) || upgradesVolumeNaming(current, instruction)) {
+            current = this.rebuildRun(current, proposal.profileId, instruction);
+            prepareAuthorRevision(current, '');
+          } else prepareAuthorRevision(current, instruction);
           s.db.saveRun(current);
           proposal.status = 'executed';
           proposal.executionId = current.id;
@@ -1659,6 +1764,7 @@ export class Service {
     }
     if (command === 'cover.save') return saveCover(s, str(a.dataUrl), a.metadata);
     if (command === 'project.scan') { s.scan(); return this.snapshot(); }
+    if (command === 'narrative.read') return readNarrativeData(s, Number(a.chapter), typeof a.runId === 'string' ? a.runId : undefined, a.scope === 'book' ? 'book' : 'batch');
     if (command === 'document.read')
       return typeof a.hash === 'string'
         ? s.read(str(a.path), a.hash)
@@ -1713,7 +1819,7 @@ export class Service {
     }
     if (command === 'run.start') {
       if (p.finished && a.mode !== 'revision') throw new Error('当前全书计划已完成');
-      if (a.mode !== 'revision' && (p.stale.length || (s.db.get<string[]>('memoryIssues') ?? []).length))
+      if (a.mode !== 'revision' && this.needsMemoryRepair(str(a.request), typeof a.profileId === 'string' ? a.profileId : undefined))
         return this.startMemoryRepair(typeof a.profileId === 'string' ? a.profileId : undefined);
       if (
         s.db
@@ -1736,6 +1842,35 @@ export class Service {
       else runner.stop();
       return true;
     }
+    if (command === 'run.recover') {
+      if (runner.controller || this.chat?.controller || this.coverController) throw new Error('请先停止当前任务');
+      let r = s.db.run(str(a.id));
+      this.executor!.restore({ runId: r.id, executorId: r.executorId ?? 'legacy', executorVersion: r.executorVersion ?? '1', checkpointVersion: r.checkpointVersion ?? 1 });
+      if (r.accepted || !['paused', 'unknown', 'needs_repair', 'awaiting_review', 'failed', 'stale'].includes(r.status)) throw new Error('当前任务不需要恢复，请处理当前待确认事项');
+      const decision = recoveryDecision(r);
+      if (decision.confirmation && a.retryUnknown !== true) throw new ApplicationError('REMOTE_RESULT_UNKNOWN', '上次请求结果与费用未知，核对后确认才能重新请求', ['authorize_attempt']);
+      if (decision.kind === 'inspect' || decision.kind === 'author') throw new ApplicationError(decision.code, decision.detail, ['refresh']);
+      const instruction = typeof a.instruction === 'string' ? a.instruction.trim() : '';
+      if (r.planning && instruction) throw new ApplicationError('VALIDATION_ERROR', '修改策划想法请使用方案页；恢复任务继续当前已确认的输入');
+      if (!instruction && runner.recoverReadyCandidate(r, p, 'continue')) return r.id;
+      // Completing an old direction-review checkpoint needs no model/tool call.
+      // The executor still validates the saved report and current source binding.
+      if (!hasSavedDirectionCheckpoint(r)) {
+        if (r.rounds >= p.config.maxRounds) throw new ApplicationError('ROUND_LIMIT', '已达到模型调用上限，请在运行配置中提高上限后恢复');
+        if (r.toolCount >= p.config.maxTools) throw new ApplicationError('TOOL_LIMIT', '已达到工具调用上限，请在运行配置中提高上限后恢复');
+      }
+      const profileId = typeof a.profileId === 'string' && a.profileId ? a.profileId : r.profileId;
+      if (profileId !== r.profileId || runner.needsFreshContext(r) || upgradesVolumeNaming(r, instruction)) {
+        r = this.rebuildRun(r, profileId, instruction);
+        if (instruction) prepareAuthorRevision(r, '');
+      }
+      else if (instruction) prepareAuthorRevision(r, instruction);
+      runner.check(r, p);
+      if (!instruction) prepareRunRecovery(r);
+      s.db.event(r.id, 'recovery-requested', '已检查恢复条件，将沿用已保存内容继续当前步骤', { code: decision.code, profileId, repairPaths: r.repairScope?.paths ?? [], confirmedUnknown: decision.confirmation });
+      s.db.saveRun(r);
+      return this.launch(r);
+    }
     if (command === 'run.handoff') {
       if (runner.controller) throw new Error('请先停止任务');
       const old = s.db.run(str(a.id));
@@ -1756,7 +1891,8 @@ export class Service {
       if (command === 'run.resume') {
         if (!['paused', 'unknown', 'needs_repair', 'awaiting_review', 'failed', 'stale'].includes(r.status)) throw new Error('请先处理当前待回答或待授权的事项');
         if (!String(a.instruction ?? '').trim() && runner.recoverReadyCandidate(r, p, 'continue')) return r.id;
-        if (runner.needsFreshContext(r)) return this.launch(this.rebuildRun(r, r.profileId, typeof a.instruction === 'string' ? a.instruction : ''));
+        if (runner.needsFreshContext(r) || upgradesVolumeNaming(r, String(a.instruction ?? '')))
+          return this.launch(this.rebuildRun(r, r.profileId, typeof a.instruction === 'string' ? a.instruction : ''));
       }
       if (command === 'run.answer') {
         if (!r.input) throw new Error('任务没有待回答问题');
@@ -1796,6 +1932,8 @@ export class Service {
       if (at < 0) throw new Error('候选不存在');
       r.changes[at].content = z.string().parse(a.content);
       if (r.pipeline && r.changes[at].path === prosePath(r.chapter)) {
+        const previousProseHash = r.pipeline.proseHash;
+        const previousRepairAttempts = structuredClone(r.repairAttempts);
         runner.telemetry.invalidate(r.id);
         r.pipeline.phase = 'review';
         r.pipeline.proseHash = hash(r.changes[at].content);
@@ -1804,7 +1942,19 @@ export class Service {
         r.messages = [];
         r.facts = [];
         r.candidateWrites = {};
+        r.repairScope = undefined;
+        r.memoryReview = undefined;
+        r.memoryCompletionHash = undefined;
+        r.futurePlanReview = undefined;
+        r.proseReviewFeedback = undefined;
+        // The author supplied a new prose version, so old per-version repair
+        // scopes/receipts no longer apply. Task-wide rounds, tools and usage stay.
+        for (const phase of ['prose', 'review', 'memory']) if (r.repairAttempts) delete r.repairAttempts[phase];
         r.changes = [r.changes[at]];
+        s.db.event(r.id, 'candidate-prose-edited', '作者修改正文候选；旧审核与章后证据失效，保留累计轮数、工具数及用量，重新审核当前稿。', {
+          previousProseHash, proseHash: r.pipeline.proseHash, previousRepairAttempts,
+          rounds: r.rounds, toolCount: r.toolCount
+        });
       }
       runner.check(r, p);
       setRunStatus(r, r.issues.some((i) => i.severity === 'error') ? 'needs_repair' : 'awaiting_review');
@@ -1863,8 +2013,6 @@ export class Service {
         s.db.saveRun(r);
       }
       if (!r.changes.length) throw new Error('没有可接受的候选文件');
-      if (r.issues.some((i) => i.severity === 'warning') && !String(a.warningReason ?? '').trim())
-        throw new Error('请填写保留警告的审阅理由');
       if (a.warningReason) s.db.event(r.id, 'warning-review', String(a.warningReason));
       let next = r.mode === 'stage' ? advance(p, r.id) : structuredClone(p);
       if (r.pipeline) next = advance(next, r.id);
@@ -2028,8 +2176,10 @@ export class Service {
         const fromChapter = r.continuity?.mode === 'forward' ? r.continuity.fromChapter : nextUnwrittenChapter(next);
         const changed = changes.filter(change => !s.db.document(change.path)?.hash ||
           !sameStoryText(s.readAccepted(change.path).content, change.content));
+        const aligned = r.mode === 'stage' && (r.stage === 'S11' || r.pipeline) ? confirmedAlignedPlans(s, r) : new Set<string>();
         const targets = futurePlanTargets(s, fromChapter, changed.map(change => change.path), storyStates,
-          changed.map(change => change.path), initialFiles(p, this.skillRoot, ''));
+          changed.map(change => change.path), initialFiles(p, this.skillRoot, '')).filter(target => !aligned.has(target.path));
+        if (aligned.size) s.db.event(r.id, 'future-plans-aligned', '独立核对确认以下后续计划仍可执行，无需重复生成', { paths: [...aligned], fingerprint: r.futurePlanReview?.fingerprint });
         resolveStoryImpacts(next, changed.map(change => change.path));
         next.stale = next.stale.filter(file => !changed.some(change => change.path === file));
         if (targets.length && (changed.length || storyStates.length)) {
@@ -2131,6 +2281,15 @@ export class Service {
         this.change(paths.progress, renderProgress(next)),
         this.change(paths.index, renderIndex(next, all))
       );
+      if (r.mode === 'stage' && (r.stage === 'S11' || r.pipeline)) {
+        const statusFields = materializeAftermathStatus(changes, p);
+        if (p.chapter < activeBatch(p).end) {
+          const summary = changes.find(change => change.path === paths.summary);
+          if (summary) summary.content = batchSummaryProgress(summary.content, p);
+          else changes.push(this.change(paths.summary, batchSummaryProgress(s.readAccepted(paths.summary).content, p)));
+        }
+        s.db.event(r.id, 'aftermath-status-materialized', '本次批准事务将同步章后状态；故事内容和审核结论保持不变', { fields: statusFields });
+      }
       r.accepted = true;
       setRunStatus(r, 'complete');
       r.updatedAt = now();
@@ -2162,7 +2321,7 @@ export class Service {
       const titleResult = confirmedTitle && confirmedTitle !== p.title ? { titleChanged: true } : {};
       if (a.startNext === true && (r.mode === 'stage' || r.memoryRepair) && !next.finished) {
         try {
-          if (next.stale.length || (s.db.get<string[]>('memoryIssues') ?? []).length)
+          if (this.needsMemoryRepair(`完成 ${stageNames[next.stage]}。沿用已接受要求，开始前复核全部必读资料。`, next.config.stageProfiles[next.stage] || next.config.defaultProfileId || r.profileId))
             return { accepted: true, nextRun: this.startMemoryRepair(next.config.defaultProfileId || r.profileId), ...titleResult };
           const nextRun = this.makeRun(
               'stage',
@@ -2245,7 +2404,7 @@ export class Service {
         });
       const issues = checkPublication(p, documents);
       if (issues.length) throw new Error(`正式文稿尚未准备好：\n${issues.map(issue => `${issue.path}：${issue.message}`).join('\n')}`);
-      const content = documents.map(doc => doc.content).join('\n\n');
+      const content = documents.map(doc => doc.path.startsWith('07_') ? doc.content : documentPreviewText(doc.content)).join('\n\n');
       return exportDocument(content, str(a.target));
     }
     throw new Error(`尚未实现命令：${command}`);

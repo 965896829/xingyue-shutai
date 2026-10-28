@@ -73,12 +73,23 @@ export function selectNamingModules(rules: NamingRules, genre: string) {
   // The existing client's default spells this label in the opposite order.
   byLabel.set('脑洞玄幻', 'G08');
   byLabel.set('短篇', 'T12');
+  // Exact compound aliases only: these select reference modules, never create
+  // world facts. Do not infer genres from substrings or negative statements.
+  const compound: Record<string, string[]> = {
+    '都市悬疑': ['G01', 'G14'],
+    '都市规则悬疑': ['G01', 'G14', 'T01'],
+    '规则悬疑': ['G14', 'T01'],
+    '大逃杀': ['T01'],
+    '生存游戏': ['T01'],
+    '智斗': []
+  };
   const ids = new Set<string>(),
     unmatched: string[] = [];
   for (const label of genre
     .split(/[+＋/／,，、;；|｜\n]+/)
     .map((x) => x.trim())
     .filter(Boolean)) {
+    if (Object.hasOwn(compound, label)) { for (const id of compound[label]) ids.add(id); continue; }
     const id = byLabel.get(label);
     if (id) ids.add(id);
     else unmatched.push(label);

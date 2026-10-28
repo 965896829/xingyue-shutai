@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { CreationTimings } from '../src/core/creation-timing';
 import { creationProgress, creationTimeText } from '../src/shared/creation-progress';
 import { CreationProgress } from '../src/ui/CreationProgress';
-import { newProject } from '../src/core/domain';
+import { newProject, hash } from '../src/core/domain';
 import type { Run } from '../src/shared/types';
 import { fakeProfile, isolatedRoot } from './fixtures/refactor';
 import { FileStore } from '../src/core/storage';
@@ -37,13 +37,14 @@ function record(timings: CreationTimings, store: ReturnType<typeof memory>, task
 test('阶段依据真实工作流，保存候选、暂停和失效均不会伪装成已完成', () => {
   const task = run();
   assert.equal(creationProgress(task)?.current, 0);
+  assert.deepEqual(creationProgress(task)?.labels, ['生成三个方向', '查看结果']);
   task.planning!.phase = 'reviewing_report';
-  assert.equal(creationProgress(task)?.current, 1);
+  assert.equal(creationProgress(task)?.current, 0);
   task.planning!.phase = 'awaiting_direction'; task.status = 'unknown';
   assert.equal(creationProgress(task)?.finished, false);
-  assert.notEqual(creationProgress(task)?.current, 2);
+  assert.notEqual(creationProgress(task)?.current, 1);
   task.status = 'awaiting_input';
-  assert.equal(creationProgress(task)?.current, 2);
+  assert.equal(creationProgress(task)?.current, 1);
   assert.equal(creationProgress(task)?.finished, true);
   task.planning!.phase = 'contract'; task.status = 'running';
   assert.equal(creationProgress(task)?.current, 0);
@@ -84,7 +85,7 @@ test('至少三次同类成功记录才估时，按模型、强度、分工、�
   assert.equal(restarted.view(task)?.expectedSeconds, undefined);
   restarted.begin(task, { ...project, config: { ...project.config, modelRouting: { ...project.config.modelRouting, review: 'reviewer' } } },
     [...profiles, { ...profiles[0], id: 'reviewer', model: 'different' }], store, at);
-  assert.equal(restarted.view(task)?.expectedSeconds, undefined);
+  assert.equal(restarted.view(task)?.samples, 3, '三案不再使用审核模型，其配置不影响三案估时');
   restarted.begin(task, project, [{ ...profiles[0], reasoningEffort: 'xhigh' }], store, at);
   assert.equal(restarted.view(task)?.samples, 3, '采用任务锁定的 high，不使用后来切换的全局强度');
   restarted.begin(task, project, profiles, store, at + 31 * 86400000);
@@ -100,11 +101,14 @@ test('取消、断流、恢复半程及追加修订不污染普通耗时，确�
     task.status = status;
     timings.finish(task, store, epoch + 60000);
   }
-  const resumed = run('resumed'); resumed.planning!.phase = 'reviewing_report';
-  timings.begin(resumed, project, profiles, store, epoch);
-  assert.equal(timings.view(resumed)?.unavailable, 'resumed');
-  resumed.planning!.phase = 'awaiting_direction'; resumed.status = 'awaiting_input';
-  timings.finish(resumed, store, epoch + 60000);
+  for (const phase of ['reviewing_report', 'planning'] as const) {
+    const resumed = run('resumed-' + phase); resumed.planning!.phase = phase;
+    if (phase === 'planning') resumed.planning!.repair = { phase: 'planning' } as NonNullable<Run['planning']>['repair'];
+    timings.begin(resumed, project, profiles, store, epoch);
+    assert.equal(timings.view(resumed)?.unavailable, 'resumed');
+    resumed.planning!.phase = 'awaiting_direction'; resumed.status = 'awaiting_input';
+    timings.finish(resumed, store, epoch + 60000);
+  }
   for (const field of ['formatRepairs', 'semanticRevisions'] as const) {
     const task = run(field);
     timings.begin(task, project, profiles, store, epoch);
@@ -125,6 +129,31 @@ test('取消、断流、恢复半程及追加修订不污染普通耗时，确�
   assert.deepEqual((Array.from(store.data.values())[0] as {seconds: number}[]).map(value => value.seconds), [120, 90]);
 });
 
+test('单次生成的估时不混入旧版方向审核耗时，完整方案仍按审核模型隔离', () => {
+  const store = memory(), timings = new CreationTimings();
+  const profile = profiles[0];
+  const profileKey = { model: profile.model, protocol: profile.protocol, endpoint: profile.baseUrl,
+    proxy: profile.proxy, effort: 'high', outputLimit: profile.outputLimit };
+  const oldKey = hash(JSON.stringify({ version: 1, kind: 'directions', scope: 'initial', workflow: 2, origin: 'new',
+    writer: profileKey, reviewer: profileKey }));
+  store.set('creationTiming:v1', [0, 1, 2].map(i => ({ id: 'old-' + i, key: oldKey, seconds: 240, at: epoch - 1000 })));
+  const task = run('fresh');
+  timings.begin(task, project, profiles, store, epoch);
+  assert.equal(timings.view(task)?.samples, 0);
+  for (let i = 0; i < 3; i++) {
+    const task = run('plan-' + i); task.planning!.phase = 'contract';
+    timings.begin(task, project, profiles, store, epoch + i * 100000);
+    task.planning!.phase = 'ready'; task.status = 'awaiting_review';
+    timings.finish(task, store, epoch + i * 100000 + 60000);
+  }
+  const plan = run('plan'); plan.planning!.phase = 'contract';
+  timings.begin(plan, project, profiles, store, epoch + 400000);
+  assert.equal(timings.view(plan)?.samples, 3);
+  timings.begin(plan, { ...project, config: { ...project.config, modelRouting: { ...project.config.modelRouting, review: 'other' } } },
+    [...profiles, { ...profile, id: 'other', model: 'other-model' }], store, epoch + 400000);
+  assert.equal(timings.view(plan)?.samples, 0);
+});
+
 test('估时范围不会倒数为负数或用假百分比表示，修订和超时改用真实状态', () => {
   assert.match(creationTimeText(undefined), /历史样本不足/);
   const timing = { startedAt: new Date(epoch).toISOString(), samples: 3, expectedSeconds: { low: 240, high: 420 } };
@@ -136,6 +165,8 @@ test('估时范围不会倒数为负数或用假百分比表示，修订和超�
   const html = renderToStaticMarkup(createElement(CreationProgress, { run: task }));
   assert.match(html, /aria-current="step"/);
   assert.match(html, /生成三个方向/);
+  assert.doesNotMatch(html, /自动检查|按检查意见修订|含检查/);
+  assert.match(html, /repeat\(2, minmax\(0, 1fr\)\)/);
   assert.doesNotMatch(html, /aria-valuenow|\d+%/);
   task.status = 'paused';
   assert.doesNotMatch(renderToStaticMarkup(createElement(CreationProgress, { run: task })), /moving|预计还需/);

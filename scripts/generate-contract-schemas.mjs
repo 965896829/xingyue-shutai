@@ -41,7 +41,7 @@ function encode(type) {
   return index;
 }
 const selected = {
-  types: ['Snapshot', 'Run', 'RunEvent', 'ContextManifest', 'Profile', 'ModelCatalog', 'Fact', 'Issue', 'DocumentInfo'],
+  types: ['Snapshot', 'Run', 'RunEvent', 'ContextManifest', 'Profile', 'ModelCatalog', 'Fact', 'DocumentInfo'],
   assistant: ['Conversation', 'ConversationMessage', 'ConversationTurn', 'ActionProposal', 'DraftArtifact', 'RoleRule'],
   studio: ['StudioState', 'Assessment', 'EntityState', 'SourceRef', 'SnapshotRef'],
   tags: ['TagCatalog', 'TagKnowledge', 'BookSpec', 'ApprovedTags', 'ContractCandidate'],

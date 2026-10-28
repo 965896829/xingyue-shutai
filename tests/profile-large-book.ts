@@ -5,7 +5,9 @@ import { verifyObjects } from '../src/core/integrity';
 import { rebuildMemory } from '../src/core/memory';
 import { syncEntities, retrieveMemory } from '../src/core/memory-studio';
 
-const root = path.resolve(process.argv[2] ?? '.test-output/scale-50m-20261012/book');
+if (!process.argv[2]) throw new Error('请显式传入已生成的隔离容量样本目录：node --import tsx tests/profile-large-book.ts <样本目录>');
+const root = path.resolve(process.argv[2]);
+if (!fs.existsSync(path.join(root, '.novelclient/state.sqlite'))) throw new Error('容量样本不存在；先运行 npm run test:large-book 生成样本');
 const report: Record<string, number> = {};
 const measure = <T>(name: string, fn: () => T) => { const at = performance.now(), value = fn(); report[name] = Math.round(performance.now() - at); console.log(JSON.stringify({ name, milliseconds: report[name] })); return value; };
 const store = measure('constructor', () => new FileStore(root));

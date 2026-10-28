@@ -1,0 +1,49 @@
+{
+  "@aws-sdk/credential-provider-http@3.972.75": {
+    "file": "aws-sdk-js-v3-LICENSE",
+    "source": "https://github.com/aws/aws-sdk-js-v3/blob/4a149acb46e70905ad8849fd320d4a76c7df7402/LICENSE",
+    "licenseCommit": "4a149acb46e70905ad8849fd320d4a76c7df7402"
+  },
+  "@aws-sdk/credential-provider-login@3.972.80": {
+    "file": "aws-sdk-js-v3-LICENSE",
+    "source": "https://github.com/aws/aws-sdk-js-v3/blob/4a149acb46e70905ad8849fd320d4a76c7df7402/LICENSE",
+    "licenseCommit": "4a149acb46e70905ad8849fd320d4a76c7df7402"
+  },
+  "@aws-sdk/nested-clients@3.997.47": {
+    "file": "aws-sdk-js-v3-LICENSE",
+    "source": "https://github.com/aws/aws-sdk-js-v3/blob/4a149acb46e70905ad8849fd320d4a76c7df7402/LICENSE",
+    "licenseCommit": "4a149acb46e70905ad8849fd320d4a76c7df7402"
+  },
+  "proxy-agent-negotiate@1.1.0": {
+    "file": "proxy-agents-LICENSE",
+    "source": "https://github.com/TooTallNate/proxy-agents/blob/84e41e433b422cbe9f073952d8e16052eb9b0251/packages/proxy-agent/LICENSE",
+    "licenseCommit": "84e41e433b422cbe9f073952d8e16052eb9b0251",
+    "note": "The npm package declares MIT and Nathan Rajlich as author; the repository's proxy-agent MIT notice is retained conservatively. This optional transport package is not included in the worker bundle."
+  },
+  "standardwebhooks@1.1.1": {
+    "file": "standardwebhooks-LICENSE",
+    "source": "https://github.com/standard-webhooks/standard-webhooks/blob/b4d2c14fc5b4ccff3ff271e3b087dff812254c59/libraries/LICENSE",
+    "gitHead": "b4d2c14fc5b4ccff3ff271e3b087dff812254c59"
+  },
+  "@earendil-works/pi-telemetry@1.4.0": {
+    "file": "pi-1.4.0-LICENSE",
+    "source": "https://github.com/earendil-works/pi/blob/4a080252f06caf63a525d7873c5d94d3c23887e0/LICENSE",
+    "gitHead": "4a080252f06caf63a525d7873c5d94d3c23887e0"
+  },
+  "@earendil-works/pi-agent-core@1.4.0": {
+    "file": "pi-1.4.0-LICENSE",
+    "source": "https://github.com/earendil-works/pi/blob/4a080252f06caf63a525d7873c5d94d3c23887e0/LICENSE",
+    "gitHead": "4a080252f06caf63a525d7873c5d94d3c23887e0"
+  },
+  "@earendil-works/pi-ai@1.4.0": {
+    "file": "pi-1.4.0-LICENSE",
+    "source": "https://github.com/earendil-works/pi/blob/4a080252f06caf63a525d7873c5d94d3c23887e0/LICENSE",
+    "gitHead": "4a080252f06caf63a525d7873c5d94d3c23887e0"
+  },
+  "js-tiktoken@1.0.21": {
+    "file": "js-tiktoken-LICENSE",
+    "source": "https://github.com/dqbd/tiktoken/blob/4c8b748e07992c00386f3180af5c574b27b65139/LICENSE",
+    "gitHead": "4c8b748e07992c00386f3180af5c574b27b65139",
+    "blob": "83ed1036f70d4f419307e8a044a35e163cc35201"
+  }
+}

@@ -9,7 +9,7 @@ import {
   formatNumber,
   type DataRecord,
 } from "@reference/lib/api";
-import { Drawer, useToast, Spinner, Status } from "./ui";
+import { Drawer, useToast, Spinner } from "./ui";
 
 export function ResourceExtras({ kind }: { kind: string }) {
   const [open, setOpen] = useState(false),

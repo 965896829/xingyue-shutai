@@ -402,6 +402,28 @@ details > p {
   min-height: 70px;
   margin: 0;
 }
+.current-stage-summary {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--accent-line);
+  border-radius: 8px;
+  background: var(--accent-wash);
+  color: var(--sidebar-ink);
+}
+.current-stage-summary > div,
+.current-stage-summary > strong {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.current-stage-summary > div { color: var(--accent); font-size: 10px; margin-bottom: 3px; }
+.current-stage-summary > div b { font-weight: 500; }
+.current-stage-summary > strong { font-size: 12px; }
+.current-stage-summary small { font-size: 10px; font-weight: 400; white-space: nowrap; }
+.current-stage-summary.finished { border-color: var(--line); background: var(--sidebar-selected); }
+.current-stage-summary.finished > div { color: var(--success); }
 .files button {
   display: flex;
   width: 100%;
@@ -415,6 +437,7 @@ details > p {
   border-radius: 8px;
 }
 .files button span {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -425,6 +448,25 @@ details > p {
 .files button.selected {
   background: var(--sidebar-selected);
   color: var(--sidebar-ink);
+}
+.sidebar .files button.current-stage {
+  background: var(--accent-wash);
+  color: var(--accent);
+  box-shadow: inset 3px 0 var(--accent);
+  font-weight: 600;
+}
+.sidebar .files button.current-stage:hover { background: var(--accent-wash); }
+.sidebar .files button.current-stage.selected { outline: 1px solid var(--accent-line); outline-offset: -1px; }
+.current-stage-badge {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 1px 5px;
+  border: 1px solid var(--accent-line);
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 500;
+  font-style: normal;
 }
 .files button i {
   width: 5px;
@@ -572,7 +614,7 @@ details > p {
   min-width: 390px;
   display: flex;
   flex-direction: column;
-  padding: 20px 28px 12px;
+  padding: 20px 0 12px;
 }
 .eyebrow {
   font-size: 9px;
@@ -1211,17 +1253,6 @@ details > p {
   line-height: 1.9;
   color: var(--ink);
 }
-.markdown-preview table {
-  border-collapse: collapse;
-  font-size: 11px;
-  display: block;
-  overflow: auto;
-}
-.markdown-preview th,
-.markdown-preview td {
-  border: 1px solid var(--line);
-  padding: 7px;
-}
 .markdown-preview h1 {
   font-size: 25px;
 }
@@ -1440,7 +1471,7 @@ details > p {
   transform: rotate(180deg);
 }
 .conversation > * {
-  width: 100%;
+  width: calc(100% - 2 * clamp(40px, 6cqi, 64px));
   max-width: 762px;
   margin-left: auto;
   margin-right: auto;
@@ -1462,6 +1493,7 @@ details > p {
 .sidebar-collapsed .current-book,
 .sidebar-collapsed .file-search,
 .sidebar-collapsed .files,
+.sidebar-collapsed .current-stage-summary,
 .sidebar-collapsed .sidebar-empty,
 .sidebar-collapsed .recent,
 .sidebar-collapsed .local,
@@ -2190,7 +2222,7 @@ details > p {
     width: 240px;
   }
   .conversation {
-    padding: 18px 22px 12px;
+    padding: 18px 0 12px;
   }
   .editor-panel {
     min-width: 350px;

@@ -1,6 +1,6 @@
 import { invokeCommand } from '../shared/client';
 import { useState } from 'react';
-import { configSchema, stageIds, type Command } from '../shared/types';
+import { configSchema, stageIds } from '../shared/types';
 import type { Invoke } from '../shared/contracts';
 import { commandContracts } from '../shared/contracts';
 export function LegacyDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {

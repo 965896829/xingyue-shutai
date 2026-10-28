@@ -12,6 +12,7 @@ import './ui/studio.css';
 import './ui/assistant.css';
 import './ui/tags.css';
 import './ui/recovery.css';
+import './ui/markdown-content.css';
 import { brand } from './shared/brand';
 document.title = brand.windowTitle;
 initializeColorMode();

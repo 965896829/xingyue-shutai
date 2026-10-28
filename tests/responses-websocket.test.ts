@@ -9,6 +9,7 @@ import { profileSchema, type ModelMessage } from '../src/shared/types';
 import { modelFields, connectionFields } from '../src/shared/provider-groups';
 import { prepareProviderGroup } from '../src/core/provider-groups';
 import { parseOutput } from '../src/shared/contracts';
+import { canRecoverRequest } from '../src/core/runtime/network-recovery';
 
 const complete = (output: unknown[], status = 'completed') => ({
   type: status === 'completed' ? 'response.completed' : 'response.incomplete',
@@ -16,6 +17,23 @@ const complete = (output: unknown[], status = 'completed') => ({
     ...(status === 'incomplete' ? { incomplete_details: { reason: 'max_output_tokens' } } : {}) }
 });
 const textOutput = [{ type: 'message', content: [{ type: 'output_text', text: '完成', annotations: [] }] }];
+
+test('Responses WebSocket retains completed streamed text and citations when the relay omits final output', async t => {
+  let requests = 0;
+  const { profile } = await endpoint(t, socket => {
+    requests++;
+    const item = { id: 'msg-1', type: 'message', role: 'assistant', content: [{ type: 'output_text', text: '参考书名',
+      annotations: [{ type: 'url_citation', title: '番茄参考', url: 'https://fanqienovel.com/page/123', start_index: 0, end_index: 4 }] }] };
+    socket.send(JSON.stringify({ type: 'response.output_text.delta', output_index: 0, item_id: item.id, delta: '参考书名' }));
+    socket.send(JSON.stringify({ type: 'response.output_item.done', output_index: 0, item }));
+    socket.send(JSON.stringify(complete([])));
+  });
+  const result = await invokeModel(profile, '', [], [], new AbortController().signal);
+  assert.equal(result.text, '参考书名');
+  assert.equal(result.webSearch?.citations[0].title, '番茄参考');
+  assert.equal(result.usage.output, 4);
+  assert.equal(requests, 1);
+});
 
 async function endpoint(t: test.TestContext, handle: (socket: WebSocket, body: any, request: http.IncomingMessage) => void) {
   const server = http.createServer((_req, res) => { res.writeHead(500); res.end(); });
@@ -113,6 +131,30 @@ test('Responses WebSocket cancellation and request deadline terminate a quiet co
   await assert.rejects(invokeModel({ ...profile, timeoutSeconds: 0.25 }, '', [], [], new AbortController().signal), (error: unknown) =>
     error instanceof RequestError && error.diagnostic?.code === 'REQUEST_TIMEOUT');
   assert.equal(calls, 2);
+});
+
+test('WebSocket 断开记录请求关联、关闭码与最后事件，有限恢复不绕过明确拒绝', async (t) => {
+  let requestId: string | undefined;
+  const { profile } = await endpoint(t, (socket, _body, request) => {
+    requestId = String(request.headers['x-client-request-id']);
+    socket.send(JSON.stringify({ type: 'response.created', response: { id: 'resp_fixture' } }));
+    socket.send(JSON.stringify({ type: 'response.function_call_arguments.delta', delta: '{"partial":' }));
+    socket.close(1012, 'restart');
+  });
+  await assert.rejects(invokeModel(profile, '', [], [], new AbortController().signal), (error: unknown) => {
+    assert.ok(error instanceof RequestError); assert.equal(error.uncertain, true);
+    assert.equal(error.diagnostic?.clientRequestId, requestId);
+    assert.equal(error.diagnostic?.closeCode, 1012);
+    assert.equal(error.diagnostic?.responseId, 'resp_fixture');
+    assert.equal(error.diagnostic?.eventCount, 2);
+    assert.equal(error.diagnostic?.lastEventType, 'response.function_call_arguments.delta');
+    assert.equal(canRecoverRequest(error, profile, 1, false, new AbortController().signal), false);
+    const enabled = { ...profile, networkRecovery: { maxRetries: 2, retryUnknown: true } };
+    assert.equal(canRecoverRequest(error, enabled, 1, false, new AbortController().signal), true);
+    assert.equal(canRecoverRequest(error, enabled, 1, true, new AbortController().signal), false);
+    assert.equal(canRecoverRequest(new RequestError('policy rejected', true, { code: 'WEBSOCKET_CLOSED', source: 'transport', closeCode: 1008, retryable: false }), enabled, 1, false, new AbortController().signal), false);
+    return true;
+  });
 });
 
 test('Responses WebSocket uses the configured HTTP CONNECT proxy and closes its tunnel', async (t) => {

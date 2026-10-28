@@ -7,12 +7,11 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import http from 'node:http';
 import { Service } from '../src/core/service';
-import { Database, FileStore, atomicWrite } from '../src/core/storage';
-import { Conversations } from '../src/core/conversations';
+import { Database, atomicWrite } from '../src/core/storage';
 import { AssistantSettings } from '../src/core/assistant-settings';
 import { checkFields, validateCandidate, parseMarkdownFields } from '../src/core/validation';
 import { templates } from '../src/core/skill';
-import { hash, paths } from '../src/core/domain';
+import { paths } from '../src/core/domain';
 import { profileSchema, type ModelResult, type SecretProfile } from '../src/shared/types';
 import { searchSettingsSchema, type ActionProposal } from '../src/shared/assistant';
 import { PublicSearch } from '../src/core/search';
@@ -307,6 +306,23 @@ test('查询流程可以读取相关规则，但不启动阶段', async () => {
   } finally {
     service.close();
   }
+});
+
+test('Pi 对话提交完整任务卡后本地结束，不额外请求模型解释同一张卡', async () => {
+  let calls = 0;
+  const { service, chatId } = await setup(async () => {
+    calls++;
+    return response('', [{ name: 'propose_action', args: proposalInput }]);
+  });
+  try {
+    await service.invoke('chat.send', { conversationId: chatId, profileId: 'test', text: '先给我渡河场景的试写任务' });
+    await done(service);
+    const data = await service.invoke('chat.read', { id: chatId });
+    assert.equal(calls, 1); assert.equal(data.proposals.length, 1);
+    assert.equal(data.turns[0].executorId, 'pi'); assert.equal(data.turns[0].status, 'complete');
+    assert.match(data.messages.at(-1)!.content, /试写开场/);
+    assert.equal(service.snapshot().runs.length, 0);
+  } finally { service.close(); }
 });
 
 test('任务卡必须确认且重复确认只执行一次；保存草稿不使未执行卡失效', async () => {

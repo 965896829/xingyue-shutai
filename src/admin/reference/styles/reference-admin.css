@@ -4463,34 +4463,6 @@
   padding: 55px !important;
   color: var(--muted);
 }
-.custom-site-page {
-  height: 100dvh;
-  display: grid;
-  grid-template-rows: 44px minmax(0, 1fr);
-  background: var(--surface);
-}
-.custom-site-page > header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-  border-bottom: 1px solid var(--line);
-  font-size: 12px;
-}
-.custom-site-page a,
-.custom-page-empty a {
-  color: var(--lime);
-}
-.custom-site-page iframe {
-  border: 0;
-  width: 100%;
-  height: 100%;
-  background: #fff;
-}
-.custom-page-empty {
-  padding: 80px;
-  text-align: center;
-}
 @media (max-width: 820px) {
   .nav-editor-layout {
     grid-template-columns: 1fr;

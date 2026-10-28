@@ -1,23 +1,13 @@
 "use client";
 import { DeleteButton } from "./interaction/delete-button";
-import { useState, useEffect, type CSSProperties } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  RefreshCw,
   Plus,
   Download,
   Upload,
   RotateCcw,
-  Save,
-  Check,
   ChevronDown,
-  Settings2,
-  Eye,
-  Send,
-  ArrowUp,
-  ArrowDown,
-  FileText,
-  Layers,
   Calculator,
 } from "lucide-react";
 import {
@@ -32,14 +22,11 @@ import {
 } from "@reference/lib/api";
 import {
   CompactHeading,
-  RefTabs,
   Modal,
   RefEmpty,
-  RefPagination,
   SearchBox,
 } from "./reference-ui";
-import { Spinner, ErrorState, Status, useToast } from "./ui";
-import { Reconciliation } from "./reconciliation";
+import { Spinner, ErrorState, useToast } from "./ui";
 import { ProcessLogs } from "./admin-parity-tools";
 import { RuntimeLoad } from "./runtime-controls";
 import { RoleActionPermissions } from "./role-action-permissions";
@@ -291,187 +278,6 @@ function Roles() {
             </section>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-function Load() {
-  const q = useQuery({
-      queryKey: ["model-load"],
-      queryFn: () => api("/admin/model-load"),
-      refetchInterval: 5000,
-    }),
-    [search, setSearch] = useState(""),
-    [page, setPage] = useState(1),
-    [size, setSize] = useState(12);
-  const rows =
-    q.data?.items.filter((r: any) =>
-      (r.model + r.platform).toLowerCase().includes(search.toLowerCase()),
-    ) || [];
-  return (
-    <div className="ref-page">
-      <CompactHeading
-        title="平台模型实时负载"
-        description="有效优先级数字越小越优先；并发按平台模型共享。"
-        actions={
-          <>
-            <span className="muted">
-              更新于 {formatTime(q.data?.updated_at)}
-            </span>
-            <button className="button secondary" onClick={() => q.refetch()}>
-              <RefreshCw size={14} />
-              刷新
-            </button>
-          </>
-        }
-      />
-      <div className="ref-toolbar">
-        <SearchBox
-          value={search}
-          onChange={(v) => {
-            setSearch(v);
-            setPage(1);
-          }}
-          placeholder="搜索模型 / 平台"
-        />
-      </div>
-      {q.error ? (
-        <ErrorState error={q.error} />
-      ) : (
-        <>
-          <div className="ref-table-wrap">
-            <table className="ref-table">
-              <thead>
-                <tr>
-                  {[
-                    "模型",
-                    "平台",
-                    "状态",
-                    "有效优先级",
-                    "满载率",
-                    "并发",
-                    "TPM",
-                    "RPM",
-                    "队列",
-                    "操作",
-                  ].map((h) => (
-                    <th key={h}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {q.isPending ? (
-                  <tr>
-                    <td colSpan={10}>
-                      <Spinner />
-                    </td>
-                  </tr>
-                ) : rows.length ? (
-                  rows.slice((page - 1) * size, page * size).map((r: any) => (
-                    <tr key={r.id}>
-                      <td>{r.model}</td>
-                      <td>{r.platform}</td>
-                      <td>
-                        <Status value={r.status} />
-                      </td>
-                      <td>{r.priority}</td>
-                      <td>{r.load === null ? "—" : r.load + "%"}</td>
-                      <td>
-                        {r.concurrency ?? "—"} / {r.limits.concurrency || 5}
-                      </td>
-                      <td>
-                        {r.tpm ?? "—"} / {r.limits.tpm || 100000}
-                      </td>
-                      <td>
-                        {r.rpm ?? "—"} / {r.limits.rpm || 60}
-                      </td>
-                      <td>—</td>
-                      <td>
-                        <a
-                          className="text-button"
-                          href="/admin/platform/runtime-policies"
-                        >
-                          策略
-                        </a>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={10}>
-                      <RefEmpty />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          <RefPagination
-            page={page}
-            size={size}
-            total={rows.length}
-            onPage={setPage}
-            onSize={(v) => {
-              setSize(v);
-              setPage(1);
-            }}
-          />
-          <p className="ref-data-note">{q.data?.note}</p>
-        </>
-      )}
-      <Reconciliation />
-    </div>
-  );
-}
-function Logs() {
-  const [auto, setAuto] = useState(false),
-    [search, setSearch] = useState("");
-  const q = useQuery({
-    queryKey: ["system-log"],
-    queryFn: () => api("/admin/system/logs"),
-    refetchInterval: auto ? 5000 : false,
-  });
-  return (
-    <div className="ref-page">
-      <div className="ref-toolbar">
-        <SearchBox
-          value={search}
-          onChange={setSearch}
-          placeholder="搜索日志…"
-        />
-        <label className="ref-checkbox">
-          <input
-            type="checkbox"
-            checked={auto}
-            onChange={(e) => setAuto(e.target.checked)}
-          />
-          自动刷新
-        </label>
-        <button className="button secondary" onClick={() => q.refetch()}>
-          <RefreshCw size={14} />
-          刷新
-        </button>
-      </div>
-      <div className="ref-log-console">
-        {q.isPending ? (
-          <Spinner />
-        ) : q.error ? (
-          <ErrorState error={q.error} />
-        ) : (
-          q.data.items
-            .filter((r: any) =>
-              JSON.stringify(r).toLowerCase().includes(search.toLowerCase()),
-            )
-            .map((r: any) => (
-              <div key={r.id}>
-                <time>{formatTime(r.created_at)}</time>
-                <span>{r.status}</span>
-                <code>
-                  {r.action}　{r.resource}
-                </code>
-              </div>
-            ))
-        )}
       </div>
     </div>
   );

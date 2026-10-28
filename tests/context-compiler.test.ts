@@ -14,8 +14,88 @@ import { paths, prosePath, batchPath, activeBatch } from '../src/core/domain';
 import { Service } from '../src/core/service';
 import { fakeProfile, fakeResult } from './fixtures/refactor';
 import { contextBook, contextCase } from './fixtures/context-book';
+import { encodeFacts, rebuildMemory } from '../src/core/memory-records';
+import { selectMemoryDiagnostics } from '../src/core/memory-diagnostics';
 
 const model = { ...fakeProfile, contextLimit: 200000, outputLimit: 4096 };
+
+function addBrokenMemory(book: ReturnType<typeof contextBook>, kind: 'unrelated' | 'related' | 'linked' | 'unknown-entity' | 'unknown-world' | 'future' | 'global' | 'duplicate' | 'parse') {
+  const bad = structuredClone(book.facts[1]);
+  bad.id = kind === 'duplicate' ? book.facts[0].id : 'isolated-bad-fact';
+  bad.subject = '远方旅人'; bad.aliases = []; bad.entityIds = ['traveler'];
+  bad.evidence[0].quote = '正式原文里不存在的证据';
+  if (kind === 'related') { bad.subject = '林澈'; bad.entityIds = ['linche']; }
+  if (kind === 'linked') bad.relatedIds = ['linche'];
+  if (kind === 'unknown-entity') bad.entityIds = [];
+  if (kind === 'unknown-world') bad.worldId = '';
+  if (kind === 'future') { bad.subject = '林澈'; bad.fromChapter = 40; bad.revealedAt = 40; }
+  if (kind === 'global') bad.scope = 'global';
+  const content = kind === 'parse' ? '<!-- wenxu-facts:v1 -->\n```json\n{\n```' : encodeFacts('# 连续性记录', [...book.facts, bad]);
+  if (kind === 'duplicate' || kind === 'parse') {
+    // Normal commits reject corrupt records. Exercise recovery from a legacy
+    // source without weakening the transaction checks to manufacture a fixture.
+    const read = book.store.read.bind(book.store);
+    book.store.read = (file, version) => file === paths.items ? { ...read(file, version), content } : read(file, version);
+    rebuildMemory(book.store);
+    return book.project;
+  }
+  const project = structuredClone(book.project); project.revision++;
+  book.store.commit([{ path: paths.items, baseHash: book.store.db.document(paths.items)!.hash, content }], project);
+  rebuildMemory(book.store);
+  return project;
+}
+
+test('无关及尚未生效的坏证据隔离保留，不阻止当前章，也不进入模型事实', () => {
+  for (const kind of ['unrelated', 'future'] as const) {
+    const book = contextBook(false);
+    try {
+      const project = addBrokenMemory(book, kind);
+      const manifest = compileContext(book.store, project, 'S10', contextCase.request, model);
+      assert.deepEqual(manifest.conflicts, []);
+      assert.ok(manifest.omitted!.some(item => item.reason.includes('失效记忆已隔离')));
+      assert.ok(!JSON.stringify(contextPayload(manifest)).includes('isolated-bad-fact'));
+      assert.ok(book.store.db.get<string[]>('memoryIssues')!.length > 0);
+      assert.equal(book.store.db.facts().find(fact => fact.id === 'isolated-bad-fact')!.state, 'disputed');
+      const loaded = selectMemoryDiagnostics(book.store, { scope: memoryScopeSchema.parse({ chapter: 25 }), query: '', sourcePaths: [paths.items] });
+      assert.ok(loaded.blocking.length > 0, '实际装入的整份资料不能隐藏其坏事实');
+    } finally { book.store.close(); }
+  }
+});
+
+test('当前人物、全局约束、身份重复和无法解析的记忆继续阻断，未知旧诊断不被放行', () => {
+  for (const kind of ['related', 'linked', 'unknown-entity', 'unknown-world', 'global', 'duplicate', 'parse'] as const) {
+    const book = contextBook(false);
+    try {
+      const project = addBrokenMemory(book, kind);
+      assert.throws(() => compileContext(book.store, project, 'S10', contextCase.request, model), /记忆来源需要核对/);
+      if (kind === 'linked') assert.ok(selectMemoryDiagnostics(book.store, {
+        scope: memoryScopeSchema.parse({ chapter: 25 }), query: 'linche', sourcePaths: []
+      }).blocking.length > 0, '直接指定关联实体编号也必须核对其失效关系');
+      book.store.db.set('memoryDiagnostics', null);
+      const result = selectMemoryDiagnostics(book.store, { scope: memoryScopeSchema.parse({ chapter: 25 }), query: '', sourcePaths: [] });
+      assert.deepEqual(result.blocking, book.store.db.get('memoryIssues'));
+    } finally { book.store.close(); }
+  }
+});
+
+test('新任务入口不会因无关坏记忆自动改成全书同步任务', async () => {
+  const book = contextBook(false);
+  addBrokenMemory(book, 'unrelated'); book.store.close();
+  const service = new Service(path.resolve('resources/skill'), () => {}, async () => fakeResult('隔离夹具'));
+  service.profiles = [model];
+  try {
+    await service.invoke('project.open', { root: book.root });
+    const project = service.store!.db.project();
+    project.config.defaultProfileId = model.id;
+    project.config.stageProfiles[project.stage] = '';
+    service.store!.db.set('project', project);
+    const id = await service.invoke('run.start', { request: contextCase.request });
+    const run = service.store!.db.run(String(id));
+    assert.equal(run.mode, 'stage'); assert.equal(run.memoryRepair, undefined);
+    assert.equal(run.profileId, model.id);
+    assert.ok(service.store!.db.get<string[]>('memoryIssues')!.length > 0);
+  } finally { await service.drain(); service.close(); }
+});
 
 test('人物视角保留作者能力禁令、伤势和承诺，未知秘密不混入人物事实', () => {
   const { store, project, files } = contextBook();

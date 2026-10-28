@@ -18,13 +18,15 @@ export interface ExecutorAdapter {
   requestControl(id: string, action: 'pause' | 'cancel'): void;
   dispose(): Promise<void>;
 }
-export const executorPolicy = Object.freeze({ piEnabled: false, piAdmitted: false });
+export const executorPolicy = Object.freeze({ piEnabled: true, piAdmitted: true });
 export function chooseExecutor(requested: 'legacy' | 'pi', enabled: boolean = executorPolicy.piEnabled): 'legacy' | 'pi' {
   return requested === 'pi' && enabled && executorPolicy.piAdmitted ? 'pi' : 'legacy';
 }
-export class LegacyExecutorAdapter implements ExecutorAdapter {
+/** Shared durable lifecycle; the selected task loop owns model/tool scheduling. */
+export abstract class RecordedExecutorAdapter implements ExecutorAdapter {
   constructor(readonly store: FileStore, readonly runner: AgentRunner, readonly chat: ConversationRunner) {}
-  describe(): ExecutorDescription { return { id: 'legacy', version: '1', checkpointVersion: 1, admitted: true, capabilities: ['stage', 'revision', 'planning', 'discussion', 'draft'] }; }
+  abstract describe(): ExecutorDescription;
+  abstract restore(checkpoint: ExecutorCheckpoint): readonly string[];
   async execute(context: ExecutionContext) {
     if (context.kind === 'conversation') { await this.chat.drive(context.id, context.referenceChats); return; }
     const run = this.store.db.run(context.id);
@@ -41,13 +43,16 @@ export class LegacyExecutorAdapter implements ExecutorAdapter {
       }
     }
   }
+  requestControl(id: string, action: 'pause' | 'cancel') {
+    this.runner.requestControl(id, action);
+  }
+  async dispose() { this.runner.stop(); this.chat.stop(); await this.runner.telemetry.stop(); }
+}
+export class LegacyExecutorAdapter extends RecordedExecutorAdapter {
+  describe(): ExecutorDescription { return { id: 'legacy', version: '1', checkpointVersion: 1, admitted: true, capabilities: ['stage', 'revision', 'planning', 'discussion', 'draft'] }; }
   restore(checkpoint: ExecutorCheckpoint) {
     if (checkpoint.executorId !== 'legacy' || checkpoint.executorVersion !== '1' || checkpoint.checkpointVersion !== 1)
       throw new ApplicationError('PROJECT_VERSION_UNSUPPORTED', '执行器检查点版本不受支持，记录保留为只读，未重新执行');
     return recoveryActions(this.store.db.run(checkpoint.runId));
   }
-  requestControl(id: string, action: 'pause' | 'cancel') {
-    this.runner.requestControl(id, action);
-  }
-  async dispose() { this.runner.stop(); this.chat.stop(); await this.runner.telemetry.stop(); }
 }

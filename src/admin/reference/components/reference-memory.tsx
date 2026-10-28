@@ -2,7 +2,7 @@
 import { DeleteButton } from "./interaction/delete-button";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Brain, Plus, RefreshCw, Search } from "lucide-react";
+import { Brain, Plus, RefreshCw } from "lucide-react";
 import {
   api,
   post,

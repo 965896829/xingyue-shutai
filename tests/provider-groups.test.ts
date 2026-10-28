@@ -29,6 +29,18 @@ const model = (id: string) =>
     })
   );
 
+test('连接恢复策略逐模型保存且参与配置版本，旧模型保持默认兼容', () => {
+  const old = legacy();
+  assert.equal(modelFields(old).networkRecovery, undefined);
+  const changed = { ...old, networkRecovery: { maxRetries: 1, retryUnknown: false } };
+  const result = prepareProviderGroup([old], connectionFields(old), [modelFields(changed)]);
+  assert.deepEqual(result.saved[0].networkRecovery, changed.networkRecovery);
+  assert.equal(result.saved[0].version, old.version + 1);
+  const again = prepareProviderGroup(result.all, connectionFields(old), [modelFields(result.saved[0])]);
+  assert.equal(again.saved[0].version, result.saved[0].version);
+  assert.throws(() => profileSchema.parse({ ...changed, networkRecovery: { maxRetries: 100, retryUnknown: true } }));
+});
+
 test('desktop/browser concurrent edits reject stale connection versions and model selections', () => {
   const a = legacy();
   const expected = { [a.id]: { version: a.version, enabled: true } };

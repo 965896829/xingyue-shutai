@@ -7,6 +7,7 @@ import { hash, paths, renderProgress } from '../src/core/domain';
 import { recordUsage } from '../src/core/telemetry';
 import { profileSchema, type ModelResult, type Run, type SecretProfile } from '../src/shared/types';
 import type { Caller } from '../src/core/runner';
+import { fixture as contentFixture } from './fixtures/workflow';
 
 const profile: SecretProfile = { ...profileSchema.parse({ id: 'dialogue-test', name: '任务对话模拟', protocol: 'chat', baseUrl: 'http://127.0.0.1:9999/v1', model: 'fixture', contextLimit: 128000, outputLimit: 4096 }), apiKey: 'local-fixture-only' };
 const response = (text: string, calls: { name: string; args: unknown }[] = []): ModelResult => ({ text, calls: calls.map((call, index) => ({ id: `tool-${index}`, name: call.name, arguments: JSON.stringify(call.args) })), native: null, usage: { input: 100, output: 30, cost: 0, currency: 'USD' }, stop: calls.length ? 'tools' : 'complete' });
@@ -37,11 +38,73 @@ async function fixture(caller: Caller, status: Run['status'] = 'needs_repair') {
 
 async function done(service: Service) {
   const deadline = Date.now() + 10000;
-  while (service.chat?.controller || service.runner?.controller) {
+  for (;;) {
     if (Date.now() > deadline) throw new Error('Task did not finish');
     await new Promise(resolve => setTimeout(resolve, 5));
+    if (!service.chat?.controller && !service.runner?.controller) return;
   }
 }
+
+test('阶段内明确修改直接执行当前候选，只一次讨论请求，不再要求确认任务卡或发送结束回执', async () => {
+  let discussions = 0, executions = 0, prompt = '';
+  let service: Service;
+  const f = await fixture(async (_profile, system, _messages, tools) => {
+    if (tools.some(tool => tool.name === 'propose_action')) {
+      discussions++; prompt = system;
+      assert.match(tools.find(tool => tool.name === 'propose_action')!.description, /直接执行，不要求再次确认/);
+      return response('', [{ name: 'propose_action', args: repair }]);
+    }
+    executions++;
+    const p = service.store!.db.project();
+    return response('', [{ name: 'propose_changes', args: { changes: [paths.config, paths.style].map(file => ({ path: file, content: contentFixture(p, file, service), baseHash: service.store!.db.document(file)?.hash ?? null })) } }]);
+  });
+  service = f.service;
+  try {
+    const formal = hash(fs.readFileSync(path.join(f.root, paths.config)));
+    const operationId = 'author-edit-message';
+    const turnId = await service.invoke('run.discuss', { id: f.run.id, text: '帮我补齐当前阶段的内容', profileId: profile.id, allowCandidateEdits: true }, { operationId });
+    await done(service);
+    const conversation = service.snapshot().conversations!.find(item => item.runId === f.run.id)!;
+    const data = await service.invoke('chat.read', { id: conversation.id });
+    assert.equal(discussions, 1);
+    assert.equal(executions, 1);
+    assert.match(prompt, /直接执行，不需要再次让作者点击确认/);
+    assert.equal(data.proposals.length, 1);
+    assert.equal(data.proposals[0].status, 'executed');
+    assert.equal(data.proposals[0].executionId, f.run.id);
+    assert.equal(service.store!.db.run(f.run.id).status, 'awaiting_review');
+    assert.equal(service.store!.db.project().stage, 'S02');
+    assert.equal(hash(fs.readFileSync(path.join(f.root, paths.config))), formal);
+    const repeated = await service.invoke('run.discuss', { id: f.run.id, text: '帮我补齐当前阶段的内容', profileId: profile.id, allowCandidateEdits: true }, { operationId });
+    assert.equal(repeated, turnId, '自动执行必须使用独立回执，不能覆盖原消息回执');
+    await service.invoke('proposal.confirm', { id: data.proposals[0].id, version: data.proposals[0].version });
+    assert.equal(executions, 1, '重复确认不能重复请求');
+  } finally { await service.drain(); }
+});
+
+test('简化流程仍区分提问与执行，未知请求不获得自动修改权限', async () => {
+  const first = await fixture(async () => response('这里只解释当前结果。'));
+  try {
+    const before = JSON.stringify(first.service.store!.db.run(first.run.id));
+    await first.service.invoke('run.discuss', { id: first.run.id, text: '为什么这个阶段要这样写？', allowCandidateEdits: true });
+    await done(first.service);
+    assert.equal(JSON.stringify(first.service.store!.db.run(first.run.id)), before);
+    assert.equal(first.service.chat!.records.all('action_proposals').length, 0);
+  } finally { await first.service.drain(); }
+  let executions = 0, discussionCalls = 0;
+  const second = await fixture(async (_p, _s, _m, tools) => {
+    if (tools.some(tool => tool.name === 'propose_action')) return ++discussionCalls === 1 ? response('', [{ name: 'propose_action', args: repair }]) : response('上次请求结果未知，需要先确认是否重新请求。');
+    executions++; return response('不应执行');
+  }, 'unknown');
+  try {
+    await second.service.invoke('run.discuss', { id: second.run.id, text: '帮我修改', allowCandidateEdits: true });
+    await done(second.service);
+    assert.equal(executions, 0);
+    const proposal = second.service.chat!.records.all('action_proposals')[0];
+    assert.equal(proposal.executionSource, undefined);
+    await assert.rejects(second.service.invoke('proposal.confirm', { id: proposal.id, version: proposal.version }), /结果与费用未知/);
+  } finally { await second.service.drain(); }
+});
 
 test('任务报错提问带入真实状态和上一阶段确认记录，不重跑或修改候选', async () => {
   let system = '', calls = 0;

@@ -85,7 +85,6 @@ export const contextPolicySchema = z.object({
   safetyTokens: z.number().int().min(64).max(65536).default(256),
   toolResultReserve: z.number().int().min(0).max(65536).default(2048)
 });
-export type ContextPolicy = z.infer<typeof contextPolicySchema>;
 export const profileSchema = z
   .object({
     id: z.string().min(1),
@@ -110,6 +109,10 @@ export const profileSchema = z
     outputPrice: z.number().nonnegative().nullable().default(null),
     currency: z.string().default('USD'),
     timeoutSeconds: z.number().int().min(10).max(1800).default(180),
+    networkRecovery: z.object({
+      maxRetries: z.number().int().min(0).max(3).default(2),
+      retryUnknown: z.boolean().default(false)
+    }).optional(),
     proxy: z.string().default(''),
     headers: z.record(z.string(), z.string()).default({}),
     version: z.number().int().positive().default(1),
@@ -184,6 +187,7 @@ export interface Issue {
   message: string;
   path?: string;
   line?: number;
+  factId?: string;
 }
 export const evidenceSchema = z.object({
   path: z.string().min(1),
@@ -300,6 +304,8 @@ export interface ContextManifest {
   chapter: number;
   stage: StageId;
   sources: ContextSource[];
+  /** Source versions used for local comparisons; their full text is not sent. */
+  referenceSources?: { path: string; hash: string; reason: 'editorial-comparison' }[];
   factIds: string[];
   conflicts: string[];
   estimatedTokens: number;
@@ -322,6 +328,8 @@ export type RunStatus =
   | 'awaiting_input'
   | 'awaiting_permission';
 export interface Run {
+  contextUsage?: import('./context-meter').ContextUsage;
+  contextCompactions?: import('./context-meter').ContextCompaction[];
   activity?: import('./generation').GenerationActivity;
   /** Derived for display by the host; never used to advance or time out a task. */
   creationTiming?: import('./creation-progress').CreationTiming;
@@ -337,7 +345,17 @@ export interface Run {
   parentRunId?: string;
   agentRulesHash?: string;
   repairAttempts?: Record<string, number>;
-  memoryReview?: { fingerprint: string; issues: string[] };
+  networkRetries?: number;
+  repairScope?: import('./recovery').CandidateRepair;
+  proseReviewFeedback?: { review: Change; proseHash: string };
+  failure?: import('./errors').ErrorPayload;
+  memoryReview?: { fingerprint: string; issues: string[]; targets?: Issue[]; sources?: { path: string; hash: string }[] };
+  /** Explicit extractor completion, bound to the complete candidate and fact set. */
+  memoryCompletionHash?: string;
+  futurePlanReview?: {
+    fingerprint: string;
+    decisions: { path: string; hash: string; verdict: 'consistent' | 'needs_review'; reason: string; planQuote: string; proseQuote: string }[];
+  };
   factRetractions?: { id: string; reason: string }[];
   continuity?: import('./continuity').ContinuityScope;
   memoryRepair?: {
@@ -351,6 +369,8 @@ export interface Run {
   };
   planning?: import('./tags').TagPlanning;
   naming?: import('./creation').TitlePlanning;
+  /** New S05 runs only; absence preserves historic prompt and recovery behavior. */
+  volumeNaming?: import('./volume-style').VolumeNaming;
   tagBinding?: { inputHash: string; contractRevision: number; knowledgeVersion: string };
   conversationId?: string;
   savedCandidateReview?: { at: string; requestUnknown: boolean; error?: string };
@@ -358,6 +378,7 @@ export interface Run {
     Record<import('./expression').ExpressionMode, import('./expression').ExpressionBinding>
   >;
   candidateWrites?: Record<string, number>;
+  documentDrafts?: (Change & { hash: string; chunks: number })[];
   modelBindings?: Record<string, { id: string; version: number }>;
   reasoningEfforts?: ReasoningSnapshot;
   proposalHash?: string;
@@ -372,6 +393,7 @@ export interface Run {
     epoch: string;
     version: number;
     previewCalls: number;
+    narrative?: import('./narrative-events').NarrativeEventState;
   };
   steps?: { phase: string; profileId: string; profileVersion: number; usage: Usage }[];
   skillHash?: string;
@@ -411,6 +433,10 @@ export interface Run {
 export interface Usage {
   input: number | null;
   output: number | null;
+  /** Subsets of input/output, not additional tokens. Missing means unreported. */
+  cachedInput?: number | null;
+  cacheWriteInput?: number | null;
+  reasoningOutput?: number | null;
   cost: number | null;
   currency: string;
 }
@@ -439,7 +465,31 @@ export interface ModelMessage {
   callId?: string;
   native?: unknown;
 }
+/** Optional arrival times from the client clock. Missing means unobserved, not zero.
+ * generationEvents counts nonempty content events, never model tokens. */
+export interface StreamTiming {
+  firstGenerationMs?: number;
+  firstTextMs?: number;
+  firstReasoningMs?: number;
+  firstToolInputMs?: number;
+  lastGenerationMs?: number;
+  generationEvents?: number;
+}
 export interface ModelResult {
+  /** Observed response metadata only; never replayed as prompt content. */
+  provider?: StreamTiming & {
+    responseId?: string;
+    requestId?: string;
+    clientRequestId?: string;
+    model?: string;
+    serviceTier?: string;
+    reasoningContext?: string;
+    reasoningEffort?: string;
+    cacheDiagnostics?: { type?: string; reason?: string; comparisonReusableTokens?: number; cacheMissedTokens?: number };
+    headersMs?: number;
+    firstEventMs?: number;
+    elapsedMs?: number;
+  };
   webSearch?: import('./web-search').NativeWebSearchState;
   text: string;
   calls: ToolCall[];
@@ -474,7 +524,7 @@ export interface AppEvent {
   workerGeneration?: number;
   resourceId?: string;
   resourceVersion?: number;
-  type: 'snapshot' | 'run-event' | 'delta' | 'error' | 'prose-delta' | 'assessment';
+  type: 'snapshot' | 'run-event' | 'delta' | 'error' | 'prose-delta' | 'narrative-event' | 'assessment';
   projectId?: string;
   snapshotId?: string;
   epoch?: string;

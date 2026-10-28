@@ -28,21 +28,6 @@ export type ManagementView =
   | 'trash'
   | 'new'
   | 'open';
-export const managementViews: ManagementView[] = [
-  'workspace',
-  'tasks',
-  'creation',
-  'memory',
-  'cover',
-  'models',
-  'assistant',
-  'project',
-  'transfer',
-  'legacy',
-  'trash',
-  'new',
-  'open'
-];
 export interface ManagementLog {
   seq: number;
   at: string;

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createPlanningTextFormatter, containsInternalPlanningText } from '../src/shared/planning-language';
-import { checkPlanningReportLanguage, checkPlanningContractLanguage, checkPlanningReviewLanguage } from '../src/core/planning-language';
+import { checkPlanningReportLanguage, checkPlanningContractLanguage, checkPlanningReviewLanguage, normalizePlanningLanguage } from '../src/core/planning-language';
 import type { ContractCandidate, PlanningReport, TagPlanning } from '../src/shared/tags';
 import { emptyTagInput } from '../src/shared/tags';
 import { validateReport } from '../src/core/tags';
@@ -34,6 +34,20 @@ function fixture() {
   };
   return { report, candidate, planning };
 }
+
+test('已知内部标签本地转中文；未知引用仍拒绝，结构编号与否定不变', () => {
+  const { planning, report, candidate } = fixture();
+  report.directions[0].storyEngine = '不采用D2，也不引入A_D1_RULE之外的机制；mustAvoid=[]不代表无限制。';
+  const id = report.directions[0].id, evidence = candidate.constraints[0].evidenceRef;
+  assert.ok(normalizePlanningLanguage(report, planning) > 0);
+  assert.doesNotThrow(() => checkPlanningReportLanguage(report, planning));
+  assert.match(report.directions[0].storyEngine, /不采用方向二/);
+  assert.match(report.directions[0].storyEngine, /不能出现：未填写不代表无限制/);
+  assert.equal(report.directions[0].id, id); assert.equal(candidate.constraints[0].evidenceRef, evidence);
+  report.directions[0].storyEngine = '依据A_UNKNOWN_RULE生成';
+  normalizePlanningLanguage(report, planning);
+  assert.throws(() => checkPlanningReportLanguage(report, planning), /内部字段或引用/);
+});
 
 test('旧契约显示把截图中的字段和引用编号解释为中文，保留否定与原记录', () => {
   const { planning } = fixture(), before = JSON.stringify(planning);

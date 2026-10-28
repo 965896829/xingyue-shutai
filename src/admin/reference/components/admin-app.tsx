@@ -4,7 +4,7 @@ import { ClientModule, localViews } from '../../ClientModule';
 import { LocalPage, localPageKeys } from '../../LocalPages';
 "use client";
 import { CloudPlatformPage } from "./cloud-platform-form";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "@reference/router-link";
 import { usePathname, useRouter } from "@reference/router";
 import {
@@ -29,7 +29,6 @@ import {
   Settings2,
   LogOut,
   Menu,
-  X,
   Download,
   ArrowUpRight,
   ShieldCheck,
@@ -76,7 +75,6 @@ import { QualityEvaluations } from "./quality-evaluations";
 import { EngineConsole } from "./engine-console";
 import { BounceSidebar } from "./interaction/bounce-sidebar";
 import { NotificationCenter } from "./interaction/notification-center";
-import { AccountMenu } from "./account-menu";
 import { ColorModeToggle } from "./color-mode";
 
 const icons: Record<string, typeof Sparkles> = {

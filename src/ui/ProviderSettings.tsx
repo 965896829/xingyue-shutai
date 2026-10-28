@@ -1,10 +1,11 @@
 import { useDialogs } from './AppDialogs';
+import { NetworkRecoverySettings } from './NetworkRecoverySettings';
 import { ReasoningSlider } from './ModelControl';
 import { invokeCommand } from '../shared/client';
 import type { Invoke } from '../shared/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Plus, RefreshCw, Search, Server, X } from 'lucide-react';
-import { profileSchema, type Command, type ModelCatalog, type Profile } from '../shared/types';
+import { profileSchema, type ModelCatalog, type Profile } from '../shared/types';
 import { connectionId, connectionFields, modelFields, providerGroups } from '../shared/provider-groups';
 import { applyModelLimits, officialModelLimits } from '../shared/model-limits';
 import { DeleteButton } from './DeleteButton';
@@ -837,7 +838,8 @@ export function ProviderSettings({
                   </label>
                 </div>
                 <details>
-                  <summary>费用与超时</summary>
+                  <summary>费用、超时与连接恢复</summary>
+                  <NetworkRecoverySettings value={p.networkRecovery} onChange={value => update('networkRecovery', value)} />
                   <div className="form-grid">
                     <label>
                       输入价 / 百万 tokens
@@ -868,12 +870,13 @@ export function ProviderSettings({
                       <input value={p.currency} onChange={(e) => update('currency', e.target.value)} />
                     </label>
                     <label>
-                      超时（秒）
+                      响应等待上限（秒）
                       <input
                         type="number"
                         value={p.timeoutSeconds}
                         onChange={(e) => update('timeoutSeconds', Number(e.target.value))}
                       />
+                      <small>流式输出按连续无生成进展计时；非流式按整次请求计时。</small>
                     </label>
                     <label>
                       Temperature（留空使用服务端默认）
