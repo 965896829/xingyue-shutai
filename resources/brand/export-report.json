@@ -111,22 +111,6 @@
       "sha256": "ca96cf9da7b897a02647dfa449714e787fa709d2fe05ab2acb2948dfdb0ec29f"
     },
     {
-      "file": "public/brand/wordmark-night.png",
-      "width": 1019,
-      "height": 281,
-      "alphaBounds": {
-        "x": 8,
-        "y": 8,
-        "width": 1003,
-        "height": 265
-      },
-      "transparent": 186238,
-      "translucent": 94972,
-      "opaque": 5129,
-      "edgePixels": 0,
-      "sha256": "a9202a009b2f68711fee9f59b011122f0060576ed4afb4cf520ed9bf815bd0d5"
-    },
-    {
       "file": "public/brand/wordmark-day.png",
       "width": 1019,
       "height": 281,
@@ -141,38 +125,6 @@
       "opaque": 5129,
       "edgePixels": 0,
       "sha256": "a9202a009b2f68711fee9f59b011122f0060576ed4afb4cf520ed9bf815bd0d5"
-    },
-    {
-      "file": "public/icon.png",
-      "width": 512,
-      "height": 512,
-      "alphaBounds": {
-        "x": 25,
-        "y": 82,
-        "width": 461,
-        "height": 398
-      },
-      "transparent": 158906,
-      "translucent": 100536,
-      "opaque": 2702,
-      "edgePixels": 0,
-      "sha256": "f7634481f20245b822ccc2e5c442b1974245ee87eea762c1671cece90f500442"
-    },
-    {
-      "file": "resources/icon.png",
-      "width": 512,
-      "height": 512,
-      "alphaBounds": {
-        "x": 25,
-        "y": 82,
-        "width": 461,
-        "height": 398
-      },
-      "transparent": 158906,
-      "translucent": 100536,
-      "opaque": 2702,
-      "edgePixels": 0,
-      "sha256": "f7634481f20245b822ccc2e5c442b1974245ee87eea762c1671cece90f500442"
     },
     {
       "file": "resources/brand/icons/app-icon-16.png",

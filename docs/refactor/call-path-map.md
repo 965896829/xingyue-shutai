@@ -4,6 +4,8 @@
 
 React → shared/client（校验、AbortSignal、等待取消）→ preload 白名单与普通对象 envelope → main（可信 mainFrame、项目会话、workerGeneration）→ worker（握手、schema）→ Service → 领域能力。业务调用不把 ipcRenderer/fs/shell 暴露给页面。
 
+0.4.78 创作执行：Service → ExecutorRouter → 记录生命周期 → 各领域的 runTaskLoop 回调 → Pi runAgentLoop（新任务）/Legacy 循环（旧任务）→ 原模型与工具网关。Pi 负责轮次、工具次序与结束判断的调度；Skill 阶段和质量要求仍在领域回调中，未再叠加监督模型或第二套自动恢复。
+
 requestId 用于一次 IPC 等待；waitId 用于取消等待；operationId 用于作者写意图；projectSessionId 隔离同一作品的不同打开；workerGeneration 隔离重启。取消等待不宣称后台撤销。
 
 0.4.2文档预览：Service → ResourceScheduler的document-import资源 → DocumentImporter → document-worker线程 → 纯文档解析器 → 同一命令输出契约。线程只读取作者选择的源文件，不打开项目数据库，不创建正式候选。Electron注入线程实现；直接构造Service的测试/工具仍可使用同步解析兼容默认。退出drain停止排队导入并终止活动线程，等待线程退出后释放调度资源。
@@ -15,13 +17,14 @@ requestId 用于一次 IPC 等待；waitId 用于取消等待；operationId 用�
 | AgentRunner 普通/正文流水线 | callModel，归属 Run | provider.invokeModel |
 | ConversationRunner 讨论/草稿 | callModel，归属 turn | provider.invokeModel |
 | 标签规划与独立审核 | callModel，归属规划 Run | 注入 Caller/原 provider |
+| 书名生成与检查 | callModel，归属书名 Run | 注入 Caller/原 provider |
 | 辅助叙事评估 | callModel，归属主 Run、同一预算和取消链 | telemetry caller |
 | 向量建立与查询 | callExternal，语义 purpose/版本/来源 | embeddings 请求 |
 | 搜索/提取与连接测试 | callExternal，宿主传 store/owner | PublicSearch |
 | 文字/工具连通性测试 | callModel，管理请求仓库 | provider |
 | 模型目录（含分页） | callExternal，管理请求仓库 | model-catalog |
 | 图像生成及其返回图片获取 | 一个 callExternal 外部操作 | cover.generateCover |
-| Pi 离线实验 | 同一 callModel/Tool Gateway | 注入假 provider；未进入生产 bundle |
+| Pi 正式执行循环 | streamFn/AgentTool 回调复用上述 callModel/Tool Gateway | 不创建额外网络出口；真实模型本轮未复测 |
 
 模型目录分页、封面后续图片读取作为一个外部操作登记；没有逐个 GET 单独建立付费 Attempt。原 runner 中通用 terminal/network 分支仍为旧兼容代码，模型工具集合和网关均明确拒绝，正式执行无法由模型触发。可信宿主终端帮助方法仍由旧回归测试覆盖。
 

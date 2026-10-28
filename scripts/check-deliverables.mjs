@@ -2,28 +2,30 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
-import { extractFile } from '@electron/asar';
+import { extractFile, listPackage } from '@electron/asar';
 const testLog = process.argv[2];
 assert.ok(testLog, '请显式指定本次测试日志：node scripts/check-deliverables.mjs <测试日志路径>');
 const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const createHashForBytes = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
 const releaseRoot = process.env.WENXU_RELEASE_DIR ?? 'release';
-const docs = fs.readdirSync('docs').filter((f) => f.endsWith('.md'));
+const docsRoot = process.env.WENXU_DOCS_DIR ?? 'docs';
+const docs = fs.readdirSync(docsRoot).filter((f) => f.endsWith('.md'));
 const broken = [];
 for (const name of docs) {
-  const file = path.join('docs', name),
+  const file = path.join(docsRoot, name),
     content = fs.readFileSync(file, 'utf8');
   for (const match of content.matchAll(/\]\(([^)\n]+)\)/g)) {
     const link = match[1].replace(/^<|>$/g, '').split('#')[0];
     if (!link || /^(https?:|app:|codex:|mailto:)/i.test(link)) continue;
     const target = decodeURIComponent(link).replace(/:\d+$/, '');
-    if (!fs.existsSync(path.isAbsolute(target) ? target : path.resolve('docs', target)))
+    if (!fs.existsSync(path.isAbsolute(target) ? target : path.resolve(docsRoot, target)))
       broken.push({ file, link });
   }
 }
 assert.deepEqual(broken, [], 'Broken documentation links');
 const ids = (file) => [...fs.readFileSync(file, 'utf8').matchAll(/^\| (REQ-[A-Z]\d+) \|/gm)].map((m) => m[1]);
-assert.deepEqual(ids('docs/15_逐项实施与验收状态.md'), ids('docs/04_功能追溯矩阵.md'));
-assert.equal(ids('docs/15_逐项实施与验收状态.md').length, 180);
+assert.deepEqual(ids(path.join(docsRoot, '15_逐项实施与验收状态.md')), ids(path.join(docsRoot, '04_功能追溯矩阵.md')));
+assert.equal(ids(path.join(docsRoot, '15_逐项实施与验收状态.md')).length, 180);
 const filesIn = (root, relative = '') =>
   fs
     .readdirSync(path.join(root, relative), { withFileTypes: true })
@@ -105,6 +107,14 @@ const taxonomy = JSON.parse(fs.readFileSync(path.join(tagRoot, 'registry/taxonom
 assert.equal(taxonomy.options.length, 482);
 assert.equal(new Set(taxonomy.options.map((o) => o.id)).size, 482);
 
+for (const directory of ['direction-planning', 'title-editing', 'title-market-editing']) {
+  const titleRoot = path.join(source, directory);
+  const titleLock = JSON.parse(fs.readFileSync(path.join(titleRoot, 'resources.lock.json'), 'utf8'));
+  assert.deepEqual(filesIn(titleRoot).filter(file => file !== 'resources.lock.json'), Object.keys(titleLock).sort(), 'Independent prompt resource lock coverage differs');
+  for (const [file, digest] of Object.entries(titleLock))
+    assert.equal(sha(resourceFile(titleRoot, file)), digest, `Independent prompt resource mismatch: ${directory}/${file}`);
+}
+
 const tests = fs.readFileSync(testLog, 'utf8');
 // Node chooses TAP or the spec reporter depending on its output stream.
 const total = Number(tests.match(/(?:#|ℹ) tests (\d+)\r?\n/)?.[1]);
@@ -119,6 +129,12 @@ assert.ok(
 assert.ok(!fs.existsSync(path.join(releaseRoot, 'win-unpacked/文序.exe')), 'Obsolete executable remains in current build');
 const version = pkg.version;
 const archive = path.join(releaseRoot, 'win-unpacked/resources/app.asar');
+assert.ok(!listPackage(archive).some(file => /(?:^|[/\\])node_modules(?:[/\\]|$)/.test(file)), 'Bundled dependency source trees must not be shipped again');
+const dependencyNotices = JSON.parse(extractFile(archive, path.join('dist', 'third-party-licenses', 'index.json')).toString('utf8'));
+assert.ok(dependencyNotices.length > 0, 'Bundled dependency notices are missing');
+for (const notice of dependencyNotices)
+  for (const file of notice.files)
+    assert.equal(createHashForBytes(extractFile(archive, path.join('dist', 'third-party-licenses', file.file))), file.sha256, `Packaged license differs: ${notice.name}`);
 for (const asset of filesIn('dist'))
   assert.deepEqual(extractFile(archive, path.join('dist', asset)), fs.readFileSync(path.join('dist', asset)), `Packaged UI asset differs: ${asset}`);
 const managementEntries = ['admin.html'];
@@ -133,6 +149,7 @@ const installer = path.join(releaseRoot, `${pkg.build.productName} Setup ${versi
 const report = {
   at: new Date().toISOString(),
   docs: docs.length,
+  docsRoot: path.resolve(docsRoot),
   brokenLinks: broken,
   requirementIds: 180,
   skillFilesByteExact: skillFiles.length,
@@ -154,6 +171,8 @@ const report = {
   testLog: { path: testLog, sha256: sha(testLog) },
   tests: total,
   managementEntries,
+  dependencyNotices: dependencyNotices.length,
+  packagedNodeModules: false,
   failures: 0,
   installer: { path: installer, bytes: fs.statSync(installer).size, sha256: sha(installer) },
   buildInputs: {

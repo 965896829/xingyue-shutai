@@ -147,6 +147,13 @@ export const planningReportSchema = z
   })
   .strict();
 export type PlanningReport = z.infer<typeof planningReportSchema>;
+/** New direction requests omit editorial bookkeeping. Persisted reports retain
+ * the established shape so selection, history and contract work stay compatible. */
+export const concisePlanningReportSchema = planningReportSchema
+  .omit({ diagnosis: true, marketClaims: true, unresolvedQuestions: true })
+  .extend({
+    directions: z.array(planningReportSchema.shape.directions.element.omit({ tagCoverage: true })).length(3)
+  });
 export const tagConstraintSchema = z
   .object({
     id: text,
@@ -225,6 +232,8 @@ export const creationContractSchema = contractCandidateSchema
   .strict();
 export interface TagPlanning {
   workflowVersion?: 2;
+  /** Absent on existing tasks: keep their original prompt and output contract. */
+  directionFormatVersion?: 1;
   planApproval?: { hash: string; planHash: string; binding: string; at: string };
   titleSelection?: TitleSelection;
   binding: string;
@@ -235,12 +244,16 @@ export interface TagPlanning {
   report?: PlanningReport;
   reportHash?: string;
   candidate?: ContractCandidate;
+  authorRevision?: { instruction: string; original: ContractCandidate };
+  /** Legacy direction-review record; retained for history, never a selection gate. */
   reportReview?: { hash: string; binding: string; result: PlanningReview };
   contractReview?: { hash: string; binding: string; result: PlanningReview };
   selectedDirectionId?: string;
   resolutions: Record<string, string>;
   semanticRevisions: number;
   formatRepairs: number;
+  consecutiveFormatFailures?: number;
+  repair?: { phase: 'planning' | 'contract'; original: PlanningReport | ContractCandidate; pointers: string[] };
   regenerate?: {
     directionId: string;
     instruction: string;
@@ -262,7 +275,7 @@ export const tagGroupNames: Record<string, string> = {
 };
 export const planningPhaseNames: Record<TagPlanning['phase'], string> = {
   planning: '生成三个方向',
-  reviewing_report: '正在检查方向方案',
+  reviewing_report: '正在整理已有方向',
   awaiting_direction: '等待你确认方向',
   contract: '正在整理设定方案',
   reviewing_contract: '正在检查设定方案',

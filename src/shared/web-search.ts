@@ -15,8 +15,17 @@ export interface NativeWebSearchState {
   citations: NativeWebCitation[];
 }
 export interface ModelRequestOptions {
+  /** Host-owned stable catalogue; actual callable tools are still the tools argument. */
+  cacheTools?: import('./types').ToolDefinition[];
+  /** Stable project/provider partition; never an attempt ID or a timestamp. */
+  promptCacheKey?: string;
+  /** Stage-owned reasoning scope; current tool chains remain intact. */
+  reasoningContext?: 'current_turn' | 'all_turns';
+  /** Host-owned, verified continuation of a Responses input; never supplied by a model. */
+  responsesInput?: Record<string, unknown>[];
+  singleToolCall?: boolean;
   onActivity?: (phase: import('./generation').GenerationPhase) => void;
-  webSearch?: { maxCalls: number; required?: boolean; serverLimit?: boolean };
+  webSearch?: { maxCalls: number; required?: boolean; serverLimit?: boolean; allowedDomains?: string[] };
   onWebSearch?: (call: NativeWebSearchCall) => void;
   onWebCitation?: (citation: NativeWebCitation) => void;
 }

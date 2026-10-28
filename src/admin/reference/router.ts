@@ -9,8 +9,6 @@ const subscribe = (fn: () => void) => {
   return () => window.removeEventListener('hashchange', fn);
 };
 export function usePathname() { return useSyncExternalStore(subscribe, () => currentRoute().split('?')[0]); }
-export function useParams<T extends Record<string, unknown> = Record<string, string>>() { return {} as T; }
-export function useSearchParams() { return new URLSearchParams(useSyncExternalStore(subscribe, currentRoute).split('?')[1]); }
 export function navigate(path: string) {
   location.hash = path.startsWith('/admin/') ? path : '/admin/novel/projects';
 }

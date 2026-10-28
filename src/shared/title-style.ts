@@ -16,3 +16,19 @@ export const titleStyleProfileSchema = z.object({
 }).strict();
 
 export type TitleStyleProfile = z.infer<typeof titleStyleProfileSchema>;
+
+/** Host-recorded search evidence, separate from the book's confirmed story facts. */
+export interface TitleMarketResearch {
+  status: 'searching' | 'ready' | 'unavailable' | 'disabled';
+  provider: 'native' | 'public' | 'none';
+  genre: string;
+  tags: string[];
+  query: string;
+  alternativeQuery?: string;
+  startedAt: string;
+  checkedAt?: string;
+  sources: { title: string; url: string; excerpt?: string }[];
+  /** Search model's editorial observations, not official facts or instructions. */
+  styleBrief?: string;
+  message: string;
+}

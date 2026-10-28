@@ -8,8 +8,26 @@ import { configSchema, profileSchema, type ModelResult, type SecretProfile } fro
 import { Service } from '../src/core/service';
 import { hash, id, now } from '../src/core/domain';
 import type { Caller } from '../src/core/runner';
+import { splitSharedRules } from '../src/core/runtime/prompt-cache';
 
 const skill = path.resolve('resources/skill');
+
+test('规划、正文、审稿和记忆共享逐字相同的表达基础，模式与全部适用规则仍保留', () => {
+  const config = configSchema.parse({});
+  const library = expressionLibrary(skill);
+  const packs = (['planning','prose','review','record'] as const).map(mode=>expressionPack(skill,config,mode));
+  const base = packs.map(p=>splitSharedRules(p.prompt).rules.find(r=>r.includes('key="expression-base"')));
+  assert.ok(base[0]);
+  for (const [i,p] of packs.entries()) {
+    assert.equal(base[i],base[0]);
+    for(const rule of library.rules.filter(r=>p.binding!.ruleIds.includes(r.id)))
+      for(const value of [rule.trigger,rule.repair,...rule.exceptions,...rule.preserve,...rule.do_not,...rule.context_required])
+        assert.ok(p.prompt.includes(value),`${p.binding!.mode}/${rule.id} 必要内容缺失`);
+    const parts=splitSharedRules(p.prompt);
+    assert.match(parts.remaining,new RegExp(`mode="${p.binding!.mode}"`));
+    assert.ok(!parts.remaining.includes('[LEX-001]'));
+  }
+});
 const profile: SecretProfile = {
   ...profileSchema.parse({
     id: 'test',
@@ -262,13 +280,17 @@ test('正式修订在工具续轮与恢复时保留表达约束和防过度改�
     ]);
   });
   try {
+    // This case verifies preserved revision rules, not the context-limit guard.
+    // Allow the complete current rule pack; the preceding test covers rejection.
+    service.profiles = [{ ...structuredClone(profile), contextLimit: 200000 }];
     const runId = await service.invoke('run.start', {
       mode: 'revision',
       request: '仅修订表达',
       profileId: 'test'
     });
     await idle(service);
-    assert.equal(service.store!.db.run(runId).status, 'awaiting_input');
+    const firstRun = service.store!.db.run(runId);
+    assert.equal(firstRun.status, 'awaiting_input', JSON.stringify({ error: firstRun.error, issues: firstRun.issues, failure: firstRun.failure, requests: requests.length }));
     await service.invoke('run.answer', { id: runId, answer: '只处理第一段的套话' });
     await idle(service);
     assert.equal(requests.length, 2, service.store!.db.run(runId).error ?? '');

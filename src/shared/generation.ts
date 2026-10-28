@@ -1,5 +1,5 @@
 /** Public execution metadata only; never contains a model's private reasoning. */
-export type GenerationPhase = 'preparing' | 'waiting' | 'thinking' | 'responding' | 'tool_input' | 'tools' | 'searching' | 'checking';
+export type GenerationPhase = 'preparing' | 'compacting' | 'waiting' | 'thinking' | 'responding' | 'tool_input' | 'tools' | 'searching' | 'checking' | 'retrying';
 export interface GenerationActivity {
   startedAt: string;
   updatedAt: string;
@@ -11,8 +11,8 @@ export interface GenerationOwner {
   activity?: GenerationActivity;
 }
 export const generationLabels: Record<GenerationPhase, string> = {
-  preparing: '正在准备', waiting: '正在思考', thinking: '正在思考', responding: '正在回复',
-  tool_input: '正在生成结果', tools: '正在执行工具', searching: '正在联网搜索', checking: '正在检查结果'
+  preparing: '正在准备', compacting: '正在整理上下文', waiting: '正在思考', thinking: '正在思考', responding: '正在回复',
+  tool_input: '正在生成结果', tools: '正在执行工具', searching: '正在联网搜索', checking: '正在检查结果', retrying: '正在恢复连接'
 };
 /** A resumed execution gets its own clock; time spent waiting for the author is excluded. */
 export function syncGeneration(owner: GenerationOwner, at = new Date().toISOString()) {

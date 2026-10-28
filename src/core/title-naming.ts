@@ -1,3 +1,5 @@
+import { runTaskLoop } from './runtime/task-loop';
+import type { ModelResult } from '../shared/types';
 import { z } from 'zod';
 import { compatibleRunBase } from './runtime-settings';
 import {
@@ -20,15 +22,21 @@ import { callModel } from './runtime/model-gateway';
 import { withTaskReasoning } from '../shared/reasoning';
 import { beginTool, finishTool, stopOnToolFailure, type ToolTicket } from './runtime/tool-gateway';
 import { setRunStatus } from './runtime/run-state';
+import { ApplicationError } from '../shared/errors';
+import { assertStructuredRepair } from './runtime/candidate-repair';
 import { requestGuard, recordUsage, syncUsage } from './telemetry';
 import { RequestError } from './provider';
 import { loadTitleStyleProfile } from './title-style';
+import { prepareTitleMarketResearch } from './title-market-research';
+import { searchSettingsSchema, type SearchSettings } from '../shared/assistant';
+import type { PublicSearch } from './search';
 import {
   creationPromptResources,
   normalizedCandidateTitle,
   titleCandidateCount,
   titleHistoryDigest,
-  titleSystemPrompt
+  titleSystemPrompt,
+  titleEditorialResources
 } from './creation-prompts';
 
 export const titlePath = '02_项目配置/书名与入口承诺.md';
@@ -89,7 +97,6 @@ export function titleSource(store: FileStore, sourceRunId?: string) {
 export function namingBinding(store: FileStore, r: Run) {
   if (!r.naming) throw new Error('不是独立命名任务');
   const t = r.naming,
-    p = store.db.project(),
     source = titleSource(store, t.sourceRunId);
   if (
     !compatibleRunBase(store, r) ||
@@ -115,11 +122,12 @@ export function validateTitleBatch(raw: unknown, r: Run, source: ReturnType<type
   const claimIds = source.plan.statements.map((v) => v.id);
   for (const candidate of batch.candidates) {
     validateBookTitle(candidate.title, t.rule);
-    if (
-      new Set(candidate.supportingClaimIds).size !== candidate.supportingClaimIds.length ||
-      candidate.supportingClaimIds.some((id) => !claimIds.includes(id))
-    )
-      throw new Error('书名引用了不存在或重复的已确认方案条目');
+    if (!t.manualTitle && (!t.regenerate || candidate.id === t.regenerate.candidateId) &&
+      t.marketResearch?.status === 'ready' && t.marketResearch.sources.some(sample => normalizedTitle(sample.title) === normalizedTitle(candidate.title)))
+      throw new Error(`书名“${candidate.title}”与本批参考作品同名。保留故事承诺，换成本书自己的表达；这不是全站查重。`);
+    const unknown = candidate.supportingClaimIds.filter(id => !claimIds.includes(id));
+    if (unknown.length || new Set(candidate.supportingClaimIds).size !== candidate.supportingClaimIds.length)
+      throw new Error(`书名“${candidate.title}”引用了不存在或重复的已确认方案条目${unknown.length ? '：' + unknown.join('、') : ''}。只能引用 plan.statements.id：${claimIds.join('、')}；约束编号不能填入 supportingClaimIds。保留书名与有效内容，仅修正引用。`);
     const claims = source.plan.statements.filter((v) => candidate.supportingClaimIds.includes(v.id));
     if (
       candidate.payoffStage === 'opening' &&
@@ -166,7 +174,7 @@ export function assertTitleSelection(
     t = child.naming;
   const source = namingBinding(store, child);
   if (child.agentRulesHash) assertControllerRules(root, child.agentRulesHash);
-  if (child.skillHash !== namingRulesHash(root, store.db.project()))
+  if (child.skillHash !== namingRulesHash(root, store.db.project(), t))
     throw new Error('命名规则已改变，请重新核对候选');
   if (
     !t ||
@@ -189,14 +197,16 @@ export function renderTitle(selection: ProjectState['titleBinding']) {
   const c = selection.candidate;
   return `# 书名与入口承诺\n\n此文件由正式记录生成，修改请使用“独立命名”。\n\n- 书名：${c.title}\n- 命名角度：${c.angle}\n- 方案指纹：${selection.planHash}\n- 候选任务：${selection.batchRunId}\n- 规则：${titleRules[selection.rule].label}\n- 规则核验日期：${titleRules[selection.rule].checkedAt}\n- 查重状态：未查重（本地候选去重不代表平台查重）\n- 状态：${selection.needsReview ? '待核对：' + selection.reason : '作者已确认'}\n\n## 阅读承诺\n${c.readerPromise}\n\n## 已确认方案依据\n${c.supportingClaimIds.map((id) => '- ' + id).join('\n')}\n\n## 预计兑现阶段\n${payoffStages[c.payoffStage]}\n\n## 风险提醒\n${c.riskNotes.map((v) => '- ' + v).join('\n') || '无额外提醒'}\n`;
 }
-export function namingRulesHash(root: string, p: ProjectState) {
+export function namingRulesHash(root: string, p: ProjectState, naming?: Run['naming']) {
   return tagHash({
     skill: new SkillRegistry(root).load('webnovel-packaging').hash,
     prompts: creationPromptResources(root).hash,
     styleProfile: tagHash(loadTitleStyleProfile(root)),
     expression: expressionFingerprint(root, p.config),
     titleRules,
-    version: 3
+    version: 3,
+    ...(naming?.editorialVersion ? { editorial: titleEditorialResources(root, naming.editorialVersion).hash, editorialVersion: naming.editorialVersion } : {}),
+    ...(naming?.marketResearchVersion ? { marketResearchVersion: naming.marketResearchVersion } : {})
   });
 }
 
@@ -213,13 +223,15 @@ export async function driveTitleNaming(args: {
   save: () => void;
   event: (text: string) => void;
   onActivity?: (phase: import('../shared/generation').GenerationPhase) => void;
+  searchSettings?: SearchSettings;
+  search?: PublicSearch | null;
 }) {
   const { store, root, run: r, project: p, writer, profiles, caller, signal, save, event } = args;
   const t = r.naming!,
     rules = controllerRules(root),
     promptResources = creationPromptResources(root),
     styleProfile = loadTitleStyleProfile(root);
-  const skillHash = namingRulesHash(root, p);
+  const skillHash = namingRulesHash(root, p, t);
   if (r.skillHash && r.skillHash !== skillHash) throw new Error('命名规则已更新，请交接后继续');
   r.skillHash = skillHash;
   const reviewer = profiles().find((v) => v.id === (p.config.modelRouting.review || writer.id));
@@ -233,32 +245,49 @@ export async function driveTitleNaming(args: {
       throw new Error('命名分工模型已改变，请交接任务');
     (r.modelBindings ??= {})[role] = { id: profile.id, version: profile.version };
   }
-  while (t.phase !== 'ready') {
+  await runTaskLoop({ executorId: r.executorId, signal,
+    event: e => { if (e.type === 'turn_end') store.db.event(r.id, 'pi-turn', '当前子阶段回执已保存', { phase: t.phase, round: r.rounds }); },
+    next: async () => {
+    if (t.phase === 'ready') return;
     const source = namingBinding(store, r);
     assertControllerRules(root, rules.hash);
-    if (namingRulesHash(root, store.db.project()) !== skillHash) throw new Error('命名规则已更新');
+    if (namingRulesHash(root, store.db.project(), t) !== skillHash) throw new Error('命名规则已更新');
     if (signal.aborted) throw new RequestError('作者已停止命名', false);
     if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools)
-      throw new Error('命名与审核预算已用完，已有候选已保留');
+      throw new ApplicationError(r.rounds >= p.config.maxRounds ? 'ROUND_LIMIT' : 'TOOL_LIMIT', '命名与审核预算已用完，已有候选已保留');
     const reviewing = t.phase === 'reviewing',
       profile = withTaskReasoning(reviewing ? reviewer : writer, r);
     if (profiles().find((v) => v.id === profile.id)?.version !== profile.version)
       throw new Error('模型配置已改变');
+    if (!reviewing) {
+      await prepareTitleMarketResearch({ store, root, run: r, project: p, profile, spec: source.spec,
+        genre: source.currentPreferences.genre, plan: source.plan, settings: args.searchSettings ?? searchSettingsSchema.parse({}),
+        search: args.search, caller, signal, save, event, onActivity: args.onActivity });
+      namingBinding(store, r);
+      if (signal.aborted) throw new RequestError('作者已停止命名', false);
+      if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools)
+        throw new ApplicationError(r.rounds >= p.config.maxRounds ? 'ROUND_LIMIT' : 'TOOL_LIMIT', '命名预算已用完，已保存联网资料');
+    }
     const name = reviewing ? 'submit_title_review' : 'submit_title_candidates';
     const expectedCount = titleCandidateCount(t);
-    const batchSchema = expectedCount === undefined ? titleBatchSchema
-      : titleBatchSchema.extend({ candidates: z.array(titleCandidateSchema).length(expectedCount) });
+    const candidateSchema = titleCandidateSchema.extend({ supportingClaimIds: z.array(z.enum(source.plan.statements.map(v => v.id))).min(1).max(40) });
+    const candidates = z.array(candidateSchema).min(1).max(12);
+    const batchSchema = titleBatchSchema.extend({ candidates: expectedCount === undefined ? candidates : candidates.length(expectedCount) });
+    const marketEdition = t.editorialVersion === 2;
+    const reviewSchema = marketEdition
+      ? titleReviewSchema.extend({ recommendedIds: z.array(z.string().min(1).max(100)).max(3) })
+      : titleReviewSchema.omit({ recommendedIds: true });
     const tools: ToolDefinition[] = [
       {
         name,
         description: '提交书名候选或独立审核；不修改作品、不发布。',
-        parameters: z.toJSONSchema(reviewing ? titleReviewSchema : batchSchema) as Record<
+        parameters: z.toJSONSchema(reviewing ? reviewSchema : batchSchema) as Record<
           string,
           unknown
         >
       }
     ];
-    const expression = expressionPack(root, p.config, reviewing ? 'review' : 'planning');
+    const expression = expressionPack(root, p.config, marketEdition ? 'title_market' : t.editorialVersion === 1 ? 'title' : reviewing ? 'review' : 'planning');
     bindExpressionRules(r, expression.binding);
     const system = titleSystemPrompt({
       controller: rules.content,
@@ -266,7 +295,8 @@ export async function driveTitleNaming(args: {
       naming: t,
       reviewing,
       submitTool: name,
-      expression: expression.prompt
+      expression: expression.prompt,
+      ...(t.editorialVersion ? { editorial: titleEditorialResources(root, t.editorialVersion) } : {})
     });
     const history = titleHistoryDigest(r, store.db.runs());
     if (!r.messages.length)
@@ -278,14 +308,18 @@ export async function driveTitleNaming(args: {
             confirmedPlan: source,
             planHash: t.planHash,
             rule: titleRules[t.rule],
-            styleProfile,
+            ...(marketEdition ? { marketTarget: { platform: 'fanqie', genre: t.marketResearch?.genre ?? source.currentPreferences.genre,
+              tags: t.marketResearch?.tags ?? [] } } : {}),
+            ...(t.marketResearch?.status === 'ready' ? {} : { styleProfile }),
+            ...(t.marketResearch ? { marketResearch: t.marketResearch } : {}),
             manualTitle: t.manualTitle,
             instruction: t.instruction,
             batch: t.batch,
-            reviewFeedback: t.review?.result,
-            regenerate: t.regenerate,
+            reviewFeedback: reviewing ? undefined : t.review?.result,
+            regenerate: reviewing && t.regenerate ? { candidateId: t.regenerate.candidateId, instruction: t.regenerate.instruction } : t.regenerate,
+            repairScope: !reviewing && t.repair ? { pointers: t.repair.pointers, instruction: '原候选即本轮batch。只修复审核未通过的候选，其他候选原样保留。不得改写作者手填书名。' } : undefined,
             candidateCount: expectedCount,
-            history
+            history: reviewing ? undefined : marketEdition ? history.map(({ sourceRunId, candidateId, title }) => ({ sourceRunId, candidateId, title })) : history
           })
         }
       ];
@@ -296,7 +330,93 @@ export async function driveTitleNaming(args: {
     event(reviewing ? '正在审核书名承诺与方案依据' : '正在按不同卖点生成书名');
     store.db.set(`inflight:${r.id}`, true);
     save();
-    const result = await callModel(
+
+    let response!: ModelResult, handled = false;
+    const submit = async () => {
+      if (handled) return;
+      handled = true;
+      const result = response;
+    let ticket: ToolTicket | undefined;
+    let toolError: string | undefined;
+    try {
+      if (result.calls.length !== 1 || result.calls[0].name !== name)
+        throw new Error('请只调用当前提交工具一次');
+      if (r.toolCount > p.config.maxTools) throw new ApplicationError('TOOL_LIMIT', '已达到工具调用总上限');
+      ticket = beginTool(store, r.id, result.calls[0], tools, signal);
+      if (ticket.status === 'complete') throw new Error('当前命名步骤已经完成，请恢复状态');
+      const value = JSON.parse(result.calls[0].arguments);
+      if (!reviewing) {
+        if (t.repair) assertStructuredRepair(t.repair.original, value, t.repair.pointers);
+        t.batch = validateTitleBatch(value, r, source, history);
+        if (t.repair && t.review?.hash === tagHash(t.batch)) {
+          // An automatic correction that changed nothing retains its negative
+          // verdict. Never ask the reviewer to reconsider identical candidates.
+          t.phase = 'ready';
+          t.repair = undefined;
+          event('候选未发生变化，保留已有检查结果');
+        } else {
+          t.review = undefined;
+          t.phase = 'reviewing';
+        }
+      } else {
+        const review = titleReviewSchema.parse(value),
+          expected = t.batch!.candidates.map((v) => v.id);
+        if (
+          new Set(review.decisions.map((v) => v.candidateId)).size !== expected.length ||
+          review.decisions.length !== expected.length ||
+          review.decisions.some((v) => !expected.includes(v.candidateId))
+        )
+          throw new Error('命名审核必须覆盖每个候选且不能引用未知编号');
+        // Recommendation is editorial advice: discard stale/unsupported IDs without starting another model request.
+        if (marketEdition) {
+          const supported = new Set(review.decisions.filter(decision => decision.verdict === 'keep').map(decision => decision.candidateId));
+          review.recommendedIds = [...new Set(review.recommendedIds ?? [])].filter(id => supported.has(id) && expected.includes(id)).slice(0, 3);
+        }
+        t.review = { hash: tagHash(t.batch), result: review };
+        const rejected = review.decisions.filter(v => v.verdict !== 'keep').map(v => v.candidateId);
+        const repairable = rejected.filter(id => !t.regenerate || id === t.regenerate.candidateId);
+        const usable = review.decisions.some(v => v.verdict === 'keep' && (!t.regenerate || v.candidateId === t.regenerate.candidateId));
+        // Deliver usable options immediately. Repair only when the requested
+        // scope has no valid choice; rejected candidates remain unselectable.
+        if (!usable && repairable.length && !t.manualTitle && t.semanticRevisions < 1) {
+          t.semanticRevisions++;
+          t.history.push({ batch: structuredClone(t.batch!), review });
+          t.repair = { original: structuredClone(t.batch!), pointers: [...t.batch!.candidates.flatMap((v, index) => repairable.includes(v.id) ? [`/candidates/${index}`] : []), '/recommendedIds'] };
+          store.db.event(r.id, 'local-repair-scope', '保留通过审核的书名，只修复其余候选', { candidateIds: repairable });
+          t.phase = 'generating';
+        } else { t.phase = 'ready'; t.repair = undefined; }
+      }
+      t.consecutiveFormatFailures = 0;
+      r.messages = [];
+      r.error = undefined;
+      save();
+    } catch (e) {
+      stopOnToolFailure(e);
+      toolError = (e as Error).message;
+      store.db.event(r.id, 'format-repair', '书名提交未通过本地检查', { phase: t.phase, error: toolError });
+      t.formatRepairs++;
+      t.consecutiveFormatFailures = (t.consecutiveFormatFailures ?? 0) + 1;
+      for (const call of result.calls)
+        r.messages.push({
+          role: 'tool',
+          callId: call.id,
+          content: JSON.stringify({ ok: false, error: (e as Error).message })
+        });
+      if (!result.calls.length) r.messages.push({ role: 'user', content: '请使用当前结构化工具提交。' });
+      save();
+      if (ticket) {
+        finishTool(store, ticket, JSON.stringify({ ok: false, error: toolError }), () => store.db.saveRun(r));
+        ticket = undefined;
+      }
+      if (t.consecutiveFormatFailures > 2) throw new ApplicationError('FORMAT_INVALID', '命名结构校验连续失败：' + (e as Error).message);
+    }
+    if (ticket)
+      finishTool(store, ticket, JSON.stringify(toolError ? { ok: false, error: toolError } : { phase: t.phase, hash: tagHash(t.batch) }), () =>
+        store.db.saveRun(r)
+      );
+    };
+    return { profile, system, messages: r.messages, tools,
+      request: delta => callModel(
       store,
       r,
       'titles:' + t.phase,
@@ -306,9 +426,10 @@ export async function driveTitleNaming(args: {
       r.messages,
       tools,
       signal,
-      () => {},
+      delta,
       { onActivity: args.onActivity }
-    );
+    ),
+      received: async result => {
     recordUsage(store, r, result.usage, {
       phase: 'titles:' + t.phase,
       profileId: profile.id,
@@ -325,55 +446,14 @@ export async function driveTitleNaming(args: {
     if (result.stop === 'length' || result.stop === 'filtered') throw new Error('命名输出未完成，候选已保留');
     r.messages.push({ role: 'assistant', content: result.text, calls: result.calls, native: result.native });
     r.toolCount += result.calls.length;
-    let ticket: ToolTicket | undefined;
-    try {
-      if (result.calls.length !== 1 || result.calls[0].name !== name)
-        throw new Error('请只调用当前提交工具一次');
-      if (r.toolCount > p.config.maxTools) throw new Error('已达到工具调用总上限');
-      ticket = beginTool(store, r.id, result.calls[0], tools, signal);
-      if (ticket.status === 'complete') throw new Error('当前命名步骤已经完成，请恢复状态');
-      const value = JSON.parse(result.calls[0].arguments);
-      if (!reviewing) {
-        t.batch = validateTitleBatch(value, r, source, history);
-        t.review = undefined;
-        t.phase = 'reviewing';
-      } else {
-        const review = titleReviewSchema.parse(value),
-          expected = t.batch!.candidates.map((v) => v.id);
-        if (
-          new Set(review.decisions.map((v) => v.candidateId)).size !== expected.length ||
-          review.decisions.length !== expected.length ||
-          review.decisions.some((v) => !expected.includes(v.candidateId))
-        )
-          throw new Error('命名审核必须覆盖每个候选且不能引用未知编号');
-        t.review = { hash: tagHash(t.batch), result: review };
-        if (!review.decisions.some((v) => v.verdict === 'keep') && t.semanticRevisions < 1) {
-          t.semanticRevisions++;
-          t.history.push({ batch: structuredClone(t.batch!), review });
-          t.phase = 'generating';
-        } else t.phase = 'ready';
-      }
-      r.messages = [];
-      r.error = undefined;
-      save();
-    } catch (e) {
-      stopOnToolFailure(e);
-      t.formatRepairs++;
-      for (const call of result.calls)
-        r.messages.push({
-          role: 'tool',
-          callId: call.id,
-          content: JSON.stringify({ ok: false, error: (e as Error).message })
-        });
-      if (!result.calls.length) r.messages.push({ role: 'user', content: '请使用当前结构化工具提交。' });
-      save();
-      if (t.formatRepairs > 2) throw new Error('命名结构校验连续失败：' + (e as Error).message);
-    }
-    if (ticket)
-      finishTool(store, ticket, JSON.stringify({ phase: t.phase, hash: tagHash(t.batch) }), () =>
-        store.db.saveRun(r)
-      );
-  }
+
+        response = result; save(); return true;
+      },
+      execute: async () => { await submit(); return { proceed: r.status === 'running', content: JSON.stringify({ phase: t.phase }) }; },
+      finish: async () => { await submit(); return r.status === 'running' && !(t.phase === 'ready'); }
+    };
+  } });
+  if (!(t.phase === 'ready')) return;
   setRunStatus(r, 'awaiting_review');
   r.responseText = '书名候选已审核，请在作品方案的独立命名中选择；选择不会自动推进阶段。';
   save();

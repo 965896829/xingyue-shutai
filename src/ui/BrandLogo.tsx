@@ -6,8 +6,7 @@ export const brandAssets = {
   app: asset('app-icon'),
   night: asset('night-symbol'),
   day: asset('day-symbol'),
-  wordmarkNight: asset('wordmark-night'),
-  wordmarkDay: asset('wordmark-day')
+  wordmark: asset('wordmark-day')
 };
 
 let decoded: Promise<void> | undefined;
@@ -55,7 +54,7 @@ export function BrandLogo({
       title={brand.name}
       style={
         {
-          '--brand-wordmark-image': `url("${new URL(brandAssets.wordmarkDay, document.baseURI).href}")`
+          '--brand-wordmark-image': `url("${new URL(brandAssets.wordmark, document.baseURI).href}")`
         } as CSSProperties
       }
     >

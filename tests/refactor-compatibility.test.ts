@@ -11,7 +11,18 @@ import { ProjectRecycleBin } from '../src/core/recycle-bin';
 import { createBackup, restoreBackup } from '../src/core/documents';
 import { buildVersion } from '../src/shared/build';
 import { resumeArguments } from '../src/shared/run-capabilities';
-import { fakeProfile, fakeResult } from './fixtures/refactor';
+import { fakeProfile, fakeResult, refactorFixture } from './fixtures/refactor';
+import { runSchema } from '../src/shared/contract-schemas';
+
+test('run transport preserves memory review evidence and accepts older reviews without sources', () => {
+  const { store, run } = refactorFixture();
+  try {
+    run.memoryReview = { fingerprint: 'review-basis', issues: [], sources: [{ path: '正文.md', hash: store.db.document('正文.md')!.hash! }] };
+    assert.deepEqual(runSchema.parse(run).memoryReview, run.memoryReview);
+    delete run.memoryReview.sources;
+    assert.deepEqual(runSchema.parse(run).memoryReview, run.memoryReview);
+  } finally { store.close(); }
+});
 
 test('T-001 version 2 identity survives trash, restore and backup without changing content', async () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-harness-'));

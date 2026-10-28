@@ -103,7 +103,7 @@
   height: 100%;
   min-width: 0;
   min-height: 0;
-  padding: 18px 26px;
+  padding: 18px var(--chat-gutter);
   overflow-y: auto;
 }
 .assistant-heading,
@@ -523,7 +523,7 @@
     padding: 14px;
   }
   .assistant-conversation .chat-scroll {
-    padding: 12px;
+    padding: 12px var(--chat-gutter);
   }
   .chat-composer-area {
     padding: 4px 12px;

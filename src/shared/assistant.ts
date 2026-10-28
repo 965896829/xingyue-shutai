@@ -59,12 +59,18 @@ export interface ConversationMessage {
   citations: Citation[];
 }
 export interface ConversationTurn {
+  executorId?: 'legacy' | 'pi';
+  executorVersion?: string;
+  contextUsage?: import('./context-meter').ContextUsage;
+  contextCompactions?: import('./context-meter').ContextCompaction[];
   activity?: import('./generation').GenerationActivity;
   reasoningEfforts?: import('./reasoning').ReasoningSnapshot;
   webSearch?: import('./web-search').NativeWebSearchState;
   manifest?: import('./types').ContextManifest;
   taskContext?: string;
   displayedError?: string;
+  /** Host-bound permission to revise this unsaved candidate when explicitly requested in this turn. */
+  candidateEdit?: { runId: string; runHash: string };
   tagBinding?: { inputHash: string; contractRevision: number; knowledgeVersion: string };
   expressionRules?: import('./expression').ExpressionBinding;
   id: string;
@@ -76,6 +82,8 @@ export interface ConversationTurn {
   createdAt: string;
   updatedAt: string;
   error?: string;
+  failure?: import('./errors').ErrorPayload;
+  networkRetries?: number;
   rules: { id: string; version: string }[];
   citations: Citation[];
   messages: ModelMessage[];
@@ -122,6 +130,8 @@ export interface ActionProposal {
   rulesHash: string;
   createdAt: string;
   executionId?: string;
+  executionSource?: 'author_message';
+  executionError?: string;
 }
 export interface DraftArtifact {
   id: string;
@@ -133,8 +143,4 @@ export interface DraftArtifact {
   createdAt: string;
   updatedAt: string;
   versions: { hash: string; at: string }[];
-}
-/** Reserved contract: future knowledge providers never mutate canonical book records. */
-export interface KnowledgeProvider {
-  search(query: string, limit: number): Promise<{ content: string; source: string; version: string }[]>;
 }

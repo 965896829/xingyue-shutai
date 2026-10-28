@@ -3,10 +3,6 @@
   "catalogSource": "D:/aiwangzhan/novel-platform/services/api/app/catalog.py",
   "files": [
     {
-      "path": "components/account-menu.tsx",
-      "sourceSha256": "11d4762ad7f83af023534526f6138091074ac95f2fa24028ff58a20549bace77"
-    },
-    {
       "path": "components/admin-app.tsx",
       "sourceSha256": "cbfac93bd88607d8915f6ff633e16cec496db5001160cb505e8618f2dc726d45"
     },
@@ -77,10 +73,6 @@
     {
       "path": "components/creation-template-panel.tsx",
       "sourceSha256": "f0913d241d5ff1e643ff06fab32f0776b13b4000a56faf5806e1e9fd19ae57fd"
-    },
-    {
-      "path": "components/decoding-experiments.tsx",
-      "sourceSha256": "d3f209a0481a038729a50a63b6810932ac544569240acc8f3a05df6945e6d2ce"
     },
     {
       "path": "components/desktop-workbench.css",
@@ -199,10 +191,6 @@
       "sourceSha256": "c129260d141c87876b952bde2454d487ef5a0c52d6dbebd74a2535f7973c702c"
     },
     {
-      "path": "components/preference-experiments.tsx",
-      "sourceSha256": "893730df662f641f232d0a727b6569f53ae392bca577bb14304e0fcd63052fb4"
-    },
-    {
       "path": "components/pricing-rule-form.tsx",
       "sourceSha256": "354ba90e1e194edcd950dca41eaca3dc0f44c63ef15b9c06540586c0ffcb3f7a"
     },
@@ -307,10 +295,6 @@
       "sourceSha256": "916f8c8f292703ed3704b2a0140f635d05e60353871856f99faaa9c0ffcc4ebd"
     },
     {
-      "path": "components/site-display.tsx",
-      "sourceSha256": "ef92678422a0736344064fe1aa6eb9f5c2851918e29f0e5fc4632ad987f9a59c"
-    },
-    {
       "path": "components/storage-form.tsx",
       "sourceSha256": "702c7055c924520d1bbd200073607050b5a54e427e3ca1d2ea5380643752a780"
     },
@@ -385,10 +369,6 @@
     {
       "path": "lib/reference-pages.ts",
       "sourceSha256": "c6e57d9066229deaa9ae3f6f8bad510dea9171804106f9c4f93efb569a75dffb"
-    },
-    {
-      "path": "lib/task-approval.ts",
-      "sourceSha256": "0b84d3b8a5c44a8b76c89364a39c54eeda1c0afe0ec16e32315f3bbf039bd85b"
     },
     {
       "path": "app/globals.css",

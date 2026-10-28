@@ -1,12 +1,11 @@
 import { useDialogs } from '../ui/AppDialogs';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, FolderOpen, Plus, RefreshCw, Sparkles, Download, ExternalLink } from 'lucide-react';
+import { BookOpen, FolderOpen, Plus, RefreshCw, Sparkles, ExternalLink } from 'lucide-react';
 import { invokeCommand } from '../shared/client';
-import { modelFields, connectionFields } from '../shared/provider-groups';
 import { useManagement } from './ManagementContext';
 import { navigate } from './reference/router';
-import { CompactHeading, Modal, SearchBox, RefTabs, RefEmpty } from './reference/components/reference-ui';
+import { CompactHeading, Modal, SearchBox, RefEmpty } from './reference/components/reference-ui';
 import { ErrorState, Spinner, useToast } from './reference/components/ui';
 import type { PageSpec } from './reference/lib/api';
 import type { RoleRule } from '../shared/assistant';
@@ -82,7 +81,7 @@ function ModelRuntime({ pricing }: { pricing: boolean }) {
   const rows = snapshot?.savedProfiles ?? snapshot?.profiles ?? [];
   return <div className="ref-page"><CompactHeading title={pricing ? '定价规则' : '运行策略'} description={pricing ? '维护客户端的输入、输出成本估算单价，按百万 Token 计算。平台收费、折扣和结算尚未接入。' : '管理客户端已实现的模型参数。平台并发池、自动回退和账号轮换尚未接入。'} /><div className="ref-table-wrap"><table className="ref-table"><thead><tr><th>模型 / 平台</th><th>{pricing ? '输入单价' : '上下文 / 输出上限'}</th><th>{pricing ? '输出单价' : '超时 / 流式 / 工具'}</th><th>操作</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td><strong>{r.model}</strong><small className="ref-row-subtitle">{r.name}</small></td><td>{pricing ? `${r.inputPrice ?? '未配置'} ${r.currency}` : `${r.contextLimit} / ${r.outputLimit}`}</td><td>{pricing ? `${r.outputPrice ?? '未配置'} ${r.currency}` : `${r.timeoutSeconds}s / ${r.stream ? '开' : '关'} / ${r.tools ? '开' : '关'}`}</td><td><button className="button secondary" onClick={() => setP({ ...r })}>编辑</button></td></tr>)}</tbody></table></div>{!rows.length && <RefEmpty text="请先在平台管理接入 API 和模型。" />}
     {p && <Modal wide title={`${pricing ? '编辑成本估算' : '编辑运行策略'} · ${p.model}`} onClose={() => !busy && setP(undefined)} footer={<button className="button primary" disabled={busy} onClick={async () => { setBusy(true); try { await invokeCommand('profiles.save', { profile: p }); await refresh(); setP(undefined); toast('配置已保存到客户端'); } catch (e) { toast((e as Error).message, true); } finally { setBusy(false); } }}>保存</button>}><div className="parity-grid">
-      {(pricing ? [['inputPrice', '输入单价 / 百万 Token'], ['outputPrice', '输出单价 / 百万 Token']] : [['contextLimit', '上下文容量'], ['outputLimit', '输出上限'], ['timeoutSeconds', '请求超时（秒）']]).map(([key, label]) => <label className="local-label" key={key}>{label}<input type="number" min={pricing ? 0 : 1} value={(p as any)[key] ?? ''} onChange={e => setP({ ...p, [key]: e.target.value === '' ? null : Number(e.target.value), ...(!pricing && key !== 'timeoutSeconds' ? { limitMode: 'manual' } : {}) })} /></label>)}
+      {(pricing ? [['inputPrice', '输入单价 / 百万 Token'], ['outputPrice', '输出单价 / 百万 Token']] : [['contextLimit', '上下文容量'], ['outputLimit', '输出上限'], ['timeoutSeconds', '响应等待上限（秒）']]).map(([key, label]) => <label className="local-label" key={key}>{label}<input type="number" min={pricing ? 0 : 1} value={(p as any)[key] ?? ''} onChange={e => setP({ ...p, [key]: e.target.value === '' ? null : Number(e.target.value), ...(!pricing && key !== 'timeoutSeconds' ? { limitMode: 'manual' } : {}) })} />{key === 'timeoutSeconds' && <small>流式按连续无生成进展计时；非流式按整次请求计时。</small>}</label>)}
       {pricing ? <label className="local-label">币种<input value={p.currency} onChange={e => setP({ ...p, currency: e.target.value })} /></label> : <>{(['stream', 'tools'] as const).map(key => <label className="local-label" key={key}><span><input type="checkbox" checked={p[key]} onChange={e => setP({ ...p, [key]: e.target.checked })} />{key === 'stream' ? '流式输出' : '允许模型工具调用'}</span></label>)}</>}
     </div></Modal>}
   </div>;

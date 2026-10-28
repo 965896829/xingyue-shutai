@@ -4,6 +4,7 @@ import type { ToolCall, ToolDefinition } from '../../shared/types';
 import { ApplicationError } from '../../shared/errors';
 import { fingerprint } from './canonical';
 import { RequestError } from '../provider';
+import { normalizeToolArguments } from '../output-normalization';
 
 export interface ToolTicket {
   id: string; runId: string; attemptId: string; toolName: string; version: 1;
@@ -15,6 +16,7 @@ export function beginTool(store: FileStore, runId: string, call: ToolCall, defin
   const definition = definitions.find((definition) => definition.name === call.name);
   if (!definition || ['terminal', 'network', 'commit', 'approve', 'run.accept'].includes(call.name))
     throw new ApplicationError('PERMISSION_DENIED', '此执行器没有该工具权限');
+  call.arguments = normalizeToolArguments(call.arguments);
   const args: unknown = JSON.parse(call.arguments);
   const schema = z.fromJSONSchema(definition.parameters as Parameters<typeof z.fromJSONSchema>[0]);
   schema.parse(args);

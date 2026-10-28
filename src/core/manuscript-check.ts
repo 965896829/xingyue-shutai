@@ -1,4 +1,5 @@
 import { countWords, hash } from './domain';
+import { extractProseBody } from './prose-body';
 import { z } from 'zod';
 import type { Issue, ProjectConfig, ProjectState } from '../shared/types';
 
@@ -38,11 +39,11 @@ export function checkReviewEvidence(file: string, report: string, prose: string)
 
 export function checkProse(file: string, content: string, config: ProjectConfig): Issue[] {
   const issues: Issue[] = [];
-  const body = content.replace(/^\uFEFF/, '').replace(/^\s*#(?!#)[^\r\n]*(?:\r?\n|$)/, '');
+  const body = extractProseBody(content);
   const compact = body.replace(/\s/gu, '');
   const count = countWords(content);
   if (count < config.minWords || count > config.maxWords)
-    issues.push({ code: 'word_count', severity: 'error', path: file, message: `正文 ${count} 字，允许范围 ${config.minWords}—${config.maxWords}（排除首行一级标题、空白）` });
+    issues.push({ code: 'word_count', severity: 'error', path: file, message: `正文 ${count} 字，允许范围 ${config.minWords}—${config.maxWords}（排除明确的首章标题、空白）` });
   if (!compact || /^(?:待填写|待生成|待补充|TODO|TBD)[。.!！]?$/i.test(compact) || /^\s*(?:-\s*)?状态[：:]\s*待生成\s*$/m.test(body) || /^## 内容\s*\n\s*待填写/m.test(body))
     issues.push({ code: 'prose_placeholder', severity: 'error', path: file, message: '正文仍是占位内容，请先完成本章写作。' });
   const repeated = /([\p{L}\p{N}])\1{39,}/u.exec(compact);

@@ -1,9 +1,10 @@
-import { useDialogs } from './AppDialogs';
+import { RunRecoveryButton } from './RunRecoveryButton';
+import { ContextCompactions } from './ContextMeter';
 import type { Run } from '../shared/types';
 import { GenerationStatus } from './GenerationStatus';
 import { CreationProgress } from './CreationProgress';
 import { reasoningLabel } from '../shared/reasoning';
-import { creationTaskState, requestErrorText, retryNeedsConfirmation } from '../shared/run-presentation';
+import { creationTaskState, requestErrorText } from '../shared/run-presentation';
 import { invokeCommand as invoke } from '../shared/client';
 
 export function CreationTaskStatus({
@@ -21,7 +22,6 @@ export function CreationTaskStatus({
   onEdit?: () => void;
   format?: (text: string) => string;
 }) {
-  const dialogs = useDialogs(run.id);
   const state = creationTaskState(run);
   return (
     <div className={`creation-task-status ${state.tone}`}>
@@ -30,28 +30,12 @@ export function CreationTaskStatus({
         {(run.status === 'running' || run.activity) && <GenerationStatus activity={run.activity} running={run.status === 'running'} label="本次执行结束" fallbackStart={run.createdAt} />}
         <CreationProgress run={run} />
         {state.detail && <p>{state.detail}</p>}
+        <ContextCompactions items={run.contextCompactions} activity={run.activity} running={run.status === 'running'} />
       </div>
       {state.recovery && (
         <div className="tag-actions">
-          {state.recovery === 'resume' && (
-            <button
-              className="primary"
-              disabled={disabled}
-              onClick={async () => {
-                if (
-                  retryNeedsConfirmation(run) &&
-                  !await dialogs.confirm('上次请求结果与费用未知，重新请求可能重复计费。确认重新请求？', { title: '重新请求当前任务？', confirmLabel: '确认重新请求', cancelLabel: '暂不重试' })
-                )
-                  return;
-                void act(() =>
-                  invoke('run.resume', { id: run.id, retryUnknown: retryNeedsConfirmation(run) })
-                );
-              }}
-            >
-              {retryNeedsConfirmation(run) ? '核对后重新请求这一步' : '继续这一步'}
-            </button>
-          )}
-          {state.recovery === 'edit' && onEdit && (
+          {state.recovery === 'resume' && <RunRecoveryButton run={run} disabled={disabled} act={act} onInspect={() => onReview(run.id)} />}
+          {state.recovery === 'resume' && onEdit && run.failure?.code === 'REPAIR_EXHAUSTED' && (
             <button className="primary" disabled={disabled} onClick={onEdit}>
               修改想法
             </button>
@@ -83,10 +67,10 @@ export interface CreationCheckItem {
   kind: 'blocking' | 'confirmation' | 'suggestion';
 }
 
-export function CreationChecks({ title, items }: { title: string; items: CreationCheckItem[] }) {
+export function CreationChecks({ title, items, processing = false }: { title: string; items: CreationCheckItem[]; processing?: boolean }) {
   if (!items.length) return null;
-  const required = items.filter((i) => i.kind !== 'suggestion'),
-    suggestions = items.filter((i) => i.kind === 'suggestion');
+  const required = items.filter((i) => i.kind === 'blocking'),
+    suggestions = items.filter((i) => i.kind !== 'blocking');
   const list = (rows: CreationCheckItem[]) => (
     <ul>
       {rows.map((item, index) => (
@@ -97,13 +81,19 @@ export function CreationChecks({ title, items }: { title: string; items: Creatio
       ))}
     </ul>
   );
+  if (processing) return (
+    <details className="creation-checks">
+      <summary>{title} · 正在处理检查意见，暂不需要你操作</summary>
+      {list(items)}
+    </details>
+  );
   return (
     <div className="creation-checks">
       {required.length > 0 && (
         <div className="creation-required-checks">
           <strong>
             {title} · {required.length} 项
-            {required.some((i) => i.kind === 'blocking') ? '需要处理' : '需要确认'}
+            需调整的内容
           </strong>
           {list(required)}
         </div>

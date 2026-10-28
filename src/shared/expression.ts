@@ -1,4 +1,4 @@
-export type ExpressionMode = 'discussion' | 'draft' | 'planning' | 'prose' | 'revision' | 'review' | 'record';
+export type ExpressionMode = 'discussion' | 'draft' | 'planning' | 'title' | 'title_market' | 'prose' | 'revision' | 'review' | 'record';
 
 export interface ExpressionBinding {
   version: string;

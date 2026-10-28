@@ -99,7 +99,9 @@ export const titleReviewSchema = z
           .strict()
       )
       .min(1)
-      .max(12)
+      .max(12),
+    /** Editorial v2: reviewer's platform-fit shortlist; empty means no recommendation. */
+    recommendedIds: ids.max(3).optional()
   })
   .strict();
 export type TitleReview = z.infer<typeof titleReviewSchema>;
@@ -117,6 +119,11 @@ export interface AcceptedTitle extends TitleSelection {
   reason?: string;
 }
 export interface TitlePlanning {
+  /** Opt in on new batches; existing reviewed names keep their original rule fingerprint. */
+  editorialVersion?: 1 | 2;
+  /** Absent on older tasks, whose already-reviewed candidates stay usable. */
+  marketResearchVersion?: 1;
+  marketResearch?: import('./title-style').TitleMarketResearch;
   sourceRunId?: string;
   planHash: string;
   sourceHash: string;
@@ -133,7 +140,20 @@ export interface TitlePlanning {
   regenerate?: { candidateId: string; instruction: string; original: TitleBatch };
   history: { batch: TitleBatch; review?: TitleReview }[];
   formatRepairs: number;
+  consecutiveFormatFailures?: number;
   semanticRevisions: number;
+  repair?: { original: TitleBatch; pointers: string[] };
+}
+
+/** Style advice changes recommendations, never the author's ability to select a supported title. */
+export function recommendedTitleIds(naming: TitlePlanning): string[] {
+  if (!naming.batch) return [];
+  if (naming.editorialVersion !== 2) return naming.batch.recommendedIds;
+  if (naming.phase !== 'ready' || !naming.review) return [];
+  const candidates = new Set(naming.batch.candidates.map(candidate => candidate.id));
+  const supported = new Set(naming.review.result.decisions.filter(decision => decision.verdict === 'keep').map(decision => decision.candidateId));
+  return [...new Set(naming.review.result.recommendedIds ?? [])]
+    .filter(id => candidates.has(id) && supported.has(id)).slice(0, 3);
 }
 
 /** New projects have one authority. Legacy snapshots retain their original tag record. */

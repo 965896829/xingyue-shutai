@@ -25,6 +25,7 @@ export const modelFields = (p: Profile) => ({
   limitMode: p.limitMode,
   modelLimits: p.modelLimits,
   ...(p.contextPolicy ? { contextPolicy: p.contextPolicy } : {}),
+  ...(p.networkRecovery ? { networkRecovery: p.networkRecovery } : {}),
   stream: p.stream,
   ...(p.responsesTransport ? { responsesTransport: p.responsesTransport } : {}),
   tools: p.tools,

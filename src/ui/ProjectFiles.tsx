@@ -1,11 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { FileText } from 'lucide-react';
 import type { DocumentInfo } from '../shared/types';
 
-export function ProjectFiles({ documents, selected, onOpen, resetKey }: { documents: DocumentInfo[]; selected?: string; onOpen: (path: string) => void; resetKey: string }) {
+export function ProjectFiles({ documents, selected, current, onOpen, resetKey }: { documents: DocumentInfo[]; selected?: string; current?: string; onOpen: (path: string) => void; resetKey: string }) {
   const container = useRef<HTMLDivElement>(null), firstRow = useRef<HTMLButtonElement>(null), pendingFocus = useRef<number | null>(null);
   const [top, setTop] = useState(0), [height, setHeight] = useState(400), [rowHeight, setRowHeight] = useState(34);
   const virtual = documents.length > 300;
+  const currentIndex = current ? documents.findIndex(document => document.path === current) : -1;
   const start = virtual ? Math.max(0, Math.min(documents.length - 1, Math.floor(top / rowHeight) - 8)) : 0;
   const end = virtual ? Math.min(documents.length, start + Math.ceil(height / rowHeight) + 17) : documents.length;
   useLayoutEffect(() => {
@@ -20,7 +21,17 @@ export function ProjectFiles({ documents, selected, onOpen, resetKey }: { docume
     if (firstRow.current) observer.observe(firstRow.current);
     return () => observer.disconnect();
   }, [virtual, documents.length]);
-  useEffect(() => { if (container.current) container.current.scrollTop = 0; setTop(0); pendingFocus.current = null; }, [resetKey]);
+  useLayoutEffect(() => {
+    const element = container.current;
+    if (!element) return;
+    pendingFocus.current = null;
+    // Follow actual stage/chapter changes, never file selection or streaming text.
+    const target = element.querySelector<HTMLButtonElement>('[aria-current="step"]');
+    const position = currentIndex < 0 ? 0 : virtual ? currentIndex * rowHeight : target
+      ? element.scrollTop + target.getBoundingClientRect().top - element.getBoundingClientRect().top : 0;
+    element.scrollTop = Math.max(0, position - (currentIndex < 0 ? 0 : (element.clientHeight - rowHeight) / 2));
+    setTop(element.scrollTop);
+  }, [resetKey, current, currentIndex, rowHeight, virtual, height]);
   useLayoutEffect(() => {
     if (pendingFocus.current === null) return;
     const button = container.current?.querySelector<HTMLButtonElement>(`[data-file-index="${pendingFocus.current}"]`);
@@ -30,8 +41,10 @@ export function ProjectFiles({ documents, selected, onOpen, resetKey }: { docume
     {virtual && start > 0 && <div aria-hidden="true" style={{ height: start * rowHeight }} />}
     {documents.slice(start, end).map((document, offset) => {
       const index = start + offset;
-      return <button key={document.path} ref={offset === 0 ? firstRow : undefined} title={document.path} data-file-index={index}
-        className={selected === document.path ? 'selected' : ''} onClick={() => onOpen(document.path)}
+      const isCurrent = current === document.path;
+      return <button key={document.path} ref={offset === 0 ? firstRow : undefined} title={`${isCurrent ? '当前阶段 · ' : ''}${document.path}`} data-file-index={index}
+        className={`${selected === document.path ? 'selected' : ''} ${isCurrent ? 'current-stage' : ''}`.trim()}
+        aria-current={isCurrent ? 'step' : undefined} onClick={() => onOpen(document.path)}
         onKeyDown={event => {
           if (!virtual || !container.current) return;
           let target = index;
@@ -49,6 +62,7 @@ export function ProjectFiles({ documents, selected, onOpen, resetKey }: { docume
           setTop(container.current.scrollTop);
         }}>
         <FileText size={14} /><span>{document.path.split('/').at(-1)?.replace('.md', '')}</span>
+        {isCurrent && <em className="current-stage-badge">当前</em>}
         {document.status !== 'accepted' && <i title="外部修改待确认" />}
       </button>;
     })}

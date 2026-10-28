@@ -27,7 +27,24 @@ function tableChapterSpan(cells: string[], column: number) {
   if (/\.md(?:$|[\s#?])/i.test(label)) return undefined;
   const explicit = new RegExp(`^第?\\s*${numeral}\\s*(?:章|[—–\\-~～至到])`).test(label);
   const numbered = column >= 0 && new RegExp(`^${numeral}$`).test(label);
-  return explicit || numbered ? chapterSpan(label, column >= 0) : undefined;
+  return explicit || numbered ? chapterSpan(label, column >= 0 || explicit) : undefined;
+}
+
+/** Volume templates put their range in a field, not necessarily in the heading.
+ * Only inspect the heading's own fields; a range in a nested chapter must not
+ * silently constrain the whole parent section. Unknown sections remain intact. */
+function sectionSpan(lines: string[], at: number) {
+  const title = lines[at].match(/^\s*#{1,6}\s+(.+)/)?.[1] ?? '';
+  const span = chapterSpan(title);
+  if (span) return span;
+  if (!/第[零〇一二两三四五六七八九十百千万\d]+卷/.test(title)) return undefined;
+  for (let n = at + 1; n < lines.length; n++) {
+    const heading = lines[n].match(/^\s*(#{1,6})\s+/);
+    if (heading) break;
+    const field = lines[n].match(/^\s*(?:[-*]\s*)?(?:\*\*)?(?:章节范围|覆盖章节|起止章节|章节区间)(?:\*\*)?\s*[：:]\s*(.*?)\s*$/);
+    if (field) return chapterSpan(field[1].replace(/\*\*/g, '').replace(/[。；;.]\s*$/, ''), true);
+  }
+  return undefined;
 }
 
 function selectLines(text: string, selected: boolean[]): TextSlice {
@@ -46,17 +63,17 @@ function selectLines(text: string, selected: boolean[]): TextSlice {
   return { content: ranges.map(r => points.slice(r.start, r.end).join('')).join('\n\n'), ranges, omitted: selected.some(v => !v) };
 }
 
-export function chapterSlice(text: string, chapter: number): TextSlice {
+export function chapterSlice(text: string, chapter: number, throughChapter = chapter): TextSlice {
   const lines = text.split(/(?<=\n)/), selected: boolean[] = [];
   const sections: { level: number; included: boolean }[] = [];
   let tableColumn = -1, matched = false, recognized = false;
-  for (const line of lines) {
+  for (const [at, line] of lines.entries()) {
     const heading = line.match(/^\s*(#{1,6})\s+(.+)/);
     if (heading) {
       while (sections.length && sections.at(-1)!.level >= heading[1].length) sections.pop();
-      const span = chapterSpan(heading[2]);
-      if (span) { recognized = true; matched ||= span[0] <= chapter && chapter <= span[1]; }
-      sections.push({ level: heading[1].length, included: (sections.at(-1)?.included ?? true) && (!span || (span[0] <= chapter && chapter <= span[1])) });
+      const span = sectionSpan(lines, at);
+      if (span) { recognized = true; matched ||= span[0] <= throughChapter && chapter <= span[1]; }
+      sections.push({ level: heading[1].length, included: (sections.at(-1)?.included ?? true) && (!span || (span[0] <= throughChapter && chapter <= span[1])) });
       tableColumn = -1;
     }
     let include = sections.at(-1)?.included ?? true;
@@ -66,7 +83,7 @@ export function chapterSlice(text: string, chapter: number): TextSlice {
       if (header >= 0) tableColumn = header;
       else if (!cells.every(c => /^:?-+:?$/.test(c))) {
         const span = tableChapterSpan(cells, tableColumn);
-        if (span) { recognized = true; matched ||= span[0] <= chapter && chapter <= span[1]; include &&= span[0] <= chapter && chapter <= span[1]; }
+        if (span) { recognized = true; matched ||= span[0] <= throughChapter && chapter <= span[1]; include &&= span[0] <= throughChapter && chapter <= span[1]; }
       }
     } else if (line.trim()) tableColumn = -1;
     selected.push(include);

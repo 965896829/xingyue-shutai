@@ -13,7 +13,6 @@ import {
   Search,
   KeyRound,
   MoreHorizontal,
-  X,
   Upload,
 } from "lucide-react";
 import {
@@ -24,7 +23,6 @@ import {
   type PageSpec,
   formatTime,
   label,
-  formatNumber,
 } from "@reference/lib/api";
 import { referencePages, type RefColumn } from "@reference/lib/reference-pages";
 import {

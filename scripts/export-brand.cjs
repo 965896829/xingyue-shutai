@@ -123,11 +123,8 @@ app.whenReady().then(() => {
   }
   const loadedWordmark = load('wordmark'), image = wordmark(loadedWordmark.image);
   report.sources.wordmark = loadedWordmark.source;
-  // Identical silhouette: the renderer changes ink color without crossfading different glyphs.
-  for (const name of ['wordmark-night', 'wordmark-day'])
-    report.outputs.push(writePNG(path.join(publicDir, `${name}.png`), image));
-  for (const file of ['public/icon.png', 'resources/icon.png'])
-    report.outputs.push(writePNG(path.join(root, file), appIcon));
+  // One silhouette serves both themes; CSS controls its ink color.
+  report.outputs.push(writePNG(path.join(publicDir, 'wordmark-day.png'), image));
   const icoImages = [16, 24, 32, 48, 64, 128, 256].map((size) => ({
     // Reserve one explicit transparent pixel so the resampling kernel cannot touch the ICO edge.
     size, image: place(appIcon.resize({ width: size - 2, height: size - 2, quality: 'best' }), size, size, 1, 1)

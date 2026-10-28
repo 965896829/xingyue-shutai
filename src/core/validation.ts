@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  countWords,
   activeBatch,
   batchPath,
   stageOutputs,
@@ -19,30 +18,12 @@ import {
 } from './domain';
 import type { Change, Issue, ProjectState, StageId } from '../shared/types';
 import { checkProse, checkReviewEvidence } from './manuscript-check';
+import { computedScore, declaredTotalScore } from './output-normalization';
+import { authorStructureIssues } from './skill-output-contract';
+export { computedScore, scoreFields } from './output-normalization';
 
 const blank =
   /^(?:待填写[。.]?|待生成[。.]?|待补充[。.]?|TBD|TODO|\/(?:5|10|100)|是\/否(?:\/无变化|\/未到批次边界)?|未启用\/已启用|用户样本\/用户描述\/项目默认|硬悬念\/软牵引|[-—]*)$/i;
-export const scoreFields = [
-  '开头有效性',
-  '强度与章节功能匹配',
-  '主角主动性',
-  '阅读回报',
-  '设定使用',
-  '状态变化',
-  '人物一致性',
-  '节奏可读性',
-  '留白与非总结化',
-  '章末牵引'
-];
-export function computedScore(content: string): number | null {
-  let total = 0;
-  for (const label of scoreFields) {
-    const m = content.match(new RegExp(`^- ${label}[：:]\\s*(\\d+(?:\\.\\d+)?)\\s*(?:/10)?\\s*$`, 'm'));
-    if (!m || Number(m[1]) > 10 || Number(m[1]) < 0) return null;
-    total += Number(m[1]);
-  }
-  return Math.round(total * 10) / 10;
-}
 export function checkFields(text: string, labels: string[], file: string, allowSections = false): Issue[] {
   const issues: Issue[] = [];
   const fields = parseMarkdownFields(text);
@@ -112,7 +93,9 @@ export function parseMarkdownFields(text: string): { label: string; content: str
     const parts = [m[3].replace(/^\*\*/, '')];
     for (let j = i + 1; j < lines.length; j++) {
       const line = lines[j];
-      if (/^\s*(?:#{1,6}\s|`{3,}|~{3,})/.test(line)) break;
+      const heading = line.match(/^(\s*)#{1,6}[\t ]/);
+      if (heading && heading[1].replaceAll('\t', '    ').length <= indent) break;
+      if (/^\s*(?:`{3,}|~{3,})/.test(line)) break;
       const list = line.match(/^(\s*)(?:[-*+]|\d+[.)])\s/);
       if (list && list[1].replaceAll('\t', '    ').length <= indent) break;
       parts.push(line);
@@ -122,13 +105,13 @@ export function parseMarkdownFields(text: string): { label: string; content: str
   return result;
 }
 function emptyField(content: string) {
-  const values = content.split('\n').map((s) =>
-    s
-      .trim()
-      .replace(/^(?:[-*+]|\d+[.)])\s+/, '')
-      .replace(/\*\*/g, '')
-      .trim()
-  );
+  const lines = content.split('\n');
+  const separator = /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/;
+  const values = lines.flatMap((line, index) => {
+    if (/^\s*#{1,6}[\t ]/.test(line) || separator.test(line) || line.includes('|') && separator.test(lines[index + 1] ?? '')) return [];
+    const text = line.trim().replace(/^(?:[-*+]|\d+[.)])\s+/, '').replace(/\*\*/g, '').trim();
+    return text.startsWith('|') && text.endsWith('|') ? text.split(/(?<!\\)\|/).slice(1, -1).map(cell => cell.trim()) : [text];
+  });
   return values.every((s) => blank.test(s));
 }
 export function templateFields(skillRoot: string): Record<string, string[]> {
@@ -147,14 +130,37 @@ export function templateFields(skillRoot: string): Record<string, string[]> {
   }
   return result;
 }
+function chapterCell(value: string): number | null {
+  const match = value.match(/^(?:第?(\d{1,8})章(?=[\s：:\-—]|$)|(\d{1,8})$)/);
+  return match ? Number(match[1] ?? match[2]) : null;
+}
+function markdownHeading(line: string) {
+  const match = line.match(/^ {0,3}(#{1,6})[\t ]+(.+)$/);
+  return match ? { level: match[1].length, title: match[2] } : null;
+}
+function chapterHeading(line: string) {
+  const heading = markdownHeading(line);
+  const match = heading?.title.match(/^第?(\d{1,8})章(?=[\s：:\-—]|$)/);
+  return match ? { ...heading!, number: Number(match[1]) } : null;
+}
 export function chapterNumbers(text: string): number[] {
-  return [...text.matchAll(/(?:^|\n)(?:#{1,6}\s*|\|\s*)第?(\d{1,8})章(?=[\s：:|\-—]|$)/g)].map((m) =>
-    Number(m[1])
-  );
+  let fence = '';
+  return text.split(/\r?\n/).flatMap(line => {
+    const marker = line.trim().match(/^(`{3,}|~{3,})/);
+    if (marker) { if (!fence) fence = marker[1]; else if (marker[1][0] === fence[0] && marker[1].length >= fence.length) fence = ''; return []; }
+    if (fence) return [];
+    const heading = chapterHeading(line);
+    if (heading) return [heading.number];
+    const cell = line.match(/^ {0,3}\|\s*([^|]*?)\s*\|/);
+    const number = cell ? chapterCell(cell[1]) : null;
+    return number === null ? [] : [number];
+  });
 }
 export function validateCoverage(text: string, start: number, end: number, file: string): Issue[] {
-  const numbers = chapterNumbers(text),
-    issues: Issue[] = [];
+  return validateChapterNumbers(chapterNumbers(text), start, end, file);
+}
+function validateChapterNumbers(numbers: number[], start: number, end: number, file: string): Issue[] {
+  const issues: Issue[] = [];
   for (let n = start; n <= end; n++)
     if (numbers.filter((v) => v === n).length !== 1)
       issues.push({
@@ -164,6 +170,22 @@ export function validateCoverage(text: string, start: number, end: number, file:
         message: `第 ${n} 章需要唯一、明确的标题或表格行`
       });
   return issues;
+}
+function chapterBlocks(text: string) {
+  const lines = text.split(/\r?\n/);
+  let fence = '';
+  const headings = lines.flatMap((line, index) => {
+    const marker = line.trim().match(/^(`{3,}|~{3,})/);
+    if (marker) { if (!fence) fence = marker[1]; else if (marker[1][0] === fence[0] && marker[1].length >= fence.length) fence = ''; return []; }
+    if (fence) return [];
+    const heading = markdownHeading(line);
+    return heading ? [{ index, level: heading.level, chapter: chapterHeading(line)?.number ?? null }] : [];
+  });
+  return headings.flatMap((heading, index) => {
+    if (heading.chapter === null) return [];
+    const end = headings.slice(index + 1).find(next => next.chapter !== null || next.level <= heading.level)?.index ?? lines.length;
+    return [{ number: heading.chapter, index: heading.index, content: lines.slice(heading.index + 1, end).join('\n') }];
+  });
 }
 function tableContent(text: string, leadingColumns: string[]) {
   let found = false, active = false;
@@ -184,6 +206,22 @@ function tableContent(text: string, leadingColumns: string[]) {
   }
   // Older imported outlines may use chapter headings instead of a table.
   return found ? rows.join('\n') : text;
+}
+function volumeWords(value: string): number | null {
+  const equivalent = value.trim().match(/^([^（）()]+)\s*[（(]([^（）()]+)[）)]$/u);
+  if (equivalent) {
+    const primary = volumeWords(equivalent[1]), annotation = volumeWords(equivalent[2]);
+    // Alternate units may clarify the same exact amount; a conflicting or
+    // approximate annotation must never be silently discarded.
+    return primary !== null && primary === annotation ? primary : null;
+  }
+  const match = value.trim().match(/^(\d+)(?:\.(\d+))?\s*(万)?\s*字?$/);
+  if (!match) return null;
+  const fraction = match[2] ?? '', scale = match[3] ? 4 : 0;
+  // Shift decimal digits exactly: fractional words and unsafe integers are invalid.
+  if (fraction.slice(scale).replace(/0/g, '')) return null;
+  const words = BigInt(match[1]) * (match[3] ? 10000n : 1n) + BigInt(fraction.slice(0, scale).padEnd(scale, '0') || '0');
+  return words <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(words) : null;
 }
 export function validateCandidate(
   stage: StageId,
@@ -234,6 +272,7 @@ export function validateCandidate(
       issues.push({ code: 'file_type', severity: 'error', path: c.path, message: '写作产物必须是 Markdown' });
       continue;
     }
+    if (mode === 'stage') issues.push(...authorStructureIssues(c));
     const lines = c.content.split(/\r?\n/);
     for (const header of tableContracts[c.path] ?? []) {
       const cells = (line: string) =>
@@ -297,7 +336,7 @@ export function validateCandidate(
           path: c.path,
           message: '质量评分必须包含十项 0—10 分数'
         });
-      else if (!new RegExp(`总分[：:]\\s*${score}(?:\\s*/100)?(?:\\s|$)`).test(c.content))
+      else if (declaredTotalScore(c.content) !== score)
         issues.push({
           code: 'quality_total',
           severity: 'error',
@@ -318,10 +357,10 @@ export function validateCandidate(
     if (c.path === paths.volumes) {
       const ranges = [
         ...c.content.matchAll(
-          /^\|\s*(?:第)?[一二三四五六七八九十\d]+卷?\s*\|[^|]*\|\s*(?:第)?(\d+)\s*章?\s*[-—～~至]\s*(?:第)?(\d+)\s*章?\s*\|\s*(\d+)\s*章?\s*\|\s*(\d+)\s*字?\s*\|/gm
+          /^\|\s*(?:第)?[一二三四五六七八九十\d]+卷?\s*\|[^|]*\|\s*(?:第)?(\d+)\s*章?\s*[-—～~至]\s*(?:第)?(\d+)\s*章?\s*\|\s*(\d+)\s*章?\s*\|([^|]*)\|/gm
         )
-      ].map((m) => ({ start: Number(m[1]), end: Number(m[2]), count: Number(m[3]), words: Number(m[4]) }));
-      if (!ranges.length)
+      ].map((m) => ({ start: Number(m[1]), end: Number(m[2]), count: Number(m[3]), words: volumeWords(m[4]) }));
+      if (!ranges.length || ranges.some(range => range.words === null))
         issues.push({
           code: 'volume_ranges',
           severity: 'error',
@@ -429,6 +468,8 @@ export function validateCandidate(
         const cfg = parseConfig(c.content, p.config);
         if (
           cfg.chapterWords !== p.config.chapterWords ||
+          cfg.minWords !== p.config.minWords ||
+          cfg.maxWords !== p.config.maxWords ||
           cfg.batchSize !== p.config.batchSize ||
           cfg.targetWords !== p.config.targetWords
         )
@@ -448,9 +489,10 @@ export function validateCandidate(
       }
     }
     if (c.path === batchPath(b)) {
+      const blocks = chapterBlocks(c.content);
       issues.push(
         ...checkFields(
-          c.content.split(/^## /m)[0],
+          c.content.split(/\r?\n/).slice(0, blocks[0]?.index).join('\n'),
           [
             '批次范围',
             '依据文件',
@@ -467,12 +509,11 @@ export function validateCandidate(
           c.path
         )
       );
-      issues.push(...validateCoverage(c.content, b.start, b.end, c.path));
-      const blocks = c.content.split(/(?=^## 第\d+章)/m).filter((x) => /^## 第\d+章/.test(x));
+      issues.push(...validateChapterNumbers(blocks.map(block => block.number), b.start, b.end, c.path));
       for (const block of blocks)
         issues.push(
           ...checkFields(
-            block,
+            block.content,
             [
               '承接',
               '章节类型',
@@ -488,7 +529,7 @@ export function validateCandidate(
               '章末牵引'
             ],
             c.path
-          )
+          ).map(issue => ({ ...issue, message: `第 ${block.number} 章：${issue.message}`, line: issue.line ? block.index + 1 + issue.line : block.index + 1 }))
         );
     }
     if (c.path === paths.outline) {
@@ -499,7 +540,7 @@ export function validateCandidate(
           .split(/(?<!\\)\|/)
           .slice(1, -1)
           .map((v) => v.trim());
-        if (/^第?\d+章(?:\s|[：:—-]|$)/.test(cells[0] ?? '')) {
+        if (chapterCell(cells[0] ?? '') !== null) {
           if (cells.length !== 13 || cells.some((v) => !v || blank.test(v)))
             issues.push({
               code: 'outline_fields',

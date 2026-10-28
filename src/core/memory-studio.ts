@@ -1,3 +1,5 @@
+import { ownsNarrativeSource } from './narrative-curves';
+import { draftSource } from './draft-source';
 import {
   memoryScopeSchema,
   type MemoryScope,
@@ -282,8 +284,9 @@ export function traceSource(store: FileStore, source: SourceRef) {
         );
       }
     );
-    if (!owned) throw new Error('此证据不属于当前作品');
-    text = store.object(source.hash).toString('utf8');
+    const draft = draftSource(store, source);
+    if (!owned && !ownsNarrativeSource(store, source) && draft === undefined) throw new Error('此证据不属于当前作品');
+    text = draft ?? store.object(source.hash).toString('utf8');
   }
   const points = Array.from(text),
     offset = source.start ?? Array.from(text.slice(0, text.indexOf(source.quote))).length;

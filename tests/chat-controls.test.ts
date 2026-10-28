@@ -79,10 +79,10 @@ test('开书故障覆盖保存的生成阶段，未知请求仍要求核对费�
   assert.equal(creationTaskState(run).recovery, null);
 });
 
-test('开书审核耗尽修订机会或预算时不会引导无效重试', () => {
+test('开书审核耗尽可从统一入口授权局部修复，任务预算耗尽仍需先调整设置', () => {
   const run = { status: 'needs_repair', planning: { phase: 'reviewing_contract', semanticRevisions: 1,
     contractReview: { result: { issues: [{ severity: 'major' }] } } } } as Run;
-  assert.equal(creationTaskState(run).recovery, 'edit');
+  assert.equal(creationTaskState(run).recovery, 'resume');
   run.error = '任务已达到轮数上限';
   assert.equal(creationTaskState(run).recovery, 'review');
 });
@@ -153,7 +153,8 @@ test('旧规则恢复会建立可运行的后续任务并保留对话、候选�
     assert.equal(service.chat!.records.get('conversations', conversation.id).runId, next);
     assert.equal(service.store!.db.project().revision, 1);
     assert.equal(hash(fs.readFileSync(path.join(service.store!.root, paths.seed))), before);
-    assert.equal(service.store!.db.run(next).error, undefined);
+    assert.equal(service.store!.db.run(next).failure?.code, 'REPAIR_EXHAUSTED', '模拟模型没有补齐候选，应报告本次校验问题');
+    assert.doesNotMatch(service.store!.db.run(next).error ?? '', /规则或工具契约发生变化/);
   } finally { await service.drain(); }
 });
 
@@ -200,7 +201,7 @@ test('用所选模型继续会带入输入框修改意见，失败任务能恢�
     await done(service);
     assert.notEqual(next, run.id);
     assert.match(text, /只调整叙述视角/);
-    assert.equal(service.store!.db.run(next).error, undefined);
+    assert.equal(service.store!.db.run(next).failure?.code, 'REPAIR_EXHAUSTED', '新任务已实际执行，遗漏产物不能静默成功');
   } finally { await service.drain(); }
 });
 

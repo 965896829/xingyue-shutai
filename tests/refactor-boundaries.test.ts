@@ -28,6 +28,7 @@ invoke('run.start', { request: 17 });
 invoke('run.accept', { id: 'test', approved: true });
 invoke('arbitrary.write', {});
 const result: Promise<number> = invoke('run.start', { request: 'test' });
+void result;
 `);
   const config = ts.readConfigFile(path.resolve('tsconfig.json'), ts.sys.readFile);
   const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, process.cwd());

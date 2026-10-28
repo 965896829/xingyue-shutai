@@ -40,10 +40,10 @@ test('生成计时在结束后冻结，继续执行重新计时，迟到状态�
 });
 
 test('生成途中仅隐藏待生成产物提示，暂停后仍显示缺失且不隐藏实际冲突', () => {
-  const run = { status: 'running', issues: [{ code: 'missing_output' }, { code: 'conflict' }] } as Run;
+  const run = { status: 'running', issues: [{ code: 'missing_output' }, { code: 'document_draft_pending' }, { code: 'pipeline_pending' }, { code: 'conflict' }] } as Run;
   assert.deepEqual(visibleRunIssues(run).map(i => i.code), ['conflict']);
   run.status = 'paused';
-  assert.equal(visibleRunIssues(run).length, 2);
+  assert.equal(visibleRunIssues(run).length, 4);
 });
 
 test('M22/23：重复与跨项目事件拒收，缺口和进程换代先拉快照再应用', () => {

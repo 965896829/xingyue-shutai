@@ -160,7 +160,7 @@ export class SemanticIndex {
   }
   async rebuild() {
     if (this.controller) throw new Error('语义索引正在更新');
-    const { settings, generation, adapter } = this.configuration();
+    const { settings, generation } = this.configuration();
     this.store.db.set('vectorQueryBlocked', false);
     if (!settings.enabled) throw new Error('请先启用语义检索');
     const owner: AttemptOwner = { id: crypto.randomUUID(), usage: { input: 0, output: 0, cost: 0, currency: settings.currency } };
@@ -282,7 +282,7 @@ export class SemanticIndex {
     budget?: RetrievalBudget
   ): Promise<ReturnType<typeof retrieveMemory> & { semantic: string; usage?: Usage }> {
     const exact = retrieveMemory(this.store, query, scope, limit),
-      { settings, generation, adapter } = this.configuration();
+      { settings, generation } = this.configuration();
     if (!settings.enabled || !query.trim() || scope.viewpoint === 'character')
       return { ...exact, semantic: 'disabled' };
     const index = this.store.db.get<{ generation: string; status: string; observedDimensions?: number }>(

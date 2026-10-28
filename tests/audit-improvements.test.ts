@@ -39,7 +39,8 @@ test('阶段技能和独立研究的文件契约均落在宿主实际允许的�
       assert.ok(registry.read(entry.path).includes(output));
     }
   }
-  assert.match(registry.load(stageSkills.S01).content, /读者承诺写入设定拆解/);
+  assert.match(registry.load(stageSkills.S01).content, /读者承诺直接落实在原十二字段/);
+  assert.match(registry.load(stageSkills.S01).content, /不另建小节或文件/);
 });
 
 test('读取未创建、未导入和真实外部修改文件时给出不同诊断', async () => {
@@ -108,8 +109,12 @@ test('正式导出挡住占位、未完成、待核对和磁盘未确认改动�
     await assert.rejects(service.invoke('project.export', { paths: [file], target }), /存在|覆盖/);
     assert.equal(fs.readFileSync(target, 'utf8'), exported);
     const noteTarget = path.join(root, '配置.md');
+    const sourceConfig = service.store!.readAccepted(paths.config);
     await service.invoke('project.export', { paths: [paths.config], target: noteTarget });
     assert.ok(fs.existsSync(noteTarget));
+    assert.equal(fs.readFileSync(noteTarget, 'utf8'), documentPreviewText(sourceConfig.content));
+    assert.doesNotMatch(fs.readFileSync(noteTarget, 'utf8'), /wenxu-config|客户端设置/);
+    assert.deepEqual(service.store!.readAccepted(paths.config), sourceConfig, '作者导出不能修改正式文稿、版本和内部配置');
   } finally { await service.drain(); }
 });
 
@@ -145,8 +150,8 @@ test('模型等待超时保留流式文字，不被误报成普通断流且不�
     await assert.rejects(invokeModel({ ...fakeProfile, protocol: 'responses', stream: true, timeoutSeconds: 0.25,
       baseUrl: `http://127.0.0.1:${(server.address() as { port: number }).port}/v1` }, '', [], [], new AbortController().signal, delta => { text += delta; }), error => {
       assert.ok(error instanceof RequestError && error.uncertain);
-      assert.match(error.message, /等待模型超过 0.25 秒/);
-      assert.match(error.message, /不会自动重发/);
+      assert.match(error.message, /流式响应连续 0.25 秒没有新的生成进展/);
+      assert.match(error.message, /服务端结果与费用尚不确定/);
       return true;
     });
     assert.equal(text, '已生成片段');
@@ -163,7 +168,9 @@ test('HTTP 错误按实际类别解释，不暴露服务端响应或暗示已经
     await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
     try {
       await assert.rejects(invokeModel({ ...fakeProfile, baseUrl: `http://127.0.0.1:${(server.address() as { port: number }).port}/v1` }, '', [], [], new AbortController().signal), error => {
-        assert.ok(error instanceof RequestError && error.uncertain);
+        assert.ok(error instanceof RequestError);
+        assert.equal(error.uncertain, status >= 500, '明确拒绝与上游结果未知应分别处理');
+        assert.equal(error.diagnostic?.httpStatus, status);
         assert.match(error.message, expected);
         assert.doesNotMatch(error.message, /private-upstream/);
         return true;

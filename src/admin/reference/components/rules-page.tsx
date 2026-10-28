@@ -6,18 +6,14 @@ import {
   Search,
   Plus,
   ShieldCheck,
-  BookOpen,
-  Layers3,
-  Sparkles,
   Play,
-  Code2,
   Check,
   History,
   FileText,
   ArrowUpRight,
   LoaderCircle,
 } from "lucide-react";
-import { api, post, put, label, formatTime, type PageSpec } from "@reference/lib/api";
+import { api, post, put, formatTime, type PageSpec } from "@reference/lib/api";
 import {
   PageHeading,
   Drawer,
@@ -39,7 +35,7 @@ const layerNames: Record<string, string> = {
   form: "篇幅形式",
   governance: "工程治理",
 };
-export function RulesPage({ page }: { page: PageSpec }) {
+export function RulesPage({ page: _page }: { page: PageSpec }) {
   const [tab, setTab] = useState("rules"),
     [q, setQ] = useState(""),
     [module, setModule] = useState(""),

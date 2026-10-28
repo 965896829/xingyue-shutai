@@ -16,7 +16,6 @@ import {
   Plus,
   LockKeyhole,
   Unlock,
-  Pencil,
   Eye,
   EyeOff,
   Search,

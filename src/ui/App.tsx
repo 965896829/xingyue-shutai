@@ -1,17 +1,26 @@
 import { useDialogs } from './AppDialogs';
+import { RunRecoveryButton } from './RunRecoveryButton';
+import { handleMarkdownLink } from './markdown-links';
 import { ModelControl } from './ModelControl';
+import { ContextMeter, ContextCompactions } from './ContextMeter';
+import { latestContext, type ContextUsage } from '../shared/context-meter';
 import { GenerationStatus } from './GenerationStatus';
-import { streamText, visibleStreamText, type StreamText } from '../shared/generation';
+import { useStreamSession, proseBinding, proseFile } from './useLiveStream';
+import { LiveMarkdown } from './LiveMarkdown';
+import { LiveProseEditor, LiveProseCount } from './LiveProseEditor';
 import { reasoningLabel } from '../shared/reasoning';
 import { invokeCommand } from '../shared/client';
 import { newProjectLocationError } from '../shared/project-location';
+import { newProjectRequest, type OpeningMode } from '../shared/new-project-request';
 import type { Invoke } from '../shared/contracts';
-import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
-import { resumeArguments, runCapabilities } from '../shared/run-capabilities';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
+import { resumeArguments } from '../shared/run-capabilities';
 import { taskErrorId, taskFileId, taskHelpLink, taskIssueId, taskSectionId } from '../shared/task-links';
 import { sendOnEnter } from './composer-keyboard';
 import { jumpToChatTarget } from './chat-navigation';
 import { ProjectFiles } from './ProjectFiles';
+import { currentStageDocument } from '../shared/project-progress';
+import { manuscriptDraft } from '../shared/manuscript-target';
 import {
   BookOpen,
   Plus,
@@ -25,7 +34,6 @@ import {
   Check,
   ChevronRight,
   X,
-  History,
   PanelRightClose,
   PanelRightOpen,
   PanelLeftClose,
@@ -33,11 +41,9 @@ import {
   ChevronDown,
   Download,
   Upload,
-  Shield,
   Layers,
   Image as ImageIcon,
   ArrowRight,
-  RotateCcw,
   Terminal,
   MoreHorizontal,
   AlertCircle,
@@ -45,15 +51,12 @@ import {
 } from 'lucide-react';
 import { MonitorCog } from 'lucide-react';
 import type { ManagementView } from '../shared/management';
-import DOMPurify from 'dompurify';
-import { marked } from 'marked';
+import { MarkdownContent } from './MarkdownContent';
 import {
-  configSchema,
   stageIds,
   type Snapshot,
   type Run,
   type Profile,
-  type Command,
   type ContextManifest,
   type ProjectConfig
 } from '../shared/types';
@@ -71,7 +74,8 @@ import { RecoveryConflicts } from './RecoveryConflicts';
 import { ChatWorkspace } from './ChatWorkspace';
 import { TaskDiscussion } from './TaskDiscussion';
 import { AssistantSettings } from './AssistantSettings';
-import { MemoryStudio, CharacterInspector, SourceDialog } from './MemoryStudio';
+import { MemoryStudio, SourceDialog } from './MemoryStudio';
+import { CharacterInspector, StoryInspector, ManuscriptCoverage } from './ManuscriptInspector';
 import { NarrativePanel } from './NarrativePanel';
 import { SkillLauncher } from './SkillLauncher';
 import { ExpressionSettings } from './ExpressionSettings';
@@ -80,6 +84,7 @@ import { emptyTagInput } from '../shared/tags';
 import { requestErrorText, retryNeedsConfirmation, taskReplyText, documentPreviewText, visibleRunIssues } from '../shared/run-presentation';
 import { renderNativeCitations } from '../shared/web-search';
 import { WebSearchEvidence } from './WebSearchEvidence';
+import { VolumeMarketEvidence } from './VolumeMarketEvidence';
 import type { SourceRef } from '../shared/studio';
 import { gateEvent, syncEventCursor, type EventCursor } from '../shared/event-gate';
 
@@ -98,7 +103,7 @@ const names = {
 };
 const status: Record<string, string> = {
   running: '正在执行',
-  awaiting_review: '等待审阅',
+  awaiting_review: '查看生成结果',
   needs_repair: '需要修改',
   paused: '已暂停',
   unknown: '请求结果未知',
@@ -166,7 +171,7 @@ function Modal({
   );
 }
 export function App({ management = false, managementView = 'workspace' }: { management?: boolean; managementView?: ManagementView } = {}) {
-  const [inspector, setInspector] = useState<'manuscript' | 'characters' | 'details'>('manuscript');
+  const [inspector, setInspector] = useState<'manuscript' | 'characters' | 'story' | 'details'>('manuscript');
   const [source, setSource] = useState<SourceRef | null>(null);
   const [focus, setFocus] = useState(false);
   const refreshSeq = useRef(0),
@@ -208,7 +213,6 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     [editorTab, setEditorTab] = useState('edit'),
     [histories, setHistories] = useState<{ hash: string; createdAt: string }[]>([]),
     [manifest, setManifest] = useState<ContextManifest | null>(null);
-  const [reviewReason, setReviewReason] = useState('');
   const historyRequest = useRef(0);
   useEffect(() => { historyRequest.current++; setHistories([]); }, [doc?.path, doc?.runId, snapshot.projectSessionId]);
   async function loadDocumentHistory(path: string) {
@@ -223,6 +227,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     }
   }
   const chatScroll = useRef<HTMLDivElement>(null);
+  const [discussionContext, setDiscussionContext] = useState<{ runId: string; usage?: ContextUsage }>();
+  const receiveDiscussionContext = useCallback((runId: string, usage?: ContextUsage) => setDiscussionContext({ runId, usage }), []);
   const [settingFocus, setSettingFocus] = useState('');
   const actionPending = useRef(false);
   const [olderRuns, setOlderRuns] = useState<Run[]>([]);
@@ -245,10 +251,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     finally { historyLoading.current = false; }
   }
   const [answer, setAnswer] = useState(''),
-    [memory, setMemory] = useState<any>(null),
-    [memoryChapter, setMemoryChapter] = useState(''),
-    [timeline, setTimeline] = useState(false),
-    [deltas, setDeltas] = useState<Record<string, StreamText>>({});
+    [timeline, setTimeline] = useState(false);
+  useStreamSession(snapshot.projectSessionId);
   const refresh = useCallback(async () => {
     const requestId = ++refreshSeq.current;
     try {
@@ -279,10 +283,10 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       setBusy(false);
     }
   };
-  async function acceptRun(candidate: Run, startNext: boolean, warningReason = reviewReason, title?: string) {
+  async function acceptRun(candidate: Run, startNext: boolean, warningReason = '', title?: string) {
     if (candidate.planning?.workflowVersion === 2 && (!candidate.planning.planApproval || snapshot.project?.titlePending && !candidate.planning.titleSelection)) {
       setWorkView('tags');
-      setNotice('请先确认作品方案，再在独立命名中核对并选择书名。');
+      setNotice('请选择满意的作品方案和书名。');
       return;
     }
     if (snapshot.project?.titlePending && candidate.mode === 'stage' && candidate.stage === 'S01' && !candidate.planning?.workflowVersion && title === undefined) {
@@ -299,7 +303,6 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     }));
     if (!result) return;
     setTitleConfirmation(null);
-    setReviewReason('');
     setSelectedRun(result.nextRun ?? candidate.id);
     setWorkView('tasks');
     setNotice(result.nextRun ? '本阶段已保存，正在开始下一阶段' : '结果已保存');
@@ -323,14 +326,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       const decision = gateEvent(eventCursor.current, event);
       if (decision === 'ignore') return;
       if (decision === 'refresh') {
-        setDeltas({});
         void refresh();
         return;
       }
-      if (event.type === 'delta') {
-        if (event.resource === 'runs' && event.runId && typeof event.text === 'string' && event.textOffset !== undefined)
-          setDeltas((d) => ({ ...d, [event.runId!]: streamText(d[event.runId!], { offset: event.textOffset!, text: event.text! }) }));
-      }
+      // Stream consumers update only their own paragraph and playback cursor.
+      // A token is not a request to reload persisted workspace state.
+      if (event.type === 'delta' || event.type === 'prose-delta' || event.type === 'narrative-event') return;
       else if (event.type === 'error') setError(event.text ?? '执行错误');
       else {
         if (event.resource) resources.add(event.resource);
@@ -377,7 +378,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     pendingStage = visibleRuns.find((r) => r.mode === 'stage' && !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status)),
     run = visibleRuns.find((r) => r.id === selectedRun) ?? visibleRuns[0],
     running = visibleRuns.find((r) => r.status === 'running'),
-    feedbackRun = run?.mode === 'stage' && !run.accepted && !run.planning && ['awaiting_review', 'needs_repair'].includes(run.status) ? run : undefined,
+    feedbackRun = run && ['stage', 'revision'].includes(run.mode) && !run.accepted && !run.planning && !run.naming && !run.memoryRepair && ['awaiting_review', 'needs_repair'].includes(run.status) ? run : undefined,
     discussionRun = run && (mode === 'stage' || run.mode === 'revision') ? run : undefined,
     dirty = doc && text !== doc.content;
   const taskBusy = busy || !!running || !!snapshot.chatBusy;
@@ -387,7 +388,9 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   useEffect(() => {
     if (titleConfirmation && titleConfirmation.projectId !== p?.id) setTitleConfirmation(null);
   }, [p?.id, titleConfirmation?.projectId]);
-  const documentAccepted = !!(doc?.runId && visibleRuns.find(item => item.id === doc.runId)?.accepted);
+  const documentRun = doc?.runId ? visibleRuns.find(item => item.id === doc.runId) : undefined;
+  const liveDocumentRun = documentRun?.pipeline && documentRun.status === 'running' && documentRun.pipeline.phase === 'prose' && doc?.path === proseFile(documentRun.chapter) ? documentRun : undefined;
+  const documentAccepted = !!documentRun?.accepted;
   useEffect(() => {
     if (!doc?.runId || !documentAccepted) return;
     let cancelled = false;
@@ -426,25 +429,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     setNotice('这处问题已更新或解决，已定位到当前任务。');
     jumpToChatTarget(chatScroll.current, run ? taskSectionId(run.id, 'recovery') : 'chat-execution') || jumpToChatTarget(chatScroll.current, 'chat-execution');
   }
-  async function continueTask(rebuild = false) {
-    if (!run || taskBusy) return;
-    if (rebuild && !profileId) { setError('请先在输入框右下方选择模型'); return; }
-    if (retryNeedsConfirmation(run) && !await dialogs.confirm('上次请求结果与费用未知，继续会产生新请求，可能重复计费。确认继续？', { title: '重新请求当前任务？', confirmLabel: '确认重新请求', cancelLabel: '暂不重试' })) return;
-    const instruction = request.trim();
-    const result = await act(() => rebuild
-      ? invoke('run.handoff', { id: run.id, profileId, instruction, retryUnknown: retryNeedsConfirmation(run) })
-      : invoke('run.resume', resumeArguments(run, instruction || '请继续任务，修复校验问题并完成全部候选。')),
-    '已提交继续请求');
-    if (result) {
-      setSelectedRun(result);
-      setRequest(value => value === request ? '' : value);
-      requestAnimationFrame(() => jumpToChatTarget(chatScroll.current, 'chat-execution'));
-    }
-  }
-  useEffect(() => {
-    const active = visibleRuns.find((r) => r.status === 'running' && r.pipeline);
+  useLayoutEffect(() => {
+    const active = visibleRuns.find((r) => r.status === 'running' && r.pipeline) ?? (documentRun?.pipeline ? documentRun : undefined);
     const prose = active?.changes.find((c) => c.path.startsWith('07_'));
-    if (!active || !prose || dirty || !p) return;
+    if (!active || !prose || dirty || !p || active.accepted) return;
+    const firstDisplay = active.status === 'running' && doc?.runId !== active.id;
+    if (!firstDisplay && (doc?.runId !== active.id || doc.path !== prose.path)) return;
     setDoc({
       projectId: p.id,
       projectKey: projectKey!,
@@ -455,10 +445,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       before: doc?.runId === active.id ? doc.before : ''
     });
     setText(prose.content);
-    setEditorOpen(true);
-    setInspector('manuscript');
-    setEditorTab('edit');
-  }, [visibleRuns.find((r) => r.status === 'running' && r.pipeline)?.pipeline?.version]);
+    if (firstDisplay) { setEditorOpen(true); setInspector('manuscript'); setEditorTab('edit'); }
+  }, [visibleRuns.find((r) => r.status === 'running' && r.pipeline)?.pipeline?.version, documentRun?.pipeline?.version, documentRun?.status]);
   useEffect(() => {
     if (!doc?.runId || doc.projectKey !== projectKey || !dirty || running || documentAccepted || !doc.path.startsWith('07_')) return;
     const timer = setTimeout(() => {
@@ -469,7 +457,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   useEffect(() => {
     // Other authorized views can switch the active book. Keep cached edits bound
     // to their original project and never carry an editor into the new book.
-    setDoc(null); setEditorOpen(false); setText(''); setSource(null); setMemory(null); setManifest(null);
+    setDoc(null); setEditorOpen(false); setText(''); setSource(null); setManifest(null);
     setModal(null); setTitleConfirmation(null);
     const pending = snapshot.runs.find((r) => !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status));
     setSelectedRun(pending?.id ?? '');
@@ -496,7 +484,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       }
     }
   }, [text, doc?.runId, doc?.path, doc?.projectKey]);
-  async function openDoc(relative: string, r?: Run) {
+  async function openDoc(relative: string, r?: Run, openMode?: 'edit' | 'diff') {
     const projectId = p?.id;
     if (!projectId || !projectKey) return;
     if (r?.accepted) r = undefined;
@@ -540,7 +528,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       });
       setText(draft ?? value);
       setEditorOpen(true);
-      setEditorTab(r ? 'diff' : 'edit');
+      setInspector('manuscript');
+      setEditorTab(openMode ?? (r ? 'diff' : 'edit'));
       setHistories([]);
     });
   }
@@ -566,9 +555,9 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   }
   async function start(taskMode = mode) {
     if (!p || ((taskMode === 'revision' || feedbackRun) && !request.trim())) return;
-    if (taskMode === 'stage' && feedbackRun) {
+    if (feedbackRun) {
       if (retryNeedsConfirmation(feedbackRun) && !await dialogs.confirm('上次请求结果未知，重新请求可能重复计费。确认重新请求？', { title: '重新请求当前任务？', confirmLabel: '确认重新请求', cancelLabel: '暂不重试' })) return;
-      const resumed = await act(() => invoke('run.resume', resumeArguments(feedbackRun, request.trim())));
+      const resumed = await act(() => invoke('run.recover', { ...resumeArguments(feedbackRun, request.trim()), ...(profileId ? { profileId } : {}) }));
       if (resumed !== undefined) setRequest('');
       return;
     }
@@ -589,7 +578,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     if (!profileId) { setError('请先选择模型'); return; }
     if (!discussionRun) { await start(); return; }
     if (!request.trim() || busy || running || snapshot.chatBusy) return;
-    const result = await act(() => invoke('run.discuss', { id: discussionRun.id, text: request.trim(), profileId, displayedError: error.slice(0, 4000) }));
+    const result = await act(() => invoke('run.discuss', { id: discussionRun.id, text: request.trim(), profileId, displayedError: error.slice(0, 4000), allowCandidateEdits: true }));
     if (result) {
       setRequest('');
       chatScroll.current?.scrollTo({ top: chatScroll.current.scrollHeight });
@@ -647,12 +636,9 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       setSelectedRun('');
       setEditorOpen(false);
       setSource(null);
-      setMemory(null);
       setManifest(null);
       setRequest('');
-      setReviewReason('');
       setAnswer('');
-      setDeltas({});
       setQuery('');
       setFocus(false);
       setNotice('');
@@ -668,7 +654,6 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           setText('');
           setSelectedRun('');
           setEditorOpen(false);
-          setMemory(null);
           setManifest(null);
           setRequest('');
           setPage('work');
@@ -678,7 +663,20 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     );
   }
   const filteredDocs = useMemo(() => snapshot.documents.filter((d) => !query || d.path.includes(query)), [snapshot.documents, query]);
-  const taskReply = run ? taskReplyText(renderNativeCitations(visibleStreamText(run.responseText, run.status === 'running' ? deltas[run.id] : undefined), run.webSearch?.citations)) : '';
+  const currentDocument = p ? currentStageDocument(p) : undefined;
+  async function openProjectDocument(path: string) {
+    await openDoc(path, p ? manuscriptDraft(visibleRuns, p, path) : undefined, 'edit');
+  }
+  useEffect(() => {
+    if (!p || !editorOpen || inspector !== 'manuscript' || doc) return;
+    const path = p.stage >= 'S10' ? proseFile(p.chapter) : currentDocument;
+    if (path) void openProjectDocument(path);
+  }, [projectKey, editorOpen, inspector, doc?.path, currentDocument]);
+  const taskReply = run?.accepted && (run.planning || run.naming)
+    ? '本阶段内容已保存，可以继续下一阶段；想调整时可进入“作品方案与书名”。'
+    : run ? taskReplyText(renderNativeCitations(run.responseText, run.webSearch?.citations)) : '';
+  const displayedChanges = run?.pipeline && run.status === 'running' && run.pipeline.phase === 'prose' && !run.changes.some(change => change.path === proseFile(run.chapter))
+    ? [...run.changes, { path: proseFile(run.chapter), content: '', baseHash: null }] : run?.changes ?? [];
   const displayedIssues = run ? visibleRunIssues(run) : [];
   const chatSections: ProximitySection[] = run
     ? [
@@ -688,15 +686,13 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         ...(run.changes.length
           ? [{ id: 'chat-candidates', label: '候选改动', kind: 'section' as const }]
           : []),
-        ...(run.facts.length ? [{ id: 'chat-facts', label: '候选记忆', kind: 'body' as const }] : []),
-        ...(displayedIssues.length ? [{ id: 'chat-issues', label: '检查结果', kind: 'body' as const }] : []),
+        ...(displayedIssues.some(issue => issue.severity === 'error') ? [{ id: 'chat-issues', label: '需完善内容', kind: 'body' as const }] : []),
         ...(timeline ? [{ id: 'chat-events', label: '执行日志', kind: 'body' as const }] : []),
         ...(['awaiting_input', 'awaiting_permission', 'awaiting_review', 'needs_repair'].includes(
           run.status
         ) && !run.accepted
           ? [{ id: 'chat-decision', label: '待你确认', kind: 'subtitle' as const }]
           : []),
-        { id: 'chat-usage', label: '调用统计', kind: 'body' }
       ]
     : [];
   return (
@@ -792,7 +788,13 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                 placeholder="查找章节与资料"
               />
             </div>
-            <ProjectFiles documents={filteredDocs} selected={doc?.path} onOpen={path => void openDoc(path)} resetKey={`${p.id}:${query}`} />
+            <div className={`current-stage-summary ${p.finished ? 'finished' : ''}`} role="status" aria-label="当前创作阶段">
+              <div><span>{p.finished ? '创作进度' : '当前阶段'}</span><b>{p.finished ? '已完成' : p.stage}</b></div>
+              <strong>{p.finished ? '全书计划已完成' : names[p.stage]}
+                {!p.finished && p.stage >= 'S06' && <small>{p.stage < 'S09' ? activeBatchText(p) : `第 ${String(p.chapter).padStart(3, '0')} 章`}</small>}
+              </strong>
+            </div>
+            <ProjectFiles documents={filteredDocs} selected={doc?.path} current={currentDocument} onOpen={path => void openProjectDocument(path)} resetKey={`${projectKey}:${query}`} />
           </>
         ) : (
           <div className="sidebar-empty">
@@ -1036,9 +1038,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                   </div>
                   {p.stale.length > 0 && (
                     <div className="inline-warning">
-                      {p.stale.length} 项资料需随故事变化核对，完成后再继续正文。
-                      <button onClick={() => setPage('memory')}>
-                        前往核对 <ArrowRight size={13} />
+                      故事有了变化，需要同步 {p.stale.length} 项关联内容。生成后查看结果，满意再继续。
+                      <button disabled={taskBusy || !profileId} onClick={() => void act(async () => {
+                        const result = await invoke('memory.rebuild', { profileId });
+                        if (result.runId) setSelectedRun(result.runId);
+                      })}>
+                        生成同步后的内容 <ArrowRight size={13} />
                       </button>
                     </div>
                   )}
@@ -1049,6 +1054,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                       scrollRef={chatScroll}
                     />
                     <div className="chat-scroll" ref={chatScroll}>
+                      <div className="chat-content">
                       {(!run || (run.accepted && !pendingStage)) && (
                         <div className="start-card">
                           <div className="assistant-mark">
@@ -1116,16 +1122,23 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 </details>
                               )}
                             </div>
-                            {taskReply && (
-                              run.webSearch?.calls.length
-                                ? <div className="markdown-body" id="chat-response" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(taskReply, { async: false }) as string, { FORBID_TAGS: ['img', 'style', 'iframe'] }) }} />
-                                : <div className="model-text" id="chat-response">{taskReply}</div>
+                            {(taskReply || run.status === 'running') && (
+                              run.accepted && (run.planning || run.naming) ? <MarkdownContent id="chat-response" content={taskReply} label="任务回答" /> :
+                              <LiveMarkdown id="chat-response" label="任务回答" format="task" citations={run.webSearch?.citations}
+                                binding={{ session: snapshot.projectSessionId, kind: 'runs', id: run.id, text: run.responseText, running: run.status === 'running' }} />
                             )}
                             <WebSearchEvidence state={run.webSearch} running={run.status === 'running'} />
+                            <VolumeMarketEvidence research={run.volumeNaming?.research} />
+                            <ContextCompactions items={run.contextCompactions} activity={run.activity} running={run.status === 'running'} />
+                            {run.documentDrafts?.map(draft => <details key={draft.path} className="saved-document-draft">
+                              <summary>已保存草稿 · {draft.path} · {draft.chunks} 段 / {draft.content.length} 字符</summary>
+                              <p className="muted">尚未生成完整；恢复任务会从已保存位置继续，完成后再统一审阅。</p>
+                              <MarkdownContent content={draft.content} label={draft.path.split('/').at(-1)?.replace(/\.md$/, '')} />
+                            </details>)}
                             {run.error && <p className="inline-warning" role="alert" id={taskErrorId(run)}>{requestErrorText(run.error)}{' '}<a href={taskHelpLink(run).href} onClick={event => { event.preventDefault(); navigateTask(event.currentTarget.getAttribute('href')!); }}>{taskHelpLink(run).label}</a></p>}
-                            {!run.accepted && run.changes.length > 0 && (
-                              <details open={['unknown', 'paused', 'needs_repair'].includes(run.status)}>
-                                <summary>检查结果详情</summary>
+                            {!run.accepted && run.changes.length > 0 && ['unknown', 'paused'].includes(run.status) && (
+                              <details>
+                                <summary>使用中断前保存的内容</summary>
                               <button
                                 disabled={busy || !!running || snapshot.chatBusy}
                                 onClick={() =>
@@ -1139,30 +1152,26 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                   )
                                 }
                               >
-                                {['unknown', 'paused'].includes(run.status)
-                                  ? '审阅已保存候选'
-                                  : '重新检查候选'}
+                                检查已保存内容是否完整
                               </button>
                               </details>
                             )}
-                            {run.changes.length > 0 && (
+                            {displayedChanges.length > 0 && (
                               <div className="candidate-list" id="chat-candidates">
-                                <div className="section-label">本次生成的文稿 · {run.changes.length} 个文件</div>
-                                {run.changes.map((c, index) => run.mode === 'stage' && !run.pipeline ? (
-                                  <details key={c.path} id={taskFileId(run.id, c.path)} open={index === 0}>
+                                <div className="section-label">本次生成的文稿 · {displayedChanges.length} 个文件</div>
+                                {displayedChanges.map((c, index) => (!run.pipeline || c.path.startsWith('07_正文章节/')) ? (
+                                  <details key={c.path} id={taskFileId(run.id, c.path)} open={run.pipeline ? c.path.startsWith('07_正文章节/') : run.planning ? c.path.startsWith('01_') : index === 0}>
                                     <summary>{c.path.split('/').at(-1)?.replace(/\.md$/, '')}</summary>
-                                    <div
+                                    {run.pipeline && c.path === proseFile(run.chapter) ? <LiveMarkdown
+                                      className="markdown-preview" label={c.path.split('/').at(-1)?.replace(/\.md$/, '')}
+                                      binding={proseBinding(snapshot.projectSessionId, run)} format="prose"
+                                      onClick={event => handleMarkdownLink(event, url => { void act(() => invoke('app.openUrl', { url })); })}
+                                    /> : <MarkdownContent
                                       className="markdown-preview"
-                                      onClick={event => {
-                                        const anchor = (event.target as HTMLElement).closest('a');
-                                        if (anchor) {
-                                          event.preventDefault();
-                                          const url = anchor.getAttribute('href') ?? '';
-                                          if (/^https?:\/\//i.test(url)) void act(() => invoke('app.openUrl', { url }));
-                                        }
-                                      }}
-                                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(documentPreviewText(c.content), { async: false }) as string, { FORBID_TAGS: ['img', 'style', 'iframe'] }) }}
-                                    />
+                                      label={c.path.split('/').at(-1)?.replace(/\.md$/, '')}
+                                      content={documentPreviewText(c.content)}
+                                      onClick={event => handleMarkdownLink(event, url => { void act(() => invoke('app.openUrl', { url })); })}
+                                    />}
                                     <button onClick={() => void openDoc(c.path, run)}>查看差异或编辑</button>
                                   </details>
                                 ) : (
@@ -1190,8 +1199,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             {displayedIssues.length > 0 && (
                               <details id="chat-issues" open={displayedIssues.some((i) => i.severity === 'error')}>
                                 <summary>
-                                  {displayedIssues.filter((i) => i.severity === 'error').length} 项阻断 ·{' '}
-                                  {displayedIssues.filter((i) => i.severity === 'warning').length} 项审阅提醒
+                                  {displayedIssues.some(i => i.severity === 'error') ? `${displayedIssues.filter(i => i.severity === 'error').length} 项内容待完善` : `${displayedIssues.filter(i => i.severity === 'warning').length} 条内容建议`}
                                 </summary>
                                 {displayedIssues.map((i, n) => (
                                   <p
@@ -1279,58 +1287,33 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             {!run.accepted && ['awaiting_review', 'needs_repair'].includes(run.status) && (
                               <div className="approval-box" id="chat-decision">
                                 <h3>{run.issues.some(issue => issue.severity === 'error') ? '本阶段还有问题需要处理' : run.memoryRepair ? '关联修订已准备好' : run.pipeline ? '本章正文与记忆已准备好' : '本阶段结果已准备好'}</h3>
-                                {feedbackRun && <p>有疑问就直接在下方问，也可以告诉我怎么修改；结果满意后再确认继续。</p>}
-                                {run.issues.some((i) => i.severity === 'warning') && (
-                                  <label>
-                                    保留警告的审阅理由
-                                    <textarea
-                                      value={reviewReason}
-                                      onChange={(e) => setReviewReason(e.target.value)}
-                                      placeholder="例如：已核对相关台词属于人物反驳，保留；连续性检查无冲突。"
-                                    />
-                                  </label>
-                                )}
+                                {feedbackRun && <p>满意就继续；不满意，在下方写修改意见。自动检查由客户端完成。</p>}
                                 <div className="button-row">
                                   <button
                                     className="primary"
                                     disabled={taskBusy || run.issues.some((i) => i.severity === 'error')}
                                     onClick={() => void acceptRun(run, run.mode === 'stage' || !!run.memoryRepair)}
                                   >
-                                    {p?.titlePending && run.mode === 'stage' && run.stage === 'S01' ? '确认方向，确定书名' : run.memoryRepair ? '采纳同步并继续创作' : run.mode === 'stage' ? '确认并继续' : '确认保存修改'}
+                                    {p?.titlePending && run.mode === 'stage' && run.stage === 'S01' ? '满意，确定书名' : run.memoryRepair ? '满意，继续创作' : run.mode === 'stage' ? '满意，继续' : '满意，保存修改'}
                                   </button>
                                   {(run.mode === 'stage' || run.memoryRepair) && (
+                                    <details className="message-actions"><summary aria-label="更多保存方式">⋯</summary>
                                     <button
                                       disabled={taskBusy || run.issues.some((i) => i.severity === 'error')}
                                       onClick={() => void acceptRun(run, false)}
                                     >
                                       保存，暂不继续
                                     </button>
+                                    </details>
                                   )}
                                 </div>
                               </div>
                             )}
                             {!run.accepted && !['running', 'discarded'].includes(run.status) && (
-                              <details id={taskSectionId(run.id, 'recovery')} open={run.status !== 'awaiting_review'}>
-                                <summary>需要修改或恢复任务</summary>
+                              <details id={taskSectionId(run.id, 'recovery')} open={['unknown', 'paused', 'failed', 'stale'].includes(run.status)}>
+                                <summary>任务恢复与其他操作</summary>
                               <div className="button-row subdued">
-                                <button
-                                  disabled={taskBusy || !profileId}
-                                  title={!profileId ? '请先选择模型' : undefined}
-                                  onClick={() => void continueTask(true)}
-                                >
-                                  用所选模型继续
-                                </button>
-                                {runCapabilities(run).canResume && (
-                                  <button
-                                    disabled={taskBusy}
-                                    onClick={() => void continueTask()}
-                                  >
-                                    {btn(
-                                      <RotateCcw size={14} />,
-                                      run.status === 'unknown' ? '确认重新请求' : '继续处理'
-                                    )}
-                                  </button>
-                                )}
+                                <RunRecoveryButton run={run} disabled={taskBusy} profileId={profileId || undefined} instruction={request} act={act} onRecovered={id => { setSelectedRun(id); setRequest(''); }} onInspect={() => navigateTask(`#${taskErrorId(run)}`)} />
                                 <div className="delete-action">
                                   <DeleteButton
                                     key={run.id}
@@ -1349,29 +1332,32 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                               </div>
                               </details>
                             )}
-                            <div className="usage" id="chat-usage">
+                            <details className="usage" id="chat-usage"><summary>运行记录</summary>
                               {run.rounds} 轮调用 · {run.toolCount} 次工具 ·{' '}
                               {run.usage.cost === null
                                 ? '费用未知'
                                 : `估算 ${run.usage.currency} ${run.usage.cost.toFixed(4)}`}{' '}
                               · 输入 {run.usage.input ?? '未知'} / 输出 {run.usage.output ?? '未知'}
-                            </div>
+                            </details>
                           </article>
                           {error && <p className="inline-warning" role="alert">{requestErrorText(error)}</p>}
-                          <TaskDiscussion key={`${p.id}:${run.id}`} conversationId={snapshot.conversations?.find(conversation => conversation.runId === run.id && !conversation.archived)?.id} projectSessionId={snapshot.projectSessionId} run={run} profileId={profileId} busy={taskBusy} scroll={chatScroll} refresh={refresh} onRun={setSelectedRun} onNavigate={navigateTask} />
+                          <TaskDiscussion key={`${p.id}:${run.id}`} conversationId={snapshot.conversations?.find(conversation => conversation.runId === run.id && !conversation.archived)?.id} projectSessionId={snapshot.projectSessionId} run={run} limits={p.config} profileId={profileId} busy={taskBusy} scroll={chatScroll} refresh={refresh} onRun={setSelectedRun} onNavigate={navigateTask} onContext={receiveDiscussionContext} />
                         </>
                       )}
+                      </div>
                     </div>
                   </div>
                   <div className="composer">
                     <textarea
                       aria-label="写作任务"
+                      placeholder={feedbackRun ? '直接告诉我怎么改；有疑问也可以在这里问。' : '输入创作要求或想讨论的问题…'}
                       value={request}
                       onChange={(e) => setRequest(e.target.value)}
                       onKeyDown={event => sendOnEnter(event, !!request.trim() && !!profileId && !taskBusy, () => void sendTaskMessage())}
                     />
                     <div className="composer-toolbar">
                       <div className="composer-tools">
+                        <details className="composer-extra-tools"><summary aria-label="更多创作选项">＋</summary><div>
                         <button
                           className="composer-context"
                           aria-label="查看召回资料"
@@ -1399,9 +1385,13 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                           </select>
                           <ChevronDown size={12} aria-hidden="true" />
                         </label>
+                        </div></details>
                       </div>
                       <div className="composer-actions">
                         <ModelControl profiles={snapshot.profiles} profileId={profileId} onProfileChange={setProfileId} onPendingChange={setModelPending} label="本次模型与推理强度" />
+                        <ContextMeter profile={snapshot.profiles.find(profile => profile.id === profileId)} usage={latestContext([
+                          { contextUsage: run?.contextUsage }, { contextUsage: discussionContext?.runId === run?.id ? discussionContext?.usage : undefined }
+                        ])} />
                         {running || snapshot.chatBusy ? (
                           <button
                             className="stop composer-send"
@@ -1445,7 +1435,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                   </div>
                 </section>
               )}
-              <NarrativePanel snapshot={snapshot} onSource={setSource} />
+              <NarrativePanel snapshot={snapshot} run={run} onSource={setSource} />
             </div>
             {editorOpen && (
               <aside className="editor-panel">
@@ -1454,6 +1444,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                     [
                       ['manuscript', '文稿'],
                       ['characters', '人物'],
+                      ['story', '故事'],
                       ['details', '详情']
                     ] as const
                   ).map(([key, label]) => (
@@ -1470,9 +1461,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                   </button>
                 </nav>
                 {inspector === 'characters' ? (
-                  <CharacterInspector snapshot={snapshot} onSource={setSource} />
+                  <CharacterInspector snapshot={snapshot} run={run} onSource={setSource} />
+                ) : inspector === 'story' ? (
+                  <StoryInspector snapshot={snapshot} run={run} onSource={setSource} />
                 ) : inspector === 'details' ? (
                   <div className="diagnostics-inspector">
+                    <ManuscriptCoverage snapshot={snapshot} run={run} />
                     <h3>当前任务</h3>
                     <p>{run ? status[run.status] : '暂无任务'}</p>
                     {run && <p>本任务推理强度：{reasoningLabel(run.reasoningEfforts?.[run.profileId])}</p>}
@@ -1555,7 +1549,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                           </div>
                         )}
                         {editorTab === 'edit' ? (
-                          <Editor
+                          liveDocumentRun ? <LiveProseEditor session={snapshot.projectSessionId} run={liveDocumentRun} onSelection={setSelection} /> : <Editor
                             value={text}
                             onChange={setText}
                             onSelection={setSelection}
@@ -1574,8 +1568,11 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             after={text}
                           />
                         ) : editorTab === 'preview' ? (
-                          <div
+                          liveDocumentRun ? <LiveMarkdown binding={proseBinding(snapshot.projectSessionId, liveDocumentRun)} format="prose" className="markdown-preview" label="实时正文" /> : <MarkdownContent
                             className="markdown-preview"
+                            label={doc.path.split('/').at(-1)?.replace(/\.md$/, '')}
+                            content={documentPreviewText(text)}
+                            allowImages
                             onClick={(e) => {
                               const anchor = (e.target as HTMLElement).closest('a');
                               if (anchor) {
@@ -1588,9 +1585,6 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                   void openDoc(relative);
                                 }
                               }
-                            }}
-                            dangerouslySetInnerHTML={{
-                              __html: DOMPurify.sanitize(marked.parse(documentPreviewText(text), { async: false }) as string)
                             }}
                           />
                         ) : (
@@ -1634,7 +1628,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                         )}
                         <footer>
                           <small>
-                            {Array.from(text.replace(/\s/g, '')).length.toLocaleString()} 字符 · UTF-8
+                            {liveDocumentRun ? <LiveProseCount session={snapshot.projectSessionId} run={liveDocumentRun} /> : Array.from(text.replace(/\s/g, '')).length.toLocaleString()} 字符 · UTF-8
                           </small>
                           <div>
                             {selection && (
@@ -1822,6 +1816,10 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
 }) {
   const [tagged, setTagged] = useState(false),
     [tagInput, setTagInput] = useState(emptyTagInput);
+  const [openingMode, setOpeningMode] = useState<OpeningMode>('planning'),
+    [title, setTitle] = useState(''),
+    [previewEnabled, setPreviewEnabled] = useState(false),
+    [capacity, setCapacity] = useState({ targetWords: 3_000_000, chapterWords: 2500, minWords: 2300, maxWords: 2700 });
   const [parent, setParent] = useState(''),
     [premise, setPremise] = useState(''),
     [createError, setCreateError] = useState(''),
@@ -1831,7 +1829,7 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
     [previewList, setPreviewList] = useState<string[]>([]);
   const locationError = newProjectLocationError(parent);
   return (
-    <Modal title="新建作品" subtitle="先写下想法，确认故事方向后再确定书名。" onClose={() => { if (!submitting) onClose(); }} wide={tagged}>
+    <Modal title="新建作品" subtitle={openingMode === 'existing' ? '沿用已有设定，直接整理故事核，再逐步完成规划与正文。' : '先写下想法，确认故事方向后再确定书名。'} onClose={() => { if (!submitting) onClose(); }} wide={tagged && openingMode === 'planning'}>
       <form
         className="modal-body form"
         onSubmit={(e) => {
@@ -1842,12 +1840,10 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
           void act(async () => {
             let created: Snapshot;
             try {
-              created = await invoke('project.create', {
-                parent,
-                premise,
-                ...(profileId ? { config: { defaultProfileId: profileId } } : {}),
+              created = await invoke('project.create', newProjectRequest({
+                mode: openingMode, parent, premise, title, profileId, capacity, previewEnabled,
                 creationInput: cleanTagInput({ ...tagInput, premise, selection: tagged ? tagInput.selection : emptyTagInput().selection })
-              });
+              }));
             } catch (error) {
               setCreateError((error as Error).message);
               return;
@@ -1855,8 +1851,10 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
             onCreated();
             if (!profileId) return;
             try {
-              const id = await invoke('creation.start', { inputHash: created.tagDraft!.inputHash, profileId, requestId: crypto.randomUUID() });
-              onStarted(id, true);
+              const id = openingMode === 'existing'
+                ? await invoke('run.start', { request: '按原 Skill 执行 S01，完整保留作者提供的设定、硬约束和叙事承诺。', profileId })
+                : await invoke('creation.start', { inputHash: created.tagDraft!.inputHash, profileId, requestId: crypto.randomUUID() });
+              onStarted(id, openingMode === 'planning');
             } catch (error) {
               throw new Error(`作品已创建，暂未开始生成：${(error as Error).message}。可以在当前作品中继续，无需重新创建。`);
             }
@@ -1885,18 +1883,35 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
           {locationError || '选择存放作品的文件夹，客户端会在里面为新作品建立独立目录。'}
         </p>
         <label>
-            创作想法
+          开书方式
+          <select value={openingMode} disabled={submitting} onChange={e => setOpeningMode(e.target.value as OpeningMode)}>
+            <option value="planning">从创意开始策划</option>
+            <option value="existing">已有完整设定</option>
+          </select>
+        </label>
+        {openingMode === 'existing' && <label>书名（选填）<input value={title} maxLength={80} disabled={submitting} onChange={e => setTitle(e.target.value)} placeholder="可填写已有书名，也可在确认故事核时确定" /></label>}
+        <label>
+            {openingMode === 'existing' ? '完整设定与必须保留的内容' : '创作想法'}
             <textarea
-              required={!tagged}
+              required={openingMode === 'existing' || !tagged}
               value={premise}
               onChange={(e) => setPremise(e.target.value)}
-              rows={4}
-              placeholder="一句话也可以。例如：夜班检修员在电梯故障中发现异常规则。"
+              rows={openingMode === 'existing' ? 8 : 4}
+              placeholder={openingMode === 'existing' ? '粘贴已有的故事核、规则、人物、分卷和开篇安排。' : '一句话也可以。例如：夜班检修员在电梯故障中发现异常规则。'}
             />
         </label>
         <div className="new-project-model"><span>创作模型</span><ModelControl profiles={profiles} profileId={profileId} onProfileChange={setProfileId} disabled={submitting} onPendingChange={setReasoningPending} label="创作模型与推理强度" /></div>
+        <div className="form-grid">
+          {([['targetWords', '目标总字数'], ['chapterWords', '单章目标字数'], ['minWords', '每章最少字数'], ['maxWords', '每章最多字数']] as const).map(([key, label]) => (
+            <label key={key}>{label}<input type="number" min={1} step={1} required disabled={submitting} value={capacity[key]} onChange={e => setCapacity(value => ({ ...value, [key]: Number(e.target.value) }))} /></label>
+          ))}
+        </div>
+        <p className="muted">字数用于分卷与章节规划，请与设定中的体量保持一致。</p>
+        <label className="check"><input type="checkbox" checked={previewEnabled} disabled={submitting} onChange={e => setPreviewEnabled(e.target.checked)} />实时节奏预览（增加模型调用）</label>
+        <p className="muted">生成中预览节奏评分。每章完成后照常进行质量审阅和记忆核对。</p>
         <details>
-          <summary>更多开书选项：题材标签与初始文件</summary>
+          <summary>{openingMode === 'planning' ? '更多开书选项：题材标签与初始文件' : '查看初始文件'}</summary>
+          {openingMode === 'planning' && <>
           <label className="check">
             <input type="checkbox" checked={tagged} disabled={submitting} onChange={e => setTagged(e.target.checked)} />
             添加平台题材标签（也可只按创意策划）
@@ -1905,6 +1920,7 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
           {!tagged && <>
             <label>必须保留（每行一项，选填）<textarea rows={2} value={tagInput.mustKeep.join('\n')} onChange={e => setTagInput({ ...tagInput, mustKeep: e.target.value.split('\n') })} /></label>
             <label>不能出现（每行一项，选填）<textarea rows={2} value={tagInput.mustAvoid.join('\n')} onChange={e => setTagInput({ ...tagInput, mustAvoid: e.target.value.split('\n') })} /></label>
+          </>}
           </>}
 
         <button
@@ -1922,13 +1938,13 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
           </details>
         )}
         </details>
-        <p className="muted">{profileId ? `使用 ${modelLabel(profiles.find(p => p.id === profileId)!, profiles)} 生成方案；你确认后才会保存为正式设定。` : '先保存作品，设置模型连接后即可开始。'}</p>
+        <p className="muted">{profileId ? `使用 ${modelLabel(profiles.find(p => p.id === profileId)!, profiles)} ${openingMode === 'existing' ? '整理故事核' : '生成方案'}；你确认后才会保存为正式设定。` : '先保存作品，设置模型连接后即可开始。'}</p>
         {createError && <p className="project-location-feedback error-text" role="alert">{createError}</p>}
         <div className="modal-footer">
           <button type="button" disabled={submitting} onClick={onClose}>
             取消
           </button>
-          <button className="primary" disabled={submitting || reasoningPending || !!locationError || !parent || (tagged ? !tagInput.selection.reading.main : !premise.trim())}>
+          <button className="primary" disabled={submitting || reasoningPending || !!locationError || !parent || (openingMode === 'planning' && tagged ? !tagInput.selection.reading.main : !premise.trim())}>
             {submitting ? '正在创建…' : profileId ? '创建并开始' : '创建作品'}
           </button>
         </div>

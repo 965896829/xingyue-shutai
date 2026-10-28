@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { extractProseBody } from './prose-body';
 import {
   configSchema,
   stageIds,
@@ -16,13 +17,7 @@ export const chapterTag = (n: number) => `第${chapterNumber(n)}章`;
 export const batchTag = (b: Batch) => `第${chapterNumber(b.start)}-${chapterNumber(b.end)}章`;
 export const estimatedChapters = (c: ProjectConfig) => Math.ceil(c.targetWords / c.chapterWords);
 export const countWords = (text: string) =>
-  Array.from(
-    text
-      .replace(/^\uFEFF/, '')
-      .replace(/^\s*(?=#(?!#))/, '')
-      .replace(/^#(?!#)[^\r\n]*(?:\r?\n|$)/, '')
-      .replace(/\s/gu, '')
-  ).length;
+  Array.from(extractProseBody(text).replace(/\s/gu, '')).length;
 export function makeBatch(start: number, c: ProjectConfig): Batch {
   return {
     id: id(),
@@ -172,15 +167,30 @@ export function renderConfig(p: ProjectState): string {
 export function parseConfig(text: string, existing: ProjectConfig): ProjectConfig {
   const raw = text.match(/```json wenxu-config\s*\n([\s\S]*?)\n```/);
   const value = { ...existing, ...(raw ? JSON.parse(raw[1]) : {}) };
+  // Original Skill fields are authoritative too; a hidden client block is not
+  // required for a reviewed creative configuration to become effective.
+  const visible = text.replace(/^\s*(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\s*\1\s*$/gm, '');
+  const field = (label: string) => visible.match(new RegExp(`^ {0,3}[-*+][ \\t]+(?:\\*\\*)?${label}(?:\\*\\*)?[：:][ \\t]*(?:\\*\\*)?([^\\r\\n]+)`, 'm'))?.[1].trim();
+  const words = (s: string | undefined) => {
+    const match = s?.match(/^(\d+(?:\.\d+)?)\s*(万)?\s*(?:字|章)?$/);
+    return match ? Number(match[1]) * (match[2] ? 10000 : 1) : undefined;
+  };
   for (const [label, key] of [
     ['目标总字数', 'targetWords'],
     ['单章目标字数', 'chapterWords'],
+    ['单章字数', 'chapterWords'],
     ['最少字数', 'minWords'],
     ['最多字数', 'maxWords'],
     ['每批章数', 'batchSize']
   ] as const) {
-    const match = text.match(new RegExp(`^- ${label}[：:]\\s*(\\d+)\\s*$`, 'm'));
-    if (match) value[key] = Number(match[1]);
+    const count = words(field(label));
+    if (count !== undefined) value[key] = count;
+  }
+  const range = field('字数允许范围')?.match(/^(\d+)\s*字?\s*[-—–～~至]\s*(\d+)\s*字?$/);
+  if (range) { value.minWords = Number(range[1]); value.maxWords = Number(range[2]); }
+  for (const [label, key] of [['视角', 'pov'], ['题材', 'genre'], ['风格', 'style'], ['用户硬约束', 'constraints']] as const) {
+    const content = field(label);
+    if (content) value[key] = content;
   }
   return configSchema.parse(value);
 }
@@ -214,7 +224,9 @@ export function updateConfigDocument(text: string, p: ProjectState): string {
   for (const [label, value] of Object.entries(values)) {
     const expression = new RegExp(`^- ${label}[：:][^\\r\\n]*`, 'gm');
     if (expression.test(text)) text = text.replace(expression, () => `- ${label}：${value}`);
-    else additions.push(`- ${label}：${value}`);
+    // Execution controls and legacy aliases stay in the managed block. Do not
+    // append a second public configuration schema after the original template.
+    else if (['工作流版本', '目标总字数', '单章字数', '字数允许范围', '视角', '风格', '用户硬约束'].includes(label)) additions.push(`- ${label}：${value}`);
   }
   const pattern = /```json wenxu-config\s*\r?\n([\s\S]*?)\r?\n```/,
     match = text.match(pattern);
@@ -228,8 +240,11 @@ export function updateConfigDocument(text: string, p: ProjectState): string {
   text = match
     ? text.replace(pattern, () => block)
     : text + newline + newline + '## 客户端设置' + newline + block + newline;
-  if (additions.length)
-    text += newline + '## 客户端管理参数' + newline + newline + additions.join(newline) + newline;
+  if (additions.length) {
+    const firstSection = text.search(/^## /m);
+    const at = firstSection < 0 ? text.length : firstSection;
+    text = text.slice(0, at) + additions.join(newline) + newline + newline + text.slice(at);
+  }
   return text;
 }
 export function reconfigure(p: ProjectState, config: ProjectConfig): ProjectState {
@@ -249,14 +264,4 @@ export function reconfigure(p: ProjectState, config: ProjectConfig): ProjectStat
   }
   next.revision++;
   return next;
-}
-export function sanitizeTitle(raw: string): string {
-  const value = raw
-    .trim()
-    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '')
-    .replace(/[. ]+$/, '');
-  if (!value || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(value))
-    throw new Error('请填写合法的作品名称，避免 Windows 保留名称');
-  if (value.length > 80) throw new Error('作品名称请控制在 80 个字符内');
-  return value;
 }

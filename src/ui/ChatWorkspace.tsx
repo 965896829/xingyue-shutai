@@ -1,14 +1,12 @@
 import { useDialogs } from './AppDialogs';
 import { invokeCommand } from '../shared/client';
 import { GenerationStatus } from './GenerationStatus';
-import { useLiveText } from './useLiveText';
+import { LiveMarkdown } from './LiveMarkdown';
 import { reasoningLabel } from '../shared/reasoning';
 import { mergeRows as merge, readChatUpdates } from '../shared/chat-history';
 import type { CommandInput, CommandOutput } from '../shared/contracts';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Plus, Archive, RotateCcw, Sparkles, FileText } from 'lucide-react';
-import DOMPurify from 'dompurify';
-import { marked } from 'marked';
 import type { Command, Snapshot } from '../shared/types';
 import type {
   Conversation,
@@ -22,8 +20,9 @@ import { ChatComposer } from './ChatComposer';
 import { brand } from '../shared/brand';
 import { requestErrorText } from '../shared/run-presentation';
 import { jumpToChatTarget } from './chat-navigation';
-import { renderNativeCitations } from '../shared/web-search';
 import { WebSearchEvidence } from './WebSearchEvidence';
+import { ContextCompactions } from './ContextMeter';
+import { latestContext } from '../shared/context-meter';
 
 interface ChatData {
   conversation: Conversation;
@@ -69,7 +68,13 @@ export function ChatWorkspace({
     });
   const scroll = useRef<HTMLDivElement>(null),
     request = useRef(0);
-  const liveText = useLiveText(snapshot.projectSessionId, selected);
+  const followReply = useRef(true);
+  const scrollAfterRender = useRef(false);
+  useLayoutEffect(() => {
+    if (!scrollAfterRender.current) return;
+    scrollAfterRender.current = false;
+    scroll.current?.scrollTo({ top: scroll.current.scrollHeight });
+  }, [data]);
   const cursor = useRef<{ nextBefore: number | null; watermark: number; latestWatermark: number; loading: boolean }>({ nextBefore: null, watermark: 0, latestWatermark: 0, loading: false });
   const conversations = (snapshot.conversations ?? []).filter(conversation => !conversation.runId),
     p = snapshot.project!,
@@ -113,6 +118,10 @@ export function ChatWorkspace({
     try {
       const result = await readChatUpdates(invokeCommand, selected, cursor.current.latestWatermark);
       if (request.current === seq) {
+        const element = scroll.current;
+        const follow = followReply.current || !!element && element.scrollHeight - element.scrollTop - element.clientHeight < 120;
+        followReply.current = false;
+        if (follow) scrollAfterRender.current = true;
         setError(current => /执行内核.*(?:恢复|尚未就绪)|作品会话已改变/.test(current) ? '' : current);
         if (!cursor.current.watermark) cursor.current = { nextBefore: result.nextBefore, watermark: result.watermark, latestWatermark: result.watermark, loading: false };
         cursor.current.latestWatermark = result.watermark;
@@ -124,6 +133,7 @@ export function ChatWorkspace({
   }, [selected]);
   useEffect(() => {
     setData(undefined);
+    followReply.current = true;
     cursor.current = { nextBefore: null, watermark: 0, latestWatermark: 0, loading: false };
     setRefs([]);
     void load();
@@ -136,7 +146,7 @@ export function ChatWorkspace({
     const unsubscribe = window.wenxu!.onEvent((event) => {
       if (event.projectSessionId && event.projectSessionId !== snapshot.projectSessionId) return;
       if (event.resource && (event.resource !== 'chat' || event.resourceId && event.resourceId !== selected)) return;
-      if (event.type === 'delta' || event.type === 'prose-delta' || event.type === 'assessment' || event.type === 'run-event') return;
+      if (event.type === 'delta' || event.type === 'prose-delta' || event.type === 'narrative-event' || event.type === 'assessment' || event.type === 'run-event') return;
       if (!timer)
         timer = setTimeout(() => {
           timer = undefined;
@@ -192,6 +202,7 @@ export function ChatWorkspace({
   }
   async function send() {
     if (!currentText.trim() || modelBusy || busy) return;
+    followReply.current = true;
     if (
       await call('chat.send', {
         conversationId: selected,
@@ -223,12 +234,21 @@ export function ChatWorkspace({
     }
   }
   async function proposal(kind: 'stage' | 'revision' | 'draft') {
+    if (busy || modelBusy || !profileId || !selected) return;
     const text = currentText.trim() || (kind === 'stage' ? `遵循当前 Skill，完成阶段 ${p.stage}` : '');
     if (!text) {
       setError('请先在输入框写明试写或修订范围');
       return;
     }
-    await call('proposal.create', {
+    await callAndStartProposal(kind, text);
+  }
+  async function callAndStartProposal(kind: 'stage' | 'revision' | 'draft', text: string) {
+    // The explicit toolbar action starts generation, not a second approval card.
+    // Version validation and final content acceptance remain on the host.
+    setBusy(true);
+    setError('');
+    try {
+      const card = await invokeCommand('proposal.create', {
       conversationId: selected,
       profileId,
       proposal: {
@@ -236,14 +256,19 @@ export function ChatWorkspace({
         goal: kind === 'stage' ? '执行当前阶段' : kind === 'draft' ? '自由试写' : '修订正式资料',
         scope: text,
         request: text,
-        outputs: [kind === 'draft' ? '独立聊天草稿' : '待审阅候选']
+        outputs: [kind === 'draft' ? '独立聊天草稿' : '生成内容，满意后保存']
       }
-    });
+      });
+      const result = await invokeCommand('proposal.confirm', { id: card.id, version: card.version });
+      input('');
+      if (result.kind !== 'draft') onRun(result.id);
+    } catch (error) { setError((error as Error).message); }
+    finally { setBusy(false); await refresh(); await load(); }
   }
   const view = data?.conversation.id === selected ? data : undefined;
   const cards = (items: ActionProposal[]) =>
     items.map((card) => (
-      <section className="action-proposal" key={card.id} aria-label="待确认任务卡">
+      <section className="action-proposal" key={card.id} aria-label="创作任务">
         <small>
           {card.kind === 'draft' ? '自由试写' : card.kind === 'revision' ? '正式修订' : 'Skill 阶段'} ·{' '}
           {{ pending: '等待确认', executed: '已启动', stale: '依据已变化', cancelled: '已取消' }[card.status]}
@@ -253,17 +278,10 @@ export function ChatWorkspace({
           <b>范围：</b>
           {card.scope}
         </p>
-        <p>
-          <b>拟生成：</b>
-          {card.outputs.join('、')}
-        </p>
-        <p>
-          <b>模型：</b>
-          {snapshot.profiles.find((x) => x.id === card.profileId)?.model ?? '模型已移除'} · 项目版本{' '}
-          {card.projectRevision}
-        </p>
         <details>
-          <summary>依据与版本 · {card.sources.length} 个文件</summary>
+          <summary>任务详情</summary>
+          <p>拟生成：{card.outputs.join('、')}</p>
+          <p>模型：{snapshot.profiles.find(x => x.id === card.profileId)?.model ?? '模型已移除'} · 项目版本 {card.projectRevision}</p>
           <small>确认版本 {card.version}</small>
           {card.sources.map((s) => (
             <div key={s.path}>
@@ -285,11 +303,11 @@ export function ChatWorkspace({
                 if (result && result.kind !== 'draft') onRun(result.id);
               }}
             >
-              确认并开始任务
+              开始生成
             </button>
           )}
           {['pending', 'stale'].includes(card.status) && (
-            <>
+            <details className="message-actions"><summary aria-label="更多任务操作">⋯</summary>
               <button
                 disabled={busy || modelBusy}
                 onClick={() => void call('proposal.refresh', { id: card.id, profileId })}
@@ -297,12 +315,12 @@ export function ChatWorkspace({
                 按当前资料与模型刷新
               </button>
               <button disabled={busy} onClick={() => void call('proposal.cancel', { id: card.id })}>
-                取消任务卡
+                暂不生成
               </button>
-            </>
+            </details>
           )}
           {card.status === 'executed' && card.kind !== 'draft' && (
-            <button onClick={() => onRun(card.executionId)}>查看执行与候选</button>
+            <button onClick={() => onRun(card.executionId)}>查看生成内容</button>
           )}
         </div>
       </section>
@@ -450,6 +468,7 @@ export function ChatWorkspace({
             }))}
           />
           <div className="chat-scroll" ref={scroll}>
+            <div className="chat-content">
             {!view?.messages.length && (
               <div className="assistant-welcome">
                 <Sparkles size={28} />
@@ -471,19 +490,16 @@ export function ChatWorkspace({
                     {m.role === 'assistant' && <GenerationStatus activity={turn?.activity} running={m.status === 'running'} fallbackStart={m.createdAt}
                       label={{ running: '', complete: '已完成', stopped: '已停止', unknown: '请求结果未知', failed: '未完成' }[m.status]} />}
                   </small>
-                  <div
-                    className="markdown-body"
-                    dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(
-                        marked.parse(
-                          renderNativeCitations(liveText(m.turnId, m.content, m.status === 'running'), m.webSearch?.citations) || (m.status === 'running' ? '' : '没有返回正文')
-                        ) as string
-                      )
-                    }}
+                  <LiveMarkdown
+                    label={m.role === 'user' ? '你的消息' : '助手回答'}
+                    allowImages
+                    binding={{ session: snapshot.projectSessionId, kind: 'chat', conversation: selected, id: m.role === 'user' ? m.id : m.turnId, text: m.content, running: m.status === 'running' }}
+                    citations={m.webSearch?.citations} fallback="没有返回正文"
                   />
                   {m.role === 'assistant' && (
                     <>
                       <WebSearchEvidence state={m.webSearch} running={m.status === 'running'} />
+                      <ContextCompactions items={turn?.contextCompactions} activity={turn?.activity} running={m.status === 'running'} />
                       {turn?.error && <p className="inline-warning">{requestErrorText(turn.error)}</p>}
                       {turn?.calls
                         .filter((c) => ['public_search', 'extract_pages'].includes(c.name))
@@ -495,6 +511,7 @@ export function ChatWorkspace({
                             </p>
                           ) : null;
                         })}
+                      <details className="message-actions"><summary aria-label="更多消息操作">⋯</summary>
                       {m.citations.length > 0 && (
                         <details>
                           <summary>资料与来源 · {m.citations.length}</summary>
@@ -529,8 +546,8 @@ export function ChatWorkspace({
                           <p>本轮推理强度：{reasoningLabel(turn.reasoningEfforts?.[turn.profileId])}</p>
                           {turn.budgets.map((b) => (
                             <p key={b.round}>
-                              第 {b.round} 轮：按 UTF-8 字节保守估算 {b.estimatedInput} / 输入额度{' '}
-                              {b.availableInput}；常驻规则与约定 {b.rules} 字节，历史 {b.history} 字节，来源{' '}
+                              第 {b.round} 轮：{b.method === 'utf8_upper_bound' ? '字节保守上界' : b.method ? '本地分词估算' : '旧版估算'} {b.estimatedInput} / 输入额度{' '}
+                              {b.availableInput}；规则与约定估算 {b.rules}，历史估算 {b.history}，来源{' '}
                               {b.sources} 项
                             </p>
                           ))}
@@ -556,6 +573,7 @@ export function ChatWorkspace({
                           <FileText size={14} /> 保存到自由草稿
                         </button>
                       )}
+                      </details>
                       {['unknown', 'failed', 'stopped'].includes(m.status) && turn?.kind === 'discussion' && (
                         <button
                           disabled={modelBusy || busy}
@@ -579,6 +597,7 @@ export function ChatWorkspace({
               );
             })}
             {view && cards(view.proposals.filter((card) => !card.turnId))}
+            </div>
           </div>
         </div>
         {view?.conversation.archived ? (
@@ -586,6 +605,7 @@ export function ChatWorkspace({
         ) : (
           <div className="chat-composer-area">
             <ChatComposer
+              contextUsage={latestContext(view?.turns ?? [])}
               conversationId={selected}
               value={currentText}
               onChange={input}

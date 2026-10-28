@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import graph from './contract-shapes.json';
-import type { Snapshot, Run, RunEvent, ContextManifest, Profile, ModelCatalog, Fact, Issue, DocumentInfo } from './types';
+import type { Snapshot, Run, RunEvent, ContextManifest, Profile, ModelCatalog, Fact, DocumentInfo } from './types';
 import type { Conversation, ConversationMessage, ConversationTurn, ActionProposal, DraftArtifact, RoleRule } from './assistant';
 import type { StudioState, Assessment, EntityState, SourceRef, SnapshotRef } from './studio';
 import type { TagCatalog, TagKnowledge, BookSpec, ApprovedTags, ContractCandidate } from './tags';
@@ -40,7 +40,6 @@ export const contextManifestSchema = build(graph.roots.ContextManifest) as z.Zod
 export const profileSchema = build(graph.roots.Profile) as z.ZodType<Profile>;
 export const modelCatalogSchema = build(graph.roots.ModelCatalog) as z.ZodType<ModelCatalog>;
 export const factSchema = build(graph.roots.Fact) as z.ZodType<Fact>;
-export const issueSchema = build(graph.roots.Issue) as z.ZodType<Issue>;
 export const documentInfoSchema = build(graph.roots.DocumentInfo) as z.ZodType<DocumentInfo>;
 export const conversationSchema = build(graph.roots.Conversation) as z.ZodType<Conversation>;
 export const conversationMessageSchema = build(graph.roots.ConversationMessage) as z.ZodType<ConversationMessage>;

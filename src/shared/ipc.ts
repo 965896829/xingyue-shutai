@@ -7,7 +7,6 @@ export const requestSchema = z.strictObject({
   workerGeneration: z.number().int().nonnegative(), projectSessionId: z.string().optional(), projectId: z.string().optional(),
   command: z.custom<Command>(isCommand), params: z.unknown()
 });
-export type RequestEnvelope = z.infer<typeof requestSchema>;
 export const rendererContextSchema = z.strictObject({
   operationId: z.string().min(1).max(200).optional(), projectSessionId: z.string().optional(), workerGeneration: z.number().int().optional(),
   waitId: z.string().uuid().optional(), timeoutMs: z.number().int().min(1).max(1_830_000).optional()

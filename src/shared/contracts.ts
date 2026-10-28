@@ -8,6 +8,8 @@ import { titleStyleProfileSchema } from './title-style';
 import * as schemas from './contract-schemas';
 import { errorCodes } from './errors';
 import { reasoningEffortSchema } from './reasoning';
+import { narrativeDataSchema } from './narrative-curve';
+import { manuscriptViewSchema } from './manuscript-view';
 
 const text = z.string();
 const key = text.min(1);
@@ -80,12 +82,15 @@ export const commandContracts = {
   'project.export': define(z.strictObject({ paths: z.array(key).min(1), target: key }), text, 'write'),
   'project.importDocument': define(z.strictObject({ file: key }), z.object({ name: text, content: text, warnings: z.array(text), hash: text.regex(/^[a-f0-9]{64}$/) }), 'read', 'global'),
   'document.read': define(z.strictObject({ path: key, hash: optionalText, disk: flag }), document),
+  'narrative.read': define(z.strictObject({ chapter: integer.min(1).max(100000), runId: optionalText, scope: z.enum(['batch', 'book']).optional() }), narrativeDataSchema),
+  'manuscript.read': define(z.strictObject({ runId: optionalText, includeDraft: z.boolean().optional() }), manuscriptViewSchema),
   'document.save': define(z.strictObject({ path: key, content: text, baseHash: text.nullable() }), text, 'write'),
   'document.restore': define(z.strictObject({ path: key, hash: key, baseHash: text.nullable() }), text, 'write'),
   'document.history': define(z.strictObject({ path: key }), z.array(z.object({ hash: text, createdAt: text, tx: text }))),
   'document.historyPage': define(z.strictObject({ path: key, before: integer.optional(), watermark: integer.optional(), limit: integer.min(1).max(200).optional() }), z.object({ items: z.array(z.object({ hash: text, createdAt: text, tx: text })), watermark: integer, nextBefore: integer.nullable() })),
   'run.start': define(z.strictObject({ mode: z.enum(['stage', 'revision']).optional(), request: key, profileId: optionalText }), text, 'write'),
   'run.resume': define(z.strictObject({ id: key, retryUnknown: flag, instruction: optionalText }), text, 'write'),
+  'run.recover': define(z.strictObject({ id: key, profileId: optionalText, retryUnknown: flag, instruction: optionalText }), text, 'write'),
   'run.answer': define(z.strictObject({ id: key, answer: key, retryUnknown: flag }), text, 'write'),
   'run.permission': define(z.strictObject({ id: key, approved: ok, retryUnknown: flag }), text, 'write'),
   'run.handoff': define(z.strictObject({ id: key, profileId: key, retryUnknown: flag, instruction: optionalText }), text, 'write'),
@@ -112,6 +117,7 @@ export const commandContracts = {
   'creation.saveDraft': define(z.strictObject({ input: tagInputSchema, expectedRevision: integer }), schemas.bookSpecSchema, 'write'),
   'creation.start': define(z.strictObject({ inputHash: key, requestId: key.max(100), profileId: optionalText, request: optionalText }), text, 'write'),
   'creation.confirmPlan': define(z.strictObject({ id: key, proposalHash: key, warningReason: optionalText }), ok, 'write'),
+  'creation.revisePlan': define(z.strictObject({ id: key, proposalHash: key, instruction: key.max(6000) }), text, 'write'),
   'titles.styleProfile': define(empty, titleStyleProfileSchema, 'read', 'global'),
   'titles.start': define(z.strictObject({ sourceRunId: optionalText, planHash: key, requestId: key.max(100), profileId: optionalText,
     rule: z.enum(['local', 'fanqie_experiment']).optional(), manualTitle: text.trim().min(1).max(80).optional(), instruction: text.max(6000).optional() }), text, 'write'),
@@ -150,7 +156,7 @@ export const commandContracts = {
   'chat.page': define(z.strictObject({ id: key, before: integer.optional(), watermark: integer.optional(), limit: integer.min(1).max(200).optional() }),
     chatData.extend({ watermark: integer, nextBefore: integer.nullable() })),
   'chat.send': define(z.strictObject({ conversationId: key, text: key, profileId: optionalText, referenceChats: z.array(text).max(10).optional() }), text, 'write'),
-  'run.discuss': define(z.strictObject({ id: key, text: key.max(120000), profileId: optionalText, displayedError: text.max(4000).optional() }), text, 'write'),
+  'run.discuss': define(z.strictObject({ id: key, text: key.max(120000), profileId: optionalText, displayedError: text.max(4000).optional(), allowCandidateEdits: z.boolean().optional() }), text, 'write'),
   'chat.retry': define(z.strictObject({ id: key, confirmRetry: z.literal(true, { error: '需要明确确认重新请求，可能产生新的费用' }), profileId: optionalText, referenceChats: z.array(text).max(10).optional() }), text, 'write'),
   'chat.stop': define(empty, ok, 'write'),
   'proposal.create': define(z.strictObject({ conversationId: key, profileId: key, proposal: action }), schemas.actionProposalSchema, 'write'),
@@ -184,7 +190,6 @@ export const commandContracts = {
 export type Command = keyof typeof commandContracts;
 export type CommandInput<C extends Command> = z.input<(typeof commandContracts)[C]['input']>;
 export type CommandOutput<C extends Command> = z.output<(typeof commandContracts)[C]['output']>;
-export const commands = Object.keys(commandContracts) as Command[];
 export function isCommand(value: unknown): value is Command {
   return typeof value === 'string' && Object.hasOwn(commandContracts, value);
 }

@@ -63,7 +63,7 @@ function setup() {
 }
 const body =
   '# 第一章\n\n𠮷阿宁左手受伤，玉钥仍在腰间。\n\n阿宁说：“钥匙已经烧毁。”阿甲对此信以为真。\n\n三日后必须归还玉钥。';
-function fact(s: FileStore, values: Partial<Fact> = {}): Fact {
+function fact(_s: FileStore, values: Partial<Fact> = {}): Fact {
   return factSchema.parse({
     id: 'f-injury',
     subject: '阿宁',

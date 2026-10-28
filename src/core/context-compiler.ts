@@ -11,6 +11,8 @@ import { contextAllowance, countInput } from './context-budget';
 import { chapterSlice, endingSlice } from './context-slices';
 import { contextDependencies } from './context-dependencies';
 import { compatibleSettingsSnapshot, currentSettingsSourceHash } from './runtime-settings';
+import { selectMemoryDiagnostics } from './memory-diagnostics';
+import { characterVoiceSlice } from './character-voice';
 
 export interface CompileOptions {
   purpose?: NonNullable<ContextManifest['purpose']>;
@@ -19,6 +21,7 @@ export interface CompileOptions {
   resident?: unknown;
   toolCount?: number;
   deferBudgetCheck?: boolean;
+  onMemoryDiagnostics?: (result: ReturnType<typeof selectMemoryDiagnostics>) => void;
 }
 
 export function contextPayload(manifest: ContextManifest) {
@@ -81,7 +84,9 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   };
   const formal = purpose === 'stage' || purpose === 'revision';
   const planned = formal ? requiredInputs(stage, p) : [paths.config, paths.style, ...(stage >= 'S04' ? [paths.world] : []), ...(purpose === 'draft' && stage >= 'S09' ? [paths.volumes, paths.outline, batchPath(activeBatch(p)), rhythmPath(activeBatch(p)), taskPath(p.chapter), detailPath(p.chapter), ...(p.chapter > 1 ? [prosePath(p.chapter - 1)] : [])] : [])];
-  const required = planned.filter(file => !(stage >= 'S09' && file.startsWith('04_') && file !== paths.summary));
+  // S09 derives a chapter from the whole accepted batch and current character
+  // records. The first chapter has no prose-derived facts to replace those files.
+  const required = planned.filter(file => !(stage >= 'S10' && file.startsWith('04_') && file !== paths.summary));
   if (stage >= 'S09' && purpose !== 'discussion')
     for (let n = Math.max(1, p.chapter - p.config.recentChapters); n < p.chapter; n++) if (snapshot.documents[updatePath(n)]) required.push(updatePath(n));
   if (approvedCreation(p)) required.push(contractPath);
@@ -99,9 +104,14 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     catch (error) { if (!options.allowConflicts) throw error; m.conflicts.push((error as Error).message); continue; }
     let slice = { content: source.content, ranges: source.ranges ?? [{ start: 0, end: Array.from(source.content).length }], omitted: !!source.ranges };
     let reason = authorRule ? '作者必守规则，不代表人物已知' : '当前任务必读';
-    if (stage >= 'S09' && /^(05_|06_)/.test(file)) { slice = chapterSlice(source.content, p.chapter); if (slice.omitted) reason = '全局说明及本章所属计划'; }
+    if (stage >= 'S09' && /^(05_|06_)/.test(file) && !(stage === 'S09' && file === batchPath(activeBatch(p)))) { slice = chapterSlice(source.content, p.chapter); if (slice.omitted) reason = '全局说明及本章所属计划'; }
+    else if (stage >= 'S06' && /^(05_|06_)/.test(file)) {
+      const batch = activeBatch(p);
+      slice = chapterSlice(source.content, batch.start, batch.end);
+      if (slice.omitted) reason = '全局说明及当前批次涉及的全部计划范围';
+    }
     if (file === prosePath(p.chapter - 1) && scope.viewpoint !== 'character') { slice = endingSlice(source.content); reason = '前章结尾，完整原文可按需回查'; }
-    if (slice.omitted) m.omitted!.push({ path: file, reason: file.startsWith('07_') ? '前章较早部分未常驻；保留结尾及精确范围，可回查全文' : '其他章节的计划未装入；全局说明及当前章节部分保留' });
+    if (slice.omitted) m.omitted!.push({ path: file, reason: file.startsWith('07_') ? '前章较早部分未常驻；保留结尾及精确范围，可回查全文' : '任务范围外的计划未常驻；全局说明及当前章或批次涉及部分保留，完整原文可回查' });
     const layer: ContextSource['layer'] = authorRule ? 'author_rules' : file.startsWith('07_') ? 'prose' : file.startsWith('04_') || file.startsWith('08_') ? 'summary' : 'chapter_plan';
     m.sources.push({ path: file, hash: source.hash, content: slice.content, ranges: slice.ranges, mode: slice.omitted || scope.viewpoint === 'character' && file.startsWith('07_') ? 'excerpt' : 'full', required: true, reason, layer, sourceSnapshotId: snapshot.id,
       category: authorRule ? 'author_instruction' : layer === 'prose' ? 'accepted_prose' : layer === 'summary' ? 'derived_summary' : 'plan' });
@@ -112,6 +122,16 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   const entities = new Set<string>(scope.characterId ? [scope.characterId] : []);
   for (const f of usable) if ([f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))) for (const entity of f.entityIds) entities.add(entity);
   m.entityIds = [...entities].sort();
+  if (stage === 'S10' && purpose !== 'discussion' && scope.viewpoint === 'author' && !m.sources.some(source => source.path === paths.roles)) {
+    const card = status.get(paths.roles);
+    if (card?.status === 'accepted' && !pendingSource(p, paths.roles)) {
+      const doc = store.readAccepted(paths.roles, snapshot.id);
+      const voice = characterVoiceSlice(doc.content, [request, ...m.sources.filter(source => source.layer === 'chapter_plan').map(source => source.content), ...entities].join('\n'));
+      if (voice) m.sources.push({ path: paths.roles, hash: doc.hash, content: voice.content, ranges: voice.ranges,
+        mode: 'excerpt', required: true, layer: 'author_rules', category: 'author_instruction', sourceSnapshotId: snapshot.id,
+        reason: '本章人物的说话与做事风格；只指导表达，不表示人物知晓秘密，不包含完整台账或事实块' });
+    }
+  }
   const current = all.filter(f => applicableFact(f, { ...scope, viewpoint: 'author' }));
   const usableIds = new Set(usable.map(f => f.id));
   const conflicts = conflictingFacts(current);
@@ -131,7 +151,11 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   const hardIds = new Set(m.hardConstraints!.map(f => f.id));
   m.retrievedFacts = found.facts.filter(x => !hardIds.has(x.fact.id) && (purpose === 'discussion' || x.fact.revealedAt <= p.chapter)).map(x => x.fact);
   m.requiredFactIds = found.facts.filter(x => x.required).map(x => x.fact.id);
-  m.conflicts.push(...found.issues, ...(store.db.get<string[]>('memoryIssues') ?? []));
+  const diagnostics = selectMemoryDiagnostics(store, { scope, query, sourcePaths: m.sources.filter(source => !(source.path === paths.roles && source.category === 'author_instruction' && source.mode === 'excerpt')).map(s => s.path), entityIds: m.entityIds });
+  options.onMemoryDiagnostics?.(diagnostics);
+  m.conflicts.push(...found.issues, ...diagnostics.blocking);
+  for (const issue of diagnostics.isolated)
+    m.omitted!.push({ path: issue.path, reason: '与当前任务无关的失效记忆已隔离；原问题保留在记忆管理中，未作为本次事实使用' });
   if (stage >= 'S09' && purpose !== 'discussion') m.conflicts.push(...found.coverage.filter(c => c.status === 'missing').map(c => `缺少连续性台账：${c.ledger}`));
   m.conflicts = [...new Set(m.conflicts)];
   if (m.conflicts.length && !options.allowConflicts) throw new Error(`记忆来源需要核对：${m.conflicts.slice(0, 4).join('；')}`);

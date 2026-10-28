@@ -345,8 +345,9 @@ test('T-059 batched backup cancellation keeps a durable partial manifest and can
   } finally { store.close(); }
 });
 
-test('T-063 unadmitted experimental executor cannot become a new job default', () => {
-  assert.equal(chooseExecutor('legacy'), 'legacy'); assert.equal(chooseExecutor('pi', true), 'legacy');
+test('T-063 admitted Pi is explicit and disabling it preserves Legacy routing', () => {
+  assert.equal(chooseExecutor('legacy'), 'legacy'); assert.equal(chooseExecutor('pi', true), 'pi');
+  assert.equal(chooseExecutor('pi', false), 'legacy');
 });
 
 test('T-024/061 scheduler excludes competing resources while allowing independent work and releases on failure', async () => {

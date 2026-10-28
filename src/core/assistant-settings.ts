@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import { z } from 'zod';
 import { readSettings } from './settings-recovery';
 import path from 'node:path';

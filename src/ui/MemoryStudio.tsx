@@ -2,7 +2,7 @@ import { useDialogs } from './AppDialogs';
 import { invokeCommand } from '../shared/client';
 import { useEffect, useRef, useState } from 'react';
 import type { Fact, Snapshot } from '../shared/types';
-import type { EntityState, SourceRef, MemoryScope } from '../shared/studio';
+import type { SourceRef, MemoryScope } from '../shared/studio';
 import { Editor } from './Editor';
 import { useDialog } from './useDialog';
 import { commandContracts } from '../shared/contracts';
@@ -128,91 +128,6 @@ export function FactCard({
         </dl>
       </details>
     </article>
-  );
-}
-export function CharacterInspector({
-  snapshot,
-  onSource
-}: {
-  snapshot: Snapshot;
-  onSource: (v: SourceRef) => void;
-}) {
-  const entities = [
-    ...new Map(
-      snapshot.facts.map((f) => [
-        f.entityIds[0] || f.subject,
-        { id: f.entityIds[0] || f.subject, name: f.subject }
-      ])
-    ).values()
-  ];
-  const [selected, setSelected] = useState(''),
-    [state, setState] = useState<EntityState>(),
-    [error, setError] = useState('');
-  const entity = selected || entities[0]?.id;
-  useEffect(() => {
-    let active = true;
-    if (!entity) {
-      setState(undefined);
-      return;
-    }
-    void invokeCommand('state.getCharacter', {
-        entityId: entity,
-        scope: { chapter: snapshot.project?.chapter ?? 0 }
-      })
-      .then((v) => {
-        if (active) {
-          setState(v);
-          setError('');
-        }
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, [entity, snapshot.studio?.snapshot?.id]);
-  return (
-    <div className="character-inspector">
-      <label className="sr-only" htmlFor="inspector-character">
-        人物
-      </label>
-      <select id="inspector-character" value={entity ?? ''} onChange={(e) => setSelected(e.target.value)}>
-        <option value="" disabled>
-          选择人物
-        </option>
-        {entities.map((e) => (
-          <option key={e.id} value={e.id}>
-            {e.name}
-          </option>
-        ))}
-      </select>
-      {error && <p role="alert">{error}</p>}
-      {state ? (
-        <>
-          <div className="character-heading">
-            <h2>{state.name}</h2>
-            <small>第 {state.chapter} 章</small>
-          </div>
-          {state.aliases.length > 0 && <p className="muted">{state.aliases.join(' · ')}</p>}
-          {state.facts.map((f) => (
-            <FactCard key={f.id} fact={f} compact onSource={onSource} />
-          ))}
-          {state.unknown.length > 0 && (
-            <dl className="unknown-fields">
-              {state.unknown.map((c) => (
-                <div key={c}>
-                  <dt>{categories[c as Fact['category']]}</dt>
-                  <dd>未知</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-        </>
-      ) : (
-        <p className="empty-state">暂无人物记录</p>
-      )}
-    </div>
   );
 }
 export function MemoryStudio({

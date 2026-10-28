@@ -3,6 +3,7 @@ import path from 'node:path';
 import { z } from 'zod';
 import { hash } from './domain';
 import { safePath } from './storage';
+import { sharedRuleBlock } from './runtime/prompt-cache';
 import type { StageId } from '../shared/types';
 
 const entrySchema = z.object({
@@ -94,11 +95,14 @@ export class SkillRegistry {
     if (JSON.stringify(contract.tools) !== JSON.stringify(entry.tools)) throw new Error('技能工具契约不一致');
     return { ...entry, host: hostSkills.has(skillId) };
   }
-  load(skillId: string, options: { outputMode?: SkillOutputMode } = {}) {
+  load(skillId: string, options: { outputMode?: SkillOutputMode; legacyVolumeNaming?: boolean } = {}) {
     const entry = this.get(skillId),
-      content = this.read(entry.path),
+      current = this.read(entry.path),
       controller = this.controller();
-    if (hash(content) !== entry.sha256) throw new Error('技能版本与注册表不一致');
+    if (hash(current) !== entry.sha256) throw new Error('技能版本与注册表不一致');
+    // Resuming a pre-0.4.72 run must retain its exact specialist prompt, not gain a new paid preflight.
+    const content = options.legacyVolumeNaming && skillId === 'webnovel-volume-architect'
+      ? this.read('skills/webnovel-volume-architect/legacy-0.4.71.md') : current;
     const files = new Set<string>(['references/shared-contract.md', 'references/agent-guidance.md']);
     for (const match of content.matchAll(/`(\.\.\/\.\.\/references\/[^`]+\.md)`/g)) {
       const relative = path.posix.normalize(path.posix.join(path.posix.dirname(entry.path), match[1]));
@@ -114,8 +118,13 @@ export class SkillRegistry {
       entry,
       content: [controller.content, `\n--- 当前专项技能：${entry.title} ---\n${specialist}`,
         ...references.filter(({ file }) => !rawMode || file !== 'references/shared-contract.md')
-          .map(({ file, content: reference }) => `\n--- ${file} ---\n${file === 'references/agent-guidance.md' ? guidanceFor(skillId, reference) : reference}`)].join('\n'),
-      hash: hash(JSON.stringify(['structured-loading-2', controller.hash, entry, ...[...files].map((f) => this.lock[f])]))
+          .map(({ file, content: reference }) => {
+            const block = `\n--- ${file} ---\n${file === 'references/agent-guidance.md' ? guidanceFor(skillId, reference) : reference}`;
+            return ['references/shared-contract.md', 'references/agent-guidance.md'].includes(file)
+              ? sharedRuleBlock(file.includes('agent-guidance') ? 'agent-guidance' : 'shared-contract', block) : block;
+          })].join('\n'),
+      hash: hash(JSON.stringify(['structured-loading-2', controller.hash, entry,
+        ...(content !== current ? [hash(content)] : []), ...[...files].map((f) => this.lock[f])]))
     };
   }
 }

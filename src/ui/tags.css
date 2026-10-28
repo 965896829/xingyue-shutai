@@ -204,6 +204,23 @@
   margin-top: auto;
   width: 100%;
 }
+.direction-settings {
+  border-top: 1px solid var(--line-strong);
+  margin: 8px 0 18px;
+  padding-top: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.direction-settings h4 {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 13px;
+}
+.direction-settings p { margin: 0 0 8px; }
+.direction-settings ul { margin: 0 0 12px; padding-left: 20px; }
+.direction-settings li + li { margin-top: 6px; }
+.creation-recommendation { line-height: 1.75; }
+.direction-settings-editor { margin-bottom: 16px; }
 .tag-directions button[aria-pressed='true'],
 .title-candidates button[aria-pressed='true'] {
   color: var(--accent);

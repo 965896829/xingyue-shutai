@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { z } from 'zod';
 import path from 'node:path';
 import { hash, paths, updateConfigDocument } from './domain';
 import { candidateChangesForCurrentSettings, compatibleRunBase } from './runtime-settings';
@@ -237,14 +238,23 @@ function validateFrozenReportMetadata(report: PlanningReport, planning: TagPlann
 }
 
 export function validateReport(value: unknown, planning: TagPlanning) {
-  const report = planningReportSchema.parse(value),
+  // Fill only omitted legacy bookkeeping; never shorten or synthesize story text.
+  const schema = planning.directionFormatVersion === 1 ? planningReportSchema.extend({
+    diagnosis: planningReportSchema.shape.diagnosis.default([]),
+    marketClaims: planningReportSchema.shape.marketClaims.default([]),
+    unresolvedQuestions: planningReportSchema.shape.unresolvedQuestions.default([]),
+    directions: z.array(planningReportSchema.shape.directions.element.extend({
+      tagCoverage: planningReportSchema.shape.directions.element.shape.tagCoverage.default([])
+    })).length(3)
+  }) : planningReportSchema;
+  const report = schema.parse(value),
     ids = selectedIds(planning.spec);
   const directionIds = report.directions.map((d) => d.id);
   if (new Set(directionIds).size !== 3 || !directionIds.includes(report.recommendedDirectionId))
     throw new Error('方向编号重复或推荐不存在');
   if (new Set(report.assumptions.map((a) => a.id)).size !== report.assumptions.length)
     throw new Error('假设编号重复');
-  for (const d of report.directions)
+  for (const d of report.directions.filter(d => planning.directionFormatVersion !== 1 || d.tagCoverage.length))
     sameSet(
       d.tagCoverage.map((t) => t.optionId),
       ids,
@@ -400,12 +410,7 @@ export function planningIssues(r: Run): Issue[] {
       t.contractReview.binding !== t.binding
     )
       throw new Error('所选方向的契约尚未完成独立审核');
-    if (
-      t.reportReview?.binding !== t.binding ||
-      t.reportReview?.hash !== tagHash(t.report) ||
-      t.reportReview.result.issues.some((i) => i.severity !== 'minor')
-    )
-      throw new Error('策划报告尚未通过当前输入的独立审核');
+    if (!t.report || t.reportHash !== tagHash(t.report)) throw new Error('方向报告已改变，请重新查看');
     validateReport(t.report, t);
     validateContract(t.candidate, t);
     if (t.contractReview.result.issues.some((i) => i.severity !== 'minor'))

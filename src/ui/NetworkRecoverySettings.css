@@ -1,0 +1,16 @@
+.network-recovery-settings {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+.network-recovery-settings label.network-recovery-consent {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+}
+.network-recovery-settings .network-recovery-consent input[type='checkbox'] {
+  width: auto;
+  flex: 0 0 auto;
+  margin: 3px 0 0;
+}

@@ -194,25 +194,42 @@
   padding-bottom: 130px;
 }
 
-.conversation {
+.conversation,
+.assistant-conversation {
   container-type: inline-size;
+}
+.chat-layout {
+  --chat-gutter: clamp(40px, 6cqi, 64px);
+  position: relative;
 }
 .conversation > .chat-layout {
   flex: 1;
   min-height: 0;
   display: flex;
-  gap: 16px;
-  /* Keep the reading column aligned with the composer when navigation appears. */
-  max-width: 850px;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
 }
 .chat-layout .chat-scroll {
   min-width: 0;
   min-height: 0;
+  padding-inline: var(--chat-gutter);
+  scrollbar-gutter: stable both-edges;
+}
+.chat-content {
+  width: 100%;
+  max-width: 762px;
+  min-width: 0;
+  margin-inline: auto;
 }
 .proximity-sidebar {
+  position: absolute;
+  inset-block: 0;
+  left: 6px;
+  z-index: 2;
   display: flex;
   align-items: center;
-  width: 72px;
+  width: clamp(28px, 4cqi, 48px);
   flex-shrink: 0;
   min-height: 0;
 }
@@ -252,9 +269,6 @@
   scroll-margin-top: 8px;
 }
 @container (max-width: 550px) {
-  .conversation > .chat-layout {
-    gap: 8px;
-  }
   .proximity-sidebar {
     width: 32px;
   }

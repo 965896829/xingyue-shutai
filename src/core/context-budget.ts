@@ -1,4 +1,5 @@
 import { Tiktoken } from 'js-tiktoken/lite';
+import { ApplicationError } from '../shared/errors';
 import o200k from 'js-tiktoken/ranks/o200k_base';
 import cl100k from 'js-tiktoken/ranks/cl100k_base';
 import { contextPolicySchema, type Profile } from '../shared/types';
@@ -56,6 +57,6 @@ export function requestSize(profile: Profile, body: unknown, toolCount = 0) {
 
 export function assertRequestFits(profile: Profile, body: unknown, toolCount = 0) {
   const size = requestSize(profile, body, toolCount);
-  if (size.tokens > size.availableInput) throw new Error(`必需上下文超过模型可用容量（${size.method === 'utf8_upper_bound' ? '字节保守上界' : '本地分词估计'} ${size.tokens}，可用 ${size.availableInput}，已预留输出、协议开销和安全余量）。请缩小任务范围或选择容量更大的模型；关键约定未被删除，本次没有发送请求。`);
+  if (size.tokens > size.availableInput) throw new ApplicationError('MODEL_CONFIGURATION', `必需上下文超过模型可用容量（${size.method === 'utf8_upper_bound' ? '字节保守上界' : '本地分词估计'} ${size.tokens}，可用 ${size.availableInput}，已预留输出、协议开销和安全余量）。请缩小任务范围或选择容量更大的模型；关键约定未被删除，本次没有发送请求。`);
   return size;
 }

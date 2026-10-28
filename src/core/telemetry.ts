@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ApplicationError } from '../shared/errors';
 import { compatibleSettingsSnapshot } from './runtime-settings';
 import { callModel, moneyUnits } from './runtime/model-gateway';
 import type { Assessment, DraftIdentity } from '../shared/studio';
@@ -12,6 +13,12 @@ import { assertRequestFits } from './context-budget';
 import { controllerRules, assertControllerRules, taskEnvelope } from './agent-control';
 
 export function addUsage(target: Usage, receipt: Usage) {
+  const empty = target.input === 0 && target.output === 0;
+  for (const k of ['cachedInput', 'cacheWriteInput', 'reasoningOutput'] as const) {
+    if (target[k] === undefined && receipt[k] === undefined) continue;
+    target[k] = (empty && target[k] === undefined ? 0 : target[k]) == null || receipt[k] == null
+      ? null : (target[k] ?? 0) + receipt[k]!;
+  }
   if (target.currency !== receipt.currency) target.cost = null;
   for (const k of ['input', 'output', 'cost'] as const)
     target[k] = target[k] === null || receipt[k] === null ? null : k === 'cost' ? Number(moneyUnits(target[k]!) + moneyUnits(receipt[k]!)) / 1e9 : target[k]! + receipt[k]!;
@@ -74,10 +81,10 @@ export function requestGuard(
   const estimate = size.tokens + size.providerReserve + size.safetyReserve;
   if (budget !== null) {
     if (run.usage.cost === null || profile.inputPrice === null || profile.outputPrice === null)
-      throw new Error('费用未知，已暂停预算内调用');
-    if (run.usage.currency !== profile.currency) throw new Error('分工模型币种不同，无法合并费用上限');
+      throw new ApplicationError('BUDGET_UNCONFIRMED', '费用未知，已暂停预算内调用');
+    if (run.usage.currency !== profile.currency) throw new ApplicationError('BUDGET_UNCONFIRMED', '分工模型币种不同，无法合并费用上限');
     const ceiling = (estimate * profile.inputPrice + profile.outputLimit * profile.outputPrice) / 1e6;
-    if (run.usage.cost + reserved + ceiling > budget) throw new Error('本章费用上限不足');
+    if (run.usage.cost + reserved + ceiling > budget) throw new ApplicationError('BUDGET_EXCEEDED', '本章费用上限不足');
     return ceiling;
   }
   return 0;

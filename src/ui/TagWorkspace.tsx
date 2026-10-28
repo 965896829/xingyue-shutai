@@ -1,9 +1,10 @@
 import { ModelControl } from './ModelControl';
+import { ContextMeter } from './ContextMeter';
+import { latestContext } from '../shared/context-meter';
 import { invokeCommand } from '../shared/client';
 import type { Invoke } from '../shared/contracts';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import DOMPurify from 'dompurify';
-import { marked } from 'marked';
+import { MarkdownContent } from './MarkdownContent';
 import { createPlanningTextFormatter } from '../shared/planning-language';
 import { assessTagPolicy } from '../shared/tag-policy';
 import type { Snapshot, Run } from '../shared/types';
@@ -16,8 +17,11 @@ import {
 } from '../shared/tags';
 import { approvedCreation, planKinds, payoffStages } from '../shared/creation';
 import { TitleWorkspace } from './TitleWorkspace';
+import { DirectionCards } from './DirectionCards';
 import { creationDirectionId, creationStep, creationValidationIssues, runHasCurrentBasis } from '../shared/run-presentation';
 import { CreationTaskStatus, CreationChecks, type CreationCheckItem } from './CreationTaskStatus';
+import { useWorkspaceAction } from './useWorkspaceAction';
+import { handleMarkdownLink } from './markdown-links';
 
 const invoke: Invoke = (command, args) => invokeCommand(command, args);
 export const cleanTagInput = (input: TagInput): TagInput => ({
@@ -215,22 +219,21 @@ export function TagWorkspace({
   setProfileId: (id: string) => void;
   refresh: () => Promise<void>;
   onReview: (id: string) => void;
-  onAccept: (run: Run, startNext: boolean, warningReason: string) => Promise<void>;
+  onAccept: (run: Run, startNext: boolean, warningReason?: string) => Promise<void>;
 }) {
   const p = snapshot.project!,
     draft = snapshot.tagDraft,
     accepted = approvedCreation(p);
   const [input, setInput] = useState<TagInput>(draft ? cleanTagInput(draft) : emptyTagInput());
-  const [actionBusy, setBusy] = useState(false),
-    [error, setError] = useState(''),
-    [note, setNote] = useState('');
+  const { busy: actionBusy, error, act } = useWorkspaceAction(refresh);
+  const [note, setNote] = useState('');
   const [modelPending, setModelPending] = useState(false);
   const busy = actionBusy || modelPending;
   const [direction, setDirection] = useState(''),
     [resolutions, setResolutions] = useState<Record<string, string>>({});
   const [rework, setRework] = useState(''),
     [rerollInstruction, setRerollInstruction] = useState(''),
-    [reviewReason, setReviewReason] = useState('');
+    [planFeedback, setPlanFeedback] = useState('');
   const [coverage, setCoverage] = useState<any>(null),
     [diff, setDiff] = useState<any>(null);
   const [inputOpen, setInputOpen] = useState(!snapshot.runs.some((r) => r.planning) && !accepted);
@@ -247,7 +250,7 @@ export function TagWorkspace({
   );
   const t = run?.planning,
     report = t?.report,
-    currentStep = creationStep(run);
+    currentStep = (p.titlePending ? creationStep(run) : Math.min(2, creationStep(run))) as 1 | 2 | 3;
   const showText = useMemo(
     () =>
       createPlanningTextFormatter({
@@ -292,7 +295,7 @@ export function TagWorkspace({
   useEffect(() => {
     setDirection(creationDirectionId(run));
     setResolutions({});
-    setReviewReason('');
+    setPlanFeedback('');
     setDiff(null);
   }, [run?.id, t?.reportHash]);
   useEffect(() => {
@@ -302,22 +305,6 @@ export function TagWorkspace({
       flowRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
     }
   }, [run?.id, currentStep]);
-  const act = async (fn: () => Promise<unknown>) => {
-    setBusy(true);
-    setError('');
-    try {
-      await fn();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      try {
-        await refresh();
-      } catch (e) {
-        setError((previous) => previous || (e as Error).message);
-      }
-      setBusy(false);
-    }
-  };
   const saved =
     !!draft &&
     (!run || runHasCurrentBasis(run, p)) &&
@@ -352,8 +339,7 @@ export function TagWorkspace({
     act(async () => {
       await invoke('creation.confirmPlan', {
         id: run!.id,
-        proposalHash: run!.proposalHash!,
-        warningReason: reviewReason
+        proposalHash: run!.proposalHash!
       });
       if (generateTitles) {
         const latest = await invoke('app.snapshot');
@@ -366,8 +352,17 @@ export function TagWorkspace({
           rule: 'local',
           requestId: crypto.randomUUID()
         });
+      } else if (!p.titlePending) {
+        await savePlan();
       }
     });
+  const savePlan = async () => {
+    // Confirmation and title selection change the proposal hash. Use the fresh candidate.
+    const latest = await invoke('app.snapshot');
+    const candidate = latest.runs.find(item => item.id === run!.id);
+    if (!candidate) throw new Error('作品方案暂未取得，请刷新后重试');
+    await onAccept(candidate, candidate.mode === 'stage' && continueAfterSave);
+  };
   const reviewItems = (issues: PlanningReview['issues'] = []): CreationCheckItem[] =>
     issues.map((i) => ({
       text: showText(i.explanation),
@@ -377,20 +372,18 @@ export function TagWorkspace({
   const validationIssues = creationValidationIssues(run);
   const validationItems: CreationCheckItem[] = validationIssues.map((i) => ({
     text: showText(i.message),
-    kind: i.severity === 'error' ? 'blocking' : i.severity === 'warning' ? 'confirmation' : 'suggestion'
+    kind: i.severity === 'error' ? 'blocking' : 'suggestion'
   }));
-  const needsReason = validationIssues.some((i) => i.severity === 'warning');
   const canAccept =
     t?.phase === 'ready' &&
     !busy &&
     !running &&
     saved &&
     !run?.issues.some((i) => i.severity === 'error') &&
-    (!needsReason || !!reviewReason.trim()) &&
     (t.workflowVersion !== 2 || (!!t.planApproval && (!p.titlePending || !!t.titleSelection)));
   const steps =
     t?.workflowVersion === 2 || !run
-      ? ['选方向', '确认方案', p.stage === 'S01' ? '定书名并开书' : '书名与保存']
+      ? p.titlePending ? ['选方向', '看方案', '选书名'] : ['选方向', '看方案并保存']
       : ['选方向', '确认方案'];
   const selectedDirection = report?.directions.find((d) => d.id === (t?.selectedDirectionId || direction));
   return (
@@ -400,13 +393,14 @@ export function TagWorkspace({
           <h1>{p.stage === 'S01' ? '准备你的新作品' : '调整作品方案'}</h1>
           <p className="muted">
             {accepted
-              ? '修改方案后，先核对变化，再保存为新的创作约定。'
+              ? '查看修改后的方案，满意后保存为新的创作约定。'
               : p.stage === 'S01'
                 ? '先选故事方向，再确定方案和书名。进度会自动保留。'
-                : '先核对已有设定，保存后保持当前章节和阶段。'}
+                : '查看已有设定的整理结果，满意后保存。'}
           </p>
         </div>
         <ModelControl profiles={snapshot.profiles} profileId={profileId} onProfileChange={setProfileId} disabled={actionBusy} onPendingChange={setModelPending} label="策划模型与推理强度" />
+        <ContextMeter profile={snapshot.profiles.find(profile => profile.id === profileId)} usage={latestContext(snapshot.runs.filter(item => item.planning || item.naming))} />
         <button onClick={editInput} disabled={busy || running}>
           {run || accepted ? '修改想法与标签' : '填写创作想法'}
         </button>
@@ -540,57 +534,9 @@ export function TagWorkspace({
                     <h2>你想写哪一个故事？</h2>
                     <p className="muted">{showText(report.positioning)}</p>
                   </div>
-                  <div className="tag-directions">
-                    {report.directions.map((d) => (
-                      <article
-                        key={d.id}
-                        className={(t.selectedDirectionId || direction) === d.id ? 'selected' : ''}
-                      >
-                        {report.recommendedDirectionId === d.id && (
-                          <span className="creation-badge">推荐方向</span>
-                        )}
-                        <h3>{showText(d.title)}</h3>
-                        <p>{showText(d.logline)}</p>
-                        <dl>
-                          <dt>故事如何展开</dt>
-                          <dd>{showText(d.storyEngine)}</dd>
-                          <dt>与其他方向的区别</dt>
-                          <dd>{showText(d.differenceFromOtherDirections)}</dd>
-                        </dl>
-                        <details>
-                          <summary>开篇、首卷与长期发展</summary>
-                          <dl>
-                            <dt>开篇选择</dt>
-                            <dd>{showText(d.openingDecision)}</dd>
-                            <dt>首卷变化</dt>
-                            <dd>{showText(d.firstVolumeChange)}</dd>
-                            <dt>长期风险</dt>
-                            <dd>{showText(d.longRunRisk)}</dd>
-                          </dl>
-                          {d.intentChanges.length > 0 && (
-                            <p>对原想法的调整：{showText(d.intentChanges.join('；'))}</p>
-                          )}
-                          {d.tagCoverage.map((v) => (
-                            <p key={v.optionId}>
-                              <b>{t.knowledge.options.find((o) => o.id === v.optionId)?.label}</b>：
-                              {showText(v.implementation)}
-                              <br />
-                              首次展示：{showText(v.firstDemonstration)}
-                              <br />
-                              风险：{showText(v.risk)}
-                            </p>
-                          ))}
-                        </details>
-                        <button
-                          disabled={busy || running || t.phase !== 'awaiting_direction'}
-                          aria-pressed={(t.selectedDirectionId || direction) === d.id}
-                          onClick={() => setDirection(d.id)}
-                        >
-                          {(t.selectedDirectionId || direction) === d.id ? '已选这个方向' : '选择这个方向'}
-                        </button>
-                      </article>
-                    ))}
-                  </div>
+                  <DirectionCards report={report} selectedId={t.selectedDirectionId || direction}
+                    disabled={busy || running || t.phase !== 'awaiting_direction'} onSelect={setDirection} format={showText} />
+                  <p className="creation-recommendation"><strong>推荐理由：</strong>{showText(report.recommendationReasons.join('；'))}</p>
                   {t.phase === 'awaiting_direction' && (
                     <div className="creation-reroll">
                       <label>
@@ -627,40 +573,41 @@ export function TagWorkspace({
                       <p className="muted">沿用当前创作要求，旧方案会保存在历史中。</p>
                     </div>
                   )}
-                  <details className="creation-background">
-                    <summary>推荐理由与方向检查</summary>
-                    <p>{showText(report.recommendationReasons.join('；'))}</p>
+                  {!!report.diagnosis.length && <details className="creation-background">
+                    <summary>旧版构思记录</summary>
                     {report.diagnosis.map((v, i) => (
                       <p key={i}>{showText(v.message)}</p>
                     ))}
-                  </details>
-                  <CreationChecks title="方向检查" items={reviewItems(t.reportReview?.result.issues)} />
+                  </details>}
+                  {!!t.reportReview?.result.issues.length && <details className="advanced-box">
+                    <summary>历史方向检查（仅供参考）</summary>
+                    <CreationChecks title="旧版检查记录" items={reviewItems(t.reportReview.result.issues)} />
+                  </details>}
                 </>
               )}
               {t.phase === 'awaiting_direction' && selectedDirection && (
                 <div className="tag-confirm">
                   <h3>为「{showText(selectedDirection.title)}」完善方案</h3>
                   {assumptions.length > 0 && (
-                    <>
-                      <p>这个方向还会采用以下设定。继续即确认这些设定；需要调整时，可直接补充意见。</p>
+                    <details className="direction-settings-editor">
+                      <summary>调整模型新增设定（选填）</summary>
+                      <p>上方已列出这个方向的新增设定。完善方案时会带入这些设定和你的修改意见。</p>
                       {assumptions.map((a) => (
                         <div className="creation-assumption" key={a.id}>
                           <p>{showText(a.text)}</p>
-                          <details>
-                            <summary>我想调整这项设定</summary>
-                            <label>
-                              修改意见
-                              <textarea
-                                placeholder="写下你的调整要求"
-                                value={resolutions[a.id] ?? ''}
-                                onChange={(e) => setResolutions({ ...resolutions, [a.id]: e.target.value })}
-                              />
-                            </label>
-                          </details>
+                          <label>
+                            修改意见（选填）
+                            <textarea
+                              placeholder="不填则沿用上方设定，也可以直接说明不采用"
+                              value={resolutions[a.id] ?? ''}
+                              onChange={(e) => setResolutions({ ...resolutions, [a.id]: e.target.value })}
+                            />
+                          </label>
                         </div>
                       ))}
-                    </>
+                    </details>
                   )}
+                  <p className="muted">继续会按所选方向及上方列出的新增设定、创意调整完善方案；完整方案仍由你决定是否采用。</p>
                   <details>
                     <summary>重新构思这个方向</summary>
                     <label>
@@ -728,7 +675,7 @@ export function TagWorkspace({
               {t.candidate?.plan && (
                 <div className="creation-plan" aria-label="完整作品方案">
                   <h2>这就是你的作品方案</h2>
-                  <p className="muted">确认故事机制、人物目标和边界，再为它确定书名。</p>
+                  <p className="muted">看看故事机制、人物目标和边界是否符合你的想法。不满意可以直接填写修改意见。</p>
                   {t.candidate.plan.statements.map((statement) => (
                     <div key={statement.id}>
                       <h3>
@@ -754,22 +701,11 @@ export function TagWorkspace({
                 <details className="creation-background" open={!t.candidate.plan}>
                   <summary>{t.origin === 'new' ? '查看完整设定拆解与约定' : '查看调整后的创作约定'}</summary>
                   {t.origin === 'new' && (
-                    <div
+                    <MarkdownContent
                       className="markdown-preview"
-                      onClick={(event) => {
-                        const anchor = (event.target as HTMLElement).closest('a');
-                        if (anchor) {
-                          event.preventDefault();
-                          const url = anchor.getAttribute('href') ?? '';
-                          if (/^https?:\/\//i.test(url)) void act(() => invoke('app.openUrl', { url }));
-                        }
-                      }}
-                      dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(
-                          marked.parse(showText(t.candidate.premiseDocument), { async: false }) as string,
-                          { FORBID_TAGS: ['img', 'style', 'iframe'] }
-                        )
-                      }}
+                      label="完整设定与约定"
+                      content={showText(t.candidate.premiseDocument)}
+                      onClick={(event) => handleMarkdownLink(event, url => { void act(() => invoke('app.openUrl', { url })); })}
                     />
                   )}
                   {t.candidate.constraints.map((v) => (
@@ -780,21 +716,26 @@ export function TagWorkspace({
                   )}
                 </details>
               )}
-              <CreationChecks title="方案检查" items={reviewItems(t.contractReview?.result.issues)} />
-              {t.phase === 'ready' && <CreationChecks title="保存前核对" items={validationItems} />}
-              {t.phase === 'ready' && needsReason && (
-                <label className="creation-review-reason">
-                  请说明保留上述提醒的原因
-                  <textarea value={reviewReason} onChange={(event) => setReviewReason(event.target.value)} />
-                </label>
+              <CreationChecks title="方案检查" items={reviewItems(t.contractReview?.result.issues)} processing={run?.status === 'running'} />
+              {t.phase === 'ready' && <CreationChecks title="内容建议" items={validationItems} />}
+              {t.candidate && !run.accepted && ['ready', 'reviewing_contract'].includes(t.phase) && (
+                <div className="content-feedback">
+                  <label>想怎么改，直接告诉我
+                    <textarea aria-label="作品方案修改意见" value={planFeedback} maxLength={6000} disabled={busy || running} onChange={event => setPlanFeedback(event.target.value)} placeholder="例如：保留回到过去的能力，把主角的目标改为寻找师父失踪的真相。" />
+                  </label>
+                  <button disabled={busy || running || !saved || !planFeedback.trim()} onClick={() => void act(async () => {
+                    await invoke('creation.revisePlan', { id: run.id, proposalHash: run.proposalHash!, instruction: planFeedback.trim() });
+                    setPlanFeedback('');
+                  })}>按意见修改方案</button>
+                </div>
               )}
-              {t.phase === 'ready' && t.workflowVersion === 2 && !t.planApproval && (
+              {t.phase === 'ready' && t.workflowVersion === 2 && (!t.planApproval || !p.titlePending) && (
                 <div className="creation-next">
                   <div>
                     <span>
                       {p.titlePending && run.mode === 'stage'
                         ? '下一步：根据方案生成书名，供你选择'
-                        : '下一步：核对书名并保存方案'}
+                        : '满意后即可保存方案；书名可以以后再调整。'}
                     </span>
                     {p.titlePending && run.mode === 'stage' && (
                       <button
@@ -803,8 +744,7 @@ export function TagWorkspace({
                           busy ||
                           running ||
                           !saved ||
-                          run.issues.some((i) => i.severity === 'error') ||
-                          (needsReason && !reviewReason.trim())
+                          run.issues.some((i) => i.severity === 'error')
                         }
                         onClick={() => void confirmPlan(false)}
                       >
@@ -819,12 +759,11 @@ export function TagWorkspace({
                       running ||
                       !saved ||
                       !profileId ||
-                      run.issues.some((i) => i.severity === 'error') ||
-                      (needsReason && !reviewReason.trim())
+                      run.issues.some((i) => i.severity === 'error')
                     }
                     onClick={() => void confirmPlan(!!p.titlePending && run.mode === 'stage')}
                   >
-                    {p.titlePending && run.mode === 'stage' ? '确认方案并生成书名' : '确认方案，下一步'}
+                    {p.titlePending && run.mode === 'stage' ? '满意，生成书名' : '满意，保存方案'}
                   </button>
                 </div>
               )}
@@ -839,15 +778,10 @@ export function TagWorkspace({
                 profileId={profileId}
                 refresh={refresh}
                 onReview={onReview}
+                onSelected={savePlan}
                 disabled={!saved || busy}
               />
-              <CreationChecks title="保存前核对" items={validationItems} />
-              {needsReason && (
-                <label className="creation-review-reason">
-                  请说明保留上述提醒的原因
-                  <textarea value={reviewReason} onChange={(e) => setReviewReason(e.target.value)} />
-                </label>
-              )}
+              <CreationChecks title="内容建议" items={validationItems} />
             </>
           )}
           {t.phase === 'ready' && (viewedStep === 3 || (t.workflowVersion !== 2 && viewedStep === 2)) && (
@@ -860,7 +794,7 @@ export function TagWorkspace({
                 ) : (
                   <p>
                     {p.titlePending && t.workflowVersion === 2
-                      ? '选好书名后，即可保存作品方案。'
+                      ? '点击喜欢的书名下方“用这个书名并保存”，即可保存作品方案。'
                       : '保存已确认的作品方案与创作约定。'}
                   </p>
                 )}
@@ -876,21 +810,21 @@ export function TagWorkspace({
                   </label>
                 )}
               </div>
-              <button
+              {(!p.titlePending || !!t.titleSelection || t.workflowVersion !== 2) && <button
                 className="primary"
                 disabled={!canAccept}
                 onClick={() =>
-                  void act(() => onAccept(run, run.mode === 'stage' && continueAfterSave, reviewReason))
+                  void act(savePlan)
                 }
               >
                 {t.workflowVersion !== 2 && p.titlePending
                   ? '确认方案并确定书名'
                   : run.mode !== 'stage'
-                    ? '保存方案并核对后续影响'
+                    ? '满意，保存方案'
                     : continueAfterSave
                       ? '确认书名并继续'
                       : '确认书名并保存'}
-              </button>
+              </button>}
             </div>
           )}
           <details className="creation-background">

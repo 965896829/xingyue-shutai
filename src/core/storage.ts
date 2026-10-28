@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { syncGeneration } from '../shared/generation';
+import { syncRunFailure } from '../shared/recovery';
 import { contractPath, renderContract, tagHash } from './tags';
 import { approvedCreation } from '../shared/creation';
 import { titlePath, renderTitle } from './title-naming';
@@ -34,6 +35,7 @@ export const proposalHash = (run: Run) => {
       stage: run.stage,
       chapter: run.chapter,
       changes: run.changes,
+      ...(run.documentDrafts?.length ? { documentDrafts: run.documentDrafts } : {}),
       facts: run.facts,
       ...(run.memoryReview ? { memoryReview: run.memoryReview } : {}),
       ...(run.factRetractions?.length ? { factRetractions: run.factRetractions } : {}),
@@ -235,6 +237,7 @@ export class Database {
   }
   saveRun(run: Run) {
     syncGeneration(run);
+    syncRunFailure(run);
     this.withUsage(run);
     const candidateHash = proposalHash(run);
     let version = run.stateVersion ?? 0;
@@ -1033,9 +1036,5 @@ export class FileStore {
     this.materialize();
     if (this.db.project() && !this.db.get('headSnapshot')) this.db.captureSnapshot();
     return messages;
-  }
-  snapshotFile(relative: string) {
-    const raw = fs.readFileSync(safePath(this.root, relative));
-    return this.putObject(raw);
   }
 }

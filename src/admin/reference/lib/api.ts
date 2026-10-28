@@ -1,6 +1,4 @@
 import { referenceRequest } from "../../reference-api";
-import { authorProblem } from "./author-copy";
-import { approvedBody } from "./task-approval";
 export { authorLabel } from "./author-copy";
 export class ApiError extends Error {
   constructor(
@@ -13,16 +11,6 @@ export class ApiError extends Error {
   ) {
     super(message);
   }
-}
-export function csrf() {
-  return typeof document === "undefined"
-    ? ""
-    : decodeURIComponent(
-        document.cookie
-          .split("; ")
-          .find((c) => c.startsWith("novel_csrf="))
-          ?.slice(11) || "",
-      );
 }
 export async function api<T = any>(
   path: string,

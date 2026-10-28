@@ -1,5 +1,5 @@
 "use client";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Box } from "lucide-react";
 import catalog from "@reference/lib/model-capability-fields.json";

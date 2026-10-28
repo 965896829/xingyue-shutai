@@ -1,6 +1,6 @@
 {
   "name": "wenxu-desktop",
-  "version": "0.4.34",
+  "version": "0.4.82",
   "private": true,
   "description": "星月书台 · 本地网文创作工作台",
   "author": "AIkehuduan",
@@ -17,7 +17,8 @@
     "preview": "vite --host 127.0.0.1",
     "test:scale": "node --import tsx tests/scale.ts",
     "test:large-book": "node scripts/test-large-book.mjs",
-    "eval:context": "node --import tsx scripts/context-eval.ts --run-context-eval"
+    "eval:context": "node --import tsx scripts/context-eval.ts --run-context-eval",
+    "eval:prose": "node --import tsx scripts/prose-eval.ts --run-prose-eval"
   },
   "build": {
     "appId": "local.wenxu.desktop",
@@ -28,7 +29,9 @@
     "files": [
       "dist/**",
       "dist-electron/**",
-      "package.json"
+      "THIRD_PARTY_NOTICES.md",
+      "package.json",
+      "!node_modules/**"
     ],
     "extraResources": [
       {
@@ -64,6 +67,8 @@
     "electronDist": "node_modules/electron/dist"
   },
   "dependencies": {
+    "@earendil-works/pi-agent-core": "1.4.0",
+    "@earendil-works/pi-ai": "1.4.0",
     "@codemirror/lang-markdown": "6.5.2",
     "@codemirror/language": "6.12.4",
     "@codemirror/merge": "6.12.2",
@@ -71,9 +76,8 @@
     "@tanstack/react-query": "5.103.1",
     "@xmldom/xmldom": "0.9.12",
     "codemirror": "6.0.2",
-    "diff": "9.0.0",
     "docx": "9.9.0",
-    "dompurify": "3.4.16",
+    "dompurify": "3.4.17",
     "fflate": "0.8.3",
     "js-tiktoken": "1.0.21",
     "lucide-react": "1.52.0",
@@ -81,12 +85,10 @@
     "motion": "14.0.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "undici": "8.11.2",
-    "zod": "4.6.5"
+    "undici": "8.12.3",
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "@mariozechner/pi-agent-core": "0.73.1",
-    "@types/diff": "7.0.2",
     "@types/node": "26.6.4",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

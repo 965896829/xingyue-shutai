@@ -15,8 +15,11 @@ import type { Profile } from '../shared/types';
 import type { Conversation } from '../shared/assistant';
 import { ModelControl } from './ModelControl';
 import { sendOnEnter } from './composer-keyboard';
+import { ContextMeter } from './ContextMeter';
+import type { ContextUsage } from '../shared/context-meter';
 
 interface Props {
+  contextUsage?: ContextUsage;
   conversationId: string;
   value: string;
   onChange: (value: string) => void;
@@ -188,6 +191,7 @@ export function ChatComposer(props: Props) {
               <span className="chat-online-indicator" aria-hidden="true" />
             </button>
           </div>
+          <ContextMeter profile={props.profiles.find(profile => profile.id === props.profileId)} usage={props.contextUsage} />
           {props.running ? (
             <button
               className="chat-composer-submit"
@@ -218,20 +222,20 @@ export function ChatComposer(props: Props) {
           <div ref={popup} className="chat-composer-popover" style={position}>
             <div role="dialog" aria-label="创作工具与引用其他聊天" id={`${uid}-tools`}>
               <div className="chat-composer-menu-heading">
-                创作工具<small>先提出任务卡，确认后开始</small>
+                开始创作<small>生成后查看内容，满意再保存</small>
               </div>
               <div className="chat-composer-task-tools">
                 <button disabled={!props.canPropose || modelPending} onClick={() => propose('stage')}>
                   <ListChecks size={16} />
-                  提出当前阶段任务
+                  生成当前阶段
                 </button>
                 <button disabled={!props.canPropose || modelPending} onClick={() => propose('draft')}>
                   <Feather size={16} />
-                  按输入提出自由试写
+                  按输入自由试写
                 </button>
                 <button disabled={!props.canPropose || modelPending} onClick={() => propose('revision')}>
                   <FilePenLine size={16} />
-                  按输入提出正式修订
+                  按输入生成修订
                 </button>
               </div>
               <div className="chat-composer-menu-heading chat-composer-menu-divider">

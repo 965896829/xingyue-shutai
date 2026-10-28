@@ -1,11 +1,9 @@
 import { z } from 'zod';
 import { Service } from '../src/core/service';
-import type { SecretProfile } from '../src/shared/types';
 import { ProjectRecycleBin } from '../src/core/recycle-bin';
 import { buildVersion, protocolVersion } from '../src/shared/build';
 import { requestSchema } from '../src/shared/ipc';
 import { ApplicationError, errorPayload } from '../src/shared/errors';
-import type { AssistantRuntime } from '../src/core/conversation-runner';
 import { commandContracts } from '../src/shared/contracts';
 import { profileSchema, roleRuleSchema } from '../src/shared/contract-schemas';
 import { searchSettingsSchema } from '../src/shared/assistant';

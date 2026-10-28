@@ -1,171 +1,61 @@
-import { useState } from 'react';
-import type { Snapshot } from '../shared/types';
-import { dimensions, type Dimension, type SourceRef, type Assessment } from '../shared/studio';
-const labels: Record<Dimension, string> = {
-  pressure: '压力',
-  payoff: '回报',
-  emotion: '情绪',
-  revelation: '揭示',
-  relationship: '关系'
-};
-const tracks: Record<Assessment['track'], string> = { plan: '计划', accepted: '已接受', candidate: '候选' };
-export function NarrativePanel({
-  snapshot,
-  onSource
-}: {
-  snapshot: Snapshot;
-  onSource: (v: SourceRef) => void;
-}) {
-  const [open, setOpen] = useState(false),
-    [dimension, setDimension] = useState<Dimension>('pressure'),
-    [selected, setSelected] = useState<Assessment>();
-  const rows = (snapshot.studio?.assessments ?? []).filter((a) => !a.stale),
-    latest = [...new Map([...rows].reverse().map((a) => [`${a.chapter}:${a.track}`, a])).values()].sort(
-      (a, b) => a.chapter - b.chapter
-    );
-  const chapters = [...new Set(latest.map((a) => a.chapter))],
-    width = 680,
-    height = 132,
-    x = (chapter: number) =>
-      chapters.length < 2
-        ? width / 2
-        : 24 + (chapters.indexOf(chapter) * (width - 48)) / (chapters.length - 1),
-    y = (n: number) => height - 18 - (n - 1) * 24;
-  return (
-    <section className={`narrative-panel ${open ? 'expanded' : ''}`}>
-      <button className="narrative-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
-        <span>叙事节奏</span>
-        <span>
-          {open ? '收起' : '展开'} {open ? '⌄' : '⌃'}
-        </span>
-      </button>
-      {open && (
-        <div className="narrative-content">
-          <div className="narrative-toolbar">
-            <div>
-              {dimensions.map((d) => (
-                <button
-                  key={d}
-                  aria-pressed={dimension === d}
-                  className={dimension === d ? 'active' : ''}
-                  onClick={() => setDimension(d)}
-                >
-                  {labels[d]}
-                </button>
-              ))}
-            </div>
-            <div className="chart-legend">
-              {Object.entries(tracks).map(([key, label]) => (
-                <span key={key} data-track={key}>
-                  {label}
-                </span>
-              ))}
-            </div>
-          </div>
-          {latest.length ? (
-            <>
-              <svg
-                viewBox={`0 0 ${width} ${height}`}
-                role="img"
-                aria-label={`${labels[dimension]}变化，评分 1 到 5`}
-              >
-                {[1, 3, 5].map((n) => (
-                  <g key={n}>
-                    <line x1="22" x2={width - 12} y1={y(n)} y2={y(n)} className="chart-grid" />
-                    <text x="3" y={y(n) + 3}>
-                      {n}
-                    </text>
-                  </g>
-                ))}
-                {(Object.keys(tracks) as Assessment['track'][]).map((track) => {
-                  let pen = false;
-                  let previous = 0;
-                  const path = chapters
-                    .map((chapter) => {
-                      const a = latest.find((a) => a.track === track && a.chapter === chapter),
-                        n = a?.values[dimension];
-                      if (n === null || n === undefined) {
-                        pen = false;
-                        return '';
-                      }
-                      if (previous && chapter !== previous + 1) pen = false;
-                      const s = `${pen ? 'L' : 'M'}${x(chapter)},${y(n)}`;
-                      pen = true;
-                      previous = chapter;
-                      return s;
-                    })
-                    .join(' ');
-                  return <path key={track} d={path} data-track={track} className="chart-line" />;
-                })}
-                {latest.map(
-                  (a) =>
-                    a.values[dimension] !== null && (
-                      <circle
-                        key={a.id}
-                        cx={x(a.chapter)}
-                        cy={y(a.values[dimension]!)}
-                        r="4"
-                        data-track={a.track}
-                        tabIndex={0}
-                        role="button"
-                        aria-label={`第 ${a.chapter} 章 ${tracks[a.track]} ${labels[dimension]} ${a.values[dimension]}`}
-                        onClick={() => setSelected(a)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') setSelected(a);
-                        }}
-                      />
-                    )
-                )}
-                {chapters.map((c) => (
-                  <text key={c} x={x(c)} y={height - 2} textAnchor="middle">
-                    {c}
-                  </text>
-                ))}
-              </svg>
-              {selected && (
-                <div className="assessment-note">
-                  <span>
-                    第 {selected.chapter} 章 · {tracks[selected.track]}
-                  </span>
-                  <p>{selected.note}</p>
-                  {selected.evidence.map((e, i) => (
-                    <button key={i} onClick={() => onSource(e)}>
-                      {e.quote}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <details>
-                <summary>数据</summary>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>章节</th>
-                      <th>版本</th>
-                      {dimensions.map((d) => (
-                        <th key={d}>{labels[d]}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {latest.map((a) => (
-                      <tr key={a.id}>
-                        <td>{a.chapter}</td>
-                        <td>{tracks[a.track]}</td>
-                        {dimensions.map((d) => (
-                          <td key={d}>{a.values[d] ?? '—'}</td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </details>
-            </>
-          ) : (
-            <div className="narrative-empty">暂无评估</div>
-          )}
-        </div>
-      )}
-    </section>
-  );
+import { useEffect, useState } from 'react';
+import type { Run, Snapshot } from '../shared/types';
+import type { SourceRef } from '../shared/studio';
+import type { CurveDatum, NarrativeData } from '../shared/narrative-curve';
+import { invokeCommand } from '../shared/client';
+import { NarrativePlayback } from './NarrativePlayback';
+import { NarrativeChart } from './NarrativeChart';
+import { NarrativeComparison } from './NarrativeComparison';
+import './narrative-curve.css';
+
+const pendingReads = new Map<string, Promise<NarrativeData>>();
+function readOnce(key: string, input: { chapter: number; runId?: string; scope: 'batch' | 'book' }) {
+  let read = pendingReads.get(key);
+  if (!read) {
+    read = invokeCommand('narrative.read', input); pendingReads.set(key, read);
+    void read.catch(() => { pendingReads.delete(key); });
+    if (pendingReads.size > 12) pendingReads.delete(pendingReads.keys().next().value!);
+  }
+  return read;
+}
+
+export function NarrativePanel({ snapshot, run, onSource }: { snapshot: Snapshot; run?: Run; onSource: (source: SourceRef) => void }) {
+  const playback = run?.pipeline ? run : undefined, chapter = playback?.chapter ?? snapshot.project?.chapter ?? 1;
+  const identity = `${snapshot.projectSessionId}:${playback?.id ?? chapter}`;
+  const [choice, setChoice] = useState<{ key: string; open: boolean }>();
+  const [view, setView] = useState<'chapter' | 'sequence' | 'dimensions'>('chapter'), [scope, setScope] = useState<'batch' | 'book'>('batch');
+  const open = choice?.key === identity ? choice.open : !!playback;
+  const [loaded, setLoaded] = useState<{ key: string; foundation: string; data?: NarrativeData; error?: string }>();
+  const documents = JSON.stringify(snapshot.documents.filter(d => /^(?:05_长篇大纲|06_章节设计|08_章后更新|07_正文章节)\//.test(d.path))
+    .map(d => [d.path, d.acceptedHash]));
+  const foundation = `${identity}:${scope}:${documents}:${snapshot.project?.stale.join('|')}:${playback?.manifest?.id}`;
+  const key = `${foundation}:${playback?.pipeline?.epoch}:${playback?.pipeline?.phase}:${playback?.pipeline?.proseHash}:${playback?.status}`;
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    void readOnce(key, { chapter, runId: playback?.id, scope }).then(data => {
+      if (active) setLoaded({ key, foundation, data });
+    }).catch(error => { if (active) setLoaded({ key, foundation, error: error.message }); });
+    return () => { active = false; };
+  }, [key, open]);
+  const data = loaded?.foundation === foundation ? loaded.data : undefined;
+  const rows = data?.chapters ?? [];
+  const chapters = rows.flatMap((row, index) => index && row.chapter > rows[index - 1].chapter + 1 ? [rows[index - 1].chapter + 1, row.chapter] : [row.chapter]);
+  const map = new Map(rows.map(row => [row.chapter, row]));
+  const series = (kind: 'plan' | 'actual'): CurveDatum[] => chapters.map(n => ({ x: n, value: map.get(n)?.[kind] ?? null, label: `第 ${n} 章`,
+    source: kind === 'plan' ? map.get(n)?.planSource : map.get(n)?.actualSource,
+    note: kind === 'plan' ? '来自已保存的章节总纲、节奏或细纲' : '来自已保存的章后强度记录' }));
+  return <section className={`narrative-panel ${open ? 'expanded' : ''}`}>
+    <button className="narrative-toggle" aria-expanded={open} onClick={() => setChoice({ key: identity, open: !open })}><span>叙事节奏</span><span>{open ? '收起 ⌄' : '展开 ⌃'}</span></button>
+    {open && <div className="narrative-content">
+      <div className="curve-toolbar"><div className="curve-tabs" aria-label="曲线范围">{(['chapter', 'sequence', 'dimensions'] as const).map(value => <button key={value} aria-pressed={view === value} className={view === value ? 'active' : ''} onClick={() => setView(value)}>{{ chapter: '本章起伏', sequence: '章节走势', dimensions: '维度对照' }[value]}</button>)}</div>
+        {view === 'sequence' && <select aria-label="章节走势范围" value={scope} onChange={e => setScope(e.target.value as typeof scope)}><option value="batch">当前批次</option><option value="book">全书</option></select>}</div>
+      {view === 'dimensions' ? <NarrativeComparison snapshot={snapshot} data={data} onSource={onSource} /> : data ? view === 'chapter' ? <NarrativePlayback snapshot={snapshot} run={playback} data={data} onSource={onSource} /> : <>
+        <NarrativeChart axis="章节" smooth={false} series={[{ key: 'plan', label: '计划强度', points: series('plan'), dashed: true }, { key: 'actual', label: '章后记录', points: series('actual') }]}
+          labels={chapters.map(n => ({ x: n, label: String(n) }))} cursor={chapter} onPoint={p => { if (p.source) onSource(p.source); }} />
+        <p className="curve-caption">第 {data.range[0]}—{data.range[1]} 章 · 复用已有纲要与章后记录；缺少数据处留空。</p>
+      </> : <div className="narrative-empty">{loaded?.key === key && loaded.error ? '曲线资料暂不可用，正文生成不受影响。' : '正在读取本地曲线资料…'}</div>}
+      {!!data?.unavailable && <small className="curve-caption">部分资料暂不可用，已保留有来源的曲线节点。</small>}
+    </div>}
+  </section>;
 }

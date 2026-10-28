@@ -23,7 +23,7 @@ export function ManagementProvider({ session, transport, children }: { session: 
     void refresh();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const unsub = window.wenxu!.onEvent(event => {
-      if (['delta', 'prose-delta'].includes(event.type) || timer) return;
+      if (['delta', 'prose-delta', 'narrative-event'].includes(event.type) || timer) return;
       timer = setTimeout(() => { timer = undefined; void refresh(); }, 450);
     });
     const lost = () => setConnected(false), restored = () => { setConnected(true); void refresh(); }, invalid = () => { setExpired(true); setConnected(false); };

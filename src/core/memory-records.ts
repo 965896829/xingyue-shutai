@@ -4,6 +4,7 @@ import { tagFactIssues } from './tags';
 import { FileStore } from './storage';
 import { pendingSource } from './memory-source';
 import { approvedCreation } from '../shared/creation';
+import type { MemoryDiagnostic } from './memory-diagnostics';
 
 const marker = '<!-- wenxu-facts:v1 -->';
 const factsPattern = /<!-- wenxu-facts:v1 -->\s*```json\s*\n([\s\S]*?)\n```/;
@@ -111,12 +112,14 @@ export function rebuildMemory(store: FileStore): { count: number; issues: string
   const facts: Fact[] = [],
     issues: string[] = [],
     ids = new Set<string>();
+  const diagnostics: MemoryDiagnostic[] = [];
+  const record = (issue: MemoryDiagnostic) => { issues.push(issue.message); diagnostics.push(issue); };
   for (const doc of store.db.acceptedDocuments()) {
     if (!doc.path.startsWith('04_') || !doc.hash) continue;
     try {
       for (const original of decodeFacts(store.read(doc.path, doc.hash).content)) {
         if (ids.has(original.id)) {
-          issues.push(`重复记忆编号：${original.id}`);
+          record({ code: 'duplicate_id', path: doc.path, message: `重复记忆编号：${original.id}` });
           continue;
         }
         ids.add(original.id);
@@ -127,18 +130,20 @@ export function rebuildMemory(store: FileStore): { count: number; issues: string
         if (evidenceIssues.length) {
           f.reviewStatus = 'disputed';
           f.state = 'disputed';
-          issues.push(...evidenceIssues);
+          for (const message of evidenceIssues)
+            record({ code: 'invalid_evidence', path: doc.path, message, fact: original });
         }
         facts.push(f);
       }
     } catch (e) {
-      issues.push(`${doc.path}：事实解析失败，${(e as Error).message}`);
+      record({ code: 'invalid_document', path: doc.path, message: `${doc.path}：事实解析失败，${(e as Error).message}` });
     }
   }
   store.db.sql.exec('BEGIN IMMEDIATE');
   try {
     store.db.replaceFacts(facts, issues.length ? -1 : store.db.project().revision);
     store.db.set('memoryIssues', issues);
+    store.db.set('memoryDiagnostics', { version: 1, revision: project.revision, issues: diagnostics });
     store.db.sql.exec('COMMIT');
   } catch (e) {
     store.db.sql.exec('ROLLBACK');
