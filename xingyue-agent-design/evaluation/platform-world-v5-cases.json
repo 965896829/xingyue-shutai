@@ -1,0 +1,945 @@
+{
+  "schemaVersion": "1.0",
+  "suiteId": "xingyue-v5-platform-world-candidates",
+  "createdAt": "2026-10-29",
+  "status": "not_executed",
+  "scope": "32个V5候选案例，覆盖平台目录边界、动态世界体系、标题证据与交互投影；不是19技能42操作的完整行为覆盖。",
+  "executionGuidance": {
+    "modelInput": "仅发送request与fixture内modelInput；host案例不调用模型。不得将expectedSkill、expectedOperation、assertions、evaluatorOnly或评分说明发送给被评模型。",
+    "localContract": "使用临时项目、模拟网关与注入目录/榜单响应，观察实际解析、版本、读集、请求次数和投影事件，不以指令文本包含规则判定通过。",
+    "modelOutput": "保存实际模型产物与宿主轨迹供独立评估器核验；所有测试用作品为原创微型设定。",
+    "humanBlind": "固定事实、模型、参数与预算，随机展示版本，隐藏来源，记录实际评价与严重退步。",
+    "network": "文件中的公开数据仅为离线夹具；example.invalid和book-*标识为桩，不向真实服务发送测试请求。",
+    "cost": "本文件仅定义待执行案例，未执行模型回归或读者盲评；静态结构检查不代表行为通过。"
+  },
+  "coverage": {
+    "cases": 32,
+    "skillPackages": 4,
+    "operationPairs": 8,
+    "hostCases": 17,
+    "byKind": {
+      "local_contract": 17,
+      "model_output": 13,
+      "human_blind": 2
+    },
+    "skills": [
+      "concept-forge",
+      "market-evidence",
+      "packaging",
+      "world-design"
+    ],
+    "operations": [
+      "concept-forge.create",
+      "concept-forge.regenerate",
+      "market-evidence.research",
+      "packaging.title",
+      "world-design.create",
+      "world-design.inherit",
+      "world-design.profile",
+      "world-design.stress-test"
+    ]
+  },
+  "cases": [
+    {
+      "id": "V5-PLATFORM-WORLD-01",
+      "category": "taxonomy_surface_coverage",
+      "request": "新建作品时显示所有已核验的公开阅读分类和标签，并说明覆盖范围。",
+      "fixture": {
+        "snapshotFile": "v5-fanqie-taxonomy-snapshot.json",
+        "libraryExpectedCounts": {
+          "male": 154,
+          "female": 182
+        },
+        "rankExpectedChannelEntries": 37
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "公开书库显示336个带频道的阅读选项，榜单目录保持37个独立入口。",
+        "展示名称和筛选不能把37个榜单入口称为平台全部标签。",
+        "不调用模型生成缺失目录。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-02",
+      "category": "female_library_categories_without_rank",
+      "request": "我要选双男主、双女主或动漫衍生，为什么榜单里找不到？",
+      "fixture": {
+        "snapshotFile": "v5-fanqie-taxonomy-snapshot.json",
+        "audience": "female",
+        "libraryMainIds": [
+          "275",
+          "704",
+          "718"
+        ],
+        "rankMainIdsDoNotContain": [
+          "275",
+          "704",
+          "718"
+        ]
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "三个选项在女频公开书库可选，不因榜单缺失而隐藏。",
+        "没有伪造同频道同分类榜单入口。",
+        "目录说明区分公开书库可选与暂无对应榜单。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-03",
+      "category": "legacy_stable_ids",
+      "request": "刷新番茄目录后，继续打开原来只选男频标签的作品。",
+      "fixture": {
+        "oldTaxonomyVersion": "fanqie-user-snapshot-v1",
+        "crosswalkFile": "v5-fanqie-male-reading-crosswalk.json",
+        "legacySelectedIds": [
+          "reading.main.002",
+          "reading.theme.001"
+        ],
+        "oldOrderChangedInNewResponse": true
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "154项映射保留本地optionId与conceptId。",
+        "新增外部平台ID映射，不按新排序重编号。",
+        "旧作品保留选择及其目录版本，无法解析的历史项进入待处理状态而非静默改选。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-04",
+      "category": "unverified_content_pool",
+      "request": "把现有328个内容标签也标成今天已经全部官方验证。",
+      "fixture": {
+        "localContentCount": 328,
+        "publicLibraryCoverage": "reading_only",
+        "authorWorkspaceObserved": false
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "拒绝将阅读目录核验结果推广为内容标签全量已核验。",
+        "保留328项原来源及覆盖状态。",
+        "不从公开书籍标签反推作者后台内容标签完整池。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-05",
+      "category": "partial_refresh_preserves_previous",
+      "request": "这次刷新只返回12项，接口随后超时，更新目录。",
+      "fixture": {
+        "previousSuccessfulCount": 336,
+        "responseCount": 12,
+        "responseCompleteness": "partial",
+        "transportStatus": "timeout",
+        "previousSnapshotId": "tax-1"
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "不将其余324项判为删除或停用。",
+        "最近完整快照继续可用，失败与部分结果单独记录。",
+        "只有完整且结构合法的新快照可进入目录差异审核。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-06",
+      "category": "namespaced_taxonomy_identity",
+      "request": "将男频和女频的科幻末世加入不同作品，并对照对应榜单。",
+      "fixture": {
+        "platformId": "8",
+        "surfaces": [
+          "public_library_reading_catalog",
+          "public_rank_category_catalog"
+        ],
+        "audiences": [
+          "male",
+          "female"
+        ]
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "表面、频道、分组与平台ID共同保持身份。",
+        "同名同ID可建立显式语义关联，不跨频道覆盖原选项。",
+        "榜单映射不会改变作者选择的阅读目录身份。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-07",
+      "category": "creative_mix_separate_from_platform",
+      "request": "我想写都市刑侦与仙侠结合，但不想一开始决定投哪个频道。",
+      "fixture": {
+        "modelInput": {
+          "premise": "现代刑警调查只能在古代仙门档案里发现的连环失踪案。",
+          "creativeGenres": [
+            "都市",
+            "刑侦",
+            "仙侠"
+          ],
+          "platformSelection": null,
+          "mustKeep": [
+            "主角是现代刑警"
+          ],
+          "systemPreferences": {
+            "progression": "undecided"
+          }
+        }
+      },
+      "expectedSkill": "world-design",
+      "expectedOperation": "profile",
+      "assertions": [
+        "允许混搭和未定频道，不要求先压缩成一个主分类。",
+        "识别调查因果、时代交互和超自然边界；是否需要境界保持建议。",
+        "平台发布映射与作品体系档案分开。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-08",
+      "category": "publication_single_main_does_not_limit_design",
+      "request": "我已经选定平台主分类悬疑脑洞，但创作标签还想保留都市与仙侠。",
+      "fixture": {
+        "platformRules": {
+          "reading.main": {
+            "min": 1,
+            "max": 1
+          }
+        },
+        "platformMainId": "539",
+        "creativeGenres": [
+          "悬疑",
+          "都市",
+          "仙侠"
+        ]
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "平台阅读主分类恰好一项。",
+        "不删除或禁止内部创作混搭标签。",
+        "任何平台合法性状态只来自适用规则及宿主核验，不由模型宣称。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-09",
+      "category": "user_override_genre_inference",
+      "request": "AI说这是仙侠，但我想按现实悬疑写，所有神怪现象最终都有现实解释。",
+      "fixture": {
+        "modelInput": {
+          "previousInference": "仙侠",
+          "authorDecision": "现实悬疑",
+          "mustKeep": [
+            "不存在真实超自然力量"
+          ],
+          "premise": "山村反复出现仙人留字，主角追查伪造与传播链。"
+        }
+      },
+      "expectedSkill": "world-design",
+      "expectedOperation": "profile",
+      "assertions": [
+        "作者决定覆盖旧的题材推测。",
+        "禁用真实法术、灵气和境界模块，保留未知现象与现实证据。",
+        "AI判断保留为历史候选，不自动成为作者意图。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-10",
+      "category": "urban_opt_in_supernatural",
+      "request": "这是都市日常，但我明确要保留主角能听见物品最后一句话的能力。",
+      "fixture": {
+        "modelInput": {
+          "genre": "都市日常",
+          "lockedAbility": "听见物品最后一句话",
+          "mustAvoid": [
+            "境界等级",
+            "无限读心"
+          ],
+          "authorRequest": "识别本书应启用和关闭的体系模块"
+        }
+      },
+      "expectedSkill": "world-design",
+      "expectedOperation": "profile",
+      "assertions": [
+        "允许都市题材显式启用能力规则。",
+        "不因都市标签关闭作者锁定能力。",
+        "能力边界可建议，境界等级与读心扩张不得加入。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-11",
+      "category": "xianxia_without_realm_ladder",
+      "request": "我写仙侠游记，但不要炼气筑基金丹，也不要任何数值等级。",
+      "fixture": {
+        "modelInput": {
+          "genre": "仙侠",
+          "premise": "游医沿山海渡口治病，与各地异类交换药方。",
+          "mustAvoid": [
+            "境界序列",
+            "数值战力"
+          ],
+          "authorRequest": "识别本书需要的世界模块"
+        }
+      },
+      "expectedSkill": "world-design",
+      "expectedOperation": "profile",
+      "assertions": [
+        "修行、异类、医药与地方秩序可以存在，境界梯子保持关闭。",
+        "不把职业、证照或名望偷偷做成替代升级等级。",
+        "体系模块选择依据作者需求而非仙侠惯例。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-12",
+      "category": "inherit_author_progression_exactly",
+      "request": "沿用我这套境界：听潮、借汐、镇海。名字、顺序和跨阶限制都不许改。",
+      "fixture": {
+        "modelInput": {
+          "authorSystem": {
+            "levels": [
+              "听潮",
+              "借汐",
+              "镇海"
+            ],
+            "lockedRules": [
+              "借汐不能直接进入镇海",
+              "每次晋升永久失去一段个人记忆"
+            ]
+          },
+          "mode": "inherit",
+          "requestedExpansion": "补充社会影响与资源争夺"
+        }
+      },
+      "expectedSkill": "world-design",
+      "expectedOperation": "inherit",
+      "assertions": [
+        "锁定名称、顺序和限制原样保留。",
+        "新增内容只填授权空白，标为新增候选。",
+        "不能为了创新另造第四境、免费晋级或恢复被失去的记忆。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-13",
+      "category": "inherit_ambiguous_source_conflict",
+      "request": "导入我的两份旧设定，先对齐，别帮我擅自决定哪份是真的。",
+      "fixture": {
+        "modelInput": {
+          "documents": [
+            {
+              "sourceId": "a",
+              "text": "借汐者不能进入内海。"
+            },
+            {
+              "sourceId": "b",
+              "text": "借汐者须进入内海才能晋升。"
+            }
+          ],
+          "authorInstruction": "保留冲突，提出最少必要决策"
+        }
+      },
+      "expectedSkill": "world-design",
+      "expectedOperation": "inherit",
+      "assertions": [
+        "保留两条来源与具体冲突。",
+        "不将看似更新的文本自行当成已授权覆盖。",
+        "可以提出兼容解释候选，但不能补造已经发生的规则修订。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-14",
+      "category": "system_stress_test_counterplay",
+      "request": "检查这套能力能不能撑住长篇，找出真正会让故事失效的漏洞。",
+      "fixture": {
+        "modelInput": {
+          "rules": [
+            "每次救活他人，救助者失去同等寿命",
+            "寿命可在亲属间无条件无限转移"
+          ],
+          "authorIntent": "主角必须承担救人的代价",
+          "testScenarios": [
+            "富人雇佣多人转移寿命",
+            "主角和伙伴循环互救"
+          ],
+          "locked": [
+            "救人有实际不可规避代价"
+          ]
+        }
+      },
+      "expectedSkill": "world-design",
+      "expectedOperation": "stress-test",
+      "assertions": [
+        "沿具体场景检查寿命循环是否消除作者要求的代价。",
+        "区分确定冲突、可利用策略与仍需作者决定的空白。",
+        "修复建议最小化，不能擅自提交为正式世界规则。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-15",
+      "category": "novel_world_mechanism_blind_comparison",
+      "request": "基于这份创意，提出有新意且能持续产生冲突的世界体系。",
+      "fixture": {
+        "modelInput": {
+          "premise": "港城以承诺为货币，主角替无力兑现的人追债。",
+          "locked": [
+            "承诺能转让但不能凭空产生",
+            "主角不能读心"
+          ],
+          "requestedOutput": "一套世界机制候选及三个可推演的后续难题"
+        },
+        "evaluatorOnly": {
+          "comparison": "baseline_v4_vs_v5",
+          "presentationOrder": "randomized",
+          "judgeRubric": [
+            "作者约束保持",
+            "机制产生选择与代价",
+            "反制的可信度",
+            "重复使用后的变化空间",
+            "继续阅读意愿"
+          ]
+        }
+      },
+      "expectedSkill": "world-design",
+      "expectedOperation": "create",
+      "assertions": [
+        "盲评使用同一事实、输入资料、模型与预算，隐藏方案版本。",
+        "记录人物能做的行动、对手反制和可展开变化，避免只比新名词数量。",
+        "无实际盲评前不填写质量通过率或爆款概率。"
+      ],
+      "evaluationKind": "human_blind"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-16",
+      "category": "one_direction_request_with_system_profile",
+      "request": "新建作品，从我的创意给出三个方向，同时看需要哪些世界体系。",
+      "fixture": {
+        "modelInput": {
+          "premise": "在一个所有愿望都需要担保人的城市，主角替失踪者偿债。",
+          "selectedGenres": [
+            "都市脑洞",
+            "悬疑"
+          ],
+          "mustKeep": [
+            "愿望不能无代价实现"
+          ],
+          "existingDirections": []
+        },
+        "evaluatorOnly": {
+          "normalSuccessModelRequestBudget": 1,
+          "expectedSubmissionCount": 1
+        }
+      },
+      "expectedSkill": "concept-forge",
+      "expectedOperation": "create",
+      "assertions": [
+        "首次三方向正常路径只产生一次模型生成请求，不先调用题材识别或世界分析Agent。",
+        "体系判断与方向候选在当前版本合同内同轮返回，恰好三案。",
+        "尚未采纳的世界机制保持候选，不提前入正史。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-17",
+      "category": "frozen_direction_world_modules",
+      "request": "只把第二个方向改成无超自然版本，第一和第三个方向及它们的体系不变。",
+      "fixture": {
+        "modelInput": {
+          "directions": [
+            {
+              "id": "d1",
+              "worldProfileHash": "h1"
+            },
+            {
+              "id": "d2",
+              "worldProfileHash": "h2"
+            },
+            {
+              "id": "d3",
+              "worldProfileHash": "h3"
+            }
+          ],
+          "regenerationScope": {
+            "changedDirectionIds": [
+              "d2"
+            ],
+            "frozenDirectionIds": [
+              "d1",
+              "d3"
+            ]
+          },
+          "requestedD2Change": "现实解释所有异常"
+        },
+        "evaluatorOnly": {
+          "normalSuccessModelRequestBudget": 1
+        }
+      },
+      "expectedSkill": "concept-forge",
+      "expectedOperation": "regenerate",
+      "assertions": [
+        "返回恰好三案，d1与d3故事字段及相关设定保持不变。",
+        "只修改d2的体系与解释，不能把无超自然要求扩散到所有方向。",
+        "冻结验证绑定完整方向与新增设定归属。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-18",
+      "category": "candidate_world_not_canon",
+      "request": "AI刚提出一套新境界，下一章先继续使用已采纳的旧体系。",
+      "fixture": {
+        "canonRevision": "r8",
+        "canonSystem": "s-old",
+        "candidateSystem": "s-new",
+        "candidateStatus": "draft",
+        "nextChapterBaseRevision": "r8"
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "下一章必要规则从r8正式体系编译。",
+        "草稿候选可在比较面板查看，但不能污染记忆、校验或正式图谱。",
+        "采纳新体系时必须使用有版本的变更与影响处理。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-19",
+      "category": "rank_cutoff_vs_observation_time",
+      "request": "根据今天刚获取的同题材榜单，为命名提炼近期风格。",
+      "fixture": {
+        "modelInput": {
+          "evidence": [
+            {
+              "sourceKind": "official_rank",
+              "observedAt": "2026-10-29T12:30:00+08:00",
+              "statsCutoffRaw": "10-28 24:00",
+              "rankType": "new_book",
+              "audience": "male",
+              "categoryId": "257",
+              "sampleCount": 12
+            }
+          ]
+        }
+      },
+      "expectedSkill": "market-evidence",
+      "expectedOperation": "research",
+      "assertions": [
+        "明确证据观察日与统计截止日。",
+        "不写成10月29日实时热度。",
+        "只描述该榜单样本的形态，不推导整个题材市场份额或标题因果效果。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-20",
+      "category": "rank_date_unknown_remains_unknown",
+      "request": "这个榜单页面没显示统计日期，也请作为参考。",
+      "fixture": {
+        "modelInput": {
+          "evidence": [
+            {
+              "sourceKind": "official_rank",
+              "observedAt": "2026-10-29T12:35:00+08:00",
+              "statsCutoffRaw": null,
+              "rankVersionRaw": null,
+              "latestChapterAt": "2026-10-29T11:00:00+08:00",
+              "titles": [
+                "旧钟里的来信"
+              ]
+            }
+          ]
+        }
+      },
+      "expectedSkill": "market-evidence",
+      "expectedOperation": "research",
+      "assertions": [
+        "统计日期保持未知。",
+        "不使用抓取时间或章节更新时间替代榜单统计截止。",
+        "样本可以降级参考，不能称为已确认当日日榜。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-21",
+      "category": "search_results_are_not_rankings",
+      "request": "联网只搜到这几个书名，帮我总结爆款榜单规律。",
+      "fixture": {
+        "modelInput": {
+          "evidence": [
+            {
+              "sourceKind": "search_result",
+              "title": "雨停之前别回头",
+              "url": "https://example.invalid/book/a",
+              "rankingPosition": null
+            },
+            {
+              "sourceKind": "search_result",
+              "title": "我在旧城替人收梦",
+              "url": "https://example.invalid/book/b",
+              "rankingPosition": null
+            }
+          ]
+        }
+      },
+      "expectedSkill": "market-evidence",
+      "expectedOperation": "research",
+      "assertions": [
+        "明确它们是搜索发现样本，不是榜单或已验证爆款。",
+        "不编造排名、在读、统计日期。",
+        "可以提出标题形态观察，并标明证据范围。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-22",
+      "category": "missing_rank_explicit_neighbor_fallback",
+      "request": "女频双女主没有对应公开榜单，先找可用于书名参考的相近题材样本并说明范围。",
+      "fixture": {
+        "modelInput": {
+          "selectedCategory": {
+            "surface": "public_library",
+            "audience": "female",
+            "categoryId": "704",
+            "label": "双女主"
+          },
+          "exactRankMapping": null,
+          "fallbackEvidence": [
+            {
+              "audience": "female",
+              "categoryId": "749",
+              "label": "青春甜宠",
+              "sourceKind": "official_rank",
+              "mappingKind": "adjacent"
+            }
+          ],
+          "authorIntent": "校园双女主成长故事"
+        }
+      },
+      "expectedSkill": "market-evidence",
+      "expectedOperation": "research",
+      "assertions": [
+        "同类榜单缺失保持明确。",
+        "相近青春甜宠样本标为近邻，不能标为双女主榜单。",
+        "候选命名仍遵守本书人物关系，不套用样本中的异性CP信息。"
+      ],
+      "evaluationKind": "model_output"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-23",
+      "category": "title_detail_join_and_unreadable_text",
+      "request": "榜单书名有乱码，获取同一本书的正常标题。",
+      "fixture": {
+        "rankItem": {
+          "bookId": "book-21",
+          "title": "",
+          "rankPosition": 2
+        },
+        "detailResponses": [
+          {
+            "bookId": "book-22",
+            "title": "别人的书"
+          },
+          {
+            "bookId": "book-21",
+            "title": "旧城邮差"
+          }
+        ],
+        "mockNetwork": true
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "只按同一bookId关联详情。",
+        "不猜测私用区字符，不用不同书号标题替换。",
+        "详情仍不可读时记录样本不可用，不造标题。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-24",
+      "category": "title_promise_and_style_blind_evaluation",
+      "request": "根据已确认的故事与同类证据，给出既吸睛又准确的书名候选。",
+      "fixture": {
+        "modelInput": {
+          "story": {
+            "protagonist": "只会修钟的普通人",
+            "hook": "每修好一座钟，城里一段被篡改的往事恢复",
+            "locked": [
+              "不能回到过去",
+              "主角不无敌"
+            ]
+          },
+          "evidenceProfile": {
+            "forms": [
+              "概念短题",
+              "具体行动与后果"
+            ],
+            "scope": "同类小样本，非点击率实验"
+          }
+        },
+        "evaluatorOnly": {
+          "comparison": "baseline_v4_vs_v5",
+          "presentationOrder": "randomized",
+          "rubric": [
+            "题材可识别",
+            "好奇与阅读意愿",
+            "与确认内容一致",
+            "候选差异",
+            "不近似照搬样本"
+          ]
+        }
+      },
+      "expectedSkill": "packaging",
+      "expectedOperation": "title",
+      "assertions": [
+        "盲评与事实核验分开记录，真实阅读意愿由盲评者给出。",
+        "不得用无敌、穿越回过去等不存在的承诺吸睛。",
+        "没有实测数据前不宣称点击率提升或爆款概率。"
+      ],
+      "evaluationKind": "human_blind"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-25",
+      "category": "plot_change_invalidates_title_promise",
+      "request": "采纳删除主角能力的剧情修改后，更新已选书名的承诺状态。",
+      "fixture": {
+        "acceptedTitle": {
+          "text": "我替死者找回最后一眼",
+          "version": "t3",
+          "promiseDependencies": [
+            "ability-7"
+          ]
+        },
+        "acceptedChangeSet": {
+          "revision": "r22",
+          "removedIds": [
+            "ability-7"
+          ]
+        },
+        "autoRenameAuthorized": false
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "标题承诺依赖失效，标记需要复核。",
+        "不自动改书名、不继续标记与正文一致。",
+        "复核使用新作品版本，保留旧标题与原采纳证据。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-26",
+      "category": "rank_metric_field_binding",
+      "request": "解析榜单在读人数，别把默认字段误当成真实值。",
+      "fixture": {
+        "rawRankItem": {
+          "readCount": "0",
+          "read_count": "270937",
+          "bookId": "book-1"
+        },
+        "verifiedMetricBinding": "rank.book_list[].read_count"
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "结果使用已核验字段270937，保留指标名称和来源字段。",
+        "不将其解释为销量、收入或点击率。",
+        "字段消失或类型改变时停止该字段解析，不能猜替代字段。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-27",
+      "category": "graph_layout_is_not_canon",
+      "request": "把这两个角色的卡片拖近一点，再固定位置。",
+      "fixture": {
+        "graphView": "relationship",
+        "layoutVersion": "l4",
+        "canonRevision": "r10",
+        "nodes": [
+          "a",
+          "b"
+        ],
+        "dragDelta": {
+          "x": 40,
+          "y": 20
+        }
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "只更新布局状态。",
+        "不新增亲密、联盟或信任关系，不产生正史修订。",
+        "不调用模型，不触发记忆重提取。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-28",
+      "category": "draft_preview_retraction",
+      "request": "刚才生成的势力关系还没采纳，撤回这轮草稿。",
+      "fixture": {
+        "canonEdges": [
+          "e1"
+        ],
+        "previewEdges": [
+          "draft-e2",
+          "draft-e3"
+        ],
+        "taskStatus": "streaming_preview",
+        "authorAction": "cancel"
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "撤回所有该任务预览边及临时节点。",
+        "正式e1和其他任务预览保持不变。",
+        "迟到的该任务流式片段不能重新出现在已撤回视图中。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-29",
+      "category": "graph_knowledge_scope",
+      "request": "把图谱切到第40章主角当时知道的内容。",
+      "fixture": {
+        "queryScope": {
+          "branch": "b1",
+          "revision": "r9",
+          "narrationPosition": 40,
+          "actorId": "hero"
+        },
+        "edges": [
+          {
+            "id": "e-known",
+            "knownBy": "hero",
+            "learnedAt": 12
+          },
+          {
+            "id": "e-secret",
+            "knownBy": "author",
+            "revealedAt": 80
+          }
+        ],
+        "layoutCacheContainsAllEdges": true
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "返回的图谱数据本身按人物知情与版本过滤，不能只用CSS隐藏秘密。",
+        "缓存和预加载不把作者视角秘密泄露进角色视角工具结果。",
+        "分支和叙述位置变更使原范围缓存失效或切换到独立键。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-30",
+      "category": "unicode_codepoint_evidence",
+      "request": "点击原文证据，正确高亮包含扩展字符的一段，并拒绝旧版位置。",
+      "fixture": {
+        "sourceText": "甲😀乙𠮷丙",
+        "sourceRevision": "r1",
+        "span": {
+          "unit": "unicode_codepoint",
+          "start": 2,
+          "end": 4
+        },
+        "expectedText": "乙𠮷",
+        "newRevisionText": "前甲😀乙𠮷丙",
+        "newRevision": "r2"
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "在r1按码点半开区间高亮乙𠮷，不能直接把码点偏移交给UTF-16切片。",
+        "r1证据不能无校验应用到r2。",
+        "位置转换记录明确单位，正文hash不匹配时要求重新定位。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-31",
+      "category": "filtered_subscription_checkpoint",
+      "request": "图谱只订阅当前角色，其他角色连续更新后断线重连。",
+      "fixture": {
+        "scope": {
+          "actorId": "a",
+          "branch": "b1"
+        },
+        "stream": [
+          {
+            "seq": 101,
+            "actorId": "b"
+          },
+          {
+            "seq": 102,
+            "actorId": "a"
+          },
+          {
+            "seq": 103,
+            "actorId": "c"
+          }
+        ],
+        "lastDeliveredSeq": 102,
+        "lastScannedSeq": 103,
+        "reconnect": true
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "订阅checkpoint能表示已扫描到103，即使103未向该过滤视图投递。",
+        "重连不把隐藏事件当缺失，也不重复应用102。",
+        "cursor绑定订阅范围与分支，序列连续性依据服务端扫描合同。"
+      ],
+      "evaluationKind": "local_contract"
+    },
+    {
+      "id": "V5-PLATFORM-WORLD-32",
+      "category": "subscription_scope_change_resnapshot",
+      "request": "把图谱从主角视角切换到作者视角，再切到另一编辑分支。",
+      "fixture": {
+        "oldSubscription": {
+          "scopeHash": "pov-a-b1",
+          "branch": "b1",
+          "cursor": "cursor-old",
+          "snapshotRevision": "r10"
+        },
+        "newSubscription": {
+          "scopeHash": "author-b2",
+          "branch": "b2"
+        },
+        "delayedOldFrames": [
+          {
+            "scopeHash": "pov-a-b1",
+            "seq": 211
+          }
+        ],
+        "snapshotThenEventsBoundary": {
+          "newSnapshotSeq": 500,
+          "nextEventSeq": 501
+        }
+      },
+      "expectedSkill": null,
+      "expectedOperation": null,
+      "assertions": [
+        "范围或分支变化后不能复用旧cursor，获取匹配的新快照和续传位置。",
+        "旧订阅迟到帧被丢弃或隔离，不与新图合并。",
+        "新快照与增量之间没有遗漏或重复，至少一次投递通过事件ID去重。"
+      ],
+      "evaluationKind": "local_contract"
+    }
+  ]
+}

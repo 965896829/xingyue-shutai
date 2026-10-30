@@ -1,0 +1,2944 @@
+{
+  "id": "39babdb77161a05df179237e597530789110dc6ba013e11b7a78a8c2a5bcaa04",
+  "observedAt": "2026-10-29T04:29:49.874816+00:00",
+  "extractorVersion": 1,
+  "sources": [
+    {
+      "channel": "male",
+      "url": "https://fanqienovel.com/api/author/book/category_list/v0/?gender=1",
+      "observedAt": "2026-10-29T04:29:49.874816+00:00",
+      "hash": "1f467f18085770b66b6a9e42287d7649920aafd79f83ad512e69cc725a1bc357"
+    },
+    {
+      "channel": "female",
+      "url": "https://fanqienovel.com/api/author/book/category_list/v0/?gender=0",
+      "observedAt": "2026-10-29T04:29:49.857776+00:00",
+      "hash": "568e2e45d3df14e56585eeea8d84ce53bb8c8ddef778464823a074a93b95d1cc"
+    }
+  ],
+  "options": [
+    {
+      "id": "fanqie:public_library:male:reading.main:1141",
+      "platformId": "1141",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "西方奇幻",
+      "legacyId": "reading.main.001",
+      "conceptId": "concept.reading.main.001"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:1140",
+      "platformId": "1140",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "东方仙侠",
+      "legacyId": "reading.main.002",
+      "conceptId": "concept.reading.main.002"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:8",
+      "platformId": "8",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "科幻末世",
+      "legacyId": "reading.main.003",
+      "conceptId": "concept.reading.main.003"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:1016",
+      "platformId": "1016",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "男频衍生",
+      "legacyId": "reading.main.004",
+      "conceptId": "concept.reading.main.004"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:1014",
+      "platformId": "1014",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "都市高武",
+      "legacyId": "reading.main.005",
+      "conceptId": "concept.reading.main.005"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:751",
+      "platformId": "751",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "悬疑灵异",
+      "legacyId": "reading.main.006",
+      "conceptId": "concept.reading.main.006"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:539",
+      "platformId": "539",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "悬疑脑洞",
+      "legacyId": "reading.main.007",
+      "conceptId": "concept.reading.main.007"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:504",
+      "platformId": "504",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "抗战谍战",
+      "legacyId": "reading.main.008",
+      "conceptId": "concept.reading.main.008"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:273",
+      "platformId": "273",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "历史古代",
+      "legacyId": "reading.main.009",
+      "conceptId": "concept.reading.main.009"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:272",
+      "platformId": "272",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "历史脑洞",
+      "legacyId": "reading.main.010",
+      "conceptId": "concept.reading.main.010"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:263",
+      "platformId": "263",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "都市种田",
+      "legacyId": "reading.main.011",
+      "conceptId": "concept.reading.main.011"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:262",
+      "platformId": "262",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "都市脑洞",
+      "legacyId": "reading.main.012",
+      "conceptId": "concept.reading.main.012"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:261",
+      "platformId": "261",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "都市日常",
+      "legacyId": "reading.main.013",
+      "conceptId": "concept.reading.main.013"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:257",
+      "platformId": "257",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "玄幻脑洞",
+      "legacyId": "reading.main.014",
+      "conceptId": "concept.reading.main.014"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:27",
+      "platformId": "27",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "战神赘婿",
+      "legacyId": "reading.main.015",
+      "conceptId": "concept.reading.main.015"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:718",
+      "platformId": "718",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "动漫衍生",
+      "legacyId": "reading.main.016",
+      "conceptId": "concept.reading.main.016"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:746",
+      "platformId": "746",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "游戏体育",
+      "legacyId": "reading.main.017",
+      "conceptId": "concept.reading.main.017"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:258",
+      "platformId": "258",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "传统玄幻",
+      "legacyId": "reading.main.018",
+      "conceptId": "concept.reading.main.018"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.main:124",
+      "platformId": "124",
+      "channel": "male",
+      "group": "reading.main",
+      "label": "都市修真",
+      "legacyId": "reading.main.019",
+      "conceptId": "concept.reading.main.019"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:1079",
+      "platformId": "1079",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "衍生",
+      "legacyId": "reading.theme.001",
+      "conceptId": "concept.reading.theme.001"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:558",
+      "platformId": "558",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "仕途",
+      "legacyId": "reading.theme.002",
+      "conceptId": "concept.ca48cff4eea0"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:1058",
+      "platformId": "1058",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "综影视",
+      "legacyId": "reading.theme.003",
+      "conceptId": "concept.reading.theme.003"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:658",
+      "platformId": "658",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "天灾",
+      "legacyId": "reading.theme.004",
+      "conceptId": "concept.reading.theme.004"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:871",
+      "platformId": "871",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "第一人称",
+      "legacyId": "reading.theme.005",
+      "conceptId": "concept.reading.theme.005"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:873",
+      "platformId": "873",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "赛博朋克",
+      "legacyId": "reading.theme.006",
+      "conceptId": "concept.afe976d0b52a"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:855",
+      "platformId": "855",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "第四天灾",
+      "legacyId": "reading.theme.007",
+      "conceptId": "concept.601adba70dd6"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:851",
+      "platformId": "851",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "规则怪谈",
+      "legacyId": "reading.theme.008",
+      "conceptId": "concept.df9d3e9874d3"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:778",
+      "platformId": "778",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "搞笑轻松",
+      "legacyId": "reading.theme.009",
+      "conceptId": "concept.reading.theme.009"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:758",
+      "platformId": "758",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "古代",
+      "legacyId": "reading.theme.010",
+      "conceptId": "concept.reading.theme.010"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:10",
+      "platformId": "10",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "悬疑",
+      "legacyId": "reading.theme.011",
+      "conceptId": "concept.reading.theme.011"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:705",
+      "platformId": "705",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "克苏鲁",
+      "legacyId": "reading.theme.012",
+      "conceptId": "concept.reading.theme.012"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:516",
+      "platformId": "516",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "都市异能",
+      "legacyId": "reading.theme.013",
+      "conceptId": "concept.reading.theme.013"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:515",
+      "platformId": "515",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "末日求生",
+      "legacyId": "reading.theme.014",
+      "conceptId": "concept.reading.theme.014"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:514",
+      "platformId": "514",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "灵气复苏",
+      "legacyId": "reading.theme.015",
+      "conceptId": "concept.49db3f7e5a2f"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:513",
+      "platformId": "513",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "高武世界",
+      "legacyId": "reading.theme.016",
+      "conceptId": "concept.reading.theme.016"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:512",
+      "platformId": "512",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "异世大陆",
+      "legacyId": "reading.theme.017",
+      "conceptId": "concept.reading.theme.017"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:511",
+      "platformId": "511",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "东方玄幻",
+      "legacyId": "reading.theme.018",
+      "conceptId": "concept.reading.theme.018"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:507",
+      "platformId": "507",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "谍战",
+      "legacyId": "reading.theme.019",
+      "conceptId": "concept.reading.theme.019"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:503",
+      "platformId": "503",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "清朝",
+      "legacyId": "reading.theme.020",
+      "conceptId": "concept.37be4ac2df88"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:501",
+      "platformId": "501",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "宋朝",
+      "legacyId": "reading.theme.021",
+      "conceptId": "concept.87f5de4eecd4"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:500",
+      "platformId": "500",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "断层",
+      "legacyId": "reading.theme.022",
+      "conceptId": "concept.reading.theme.022"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:497",
+      "platformId": "497",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "武将",
+      "legacyId": "reading.theme.023",
+      "conceptId": "concept.reading.theme.023"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:496",
+      "platformId": "496",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "国运",
+      "legacyId": "reading.theme.024",
+      "conceptId": "concept.reading.theme.024"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:465",
+      "platformId": "465",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "综漫",
+      "legacyId": "reading.theme.025",
+      "conceptId": "concept.reading.theme.025"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:453",
+      "platformId": "453",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "开局",
+      "legacyId": "reading.theme.026",
+      "conceptId": "concept.reading.theme.026"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:452",
+      "platformId": "452",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "架空",
+      "legacyId": "reading.theme.027",
+      "conceptId": "concept.reading.theme.027"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:259",
+      "platformId": "259",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "奇幻仙侠",
+      "legacyId": "reading.theme.028",
+      "conceptId": "concept.reading.theme.028"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:1",
+      "platformId": "1",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "都市",
+      "legacyId": "reading.theme.029",
+      "conceptId": "concept.reading.theme.029"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:7",
+      "platformId": "7",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "玄幻",
+      "legacyId": "reading.theme.030",
+      "conceptId": "concept.reading.theme.030"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:12",
+      "platformId": "12",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "历史",
+      "legacyId": "reading.theme.031",
+      "conceptId": "concept.reading.theme.031"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:15",
+      "platformId": "15",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "体育",
+      "legacyId": "reading.theme.032",
+      "conceptId": "concept.reading.theme.032"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.theme:16",
+      "platformId": "16",
+      "channel": "male",
+      "group": "reading.theme",
+      "label": "武侠",
+      "legacyId": "reading.theme.033",
+      "conceptId": "concept.reading.theme.033"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:91",
+      "platformId": "91",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "多女主",
+      "legacyId": "reading.role.001",
+      "conceptId": "concept.reading.role.001"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:25",
+      "platformId": "25",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "赘婿",
+      "legacyId": "reading.role.002",
+      "conceptId": "concept.c9df291744c1"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:856",
+      "platformId": "856",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "全能",
+      "legacyId": "reading.role.003",
+      "conceptId": "concept.reading.role.003"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:520",
+      "platformId": "520",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "大佬",
+      "legacyId": "reading.role.004",
+      "conceptId": "concept.reading.role.004"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:519",
+      "platformId": "519",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "大小姐",
+      "legacyId": "reading.role.005",
+      "conceptId": "concept.reading.role.005"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:518",
+      "platformId": "518",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "特工",
+      "legacyId": "reading.role.006",
+      "conceptId": "concept.reading.role.006"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:509",
+      "platformId": "509",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "游戏主播",
+      "legacyId": "reading.role.007",
+      "conceptId": "concept.reading.role.007"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:506",
+      "platformId": "506",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "神探",
+      "legacyId": "reading.role.008",
+      "conceptId": "concept.reading.role.008"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:502",
+      "platformId": "502",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "贵族",
+      "legacyId": "reading.role.009",
+      "conceptId": "concept.reading.role.009"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:498",
+      "platformId": "498",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "皇帝",
+      "legacyId": "reading.role.010",
+      "conceptId": "concept.reading.role.010"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:389",
+      "platformId": "389",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "单女主",
+      "legacyId": "reading.role.011",
+      "conceptId": "concept.3e133240a3a7"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:385",
+      "platformId": "385",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "校花",
+      "legacyId": "reading.role.012",
+      "conceptId": "concept.reading.role.012"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:391",
+      "platformId": "391",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "无女主",
+      "legacyId": "reading.role.013",
+      "conceptId": "concept.5adfd7c5d9db"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:378",
+      "platformId": "378",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "女帝",
+      "legacyId": "reading.role.014",
+      "conceptId": "concept.727ea53a1ffa"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:375",
+      "platformId": "375",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "特种兵",
+      "legacyId": "reading.role.015",
+      "conceptId": "concept.reading.role.015"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:369",
+      "platformId": "369",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "反派",
+      "legacyId": "reading.role.016",
+      "conceptId": "concept.c23027398628"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:26",
+      "platformId": "26",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "神医",
+      "legacyId": "reading.role.017",
+      "conceptId": "concept.02b1c40a5463"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:42",
+      "platformId": "42",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "奶爸",
+      "legacyId": "reading.role.018",
+      "conceptId": "concept.ee68b25d37a1"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:82",
+      "platformId": "82",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "学霸",
+      "legacyId": "reading.role.019",
+      "conceptId": "concept.5b6427756244"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:90",
+      "platformId": "90",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "天才",
+      "legacyId": "reading.role.020",
+      "conceptId": "concept.9fa8ca8b3830"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:92",
+      "platformId": "92",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "腹黑",
+      "legacyId": "reading.role.021",
+      "conceptId": "concept.reading.role.021"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.role:93",
+      "platformId": "93",
+      "channel": "male",
+      "group": "reading.role",
+      "label": "扮猪吃虎",
+      "legacyId": "reading.role.022",
+      "conceptId": "concept.reading.role.022"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:1460",
+      "platformId": "1460",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "都市江湖",
+      "legacyId": "reading.plot.001",
+      "conceptId": "concept.0dfb0d43c04e"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:1455",
+      "platformId": "1455",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "风水秘术",
+      "legacyId": "reading.plot.002",
+      "conceptId": "concept.ef6a2e005a3c"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:1062",
+      "platformId": "1062",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "斩神衍生",
+      "legacyId": "reading.plot.003",
+      "conceptId": "concept.reading.plot.003"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:1060",
+      "platformId": "1060",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "十日衍生",
+      "legacyId": "reading.plot.004",
+      "conceptId": "concept.reading.plot.004"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:373",
+      "platformId": "373",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "西游衍生",
+      "legacyId": "reading.plot.005",
+      "conceptId": "concept.reading.plot.005"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:1037",
+      "platformId": "1037",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "公版衍生",
+      "legacyId": "reading.plot.006",
+      "conceptId": "concept.reading.plot.006"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:1036",
+      "platformId": "1036",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "红楼衍生",
+      "legacyId": "reading.plot.007",
+      "conceptId": "concept.reading.plot.007"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:1035",
+      "platformId": "1035",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "甄嬛衍生",
+      "legacyId": "reading.plot.008",
+      "conceptId": "concept.reading.plot.008"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:1034",
+      "platformId": "1034",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "如懿衍生",
+      "legacyId": "reading.plot.009",
+      "conceptId": "concept.reading.plot.009"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:537",
+      "platformId": "537",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "惊悚游戏",
+      "legacyId": "reading.plot.010",
+      "conceptId": "concept.20d66f7e6c97"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:874",
+      "platformId": "874",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "卡牌",
+      "legacyId": "reading.plot.011",
+      "conceptId": "concept.reading.plot.011"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:875",
+      "platformId": "875",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "山海经",
+      "legacyId": "reading.plot.012",
+      "conceptId": "concept.reading.plot.012"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:867",
+      "platformId": "867",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "捉鬼",
+      "legacyId": "reading.plot.013",
+      "conceptId": "concept.13bd824e2d4e"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:868",
+      "platformId": "868",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "剑修",
+      "legacyId": "reading.plot.014",
+      "conceptId": "concept.reading.plot.014"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:869",
+      "platformId": "869",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "废土",
+      "legacyId": "reading.plot.015",
+      "conceptId": "concept.reading.plot.015"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:864",
+      "platformId": "864",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "副本",
+      "legacyId": "reading.plot.016",
+      "conceptId": "concept.reading.plot.016"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:854",
+      "platformId": "854",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "黑科技",
+      "legacyId": "reading.plot.017",
+      "conceptId": "concept.7aa89486a185"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:850",
+      "platformId": "850",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "无脑爽",
+      "legacyId": "reading.plot.018",
+      "conceptId": "concept.reading.plot.018"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:852",
+      "platformId": "852",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "魂穿",
+      "legacyId": "reading.plot.019",
+      "conceptId": "concept.reading.plot.019"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:845",
+      "platformId": "845",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "高手下山",
+      "legacyId": "reading.plot.020",
+      "conceptId": "concept.49e4200776d5"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:846",
+      "platformId": "846",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "黑化",
+      "legacyId": "reading.plot.021",
+      "conceptId": "concept.c06706414fa2"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:843",
+      "platformId": "843",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "迪化",
+      "legacyId": "reading.plot.022",
+      "conceptId": "concept.reading.plot.022"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:840",
+      "platformId": "840",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "发家致富",
+      "legacyId": "reading.plot.023",
+      "conceptId": "concept.reading.plot.023"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:838",
+      "platformId": "838",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "无后宫",
+      "legacyId": "reading.plot.024",
+      "conceptId": "concept.6656bd07aeb9"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:837",
+      "platformId": "837",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "争霸",
+      "legacyId": "reading.plot.025",
+      "conceptId": "concept.497776fe04bd"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:834",
+      "platformId": "834",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "1v1",
+      "legacyId": "reading.plot.026",
+      "conceptId": "concept.4918cd225d05"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:830",
+      "platformId": "830",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "升级流",
+      "legacyId": "reading.plot.027",
+      "conceptId": "concept.reading.plot.027"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:831",
+      "platformId": "831",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "灵魂互换",
+      "legacyId": "reading.plot.028",
+      "conceptId": "concept.0e18c4cbaaf8"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:832",
+      "platformId": "832",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "科举",
+      "legacyId": "reading.plot.029",
+      "conceptId": "concept.reading.plot.029"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:731",
+      "platformId": "731",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "封神",
+      "legacyId": "reading.plot.030",
+      "conceptId": "concept.reading.plot.030"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:495",
+      "platformId": "495",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "四合院",
+      "legacyId": "reading.plot.031",
+      "conceptId": "concept.reading.plot.031"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:508",
+      "platformId": "508",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "电竞",
+      "legacyId": "reading.plot.032",
+      "conceptId": "concept.bfea0253d1a7"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:524",
+      "platformId": "524",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "双重生",
+      "legacyId": "reading.plot.033",
+      "conceptId": "concept.reading.plot.033"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:11",
+      "platformId": "11",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "乡村",
+      "legacyId": "reading.plot.034",
+      "conceptId": "concept.fe5972a0e838"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:538",
+      "platformId": "538",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "同人",
+      "legacyId": "reading.plot.035",
+      "conceptId": "concept.reading.plot.035"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:522",
+      "platformId": "522",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "打脸",
+      "legacyId": "reading.plot.036",
+      "conceptId": "concept.reading.plot.036"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:505",
+      "platformId": "505",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "破案",
+      "legacyId": "reading.plot.037",
+      "conceptId": "concept.eb137f2745e7"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:494",
+      "platformId": "494",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "囤物资",
+      "legacyId": "reading.plot.038",
+      "conceptId": "concept.9666bc2237c2"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:493",
+      "platformId": "493",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "钓鱼",
+      "legacyId": "reading.plot.039",
+      "conceptId": "concept.reading.plot.039"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:372",
+      "platformId": "372",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "网游",
+      "legacyId": "reading.plot.040",
+      "conceptId": "concept.reading.plot.040"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:367",
+      "platformId": "367",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "奥特同人",
+      "legacyId": "reading.plot.041",
+      "conceptId": "concept.reading.plot.041"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:379",
+      "platformId": "379",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "求生",
+      "legacyId": "reading.plot.042",
+      "conceptId": "concept.reading.plot.042"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:384",
+      "platformId": "384",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "无敌",
+      "legacyId": "reading.plot.043",
+      "conceptId": "concept.reading.plot.043"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:390",
+      "platformId": "390",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "民国",
+      "legacyId": "reading.plot.044",
+      "conceptId": "concept.reading.plot.044"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:383",
+      "platformId": "383",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "九叔",
+      "legacyId": "reading.plot.045",
+      "conceptId": "concept.ea0a378209fd"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:382",
+      "platformId": "382",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "穿书",
+      "legacyId": "reading.plot.046",
+      "conceptId": "concept.c158092f7bfe"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:381",
+      "platformId": "381",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "聊天群",
+      "legacyId": "reading.plot.047",
+      "conceptId": "concept.173050ce17b7"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:377",
+      "platformId": "377",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "大秦",
+      "legacyId": "reading.plot.048",
+      "conceptId": "concept.reading.plot.048"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:376",
+      "platformId": "376",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "龙珠",
+      "legacyId": "reading.plot.049",
+      "conceptId": "concept.reading.plot.049"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:374",
+      "platformId": "374",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "漫威",
+      "legacyId": "reading.plot.050",
+      "conceptId": "concept.reading.plot.050"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:371",
+      "platformId": "371",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "神奇宝贝",
+      "legacyId": "reading.plot.051",
+      "conceptId": "concept.reading.plot.051"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:370",
+      "platformId": "370",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "海贼",
+      "legacyId": "reading.plot.052",
+      "conceptId": "concept.reading.plot.052"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:368",
+      "platformId": "368",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "火影",
+      "legacyId": "reading.plot.053",
+      "conceptId": "concept.reading.plot.053"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:127",
+      "platformId": "127",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "职场",
+      "legacyId": "reading.plot.054",
+      "conceptId": "concept.reading.plot.054"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:126",
+      "platformId": "126",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "明朝",
+      "legacyId": "reading.plot.055",
+      "conceptId": "concept.reading.plot.055"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:125",
+      "platformId": "125",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "家庭",
+      "legacyId": "reading.plot.056",
+      "conceptId": "concept.reading.plot.056"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:67",
+      "platformId": "67",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "三国",
+      "legacyId": "reading.plot.057",
+      "conceptId": "concept.reading.plot.057"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:68",
+      "platformId": "68",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "末世",
+      "legacyId": "reading.plot.058",
+      "conceptId": "concept.reading.plot.058"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:69",
+      "platformId": "69",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "直播",
+      "legacyId": "reading.plot.059",
+      "conceptId": "concept.e472b37cf9ad"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:70",
+      "platformId": "70",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "无限流",
+      "legacyId": "reading.plot.060",
+      "conceptId": "concept.d91195ae0dcf"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:71",
+      "platformId": "71",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "诸天万界",
+      "legacyId": "reading.plot.061",
+      "conceptId": "concept.b5b586a23fa3"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:73",
+      "platformId": "73",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "大唐",
+      "legacyId": "reading.plot.062",
+      "conceptId": "concept.reading.plot.062"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:74",
+      "platformId": "74",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "宠物",
+      "legacyId": "reading.plot.063",
+      "conceptId": "concept.reading.plot.063"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:75",
+      "platformId": "75",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "外卖",
+      "legacyId": "reading.plot.064",
+      "conceptId": "concept.reading.plot.064"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:77",
+      "platformId": "77",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "星际",
+      "legacyId": "reading.plot.065",
+      "conceptId": "concept.reading.plot.065"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:78",
+      "platformId": "78",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "美食",
+      "legacyId": "reading.plot.066",
+      "conceptId": "concept.5fa29a4e5565"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:80",
+      "platformId": "80",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "剑道",
+      "legacyId": "reading.plot.067",
+      "conceptId": "concept.reading.plot.067"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:81",
+      "platformId": "81",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "盗墓",
+      "legacyId": "reading.plot.068",
+      "conceptId": "concept.reading.plot.068"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:100",
+      "platformId": "100",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "灵异",
+      "legacyId": "reading.plot.069",
+      "conceptId": "concept.reading.plot.069"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:17",
+      "platformId": "17",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "鉴宝",
+      "legacyId": "reading.plot.070",
+      "conceptId": "concept.1add76dc044d"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:19",
+      "platformId": "19",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "系统",
+      "legacyId": "reading.plot.071",
+      "conceptId": "concept.reading.plot.071"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:20",
+      "platformId": "20",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "神豪",
+      "legacyId": "reading.plot.072",
+      "conceptId": "concept.61f16f4e004c"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:36",
+      "platformId": "36",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "重生",
+      "legacyId": "reading.plot.073",
+      "conceptId": "concept.reading.plot.073"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:37",
+      "platformId": "37",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "穿越",
+      "legacyId": "reading.plot.074",
+      "conceptId": "concept.reading.plot.074"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:39",
+      "platformId": "39",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "二次元",
+      "legacyId": "reading.plot.075",
+      "conceptId": "concept.reading.plot.075"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:40",
+      "platformId": "40",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "海岛",
+      "legacyId": "reading.plot.076",
+      "conceptId": "concept.reading.plot.076"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:43",
+      "platformId": "43",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "娱乐圈",
+      "legacyId": "reading.plot.077",
+      "conceptId": "concept.reading.plot.077"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:44",
+      "platformId": "44",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "空间",
+      "legacyId": "reading.plot.078",
+      "conceptId": "concept.reading.plot.078"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:61",
+      "platformId": "61",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "推理",
+      "legacyId": "reading.plot.079",
+      "conceptId": "concept.132411ba41da"
+    },
+    {
+      "id": "fanqie:public_library:male:reading.plot:66",
+      "platformId": "66",
+      "channel": "male",
+      "group": "reading.plot",
+      "label": "洪荒",
+      "legacyId": "reading.plot.080",
+      "conceptId": "concept.81f5bb8129f4"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:747",
+      "platformId": "747",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "女频悬疑"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:1139",
+      "platformId": "1139",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "古风世情"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:8",
+      "platformId": "8",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "科幻末世"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:1015",
+      "platformId": "1015",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "女频衍生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:1017",
+      "platformId": "1017",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "民国言情"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:539",
+      "platformId": "539",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "悬疑脑洞"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:749",
+      "platformId": "749",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "青春甜宠"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:275",
+      "platformId": "275",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "双男主"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:253",
+      "platformId": "253",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "古言脑洞"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:267",
+      "platformId": "267",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "现言脑洞"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:248",
+      "platformId": "248",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "玄幻言情"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:246",
+      "platformId": "246",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "宫斗宅斗"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:748",
+      "platformId": "748",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "豪门总裁"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:718",
+      "platformId": "718",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "动漫衍生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:745",
+      "platformId": "745",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "星光璀璨"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:746",
+      "platformId": "746",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "游戏体育"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:750",
+      "platformId": "750",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "职场婚恋"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:704",
+      "platformId": "704",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "双女主"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:79",
+      "platformId": "79",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "年代"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:23",
+      "platformId": "23",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "种田"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.main:24",
+      "platformId": "24",
+      "channel": "female",
+      "group": "reading.main",
+      "label": "快穿"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:1317",
+      "platformId": "1317",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "古言权谋"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:1169",
+      "platformId": "1169",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "悬疑恋爱"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:1012",
+      "platformId": "1012",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "纯爱"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:1079",
+      "platformId": "1079",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "衍生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:558",
+      "platformId": "558",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "仕途"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:1058",
+      "platformId": "1058",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "综影视"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:658",
+      "platformId": "658",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "天灾"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:871",
+      "platformId": "871",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "第一人称"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:873",
+      "platformId": "873",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "赛博朋克"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:851",
+      "platformId": "851",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "规则怪谈"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:778",
+      "platformId": "778",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "搞笑轻松"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:758",
+      "platformId": "758",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "古代"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:10",
+      "platformId": "10",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "悬疑"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:507",
+      "platformId": "507",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "谍战"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:485",
+      "platformId": "485",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "职场商战"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:481",
+      "platformId": "481",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "虐恋情深"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:474",
+      "platformId": "474",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "日久生情"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:473",
+      "platformId": "473",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "豪门世家"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:465",
+      "platformId": "465",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "综漫"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:464",
+      "platformId": "464",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "异世穿越"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:460",
+      "platformId": "460",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "独宠"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:3",
+      "platformId": "3",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "现代言情"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:5",
+      "platformId": "5",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "古代言情"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:16",
+      "platformId": "16",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "武侠"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.theme:32",
+      "platformId": "32",
+      "channel": "female",
+      "group": "reading.theme",
+      "label": "幻想言情"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:1456",
+      "platformId": "1456",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "位尊权重"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:29",
+      "platformId": "29",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "总裁"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:865",
+      "platformId": "865",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "忠犬"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:856",
+      "platformId": "856",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "全能"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:853",
+      "platformId": "853",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "白切黑"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:849",
+      "platformId": "849",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "双学霸"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:521",
+      "platformId": "521",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "作精"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:520",
+      "platformId": "520",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "大佬"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:519",
+      "platformId": "519",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "大小姐"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:509",
+      "platformId": "509",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "游戏主播"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:506",
+      "platformId": "506",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "神探"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:502",
+      "platformId": "502",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "贵族"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:492",
+      "platformId": "492",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "将军"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:491",
+      "platformId": "491",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "毒医"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:490",
+      "platformId": "490",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "厨娘"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:488",
+      "platformId": "488",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "律师"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:487",
+      "platformId": "487",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "医生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:486",
+      "platformId": "486",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "明星"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:470",
+      "platformId": "470",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "替身"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:469",
+      "platformId": "469",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "双面"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:468",
+      "platformId": "468",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "冰山"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:459",
+      "platformId": "459",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "古灵精怪"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:455",
+      "platformId": "455",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "天作之合"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:454",
+      "platformId": "454",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "可盐可甜"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:392",
+      "platformId": "392",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "无CP"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:380",
+      "platformId": "380",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "病娇"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:369",
+      "platformId": "369",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "反派"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:28",
+      "platformId": "28",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "萌宝"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:30",
+      "platformId": "30",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "宠妻"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:82",
+      "platformId": "82",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "学霸"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:83",
+      "platformId": "83",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "公主"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:84",
+      "platformId": "84",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "皇后"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:85",
+      "platformId": "85",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "王妃"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:86",
+      "platformId": "86",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "女强"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:87",
+      "platformId": "87",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "皇叔"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:88",
+      "platformId": "88",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "嫡女"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:89",
+      "platformId": "89",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "精灵"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:90",
+      "platformId": "90",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "天才"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:92",
+      "platformId": "92",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "腹黑"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:93",
+      "platformId": "93",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "扮猪吃虎"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.role:94",
+      "platformId": "94",
+      "channel": "female",
+      "group": "reading.role",
+      "label": "团宠"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:1457",
+      "platformId": "1457",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "男二上位"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:1458",
+      "platformId": "1458",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "代嫁代娶"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:1459",
+      "platformId": "1459",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "攻略反派"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:1455",
+      "platformId": "1455",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "风水秘术"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:1062",
+      "platformId": "1062",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "斩神衍生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:1060",
+      "platformId": "1060",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "十日衍生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:373",
+      "platformId": "373",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "西游衍生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:1037",
+      "platformId": "1037",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "公版衍生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:1036",
+      "platformId": "1036",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "红楼衍生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:1035",
+      "platformId": "1035",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "甄嬛衍生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:1034",
+      "platformId": "1034",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "如懿衍生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:537",
+      "platformId": "537",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "惊悚游戏"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:872",
+      "platformId": "872",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "追夫"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:875",
+      "platformId": "875",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "山海经"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:876",
+      "platformId": "876",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "胎穿"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:867",
+      "platformId": "867",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "捉鬼"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:868",
+      "platformId": "868",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "剑修"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:860",
+      "platformId": "860",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "相互救赎"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:861",
+      "platformId": "861",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "宠夫"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:850",
+      "platformId": "850",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "无脑爽"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:852",
+      "platformId": "852",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "魂穿"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:846",
+      "platformId": "846",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "黑化"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:847",
+      "platformId": "847",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "养崽"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:848",
+      "platformId": "848",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "年龄差"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:844",
+      "platformId": "844",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "真假千金"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:839",
+      "platformId": "839",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "久别重逢"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:840",
+      "platformId": "840",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "发家致富"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:835",
+      "platformId": "835",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "养成"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:836",
+      "platformId": "836",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "互宠"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:834",
+      "platformId": "834",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "1v1"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:831",
+      "platformId": "831",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "灵魂互换"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:832",
+      "platformId": "832",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "科举"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:829",
+      "platformId": "829",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "年下"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:34",
+      "platformId": "34",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "婚恋"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:731",
+      "platformId": "731",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "封神"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:495",
+      "platformId": "495",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "四合院"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:508",
+      "platformId": "508",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "电竞"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:524",
+      "platformId": "524",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "双重生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:523",
+      "platformId": "523",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "前世今生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:702",
+      "platformId": "702",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "双洁"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:616",
+      "platformId": "616",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "追妻火葬场"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:11",
+      "platformId": "11",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "乡村"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:557",
+      "platformId": "557",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "逃荒"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:538",
+      "platformId": "538",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "同人"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:522",
+      "platformId": "522",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "打脸"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:505",
+      "platformId": "505",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "破案"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:494",
+      "platformId": "494",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "囤物资"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:493",
+      "platformId": "493",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "钓鱼"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:484",
+      "platformId": "484",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "HE"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:483",
+      "platformId": "483",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "相爱相杀"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:482",
+      "platformId": "482",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "暗恋"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:480",
+      "platformId": "480",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "逃婚"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:479",
+      "platformId": "479",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "带球跑"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:478",
+      "platformId": "478",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "强强"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:477",
+      "platformId": "477",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "一见钟情"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:476",
+      "platformId": "476",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "双向奔赴"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:475",
+      "platformId": "475",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "破镜重圆"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:471",
+      "platformId": "471",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "契约婚姻"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:467",
+      "platformId": "467",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "隐婚"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:466",
+      "platformId": "466",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "闪婚"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:463",
+      "platformId": "463",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "今穿古"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:462",
+      "platformId": "462",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "古穿今"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:461",
+      "platformId": "461",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "群穿"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:458",
+      "platformId": "458",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "护短"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:457",
+      "platformId": "457",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "虐渣"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:456",
+      "platformId": "456",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "情有独钟"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:266",
+      "platformId": "266",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "马甲"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:265",
+      "platformId": "265",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "先婚后爱"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:247",
+      "platformId": "247",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "医术"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:388",
+      "platformId": "388",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "女扮男装"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:387",
+      "platformId": "387",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "青梅竹马"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:384",
+      "platformId": "384",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "无敌"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:390",
+      "platformId": "390",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "民国"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:382",
+      "platformId": "382",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "穿书"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:127",
+      "platformId": "127",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "职场"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:125",
+      "platformId": "125",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "家庭"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:68",
+      "platformId": "68",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "末世"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:69",
+      "platformId": "69",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "直播"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:70",
+      "platformId": "70",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "无限流"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:72",
+      "platformId": "72",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "兽世"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:76",
+      "platformId": "76",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "清穿"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:77",
+      "platformId": "77",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "星际"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:78",
+      "platformId": "78",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "美食"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:81",
+      "platformId": "81",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "盗墓"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:95",
+      "platformId": "95",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "虐文"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:96",
+      "platformId": "96",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "甜宠"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:100",
+      "platformId": "100",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "灵异"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:4",
+      "platformId": "4",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "校园"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:19",
+      "platformId": "19",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "系统"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:36",
+      "platformId": "36",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "重生"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:37",
+      "platformId": "37",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "穿越"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:39",
+      "platformId": "39",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "二次元"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:43",
+      "platformId": "43",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "娱乐圈"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:44",
+      "platformId": "44",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "空间"
+    },
+    {
+      "id": "fanqie:public_library:female:reading.plot:61",
+      "platformId": "61",
+      "channel": "female",
+      "group": "reading.plot",
+      "label": "推理"
+    }
+  ],
+  "ranks": [
+    {
+      "id": "fanqie:public_rank:male:1141",
+      "channel": "male",
+      "platformId": "1141",
+      "label": "西方奇幻",
+      "url": "https://fanqienovel.com/rank/1_2_1141"
+    },
+    {
+      "id": "fanqie:public_rank:male:1140",
+      "channel": "male",
+      "platformId": "1140",
+      "label": "东方仙侠",
+      "url": "https://fanqienovel.com/rank/1_2_1140"
+    },
+    {
+      "id": "fanqie:public_rank:male:8",
+      "channel": "male",
+      "platformId": "8",
+      "label": "科幻末世",
+      "url": "https://fanqienovel.com/rank/1_2_8"
+    },
+    {
+      "id": "fanqie:public_rank:male:261",
+      "channel": "male",
+      "platformId": "261",
+      "label": "都市日常",
+      "url": "https://fanqienovel.com/rank/1_2_261"
+    },
+    {
+      "id": "fanqie:public_rank:male:124",
+      "channel": "male",
+      "platformId": "124",
+      "label": "都市修真",
+      "url": "https://fanqienovel.com/rank/1_2_124"
+    },
+    {
+      "id": "fanqie:public_rank:male:1014",
+      "channel": "male",
+      "platformId": "1014",
+      "label": "都市高武",
+      "url": "https://fanqienovel.com/rank/1_2_1014"
+    },
+    {
+      "id": "fanqie:public_rank:male:273",
+      "channel": "male",
+      "platformId": "273",
+      "label": "历史古代",
+      "url": "https://fanqienovel.com/rank/1_2_273"
+    },
+    {
+      "id": "fanqie:public_rank:male:27",
+      "channel": "male",
+      "platformId": "27",
+      "label": "战神赘婿",
+      "url": "https://fanqienovel.com/rank/1_2_27"
+    },
+    {
+      "id": "fanqie:public_rank:male:263",
+      "channel": "male",
+      "platformId": "263",
+      "label": "都市种田",
+      "url": "https://fanqienovel.com/rank/1_2_263"
+    },
+    {
+      "id": "fanqie:public_rank:male:258",
+      "channel": "male",
+      "platformId": "258",
+      "label": "传统玄幻",
+      "url": "https://fanqienovel.com/rank/1_2_258"
+    },
+    {
+      "id": "fanqie:public_rank:male:272",
+      "channel": "male",
+      "platformId": "272",
+      "label": "历史脑洞",
+      "url": "https://fanqienovel.com/rank/1_2_272"
+    },
+    {
+      "id": "fanqie:public_rank:male:539",
+      "channel": "male",
+      "platformId": "539",
+      "label": "悬疑脑洞",
+      "url": "https://fanqienovel.com/rank/1_2_539"
+    },
+    {
+      "id": "fanqie:public_rank:male:262",
+      "channel": "male",
+      "platformId": "262",
+      "label": "都市脑洞",
+      "url": "https://fanqienovel.com/rank/1_2_262"
+    },
+    {
+      "id": "fanqie:public_rank:male:257",
+      "channel": "male",
+      "platformId": "257",
+      "label": "玄幻脑洞",
+      "url": "https://fanqienovel.com/rank/1_2_257"
+    },
+    {
+      "id": "fanqie:public_rank:male:751",
+      "channel": "male",
+      "platformId": "751",
+      "label": "悬疑灵异",
+      "url": "https://fanqienovel.com/rank/1_2_751"
+    },
+    {
+      "id": "fanqie:public_rank:male:504",
+      "channel": "male",
+      "platformId": "504",
+      "label": "抗战谍战",
+      "url": "https://fanqienovel.com/rank/1_2_504"
+    },
+    {
+      "id": "fanqie:public_rank:male:746",
+      "channel": "male",
+      "platformId": "746",
+      "label": "游戏体育",
+      "url": "https://fanqienovel.com/rank/1_2_746"
+    },
+    {
+      "id": "fanqie:public_rank:male:718",
+      "channel": "male",
+      "platformId": "718",
+      "label": "动漫衍生",
+      "url": "https://fanqienovel.com/rank/1_2_718"
+    },
+    {
+      "id": "fanqie:public_rank:male:1016",
+      "channel": "male",
+      "platformId": "1016",
+      "label": "男频衍生",
+      "url": "https://fanqienovel.com/rank/1_2_1016"
+    },
+    {
+      "id": "fanqie:public_rank:female:1139",
+      "channel": "female",
+      "platformId": "1139",
+      "label": "古风世情",
+      "url": "https://fanqienovel.com/rank/0_2_1139"
+    },
+    {
+      "id": "fanqie:public_rank:female:8",
+      "channel": "female",
+      "platformId": "8",
+      "label": "科幻末世",
+      "url": "https://fanqienovel.com/rank/0_2_8"
+    },
+    {
+      "id": "fanqie:public_rank:female:746",
+      "channel": "female",
+      "platformId": "746",
+      "label": "游戏体育",
+      "url": "https://fanqienovel.com/rank/0_2_746"
+    },
+    {
+      "id": "fanqie:public_rank:female:1015",
+      "channel": "female",
+      "platformId": "1015",
+      "label": "女频衍生",
+      "url": "https://fanqienovel.com/rank/0_2_1015"
+    },
+    {
+      "id": "fanqie:public_rank:female:248",
+      "channel": "female",
+      "platformId": "248",
+      "label": "玄幻言情",
+      "url": "https://fanqienovel.com/rank/0_2_248"
+    },
+    {
+      "id": "fanqie:public_rank:female:23",
+      "channel": "female",
+      "platformId": "23",
+      "label": "种田",
+      "url": "https://fanqienovel.com/rank/0_2_23"
+    },
+    {
+      "id": "fanqie:public_rank:female:79",
+      "channel": "female",
+      "platformId": "79",
+      "label": "年代",
+      "url": "https://fanqienovel.com/rank/0_2_79"
+    },
+    {
+      "id": "fanqie:public_rank:female:267",
+      "channel": "female",
+      "platformId": "267",
+      "label": "现言脑洞",
+      "url": "https://fanqienovel.com/rank/0_2_267"
+    },
+    {
+      "id": "fanqie:public_rank:female:246",
+      "channel": "female",
+      "platformId": "246",
+      "label": "宫斗宅斗",
+      "url": "https://fanqienovel.com/rank/0_2_246"
+    },
+    {
+      "id": "fanqie:public_rank:female:539",
+      "channel": "female",
+      "platformId": "539",
+      "label": "悬疑脑洞",
+      "url": "https://fanqienovel.com/rank/0_2_539"
+    },
+    {
+      "id": "fanqie:public_rank:female:253",
+      "channel": "female",
+      "platformId": "253",
+      "label": "古言脑洞",
+      "url": "https://fanqienovel.com/rank/0_2_253"
+    },
+    {
+      "id": "fanqie:public_rank:female:24",
+      "channel": "female",
+      "platformId": "24",
+      "label": "快穿",
+      "url": "https://fanqienovel.com/rank/0_2_24"
+    },
+    {
+      "id": "fanqie:public_rank:female:749",
+      "channel": "female",
+      "platformId": "749",
+      "label": "青春甜宠",
+      "url": "https://fanqienovel.com/rank/0_2_749"
+    },
+    {
+      "id": "fanqie:public_rank:female:745",
+      "channel": "female",
+      "platformId": "745",
+      "label": "星光璀璨",
+      "url": "https://fanqienovel.com/rank/0_2_745"
+    },
+    {
+      "id": "fanqie:public_rank:female:747",
+      "channel": "female",
+      "platformId": "747",
+      "label": "女频悬疑",
+      "url": "https://fanqienovel.com/rank/0_2_747"
+    },
+    {
+      "id": "fanqie:public_rank:female:750",
+      "channel": "female",
+      "platformId": "750",
+      "label": "职场婚恋",
+      "url": "https://fanqienovel.com/rank/0_2_750"
+    },
+    {
+      "id": "fanqie:public_rank:female:748",
+      "channel": "female",
+      "platformId": "748",
+      "label": "豪门总裁",
+      "url": "https://fanqienovel.com/rank/0_2_748"
+    },
+    {
+      "id": "fanqie:public_rank:female:1017",
+      "channel": "female",
+      "platformId": "1017",
+      "label": "民国言情",
+      "url": "https://fanqienovel.com/rank/0_2_1017"
+    }
+  ],
+  "ranksObservedAt": "2026-10-29T04:28:02.828454+00:00",
+  "source": "bundled"
+}

@@ -84,3 +84,10 @@ export function curveSegments(points: { x: number; y: number | null }[], smooth 
   if (current) paths.push(current);
   return paths;
 }
+
+/** A dashed hold carries the latest observation to the displayed prose cursor, never into unwritten text. */
+export function curveContinuation(points: { x: number; y: number | null }[], cursor: number): string | undefined {
+  const last = points.at(-1);
+  if (!last || last.y === null || !Number.isFinite(last.y) || !Number.isFinite(last.x) || !Number.isFinite(cursor) || cursor <= last.x) return;
+  return `M ${last.x} ${last.y} L ${cursor} ${last.y}`;
+}

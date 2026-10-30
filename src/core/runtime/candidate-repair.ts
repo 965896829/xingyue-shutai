@@ -8,22 +8,30 @@ import { fingerprint } from './canonical';
 const canonicalPath = (value: string) => path.posix.normalize(value.replaceAll('\\', '/')).toLowerCase();
 export function planCandidateRepair(run: Run, issues: Issue[], phase: string): CandidateRepair {
   const errors = issues.filter(i => i.severity === 'error');
-  const paths = [...new Set(errors.flatMap(issue => issue.path ? [issue.path] : []))];
+  const coverageIssue = (issue: Issue) => run.pipeline?.coverageVersion === 1 && issue.code.startsWith('chapter_coverage');
+  const paths = [...new Set(errors.flatMap(issue => issue.path && !coverageIssue(issue) ? [issue.path] : []))];
   const factIds = [...new Set(errors.flatMap(issue => issue.factId ? [issue.factId] : []))];
-  const unresolvedIssues = errors.filter(issue => !issue.path && !issue.factId).map(({ code, message }) => ({ code, message }));
+  const unresolvedIssues = errors.filter(issue => !issue.path && !issue.factId && !coverageIssue(issue)).map(({ code, message }) => ({ code, message }));
+  const coverage = run.pipeline?.coverageVersion === 1 && (errors.some(coverageIssue) || factIds.length > 0);
   const allowed = new Set(paths.map(canonicalPath));
   const protectedHashes = Object.fromEntries(run.changes.filter(c => !allowed.has(canonicalPath(c.path))).map(c => [c.path, fingerprint(c)]));
   const protectedFactHashes = Object.fromEntries(run.facts.filter(f => !factIds.includes(f.id)).map(f => [f.id, fingerprint(f)]));
   return { version: 2, phase, paths, factIds, protectedHashes, protectedFactHashes, unresolvedIssues,
-    allowNewFacts: !run.memoryCompletionHash && (phase === 'memory' || run.stage === 'S11') && paths.length > 0 && !unresolvedIssues.length,
+    ...(run.pipeline?.coverageVersion === 1 ? { coverage } : {}),
+    allowNewFacts: coverage && errors.some(coverageIssue) || !run.memoryCompletionHash && (phase === 'memory' || run.stage === 'S11') && paths.length > 0 && !unresolvedIssues.length,
     fingerprint: fingerprint({ errors, candidates: run.changes, facts: run.facts }), attempts: (run.repairAttempts?.[phase] ?? 0) + 1 };
 }
 export function repairContext(run: Run) {
   const scope = run.repairScope;
   if (!scope) return;
   return { paths: scope.paths, factIds: scope.factIds ?? [], protectedPaths: Object.keys(scope.protectedHashes),
+    ...(scope.coverage !== undefined ? { coverage: scope.coverage, existingCoverage: run.chapterCoverage } : {}),
     unresolvedIssues: scope.unresolvedIssues ?? [], allowNewFacts: scope.allowNewFacts,
     instruction: '仅修改列出的文件和事实编号，其他候选与事实原样保留。未定位的问题不能扩大修改范围；先读取资料或调用 validate 核对，不重生成全部内容。' };
+}
+export function assertRepairCoverage(run: Run, coverage: Run['chapterCoverage']) {
+  if (run.repairScope?.coverage === false && fingerprint(coverage) !== fingerprint(run.chapterCoverage))
+    throw new ApplicationError('VALIDATION_ERROR', '局部修复未授权改写人物覆盖记录');
 }
 export function assertRepairWrite(run: Run, changes: Change[]) {
   if (!run.repairScope) return;

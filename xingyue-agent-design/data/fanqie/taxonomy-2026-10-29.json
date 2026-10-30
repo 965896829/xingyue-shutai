@@ -1,0 +1,3772 @@
+{
+  "schemaVersion": "v5-research-1",
+  "platform": "fanqie",
+  "capturedDate": "2026-10-29",
+  "snapshotStatus": "observed_public_surfaces_only",
+  "coverageNote": "本次完整覆盖公开书库接口两频道返回的阅读分类与标签，以及公开榜单内嵌分类目录；未核验作者后台独立内容标签的完整池或针对具体账户/作品的发布限制。",
+  "summary": {
+    "libraryOptions": 336,
+    "libraryMainChannelEntries": 40,
+    "libraryMainUniquePlatformIds": 36,
+    "rankChannelEntries": 37,
+    "rankUniquePlatformIds": 34
+  },
+  "surfaces": [
+    {
+      "surface": "public_library_reading_catalog",
+      "channel": "male",
+      "sourceUrl": "https://fanqienovel.com/api/author/book/category_list/v0/?gender=1",
+      "discoveredFrom": "https://fanqienovel.com/library",
+      "observedAt": "2026-10-29T04:29:49.874816+00:00",
+      "httpStatus": 200,
+      "responseCode": 0,
+      "sourceSha256": "1f467f18085770b66b6a9e42287d7649920aafd79f83ad512e69cc725a1bc357",
+      "coverage": {
+        "status": "complete_for_returned_public_surface",
+        "pagination": "no_pagination_exposed_in_response",
+        "responseCount": 154,
+        "countsByGroup": {
+          "reading.main": 19,
+          "reading.theme": 33,
+          "reading.role": 22,
+          "reading.plot": 80
+        },
+        "authorWorkspaceCoverage": "not_verified",
+        "contentTagsCoverage": "not_in_this_surface"
+      },
+      "options": [
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:1141",
+          "platformId": "1141",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "西方奇幻",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:1140",
+          "platformId": "1140",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "东方仙侠",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:8",
+          "platformId": "8",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "科幻末世",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:1016",
+          "platformId": "1016",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "男频衍生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:1014",
+          "platformId": "1014",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "都市高武",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:751",
+          "platformId": "751",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "悬疑灵异",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:539",
+          "platformId": "539",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "悬疑脑洞",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:504",
+          "platformId": "504",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "抗战谍战",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:273",
+          "platformId": "273",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "历史古代",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:272",
+          "platformId": "272",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "历史脑洞",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:263",
+          "platformId": "263",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "都市种田",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:262",
+          "platformId": "262",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "都市脑洞",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:261",
+          "platformId": "261",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "都市日常",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:257",
+          "platformId": "257",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "玄幻脑洞",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:27",
+          "platformId": "27",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "战神赘婿",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:718",
+          "platformId": "718",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "动漫衍生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:746",
+          "platformId": "746",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "游戏体育",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:258",
+          "platformId": "258",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "传统玄幻",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.main:124",
+          "platformId": "124",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "都市修真",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:1079",
+          "platformId": "1079",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "衍生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:558",
+          "platformId": "558",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "仕途",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:1058",
+          "platformId": "1058",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "综影视",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:658",
+          "platformId": "658",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "天灾",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:871",
+          "platformId": "871",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "第一人称",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:873",
+          "platformId": "873",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "赛博朋克",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:855",
+          "platformId": "855",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "第四天灾",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:851",
+          "platformId": "851",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "规则怪谈",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:778",
+          "platformId": "778",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "搞笑轻松",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:758",
+          "platformId": "758",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "古代",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:10",
+          "platformId": "10",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "悬疑",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:705",
+          "platformId": "705",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "克苏鲁",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:516",
+          "platformId": "516",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "都市异能",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:515",
+          "platformId": "515",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "末日求生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:514",
+          "platformId": "514",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "灵气复苏",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:513",
+          "platformId": "513",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "高武世界",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:512",
+          "platformId": "512",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "异世大陆",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:511",
+          "platformId": "511",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "东方玄幻",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:507",
+          "platformId": "507",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "谍战",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:503",
+          "platformId": "503",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "清朝",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:501",
+          "platformId": "501",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "宋朝",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:500",
+          "platformId": "500",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "断层",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:497",
+          "platformId": "497",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "武将",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:496",
+          "platformId": "496",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "国运",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:465",
+          "platformId": "465",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "综漫",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:453",
+          "platformId": "453",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "开局",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:452",
+          "platformId": "452",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "架空",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:259",
+          "platformId": "259",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "奇幻仙侠",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:1",
+          "platformId": "1",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "都市",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:7",
+          "platformId": "7",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "玄幻",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:12",
+          "platformId": "12",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "历史",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:15",
+          "platformId": "15",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "体育",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.theme:16",
+          "platformId": "16",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "武侠",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:91",
+          "platformId": "91",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "多女主",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:25",
+          "platformId": "25",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "赘婿",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:856",
+          "platformId": "856",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "全能",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:520",
+          "platformId": "520",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "大佬",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:519",
+          "platformId": "519",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "大小姐",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:518",
+          "platformId": "518",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "特工",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:509",
+          "platformId": "509",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "游戏主播",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:506",
+          "platformId": "506",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "神探",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:502",
+          "platformId": "502",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "贵族",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:498",
+          "platformId": "498",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "皇帝",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:389",
+          "platformId": "389",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "单女主",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:385",
+          "platformId": "385",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "校花",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:391",
+          "platformId": "391",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "无女主",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:378",
+          "platformId": "378",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "女帝",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:375",
+          "platformId": "375",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "特种兵",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:369",
+          "platformId": "369",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "反派",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:26",
+          "platformId": "26",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "神医",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:42",
+          "platformId": "42",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "奶爸",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:82",
+          "platformId": "82",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "学霸",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:90",
+          "platformId": "90",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "天才",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:92",
+          "platformId": "92",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "腹黑",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.role:93",
+          "platformId": "93",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "扮猪吃虎",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:1460",
+          "platformId": "1460",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "都市江湖",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:1455",
+          "platformId": "1455",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "风水秘术",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:1062",
+          "platformId": "1062",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "斩神衍生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:1060",
+          "platformId": "1060",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "十日衍生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:373",
+          "platformId": "373",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "西游衍生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:1037",
+          "platformId": "1037",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "公版衍生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:1036",
+          "platformId": "1036",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "红楼衍生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:1035",
+          "platformId": "1035",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "甄嬛衍生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:1034",
+          "platformId": "1034",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "如懿衍生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:537",
+          "platformId": "537",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "惊悚游戏",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:874",
+          "platformId": "874",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "卡牌",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:875",
+          "platformId": "875",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "山海经",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:867",
+          "platformId": "867",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "捉鬼",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:868",
+          "platformId": "868",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "剑修",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:869",
+          "platformId": "869",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "废土",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:864",
+          "platformId": "864",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "副本",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:854",
+          "platformId": "854",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "黑科技",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:850",
+          "platformId": "850",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "无脑爽",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:852",
+          "platformId": "852",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "魂穿",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:845",
+          "platformId": "845",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "高手下山",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:846",
+          "platformId": "846",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "黑化",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:843",
+          "platformId": "843",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "迪化",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:840",
+          "platformId": "840",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "发家致富",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:838",
+          "platformId": "838",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "无后宫",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:837",
+          "platformId": "837",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "争霸",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:834",
+          "platformId": "834",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "1v1",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:830",
+          "platformId": "830",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "升级流",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:831",
+          "platformId": "831",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "灵魂互换",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:832",
+          "platformId": "832",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "科举",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:731",
+          "platformId": "731",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "封神",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:495",
+          "platformId": "495",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "四合院",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:508",
+          "platformId": "508",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "电竞",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:524",
+          "platformId": "524",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "双重生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:11",
+          "platformId": "11",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "乡村",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:538",
+          "platformId": "538",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "同人",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:522",
+          "platformId": "522",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "打脸",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:505",
+          "platformId": "505",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "破案",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:494",
+          "platformId": "494",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "囤物资",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:493",
+          "platformId": "493",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "钓鱼",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:372",
+          "platformId": "372",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "网游",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:367",
+          "platformId": "367",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "奥特同人",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:379",
+          "platformId": "379",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "求生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:384",
+          "platformId": "384",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "无敌",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:390",
+          "platformId": "390",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "民国",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:383",
+          "platformId": "383",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "九叔",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:382",
+          "platformId": "382",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "穿书",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:381",
+          "platformId": "381",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "聊天群",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:377",
+          "platformId": "377",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "大秦",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:376",
+          "platformId": "376",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "龙珠",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:374",
+          "platformId": "374",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "漫威",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:371",
+          "platformId": "371",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "神奇宝贝",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:370",
+          "platformId": "370",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "海贼",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:368",
+          "platformId": "368",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "火影",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:127",
+          "platformId": "127",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "职场",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:126",
+          "platformId": "126",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "明朝",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:125",
+          "platformId": "125",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "家庭",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:67",
+          "platformId": "67",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "三国",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:68",
+          "platformId": "68",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "末世",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:69",
+          "platformId": "69",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "直播",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:70",
+          "platformId": "70",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "无限流",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:71",
+          "platformId": "71",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "诸天万界",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:73",
+          "platformId": "73",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "大唐",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:74",
+          "platformId": "74",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "宠物",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:75",
+          "platformId": "75",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "外卖",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:77",
+          "platformId": "77",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "星际",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:78",
+          "platformId": "78",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "美食",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:80",
+          "platformId": "80",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "剑道",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:81",
+          "platformId": "81",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "盗墓",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:100",
+          "platformId": "100",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "灵异",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:17",
+          "platformId": "17",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "鉴宝",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:19",
+          "platformId": "19",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "系统",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:20",
+          "platformId": "20",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "神豪",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:36",
+          "platformId": "36",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "重生",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:37",
+          "platformId": "37",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "穿越",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:39",
+          "platformId": "39",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "二次元",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:40",
+          "platformId": "40",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "海岛",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:43",
+          "platformId": "43",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "娱乐圈",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:44",
+          "platformId": "44",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "空间",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:61",
+          "platformId": "61",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "推理",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:male:reading.plot:66",
+          "platformId": "66",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "洪荒",
+          "audience": "male",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        }
+      ]
+    },
+    {
+      "surface": "public_library_reading_catalog",
+      "channel": "female",
+      "sourceUrl": "https://fanqienovel.com/api/author/book/category_list/v0/?gender=0",
+      "discoveredFrom": "https://fanqienovel.com/library",
+      "observedAt": "2026-10-29T04:29:49.857776+00:00",
+      "httpStatus": 200,
+      "responseCode": 0,
+      "sourceSha256": "568e2e45d3df14e56585eeea8d84ce53bb8c8ddef778464823a074a93b95d1cc",
+      "coverage": {
+        "status": "complete_for_returned_public_surface",
+        "pagination": "no_pagination_exposed_in_response",
+        "responseCount": 182,
+        "countsByGroup": {
+          "reading.main": 21,
+          "reading.theme": 25,
+          "reading.role": 41,
+          "reading.plot": 95
+        },
+        "authorWorkspaceCoverage": "not_verified",
+        "contentTagsCoverage": "not_in_this_surface"
+      },
+      "options": [
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:747",
+          "platformId": "747",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "女频悬疑",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:1139",
+          "platformId": "1139",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "古风世情",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:8",
+          "platformId": "8",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "科幻末世",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:1015",
+          "platformId": "1015",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "女频衍生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:1017",
+          "platformId": "1017",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "民国言情",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:539",
+          "platformId": "539",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "悬疑脑洞",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:749",
+          "platformId": "749",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "青春甜宠",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:275",
+          "platformId": "275",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "双男主",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:253",
+          "platformId": "253",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "古言脑洞",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:267",
+          "platformId": "267",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "现言脑洞",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:248",
+          "platformId": "248",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "玄幻言情",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:246",
+          "platformId": "246",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "宫斗宅斗",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:748",
+          "platformId": "748",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "豪门总裁",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:718",
+          "platformId": "718",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "动漫衍生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:745",
+          "platformId": "745",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "星光璀璨",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:746",
+          "platformId": "746",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "游戏体育",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:750",
+          "platformId": "750",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "职场婚恋",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:704",
+          "platformId": "704",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "双女主",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:79",
+          "platformId": "79",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "年代",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:23",
+          "platformId": "23",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "种田",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.main:24",
+          "platformId": "24",
+          "group": "reading.main",
+          "sourceGroupLabel": "主分类",
+          "label": "快穿",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": true
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:1317",
+          "platformId": "1317",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "古言权谋",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:1169",
+          "platformId": "1169",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "悬疑恋爱",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:1012",
+          "platformId": "1012",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "纯爱",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:1079",
+          "platformId": "1079",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "衍生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:558",
+          "platformId": "558",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "仕途",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:1058",
+          "platformId": "1058",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "综影视",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:658",
+          "platformId": "658",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "天灾",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:871",
+          "platformId": "871",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "第一人称",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:873",
+          "platformId": "873",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "赛博朋克",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:851",
+          "platformId": "851",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "规则怪谈",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:778",
+          "platformId": "778",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "搞笑轻松",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:758",
+          "platformId": "758",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "古代",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:10",
+          "platformId": "10",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "悬疑",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:507",
+          "platformId": "507",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "谍战",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:485",
+          "platformId": "485",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "职场商战",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:481",
+          "platformId": "481",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "虐恋情深",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:474",
+          "platformId": "474",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "日久生情",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:473",
+          "platformId": "473",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "豪门世家",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:465",
+          "platformId": "465",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "综漫",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:464",
+          "platformId": "464",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "异世穿越",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:460",
+          "platformId": "460",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "独宠",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:3",
+          "platformId": "3",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "现代言情",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:5",
+          "platformId": "5",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "古代言情",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:16",
+          "platformId": "16",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "武侠",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.theme:32",
+          "platformId": "32",
+          "group": "reading.theme",
+          "sourceGroupLabel": "主题",
+          "label": "幻想言情",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:1456",
+          "platformId": "1456",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "位尊权重",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:29",
+          "platformId": "29",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "总裁",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:865",
+          "platformId": "865",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "忠犬",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:856",
+          "platformId": "856",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "全能",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:853",
+          "platformId": "853",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "白切黑",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:849",
+          "platformId": "849",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "双学霸",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:521",
+          "platformId": "521",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "作精",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:520",
+          "platformId": "520",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "大佬",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:519",
+          "platformId": "519",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "大小姐",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:509",
+          "platformId": "509",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "游戏主播",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:506",
+          "platformId": "506",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "神探",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:502",
+          "platformId": "502",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "贵族",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:492",
+          "platformId": "492",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "将军",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:491",
+          "platformId": "491",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "毒医",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:490",
+          "platformId": "490",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "厨娘",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:488",
+          "platformId": "488",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "律师",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:487",
+          "platformId": "487",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "医生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:486",
+          "platformId": "486",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "明星",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:470",
+          "platformId": "470",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "替身",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:469",
+          "platformId": "469",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "双面",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:468",
+          "platformId": "468",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "冰山",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:459",
+          "platformId": "459",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "古灵精怪",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:455",
+          "platformId": "455",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "天作之合",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:454",
+          "platformId": "454",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "可盐可甜",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:392",
+          "platformId": "392",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "无CP",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:380",
+          "platformId": "380",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "病娇",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:369",
+          "platformId": "369",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "反派",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:28",
+          "platformId": "28",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "萌宝",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:30",
+          "platformId": "30",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "宠妻",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:82",
+          "platformId": "82",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "学霸",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:83",
+          "platformId": "83",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "公主",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:84",
+          "platformId": "84",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "皇后",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:85",
+          "platformId": "85",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "王妃",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:86",
+          "platformId": "86",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "女强",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:87",
+          "platformId": "87",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "皇叔",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:88",
+          "platformId": "88",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "嫡女",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:89",
+          "platformId": "89",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "精灵",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:90",
+          "platformId": "90",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "天才",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:92",
+          "platformId": "92",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "腹黑",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:93",
+          "platformId": "93",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "扮猪吃虎",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.role:94",
+          "platformId": "94",
+          "group": "reading.role",
+          "sourceGroupLabel": "角色",
+          "label": "团宠",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:1457",
+          "platformId": "1457",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "男二上位",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:1458",
+          "platformId": "1458",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "代嫁代娶",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:1459",
+          "platformId": "1459",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "攻略反派",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:1455",
+          "platformId": "1455",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "风水秘术",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:1062",
+          "platformId": "1062",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "斩神衍生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:1060",
+          "platformId": "1060",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "十日衍生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:373",
+          "platformId": "373",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "西游衍生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:1037",
+          "platformId": "1037",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "公版衍生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:1036",
+          "platformId": "1036",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "红楼衍生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:1035",
+          "platformId": "1035",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "甄嬛衍生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:1034",
+          "platformId": "1034",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "如懿衍生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:537",
+          "platformId": "537",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "惊悚游戏",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:872",
+          "platformId": "872",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "追夫",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:875",
+          "platformId": "875",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "山海经",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:876",
+          "platformId": "876",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "胎穿",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:867",
+          "platformId": "867",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "捉鬼",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:868",
+          "platformId": "868",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "剑修",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:860",
+          "platformId": "860",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "相互救赎",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:861",
+          "platformId": "861",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "宠夫",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:850",
+          "platformId": "850",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "无脑爽",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:852",
+          "platformId": "852",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "魂穿",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:846",
+          "platformId": "846",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "黑化",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:847",
+          "platformId": "847",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "养崽",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:848",
+          "platformId": "848",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "年龄差",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:844",
+          "platformId": "844",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "真假千金",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:839",
+          "platformId": "839",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "久别重逢",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:840",
+          "platformId": "840",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "发家致富",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:835",
+          "platformId": "835",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "养成",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:836",
+          "platformId": "836",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "互宠",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:834",
+          "platformId": "834",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "1v1",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:831",
+          "platformId": "831",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "灵魂互换",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:832",
+          "platformId": "832",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "科举",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:829",
+          "platformId": "829",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "年下",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:34",
+          "platformId": "34",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "婚恋",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:731",
+          "platformId": "731",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "封神",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:495",
+          "platformId": "495",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "四合院",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:508",
+          "platformId": "508",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "电竞",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:524",
+          "platformId": "524",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "双重生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:523",
+          "platformId": "523",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "前世今生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:702",
+          "platformId": "702",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "双洁",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:616",
+          "platformId": "616",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "追妻火葬场",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:11",
+          "platformId": "11",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "乡村",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:557",
+          "platformId": "557",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "逃荒",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:538",
+          "platformId": "538",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "同人",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:522",
+          "platformId": "522",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "打脸",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:505",
+          "platformId": "505",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "破案",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:494",
+          "platformId": "494",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "囤物资",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:493",
+          "platformId": "493",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "钓鱼",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:484",
+          "platformId": "484",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "HE",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:483",
+          "platformId": "483",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "相爱相杀",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:482",
+          "platformId": "482",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "暗恋",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:480",
+          "platformId": "480",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "逃婚",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:479",
+          "platformId": "479",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "带球跑",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:478",
+          "platformId": "478",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "强强",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:477",
+          "platformId": "477",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "一见钟情",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:476",
+          "platformId": "476",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "双向奔赴",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:475",
+          "platformId": "475",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "破镜重圆",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:471",
+          "platformId": "471",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "契约婚姻",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:467",
+          "platformId": "467",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "隐婚",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:466",
+          "platformId": "466",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "闪婚",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:463",
+          "platformId": "463",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "今穿古",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:462",
+          "platformId": "462",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "古穿今",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:461",
+          "platformId": "461",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "群穿",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:458",
+          "platformId": "458",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "护短",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:457",
+          "platformId": "457",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "虐渣",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:456",
+          "platformId": "456",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "情有独钟",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:266",
+          "platformId": "266",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "马甲",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:265",
+          "platformId": "265",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "先婚后爱",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:247",
+          "platformId": "247",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "医术",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:388",
+          "platformId": "388",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "女扮男装",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:387",
+          "platformId": "387",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "青梅竹马",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:384",
+          "platformId": "384",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "无敌",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:390",
+          "platformId": "390",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "民国",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:382",
+          "platformId": "382",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "穿书",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:127",
+          "platformId": "127",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "职场",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:125",
+          "platformId": "125",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "家庭",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:68",
+          "platformId": "68",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "末世",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:69",
+          "platformId": "69",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "直播",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:70",
+          "platformId": "70",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "无限流",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:72",
+          "platformId": "72",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "兽世",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:76",
+          "platformId": "76",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "清穿",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:77",
+          "platformId": "77",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "星际",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:78",
+          "platformId": "78",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "美食",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:81",
+          "platformId": "81",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "盗墓",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:95",
+          "platformId": "95",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "虐文",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:96",
+          "platformId": "96",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "甜宠",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:100",
+          "platformId": "100",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "灵异",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:4",
+          "platformId": "4",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "校园",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:19",
+          "platformId": "19",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "系统",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:36",
+          "platformId": "36",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "重生",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:37",
+          "platformId": "37",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "穿越",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:39",
+          "platformId": "39",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "二次元",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:43",
+          "platformId": "43",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "娱乐圈",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:44",
+          "platformId": "44",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "空间",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        },
+        {
+          "optionKey": "fanqie:public_library:female:reading.plot:61",
+          "platformId": "61",
+          "group": "reading.plot",
+          "sourceGroupLabel": "情节",
+          "label": "推理",
+          "audience": "female",
+          "status": "observed_available",
+          "descriptionAvailableInSource": false
+        }
+      ]
+    },
+    {
+      "surface": "public_rank_category_catalog",
+      "sourceUrl": "https://fanqienovel.com/rank",
+      "observedAt": "2026-10-29T04:28:02.828454+00:00",
+      "sourceSha256": "696963c2d8294f666b6abe44c727e157c707996734ec415b2d8bc6f58ba4816c",
+      "extraction": "window.__INITIAL_STATE__.rank.rankCategoryTypeList",
+      "coverage": {
+        "status": "complete_for_embedded_rank_catalog",
+        "channelEntries": 37,
+        "uniquePlatformIds": 34,
+        "countsByChannel": {
+          "male": 19,
+          "female": 18
+        },
+        "authorWorkspaceCoverage": "not_verified"
+      },
+      "options": [
+        {
+          "optionKey": "fanqie:public_rank:male:1141",
+          "platformId": "1141",
+          "label": "西方奇幻",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_1141",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_1141"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:1140",
+          "platformId": "1140",
+          "label": "东方仙侠",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_1140",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_1140"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:8",
+          "platformId": "8",
+          "label": "科幻末世",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_8",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_8"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:261",
+          "platformId": "261",
+          "label": "都市日常",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_261",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_261"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:124",
+          "platformId": "124",
+          "label": "都市修真",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_124",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_124"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:1014",
+          "platformId": "1014",
+          "label": "都市高武",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_1014",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_1014"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:273",
+          "platformId": "273",
+          "label": "历史古代",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_273",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_273"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:27",
+          "platformId": "27",
+          "label": "战神赘婿",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_27",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_27"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:263",
+          "platformId": "263",
+          "label": "都市种田",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_263",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_263"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:258",
+          "platformId": "258",
+          "label": "传统玄幻",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_258",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_258"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:272",
+          "platformId": "272",
+          "label": "历史脑洞",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_272",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_272"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:539",
+          "platformId": "539",
+          "label": "悬疑脑洞",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_539",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_539"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:262",
+          "platformId": "262",
+          "label": "都市脑洞",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_262",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_262"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:257",
+          "platformId": "257",
+          "label": "玄幻脑洞",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_257",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_257"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:751",
+          "platformId": "751",
+          "label": "悬疑灵异",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_751",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_751"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:504",
+          "platformId": "504",
+          "label": "抗战谍战",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_504",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_504"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:746",
+          "platformId": "746",
+          "label": "游戏体育",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_746",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_746"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:718",
+          "platformId": "718",
+          "label": "动漫衍生",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_718",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_718"
+        },
+        {
+          "optionKey": "fanqie:public_rank:male:1016",
+          "platformId": "1016",
+          "label": "男频衍生",
+          "audience": "male",
+          "newBookRankUrl": "https://fanqienovel.com/rank/1_1_1016",
+          "readingRankUrl": "https://fanqienovel.com/rank/1_2_1016"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:1139",
+          "platformId": "1139",
+          "label": "古风世情",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_1139",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_1139"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:8",
+          "platformId": "8",
+          "label": "科幻末世",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_8",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_8"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:746",
+          "platformId": "746",
+          "label": "游戏体育",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_746",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_746"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:1015",
+          "platformId": "1015",
+          "label": "女频衍生",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_1015",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_1015"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:248",
+          "platformId": "248",
+          "label": "玄幻言情",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_248",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_248"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:23",
+          "platformId": "23",
+          "label": "种田",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_23",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_23"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:79",
+          "platformId": "79",
+          "label": "年代",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_79",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_79"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:267",
+          "platformId": "267",
+          "label": "现言脑洞",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_267",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_267"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:246",
+          "platformId": "246",
+          "label": "宫斗宅斗",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_246",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_246"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:539",
+          "platformId": "539",
+          "label": "悬疑脑洞",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_539",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_539"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:253",
+          "platformId": "253",
+          "label": "古言脑洞",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_253",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_253"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:24",
+          "platformId": "24",
+          "label": "快穿",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_24",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_24"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:749",
+          "platformId": "749",
+          "label": "青春甜宠",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_749",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_749"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:745",
+          "platformId": "745",
+          "label": "星光璀璨",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_745",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_745"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:747",
+          "platformId": "747",
+          "label": "女频悬疑",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_747",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_747"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:750",
+          "platformId": "750",
+          "label": "职场婚恋",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_750",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_750"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:748",
+          "platformId": "748",
+          "label": "豪门总裁",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_748",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_748"
+        },
+        {
+          "optionKey": "fanqie:public_rank:female:1017",
+          "platformId": "1017",
+          "label": "民国言情",
+          "audience": "female",
+          "newBookRankUrl": "https://fanqienovel.com/rank/0_1_1017",
+          "readingRankUrl": "https://fanqienovel.com/rank/0_2_1017"
+        }
+      ]
+    }
+  ],
+  "rules": {
+    "readingRules": {
+      "sourceUrl": "https://fanqienovel.com/writer/zone/article/7617805652965982232",
+      "publishedAt": "2026-03-16",
+      "main": {
+        "min": 1,
+        "max": 1
+      },
+      "theme": {
+        "min": 0,
+        "max": 2
+      },
+      "role": {
+        "min": 0,
+        "max": 2
+      },
+      "plot": {
+        "min": 0,
+        "max": 2
+      },
+      "scope": "该公告的原作品标签；2026-08-24公告确认更名阅读标签且原分类/规则不变。实际作品页后续明确规则优先。"
+    },
+    "contentRules": {
+      "sourceUrl": "https://fanqienovel.com/writer/zone/article/7677414599091552318",
+      "publishedAt": "2026-08-24",
+      "pool": "separate",
+      "readerVisible": false,
+      "selectionLimits": "read_specific_author_ui",
+      "fullCatalogCoverage": "not_verified"
+    }
+  }
+}

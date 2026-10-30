@@ -1,0 +1,1726 @@
+{
+  "designVersion": "V4",
+  "status": "passed",
+  "scope": "static design-artifact verification only",
+  "skills": 19,
+  "operations": 39,
+  "bindings": 41,
+  "promptResources": 57,
+  "evaluationCases": 36,
+  "evaluationCasesExecuted": 0,
+  "checks": [
+    {
+      "name": "catalog-json-schema",
+      "passed": true,
+      "errors": null
+    },
+    {
+      "name": "unique-skill-ids",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-story-contract",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-co-creation",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-world-design",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-character-design",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-revision",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-memory-review",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-memory-query",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-packaging",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "prompt-map-unique",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P01",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P02",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P03",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P04",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P05",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P06",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P07",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P08",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P09",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P10",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P11",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P12",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P13",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P14",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P15",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P16",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P17",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P18",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P19",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P20",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P21",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P22",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P23",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P24",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P25",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P26",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P27",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P28",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P29",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P30",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P31",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P32",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P33",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P34",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P35",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P36",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P37",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P38",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P39",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P40",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P41",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P42",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P43",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P44",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P45",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P46",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P47",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P48",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P49",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P50",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P51",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P52",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P53",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P54",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P55",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P56",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P57",
+      "passed": true
+    },
+    {
+      "name": "source-ids-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "source-ids-story-contract",
+      "passed": true
+    },
+    {
+      "name": "source-ids-co-creation",
+      "passed": true
+    },
+    {
+      "name": "source-ids-world-design",
+      "passed": true
+    },
+    {
+      "name": "source-ids-character-design",
+      "passed": true
+    },
+    {
+      "name": "source-ids-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "source-ids-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "source-ids-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "source-ids-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "source-ids-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "source-ids-revision",
+      "passed": true
+    },
+    {
+      "name": "source-ids-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "source-ids-memory-review",
+      "passed": true
+    },
+    {
+      "name": "source-ids-memory-query",
+      "passed": true
+    },
+    {
+      "name": "source-ids-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "source-ids-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "source-ids-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "source-ids-packaging",
+      "passed": true
+    },
+    {
+      "name": "source-ids-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "design-not-activated",
+      "passed": true
+    },
+    {
+      "name": "registry-skill-ids",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-story-contract",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-story-contract",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-co-creation",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-co-creation",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-world-design",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-world-design",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-character-design",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-character-design",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-revision",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-revision",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-memory-review",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-memory-review",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-memory-query",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-memory-query",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-packaging",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-packaging",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "capability-request-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "capability-request-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "capability-request-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "resource-scope-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "capability-request-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "operation-binding-coverage",
+      "passed": true
+    },
+    {
+      "name": "packaging-discriminants",
+      "passed": true
+    },
+    {
+      "name": "evaluation-not-executed",
+      "passed": true
+    },
+    {
+      "name": "case-ids-unique",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-01",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-01",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-02",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-02",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-03",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-03",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-04",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-04",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-05",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-05",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-06",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-06",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-07",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-07",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-08",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-08",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-09",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-09",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-10",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-10",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-11",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-11",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-12",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-12",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-13",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-13",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-14",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-14",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-15",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-15",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-16",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-16",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-17",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-17",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-18",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-18",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-19",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-19",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-20",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-20",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-21",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-21",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-22",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-22",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-23",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-23",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-24",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-24",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-25",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-25",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-26",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-26",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-27",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-27",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-28",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-28",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-29",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-29",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-30",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-30",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-31",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-31",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-32",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-32",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-33",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-33",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-34",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-34",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-35",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-35",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V4-SKILL-36",
+      "passed": true
+    },
+    {
+      "name": "case-route-V4-SKILL-36",
+      "passed": true
+    },
+    {
+      "name": "typescript-strict",
+      "passed": true,
+      "diagnostics": [],
+      "version": "5.9.3"
+    },
+    {
+      "name": "no-code-comments-contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-co-creation-contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-memory-contracts-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-character-mind-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-skill-runtime-v4.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-check-skill-catalog-v4.mjs",
+      "passed": true
+    }
+  ],
+  "limitations": [
+    "No application integration",
+    "No paid model calls",
+    "No reader blind evaluation",
+    "No product-behavior regressions executed"
+  ]
+}

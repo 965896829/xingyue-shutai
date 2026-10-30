@@ -1,0 +1,58 @@
+{
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "baselineVersion": "0.4.82",
+  "verificationDate": "2026-10-28",
+  "completed": [
+    {
+      "check": "compat-skill-loader",
+      "result": "passed",
+      "count": 26,
+      "method": "隔离资源副本重建 registry/lock，使用原 SkillRegistry.get/load 加载；详见 compat/compatibility-check.json"
+    },
+    {
+      "check": "compat-source-file-digests",
+      "result": "passed",
+      "count": 26,
+      "method": "逐一比较交付 SKILL.md 的 SHA-256 与 compat/manifest.json"
+    },
+    {
+      "check": "creation-resource-envelope",
+      "result": "passed",
+      "count": 5,
+      "method": "非空、UTF-8、无 NUL、原加载器单资源 24000 字节上限；未执行真实模型输出验证"
+    },
+    {
+      "check": "baseline-prompt-footprint-reproduction",
+      "result": "passed",
+      "count": 12,
+      "method": "从固定源码运行随包脚本，outputs 与 prompt-footprint.json 完全一致"
+    },
+    {
+      "check": "vnext-contracts-typescript",
+      "result": "passed",
+      "method": "tsc --noEmit --strict --skipLibCheck --target es2022；仅验证类型草案"
+    },
+    {
+      "check": "cross-review",
+      "result": "passed",
+      "method": "复核版本路由、阶段提交、局部重做、五项审稿映射、纯正文及独立阻断出口"
+    },
+    {
+      "check": "report-visual-qa",
+      "result": "passed",
+      "count": 22,
+      "method": "Word 经 LibreOffice 渲染，每页原尺寸图片检查；无截断、重叠或缺字"
+    }
+  ],
+  "notExecuted": [
+    "真实付费模型请求",
+    "真实小说样本盲评",
+    "真实读者指标验证",
+    "Windows 安装包构建与完整 GUI 验证",
+    "远端仓库写入或部署"
+  ],
+  "scopeNote": "验证表明资源可加载、设计文件完整及类型可检查；不表明新工程协议已接入，也不构成文学质量或商业成绩的实测结果。",
+  "designVersion": "V1",
+  "recordStatus": "historical",
+  "supersededReportNote": "本记录保留前序版本当时的验证结果；V4 本轮交付与验证见 verification-v4.json。未改变原测试执行范围。"
+}

@@ -57,7 +57,6 @@ export function ContextMeter({ profile, usage }: { profile?: Profile; usage?: Co
       </dl>
       <p>{profile?.limitMode === 'official' && meter.capacity !== null ? '容量来自该模型已核实的配置。' : meter.capacity !== null ? '容量来自当前连接的手动配置。' : '请在模型设置中核实容量。'}</p>
       {meter.matching ? <p>{meter.measured ? '输入量由服务端返回，包含缓存输入；缓存命中不会减少上下文占用。' : usage?.method === 'utf8_upper_bound' ? '当前为 UTF-8 字节保守上界，不是服务端实测 token 数。' : usage?.method === 'measured_prefix_upper_bound' ? '已测前缀加未测尾部的保守上界，完整输入尚未实测。' : '当前为本地分词估算。'}{usage?.status === 'unknown' ? '本次请求结果未知。' : usage?.status === 'not_sent' ? '请求未成功执行，显示发送前估算。' : usage?.status === 'complete' && !meter.measured ? '服务端未报告输入用量，本次保留估算值。' : ''}</p> : <p>当前模型尚无本次上下文测量；发送后自动更新。</p>}
-      <p className="muted">显示最近一次请求的输入，不累加历史调用或费用用量；尚未发送的文字不计入。{meter.separate ? '此模型输入与输出分别计限。' : ''}</p>
     </div>, document.querySelector('.client-module') ?? document.body)}
   </>;
 }

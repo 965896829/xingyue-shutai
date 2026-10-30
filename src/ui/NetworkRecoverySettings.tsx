@@ -10,6 +10,5 @@ export function NetworkRecoverySettings({ value, onChange }: { value: Profile['n
       </select>
     </label>
     <label className="network-recovery-consent"><input type="checkbox" checked={policy.retryUnknown} disabled={policy.maxRetries === 0} onChange={e => onChange({ ...policy, retryUnknown: e.target.checked })} /><span>允许对结果未知的临时网络错误重新请求（可能重复计费）</span></label>
-    <p className="muted">默认只恢复确认未发出的连接故障及临时限流。已收到部分文本、费用预算无法确认或达到任务上限时暂停；可随时取消等待。每次重试都会记入任务日志。</p>
   </div>;
 }

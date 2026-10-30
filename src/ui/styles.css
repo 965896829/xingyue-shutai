@@ -27,6 +27,49 @@ body {
 .creation-task-status .generation-status { margin-left: 12px; }
 @keyframes generation-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .generation-spinner { animation: none; } }
+.generation-step {
+  margin: 12px 0 8px;
+  min-height: 20px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+.generation-step-text {
+  display: inline-block;
+  max-width: 100%;
+}
+.writing-style-field { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; min-width: 0; }
+.writing-style-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.writing-style-candidates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+.writing-style-candidate { display: flex; flex-direction: column; padding: 14px; border: 1px solid var(--line); border-radius: 10px; overflow-wrap: anywhere; }
+.writing-style-candidate.is-selected { border-color: var(--accent); }
+.writing-style-candidate p { margin: 10px 0; line-height: 1.7; }
+.writing-style-candidate details { margin-bottom: 12px; }
+.writing-style-candidate > button { margin-top: auto; align-self: flex-start; }
+.writing-style-recommended { color: var(--accent); font-size: 12px; }
+.writing-style-note { grid-column: 1 / -1; margin: 0; font-size: 12px; }
+@media (max-width: 800px) { .writing-style-candidates { grid-template-columns: 1fr; } }
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .generation-step-text {
+    color: transparent;
+    background-image: linear-gradient(105deg, var(--muted) 38%, var(--ink) 50%, var(--muted) 62%);
+    background-size: 250% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: generation-shimmer 2.6s linear infinite;
+  }
+}
+@keyframes generation-shimmer {
+  from { background-position: 100% 0; }
+  85%, to { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .generation-step-text { color: var(--muted); background: none; animation: none; }
+}
+@media (forced-colors: active) {
+  .generation-step-text { color: CanvasText; }
+}
 .window-titlebar {
   height: env(titlebar-area-height, 38px);
   background: var(--bg);
@@ -2248,3 +2291,7 @@ details > p {
     margin-top: 32px;
   }
 }
+
+.book-profile-fields { display: grid; gap: 14px; }
+.book-profile-fields > details { margin: 0; }
+.market-evidence { overflow-wrap: anywhere; }

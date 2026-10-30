@@ -10,8 +10,15 @@ export function prepareAuthorRevision(run: Run, instruction: string) {
   run.candidateWrites = {};
   run.repairScope = undefined;
   run.memoryReview = undefined;
+  run.chapterCoverage = undefined;
   run.memoryCompletionHash = undefined;
   run.futurePlanReview = undefined;
+  if (run.revisionCore) {
+    run.revisionCore = undefined;
+    run.revisionCoreRequired = 1;
+    run.facts = [];
+    run.changes = run.changes.filter(change => !/^08_/.test(change.path));
+  }
   run.repairAttempts = {};
   if (run.pipeline) {
     run.pipeline.phase = 'prose';

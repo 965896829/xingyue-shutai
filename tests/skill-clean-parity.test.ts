@@ -16,13 +16,15 @@ import { factSchema, type Run } from '../src/shared/types';
 import { documentPreviewText } from '../src/shared/run-presentation';
 import type { Caller } from '../src/core/runner';
 import { loadNamingRules } from '../src/core/naming';
+import { fixtureCoverage, fixtureAuditEvidence } from './fixtures/chapter-coverage';
+import type { ChapterCoverage } from '../src/shared/chapter-memory';
 
 const skill = path.resolve('resources/skill');
 const profile = { ...fakeProfile, contextLimit: 1000000, outputLimit: 4096, stream: false };
-const proposal = (changes: unknown[], facts?: unknown[], complete?: boolean) => ({ ...fakeResult(''), native: null, stop: 'tools' as const,
+const proposal = (changes: unknown[], facts?: unknown[], complete?: boolean, coverage?: ChapterCoverage) => ({ ...fakeResult(''), native: null, stop: 'tools' as const,
   calls: [
     ...(changes.length ? [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes }) }] : []),
-    ...(facts ? [{ id: crypto.randomUUID(), name: 'propose_memory', arguments: JSON.stringify({ facts, complete }) }] : [])
+    ...(facts ? [{ id: crypto.randomUUID(), name: 'propose_memory', arguments: JSON.stringify({ facts, complete, coverage }) }] : [])
   ] });
 
 test('原Skill表格表示法在本地转换，叙事单元格和主题逐字保留，重复运行幂等', () => {
@@ -178,7 +180,7 @@ for (const withFacts of [true, false]) for (const combined of [true, false]) tes
     if (system.includes('你独立检查')) {
       audits++;
       const input = JSON.parse(messages[0].content);
-      return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => ({ id: item.id, verdict: 'supported', reason: '原文明确写出相同动作与主体。', evidence: item.fact.evidence.map((e: any) => ({ path: e.path, quote: e.quote })) })) }));
+      return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => ({ id: item.id, verdict: 'supported', reason: '原文明确写出相同动作与主体。', evidence: fixtureAuditEvidence(item, input.sources) })) }));
     }
     if (!tools.length) { proseCalls++; return fakeResult(fixture(p, prosePath(1), service)); }
     if (system.includes('本阶段为 review')) { reviews++; assert.equal(reviews, 1); return proposal([service.change(qualityPath(1), fixture(p, qualityPath(1), service))]); }
@@ -191,14 +193,15 @@ for (const withFacts of [true, false]) for (const combined of [true, false]) tes
     const prose = r.changes.find(item => item.path === prosePath(1))!;
     const facts = withFacts ? [factSchema.parse({ id: 'action-1', subject: '阿宁', predicate: '递出记录本', value: '向医生递出记录本', kind: 'event', category: 'item', fromChapter: 1, revealedAt: 1, evidence: [{ path: prose.path, hash: hash(prose.content), quote: '阿宁推开诊室的门，把记录本递到灯下。' }] })] : [];
     const changes = stageOutputs('S11', p).map(file => service.change(file, fixture(p, file, service)));
-    return combined ? { ...fakeResult(''), native: null, stop: 'tools' as const, calls: [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes, facts, complete: true }) }] } : proposal(changes, facts, true);
+    const coverage = fixtureCoverage(service, r, facts);
+    return combined ? { ...fakeResult(''), native: null, stop: 'tools' as const, calls: [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes, facts, complete: true, coverage }) }] } : proposal(changes, facts, true, coverage);
   });
   service = created.service;
   try {
     await service.runner!.drive(created.run.id);
     const done = service.store!.db.run(created.run.id);
     assert.equal(done.status, 'awaiting_review', done.error ?? JSON.stringify(done.issues));
-    assert.equal(done.rounds, withFacts ? 5 : 3); assert.equal(proseCalls, 1); assert.equal(reviews, 1); assert.equal(extractions, 1); assert.equal(audits, withFacts ? 1 : 0); assert.equal(planAudits, withFacts ? 1 : 0);
+    assert.equal(done.rounds, withFacts ? 5 : 4); assert.equal(proseCalls, 1); assert.equal(reviews, 1); assert.equal(extractions, 1); assert.equal(audits, 1); assert.equal(planAudits, withFacts ? 1 : 0);
     assert.equal(done.pipeline!.phase, 'ready'); assert.equal(done.accepted, false);
     assert.equal(done.memoryCompletionHash, memoryCompletionHash(done));
     const changed = structuredClone(done); changed.changes[0].content += '新增一句。';
@@ -232,7 +235,7 @@ test('独立证据审核拒绝后实际调用提取器修复，不在旧完成�
     if (system.includes('你独立核对本章实际正文')) return fakeResult(JSON.stringify({ decisions: input.plans.map((plan: any) => ({ path: plan.path, verdict: 'consistent', reason: '后续求医计划与本章事件相容。', planQuote: plan.content.slice(0, 30), proseQuote: input.prose.content.slice(0, 30) })) }));
     if (system.includes('你独立检查')) {
       audits++;
-      return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => ({ id: item.id, verdict: audits === 1 ? 'contradicted' : 'supported', reason: audits === 1 ? '原文只是递出，尚未把记录本交给医生。' : '修订后的事实准确保留递出动作。', evidence: item.fact.evidence.map((e: any) => ({ path: e.path, quote: e.quote })) })) }));
+      return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => ({ id: item.id, verdict: audits === 1 ? 'contradicted' : 'supported', reason: audits === 1 ? '原文只是递出，尚未把记录本交给医生。' : '修订后的事实准确保留递出动作。', evidence: fixtureAuditEvidence(item, input.sources) })) }));
     }
     if (!tools.length) return fakeResult(fixture(p, prosePath(1), service));
     if (system.includes('本阶段为 review')) return proposal([service.change(qualityPath(1), fixture(p, qualityPath(1), service))]);
@@ -243,7 +246,7 @@ test('独立证据审核拒绝后实际调用提取器修复，不在旧完成�
     const prose = r.changes.find(change => change.path === prosePath(1))!;
     const fact = factSchema.parse({ id: 'record-action', subject: '阿宁', predicate: '记录本动作', value: extractions === 1 ? '已经交给医生' : '向医生递出记录本', kind: 'event', category: 'item', fromChapter: 1, revealedAt: 1,
       evidence: [{ path: prose.path, hash: hash(prose.content), quote: '阿宁推开诊室的门，把记录本递到灯下。' }] });
-    return proposal(extractions === 1 ? stageOutputs('S11', p).map(file => service.change(file, fixture(p, file, service))) : [], [fact], true);
+    return proposal(extractions === 1 ? stageOutputs('S11', p).map(file => service.change(file, fixture(p, file, service))) : [], [fact], true, fixtureCoverage(service, r, [fact]));
   });
   service = created.service;
   try {

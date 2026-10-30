@@ -5,7 +5,7 @@ import { hash, id, now, paths, requiredInputs, prosePath, updatePath, taskPath, 
 import { contractPath } from './tags';
 import { approvedCreation } from '../shared/creation';
 import { rebuildMemory, primaryPath } from './memory-records';
-import { applicableFact, conflictingFacts, retrieveMemory, scopedRead, scopeSnapshot, sourceValid, visibleFact, writingScope } from './memory-studio';
+import { applicableFact, conflictingFacts, retrieveMemory, scopedRead, scopeSnapshotInfo, sourceValidator, visibleFact, writingScope } from './memory-studio';
 import { pendingSource } from './memory-source';
 import { contextAllowance, countInput } from './context-budget';
 import { chapterSlice, endingSlice } from './context-slices';
@@ -13,6 +13,12 @@ import { contextDependencies } from './context-dependencies';
 import { compatibleSettingsSnapshot, currentSettingsSourceHash } from './runtime-settings';
 import { selectMemoryDiagnostics } from './memory-diagnostics';
 import { characterVoiceSlice } from './character-voice';
+import { factReadDependency, factReadSetChanged } from './runtime/fact-read-set';
+import { taskVoicePreferences, voicePath } from './quality';
+import { worldContext } from './world-model';
+import { plotPath, plotContext } from './workbench-plot';
+import { fingerprint } from './runtime/canonical';
+import { bookProfilePath, bookProfileContext } from './publishing';
 
 export interface CompileOptions {
   purpose?: NonNullable<ContextManifest['purpose']>;
@@ -30,7 +36,8 @@ export function contextPayload(manifest: ContextManifest) {
     scope: manifest.scope, entities: manifest.entityIds,
     authorRules: manifest.hardConstraints, revelation: manifest.revelation,
     facts: manifest.retrievedFacts, coverage: manifest.coverage, conflicts: manifest.conflicts,
-    sources: manifest.sources
+    sources: manifest.sources,
+    ...(manifest.voicePreferences?.length ? { voicePreferences: manifest.voicePreferences } : {})
   };
 }
 
@@ -70,7 +77,7 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   const purpose = options.purpose ?? 'stage';
   const scope = memoryScopeSchema.parse({ ...writingScope(p), projectId: p.id, ...options.scope });
   if (scope.chapter !== p.chapter || scope.mode !== 'current') throw new Error('生成资料包必须使用当前任务章号和当前正式版本');
-  const snapshot = scopeSnapshot(store, scope);
+  const snapshot = scopeSnapshotInfo(store, scope);
   if (snapshot.project.revision !== p.revision) throw new Error('作品版本已变化，请重新组装资料');
   const checked = new Map<string, DocumentInfo | undefined>();
   const status = { get(file: string) { if (!checked.has(file)) checked.set(file, store.inspect(file)); return checked.get(file); } };
@@ -90,8 +97,10 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   if (stage >= 'S09' && purpose !== 'discussion')
     for (let n = Math.max(1, p.chapter - p.config.recentChapters); n < p.chapter; n++) if (snapshot.documents[updatePath(n)]) required.push(updatePath(n));
   if (approvedCreation(p)) required.push(contractPath);
+  if (scope.viewpoint === 'author' && snapshot.documents[bookProfilePath]) required.push(bookProfilePath);
+  if (scope.viewpoint === 'author' && stage >= 'S06' && snapshot.documents[plotPath]) required.push(plotPath);
   for (const file of [...new Set(required)]) {
-    const authorRule = file === paths.world || file === paths.config || file === paths.style || file === contractPath || file === paths.seed;
+    const authorRule = file === paths.world || file === paths.config || file === paths.style || file === contractPath || file === paths.seed || file === bookProfilePath;
     if (scope.viewpoint !== 'author' && !authorRule && /^(04_|09_)/.test(file)) { m.omitted!.push({ path: file, reason: '人物视角使用有来源的结构化事实，不装入未分离知情范围的摘要' }); continue; }
     const doc = status.get(file);
     const problem = !doc || doc.status === 'missing' ? `缺少本阶段必读资料：${file}` : doc.status !== 'accepted' ? `必读资料存在待确认的外部修改：${file}` : pendingSource(p, file) ? `资料因前文修订待核对：${file}` : '';
@@ -115,13 +124,22 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     const layer: ContextSource['layer'] = authorRule ? 'author_rules' : file.startsWith('07_') ? 'prose' : file.startsWith('04_') || file.startsWith('08_') ? 'summary' : 'chapter_plan';
     m.sources.push({ path: file, hash: source.hash, content: slice.content, ranges: slice.ranges, mode: slice.omitted || scope.viewpoint === 'character' && file.startsWith('07_') ? 'excerpt' : 'full', required: true, reason, layer, sourceSnapshotId: snapshot.id,
       category: authorRule ? 'author_instruction' : layer === 'prose' ? 'accepted_prose' : layer === 'summary' ? 'derived_summary' : 'plan' });
+    if (file === paths.world && source.content.startsWith('# 世界模块')) m.sources.at(-1)!.content = worldContext(source.content, p.chapter);
+    if (file === bookProfilePath) { m.sources.at(-1)!.content = bookProfileContext(source.content); m.sources.at(-1)!.mode = 'excerpt'; m.sources.at(-1)!.reason = '作者当前创作题材与发布归类，仅装入选择结果'; }
+    if (file === plotPath) { m.sources.at(-1)!.content = plotContext(source.content, p.chapter); m.sources.at(-1)!.reason = '作者确认的本章场景与因果连接'; }
   }
   const query = [request, scope.characterId ?? '', ...m.sources.filter(s => s.layer === 'chapter_plan' || s.path === prosePath(p.chapter - 1)).map(s => s.content)].join('\n');
   const all = store.db.facts();
-  const usable = all.filter(f => f.worldId === scope.worldId && f.timelineId === scope.timelineId && f.reviewStatus === 'accepted' && !['disputed','superseded'].includes(f.state) && (applicableFact(f, { ...scope, viewpoint: 'author' }) || f.revealedAt > p.chapter) && f.evidence.every(e => sourceValid(store, e, snapshot.documents, scope.chapter, p) && status.get(e.path)?.status === 'accepted'));
+  m.factReadDependency = factReadDependency(all, scope);
+  const validSource = sourceValidator(store, snapshot.documents, scope.chapter, p);
+  const usable = all.filter(f => f.worldId === scope.worldId && f.timelineId === scope.timelineId && f.reviewStatus === 'accepted' && !['disputed','superseded'].includes(f.state) && (applicableFact(f, { ...scope, viewpoint: 'author' }) || f.revealedAt > p.chapter) && f.evidence.every(e => validSource(e) && status.get(e.path)?.status === 'accepted'));
   const entities = new Set<string>(scope.characterId ? [scope.characterId] : []);
   for (const f of usable) if ([f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))) for (const entity of f.entityIds) entities.add(entity);
   m.entityIds = [...entities].sort();
+  if (scope.viewpoint === 'author' && store.db.document(voicePath)?.hash) {
+    m.voicePreferences = taskVoicePreferences(store, query, m.entityIds);
+    m.qualityReadHash = fingerprint({ records: store.db.get('creative-quality-v1'), voice: store.db.document(voicePath)?.hash });
+  }
   if (stage === 'S10' && purpose !== 'discussion' && scope.viewpoint === 'author' && !m.sources.some(source => source.path === paths.roles)) {
     const card = status.get(paths.roles);
     if (card?.status === 'accepted' && !pendingSource(p, paths.roles)) {
@@ -171,6 +189,8 @@ export function assembleContext(store: FileStore, p: ProjectState, stage: StageI
 }
 
 export function contextChanged(store: FileStore, manifest: ContextManifest) {
+  if (manifest.qualityReadHash && manifest.qualityReadHash !== fingerprint({ records: store.db.get('creative-quality-v1'), voice: store.db.document(voicePath)?.hash })) return true;
+  if (manifest.factReadDependency && factReadSetChanged(store, manifest.factReadDependency)) return true;
   if (manifest.snapshotId && store.db.get('headSnapshot') !== manifest.snapshotId &&
       !compatibleSettingsSnapshot(store, manifest.snapshotId)) return true;
   return contextDependencies(manifest).some(s =>

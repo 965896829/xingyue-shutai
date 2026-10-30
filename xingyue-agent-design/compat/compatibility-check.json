@@ -1,0 +1,197 @@
+{
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "skillsLoaded": 26,
+  "sourceRepoModified": false,
+  "validation": "在隔离复制的资源目录中应用设计文件、重建registry与lock，使用原SkillRegistry.get/load读取全部26项，验证权限合同、引用资源锁、skill hash、正文模式输出节剥离。无模型调用。",
+  "notVerified": [
+    "真实模型输出质量",
+    "用户盲评",
+    "完整GUI流程",
+    "真实读者指标",
+    "代码优化尚未实施"
+  ],
+  "loaded": [
+    {
+      "id": "webnovel-project-bootstrap",
+      "mode": "tools",
+      "host": true,
+      "hash": "0fba85f5aa52d6c75358a87ffbefe2b7ca3016944c067003365ce51322bf91fc",
+      "chars": 6778
+    },
+    {
+      "id": "webnovel-market-research",
+      "mode": "tools",
+      "host": false,
+      "hash": "79825e7aef1eeba0f752c26a116d29e18a59c5fdcedcefde11b3a83319b813e5",
+      "chars": 6676
+    },
+    {
+      "id": "webnovel-premise-lab",
+      "mode": "tools",
+      "host": false,
+      "hash": "3cdbb4b932098438478fd7630161c51cd14cd2ee0403170872430a292e6096da",
+      "chars": 7027
+    },
+    {
+      "id": "webnovel-project-config",
+      "mode": "tools",
+      "host": false,
+      "hash": "603681842a057e0f04b0cdd1af16a9ac4913bff2f0f333723339df9e625f856a",
+      "chars": 7626
+    },
+    {
+      "id": "webnovel-world-engine",
+      "mode": "tools",
+      "host": false,
+      "hash": "130e883ffdabc175ced1f4f20c52cca4a63134613721825e2013610f86c58735",
+      "chars": 6742
+    },
+    {
+      "id": "webnovel-character-engine",
+      "mode": "tools",
+      "host": false,
+      "hash": "ab434e25ab85abfd984dc5a03f6345a19e27d4252853ed8b626ff12e5e3917a8",
+      "chars": 11144
+    },
+    {
+      "id": "webnovel-name-governance",
+      "mode": "tools",
+      "host": false,
+      "hash": "e8c789b6c85eab06b0a837e934dd8aae97298a06d9380fce4d1c6df4500b3e6b",
+      "chars": 6476
+    },
+    {
+      "id": "webnovel-voice-profile",
+      "mode": "tools",
+      "host": false,
+      "hash": "275a82dea29c0f6dee3ecf7377800ca3946e0d5f3d157694021a2eee7fd968f3",
+      "chars": 9763
+    },
+    {
+      "id": "webnovel-volume-architect",
+      "mode": "tools",
+      "host": false,
+      "hash": "d07e428b5ce4959cbf58a0fac64c258fed27aa2b1974733827f527bbc1075ef2",
+      "chars": 8953
+    },
+    {
+      "id": "webnovel-chapter-roadmap",
+      "mode": "tools",
+      "host": false,
+      "hash": "ed82969b90e05164c5e27c447d407748b0bd500678fa4497ffc28330db8fc4ad",
+      "chars": 7081
+    },
+    {
+      "id": "webnovel-rhythm-designer",
+      "mode": "tools",
+      "host": false,
+      "hash": "e1ef35b690f35aed317bef0a9b8042552de60ce53726432348ca72a8d77b33de",
+      "chars": 9686
+    },
+    {
+      "id": "webnovel-batch-outline",
+      "mode": "tools",
+      "host": false,
+      "hash": "f5188a60fffab724f5de1713560600e75cedbd99c9cc1b897a52697686b1824d",
+      "chars": 9764
+    },
+    {
+      "id": "webnovel-chapter-planner",
+      "mode": "tools",
+      "host": false,
+      "hash": "cf10adb0d8a19518bda6209392b5e6c57b52493d0b2709dd67ff71ceb377733c",
+      "chars": 10613
+    },
+    {
+      "id": "webnovel-chapter-drafter",
+      "mode": "prose",
+      "host": false,
+      "hash": "10241ce3b3a35d3dfb528b3ded2c9fbd1a66097f5a292d440852deca8a61b89d",
+      "chars": 6580
+    },
+    {
+      "id": "webnovel-chapter-reviewer",
+      "mode": "review",
+      "host": false,
+      "hash": "a09fb91d2c767e4cf05a5220e52ed450b45d577f51bc8654cadc32deb7ae9457",
+      "chars": 10119
+    },
+    {
+      "id": "webnovel-prose-polisher",
+      "mode": "tools",
+      "host": false,
+      "hash": "085be9e7ac40740fe81abeca8a29212ce06bb667126beee5cdba093bec5434e0",
+      "chars": 9479
+    },
+    {
+      "id": "webnovel-continuity-audit",
+      "mode": "tools",
+      "host": false,
+      "hash": "6ff5dbba52e5f873e2bdb321b319b77e03db8e126326f860abc1dc1e6fdf7596",
+      "chars": 9731
+    },
+    {
+      "id": "webnovel-memory-extractor",
+      "mode": "memory",
+      "host": false,
+      "hash": "b255e5be35d786f4329cd5d20d91cb60cc9dab3ed03fc86be434b94207ef9570",
+      "chars": 11769
+    },
+    {
+      "id": "webnovel-batch-close",
+      "mode": "tools",
+      "host": true,
+      "hash": "dc3c7cec4bbf023f9d7bbb02fc9be84e7b4e84c7278b23c63fef2ca72d29c919",
+      "chars": 10300
+    },
+    {
+      "id": "webnovel-revision-cascade",
+      "mode": "tools",
+      "host": false,
+      "hash": "e6e44f325f1d41b6d25fb17f4a27730a60ef02120de9a24e1db1e7ab9a726d23",
+      "chars": 9669
+    },
+    {
+      "id": "webnovel-context-retriever",
+      "mode": "tools",
+      "host": true,
+      "hash": "cf46243b3881aedc7db8d0398657abe5bc49c1c6515eee2e816070a9c72ffd94",
+      "chars": 10223
+    },
+    {
+      "id": "webnovel-packaging",
+      "mode": "tools",
+      "host": false,
+      "hash": "8e6375947263eedc31815f9cfa79ab2ecfc90686fa9e011550a73a79bbf410a6",
+      "chars": 6637
+    },
+    {
+      "id": "webnovel-reader-feedback",
+      "mode": "tools",
+      "host": false,
+      "hash": "fc76b7b8d20bc3abf56b465216b1ca0a74ec7c8b03178ece646c9ad1da1253ca",
+      "chars": 6648
+    },
+    {
+      "id": "webnovel-project-validator",
+      "mode": "tools",
+      "host": true,
+      "hash": "8b71b1d3c9922e2c0a7d517b5a012c3a11a345db295bb686eb687d3247d6a9b5",
+      "chars": 6686
+    },
+    {
+      "id": "webnovel-narrative-telemetry",
+      "mode": "tools",
+      "host": false,
+      "hash": "ac352694deee5c63a60b6a7ac1df2a14d204d8ae82379386d4ab6cb88c079f1f",
+      "chars": 7932
+    },
+    {
+      "id": "webnovel-memory-audit",
+      "mode": "tools",
+      "host": true,
+      "hash": "fbd6d3c693ed20f5f2fa1a29a9aa0022b2c1dd139bfc7df57d56198876d57ad7",
+      "chars": 8257
+    }
+  ]
+}

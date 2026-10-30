@@ -29,8 +29,10 @@ export interface VolumeMarketResearch {
 }
 
 export interface VolumeNaming {
-  version: 1;
+  version: 1 | 2;
   /** A new, explicit naming edit may research around a preserved older candidate. */
   authorRevision?: true;
   research?: VolumeMarketResearch;
+  /** Frozen outline for an explicit names-only edit. */
+  renameOnly?: { content: string; hash: string; memoryHash: string };
 }

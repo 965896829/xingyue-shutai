@@ -18,6 +18,7 @@ import {
   hash
 } from '../../src/core/domain';
 import { reviewAspects } from '../../src/core/manuscript-check';
+import { readWorldModel, renderWorldModel } from '../../src/core/world-model';
 const root = path.resolve('resources/skill');
 export function sampleProse(words = 2500) {
   const paragraphs = [
@@ -49,22 +50,11 @@ export function fixture(p: ProjectState, file: string, service: Service) {
   if (file === paths.seed) return filled(t['设定拆解']);
   if (file === paths.config) return renderConfig(p) + '\n' + filled(t['项目配置']);
   if (file === paths.style) return '# 文风样本与规则\n\n- 状态：未启用\n- 文风来源：项目默认\n';
-  if (file === paths.world)
-    return (
-      '# 世界规则\n\n' +
-      [
-        '世界底层规则',
-        '主角金手指',
-        '金手指限制',
-        '使用代价',
-        '信息差',
-        '敌人反制方式',
-        '体系升级空间',
-        '中后期防重复机制'
-      ]
-        .map((f) => `- ${f}：具体的限制与代价`)
-        .join('\n')
-    );
+  if (file === paths.world) {
+    const world = readWorldModel(service.store!);
+    world.modules = world.modules.map(module => module.id === 'world-foundation' ? { ...module, state: 'enabled', content: '人物生活在现实社区，事件遵循已知物理规律。' } : module);
+    return renderWorldModel(world);
+  }
   if (file === paths.roles) {
     const text = fs
       .readFileSync(path.join(root, 'references/memory-system.md'), 'utf8')

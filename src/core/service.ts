@@ -1,128 +1,133 @@
-import { compileContext, contextChanged } from './context-compiler';
-import { needsNewChapterCandidate } from '../shared/task-revision';
-import { readNarrativeData } from './narrative-curves';
-import { candidateChangesForCurrentSettings, compatibleRunBase, compatibleSettingsSnapshot } from './runtime-settings';
-import { planningRulesHash, hasSavedDirectionCheckpoint } from './tag-planning';
-import { captureReasoning } from '../shared/reasoning';
-import { ProseIndexer } from './prose-index';
-import { setRunStatus } from './runtime/run-state';
 import fs from 'node:fs';
-import { assertControllerRules } from './agent-control';
-import {
-  tagBundle,
-  makeBookSpec,
-  makeCreationSpec,
-  compileTags,
-  planningBinding,
-  planningFingerprint,
-  tagHash,
-  validateReport,
-  contractPath,
-  approveTags,
-  tagImpact,
-  renderContract,
-  validateApprovedTags,
-  selectedIds,
-  planCandidateHash,
-  assertPlanApproval
-} from './tags';
-import { approvedCreation, type TitleSelection } from '../shared/creation';
-import { upgradesVolumeNaming } from './volume-market-research';
-import { titleSource, namingBinding, namingRulesHash, validateBookTitle, assertTitleSelection, titlePath, renderTitle } from './title-naming';
-import { loadTitleStyleProfile } from './title-style';
-import { tagInputSchema, type BookSpec } from '../shared/tags';
-import { brand } from '../shared/brand';
-import { CreationTimings } from './creation-timing';
-import { buildVersion } from '../shared/build';
-import { assertProjectVersion } from './compatibility';
-import { commandContracts, isCommand, parseInput, parseOutput, type CommandOutput } from '../shared/contracts';
-import { ApplicationError } from '../shared/errors';
-import { newProjectLocationError } from '../shared/project-location';
-import { Operations } from './runtime/operations';
-import { recoverAttempts } from './runtime/model-gateway';
-import { ProjectCommitService } from './runtime/commit-kernel';
-import { ResourceScheduler } from './runtime/scheduler';
-import { callExternal, callModel, estimatedUnits } from './runtime/model-gateway';
-import { garbageCollectionPreview, verifyObjects } from './integrity';
-import { ProjectWatcher } from './project-watcher';
-import { chooseExecutor } from './runtime/executor';
-import { ExecutorRouter } from './runtime/executor-router';
-import { piExecutorVersion } from './runtime/task-loop';
-import { ExecutionRecords } from './runtime/execution-records';
+import { WritingStyleRecommender } from './writing-style';
+import { writingStyleRequestSchema } from '../shared/writing-style';
+import { proposalHash } from './storage';
+import { readQuality, mutateQuality, qualityStatistics, blindPresentation, voiceDocument, voicePath } from './quality';
+import { readWorldModel, renderWorldModel } from './world-model';
+import { bindWorkflow } from './runtime/workflow-contract';
+import { compileCreative, rehearsalCharacters } from './creative-context';
+import { creativeOperations } from '../shared/creative';
+import { designCatalog } from './design-operations';
+import { runDesign } from './commands/design';
+import { readExperience } from './experience';
 import path from 'node:path';
 import { z } from 'zod';
-import {
-  configSchema,
-  type AppEvent,
-  type Command,
-  type Run,
-  type SecretProfile,
-  type Snapshot,
-  type Change,
-  type ProjectState
-} from '../shared/types';
-import { FileStore, safePath, fileHash, proposalHash } from './storage';
-import { retrieveMemory, traceSource, characterState, syncEntities } from './memory-studio';
-import { readManuscriptView } from './manuscript-view';
-import {
-  memoryScopeSchema,
-  embeddingSettingsSchema,
-  type Assessment,
-  type DraftIdentity,
-  type StudioState
-} from '../shared/studio';
-import { SemanticIndex, CompatibleEmbeddings } from './embeddings';
-import { SkillRegistry, stageSkills } from './skill-registry';
-import { expressionLibrary, validateExpressionSelection } from './expression-rules';
-import { recoverUsage } from './telemetry';
-import {
-  id,
-  now,
-  hash,
-  newProject,
-  activeBatch,
-  advance,
-  stageNames,
-  paths,
-  renderProgress,
-  parseConfig,
-  updateConfigDocument,
-  reconfigure,
-  prosePath,
-  detailPath,
-  archivePath
-} from './domain';
-import { initialFiles, renderIndex } from './skill';
-import { materializeAftermathStatus, batchSummaryProgress } from './aftermath-status';
-import { confirmedAlignedPlans } from './future-plan-review';
-import { AgentRunner, type Caller } from './runner';
-import {
-  rebuildMemory,
-  searchMemory,
-  decodeFacts,
-  encodeFacts,
-  primaryPath,
-  validateEvidence
-} from './memory';
-import { createBackup, restoreBackup, importDocument, exportDocument } from './documents';
-import { checkPublication } from './manuscript-check';
-import { invokeModel } from './provider';
-import { retryNeedsConfirmation, documentPreviewText } from '../shared/run-presentation';
-import { recoveryDecision } from '../shared/recovery';
-import { prepareRunRecovery, prepareAuthorRevision } from './runtime/run-recovery';
-import { taskRunHash } from './task-discussion';
-import { prepareMemoryRepair, memoryRepairScope } from './memory-repair';
-import { sameStoryText } from './memory-source';
-import { changedStoryStates, futurePlanTargets, makeStoryImpact, nextUnwrittenChapter, resolveStoryImpacts } from './story-impact';
-import { generateCover, saveCover } from './cover';
-import { importLegacy, previewLegacy } from './migration';
-import { ProjectRecycleBin, isRecyclePath, samePath } from './recycle-bin';
-import { ConversationRunner, type AssistantRuntime } from './conversation-runner';
-import { builtInRoles } from './assistant-settings';
 import { searchSettingsSchema } from '../shared/assistant';
-import { PublicSearch } from './search';
-import { nativeServerLimit, usesNativeSearch } from '../shared/web-search';
+import { brand } from '../shared/brand';
+import { buildVersion } from '../shared/build';
+import { commandContracts,isCommand,parseInput,parseOutput,type CommandOutput } from '../shared/contracts';
+import { approvedCreation } from '../shared/creation';
+import { ApplicationError } from '../shared/errors';
+import { newProjectLocationError } from '../shared/project-location';
+import { captureReasoning } from '../shared/reasoning';
+import { recoveryDecision } from '../shared/recovery';
+import { documentPreviewText,retryNeedsConfirmation } from '../shared/run-presentation';
+import {
+embeddingSettingsSchema,
+memoryScopeSchema,
+type Assessment,
+type DraftIdentity,
+type StudioState
+} from '../shared/studio';
+import { tagInputSchema,type BookSpec } from '../shared/tags';
+import { needsNewChapterCandidate } from '../shared/task-revision';
+import {
+configSchema,
+type AppEvent,
+type Change,
+type Command,
+type ProjectState,
+type Run,
+type SecretProfile,
+type Snapshot
+} from '../shared/types';
+import { nativeServerLimit,usesNativeSearch } from '../shared/web-search';
+import { builtInRoles } from './assistant-settings';
+import { adoptionCommands,handleAdoptionCommand } from './commands/adoption';
+import { creationCommands,handleCreationCommand } from './commands/creation';
+import { discussionCommands,handleDiscussionCommand } from './commands/discussion';
+import { assertProjectVersion } from './compatibility';
+import { compileContext,contextChanged } from './context-compiler';
+import { ConversationRunner,type AssistantRuntime } from './conversation-runner';
+import { generateCover,saveCover } from './cover';
+import { CreationTimings } from './creation-timing';
+import { createBackup,exportDocument,importDocument,restoreBackup } from './documents';
+import {
+activeBatch,
+detailPath,
+hash,
+id,
+newProject,
+now,
+paths,
+prosePath,
+reconfigure,
+renderProgress,
+updateConfigDocument
+} from './domain';
+import { CompatibleEmbeddings,SemanticIndex } from './embeddings';
+import { expressionLibrary,validateExpressionSelection } from './expression-rules';
+import { garbageCollectionPreview,verifyObjects } from './integrity';
+import { checkPublication } from './manuscript-check';
+import { readManuscriptView } from './manuscript-view';
+import { exportReviewPage, importReviewFeedback } from './blind-review';
+import { workbenchCommands, handleWorkbenchCommand } from './commands/workbench';
+import { bindWorkbenchCandidate } from './workbench-candidates';
+import { bookProfilePath, readBookProfile, renderBookProfile, resolveBookProfile, refreshPublishingCatalog, verifyPublishingSnapshot } from './publishing';
+import { bookProfileSchema, type PublishingSnapshot } from '../shared/publishing';
+import { storageFileName } from '../shared/file-names';
+import { collectMarketEvidence, marketCacheKey } from './market-evidence';
+import { marketRequestSchema, type MarketEvidence } from '../shared/market-evidence';
+import { validateBookTitle } from './title-naming';
+import {
+rebuildMemory,
+searchMemory
+} from './memory';
+import { memoryRepairScope,prepareMemoryRepair } from './memory-repair';
+import { characterState,retrieveMemory,syncEntities,traceSource } from './memory-studio';
+import { importLegacy,previewLegacy } from './migration';
+import { readNarrativeData } from './narrative-curves';
 import { nativeSearchSources } from './native-web-search';
+import { ProjectWatcher } from './project-watcher';
+import { ProseIndexer } from './prose-index';
+import { invokeModel } from './provider';
+import { ProjectRecycleBin,isRecyclePath,samePath } from './recycle-bin';
+import { AgentRunner,type Caller } from './runner';
+import { candidateChangesForCurrentSettings,compatibleRunBase,compatibleSettingsSnapshot } from './runtime-settings';
+import { ProjectCommitService } from './runtime/commit-kernel';
+import { ExecutionRecords } from './runtime/execution-records';
+import { chooseExecutor } from './runtime/executor';
+import { ExecutorRouter } from './runtime/executor-router';
+import { callExternal,callModel,estimatedUnits,recoverAttempts } from './runtime/model-gateway';
+import { Operations } from './runtime/operations';
+import { prepareAuthorRevision,prepareRunRecovery } from './runtime/run-recovery';
+import { setRunStatus } from './runtime/run-state';
+import { ResourceScheduler } from './runtime/scheduler';
+import { piExecutorVersion } from './runtime/task-loop';
+import { PublicSearch } from './search';
+import { initialFiles,renderIndex } from './skill';
+import { SkillRegistry,stageSkills } from './skill-registry';
+import { FileStore,fileHash,safePath } from './storage';
+import { nextUnwrittenChapter,resolveStoryImpacts } from './story-impact';
+import { hasSavedDirectionCheckpoint,planningRulesHash } from './tag-planning';
+import {
+compileTags,
+currentCreationDraft,
+contractPath,
+makeBookSpec,
+makeCreationSpec,
+planningBinding,
+planningFingerprint,
+tagBundle,
+tagHash,
+validateApprovedTags
+} from './tags';
+import { recoverUsage } from './telemetry';
+import { namingBinding,namingRulesHash,titlePath } from './title-naming';
+import { loadTitleStyleProfile } from './title-style';
+import { upgradesVolumeNaming } from './volume-market-research';
+import { revisedVolumeNaming } from './volume-naming';
+import { chapterNamingStages, makeChapterNaming, upgradesChapterNaming } from './chapter-naming';
 const str = (v: unknown) => z.string().min(1).parse(v);
 function finishImpactReview(p: ProjectState) {
   if (p.stale.length) return;
@@ -133,15 +138,28 @@ function finishImpactReview(p: ProjectState) {
 }
 export class Service {
   projectSessionId = id();
-  private draining = false;
+  draining = false;
   private jobs = new Set<Promise<unknown>>();
   private requests = new Set<Promise<unknown>>();
   readonly operations = new Operations();
   readonly scheduler = new ResourceScheduler();
   requestJournal: FileStore | null = null;
+  readonly writingStyles = new WritingStyleRecommender();
+  private publishingSnapshots: PublishingSnapshot[] = [];
+  private marketSnapshots: Record<string, MarketEvidence> = {};
+  tagCatalog() {
+    const catalog = tagBundle(this.skillRoot).taxonomy;
+    const cached = this.requestJournal?.db.get<PublishingSnapshot[]>('publishingCatalogs') ?? this.publishingSnapshots;
+    const draft = this.store?.db.get<BookSpec>('tagDraft');
+    const pinned = this.store?.db.document(bookProfilePath)?.hash ? readBookProfile(this.store).catalog : null;
+    catalog.publishingSnapshots = [...new Map([
+      ...(catalog.publishingSnapshots ?? []), ...cached, ...(draft?.publishingCatalog ? [draft.publishingCatalog] : []), ...(pinned ? [pinned] : [])
+    ].map(c => [c.id, verifyPublishingSnapshot(c)])).values()].sort((a, b) => b.observedAt.localeCompare(a.observedAt));
+    return catalog;
+  }
   private creationTimings = new CreationTimings();
   private watcher: ProjectWatcher | null = null;
-  private managementController = new AbortController();
+  managementController = new AbortController();
   index: SemanticIndex | null = null;
   private eventSeq = 0;
   private eventEpoch = id();
@@ -179,7 +197,7 @@ export class Service {
       }); } catch {}
     };
   }
-  private track<T>(promise: Promise<T>) {
+  track<T>(promise: Promise<T>) {
     this.jobs.add(promise);
     void promise.finally(() => this.jobs.delete(promise)).catch(() => {});
     return promise;
@@ -193,6 +211,7 @@ export class Service {
     this.coverController?.abort();
     this.proseIndexer?.stop();
     this.managementController.abort();
+    this.writingStyles.cancel();
     await this.runner?.telemetry.stop();
     await Promise.allSettled([...this.requests, ...this.jobs]);
     this.store?.materialize();
@@ -201,6 +220,7 @@ export class Service {
     this.requestJournal = null;
   }
   private assertCanClose() {
+    if (this.writingStyles.busy) throw new Error('请先停止风格推荐或等待结果');
     if (this.index?.controller) throw new Error('请先停止语义索引更新');
     if (this.chat?.controller) throw new Error('请先停止当前聊天任务');
     if (this.coverController) throw new Error('封面请求尚未结束，请先停止或等待结果');
@@ -225,6 +245,7 @@ export class Service {
   }
   snapshot(): Snapshot {
     const store = this.store;
+    const tagDraft = store ? currentCreationDraft(store) : undefined;
     if (this.recycleBin) this.recent = this.recycleBin.reconcileRecent(this.recent);
     return {
       eventSeq: this.eventSeq,
@@ -235,7 +256,7 @@ export class Service {
       chatBusy: !!this.chat?.controller,
       purgedDrafts: this.recycleBin?.purgedDrafts(this.recent) ?? [],
       project: store?.db.project() ?? null,
-      tagDraft: store?.db.get<BookSpec>('tagDraft'),
+      tagDraft,
       documents: store?.documentListing() ?? [],
       runs: (store?.db.runs() ?? []).map((r) => this.presentRun(r)),
       events: store?.db.events() ?? [],
@@ -356,7 +377,13 @@ export class Service {
       for (const r of store.db.allRuns()) {
         if (r.accepted || ['discarded', 'stale'].includes(r.status)) continue;
         if (!r.baseSnapshotId && r.baseRevision === p.revision) {
-          r.baseSnapshotId = store.db.head()!.id;
+          const head = store.db.headRef();
+          if (!head) {
+            if (!['failed', 'complete'].includes(r.status)) setRunStatus(r, 'stale');
+            r.error = '任务缺少可核验的作品版本，候选已保留，请重新建立任务'; store.db.saveRun(r);
+            continue;
+          }
+          r.baseSnapshotId = head.id;
           if (r.stage === 'S10' && r.mode === 'stage' && !r.pipeline) {
             const prose = r.changes.find((c) => c.path === prosePath(r.chapter));
             r.pipeline = {
@@ -378,7 +405,14 @@ export class Service {
       }
       rebuildMemory(store);
       syncEntities(store);
-      for (const run of store.db.runs()) this.runner.recoverReadyCandidate(run, p, 'restore');
+      for (const run of store.db.runs()) {
+        if (!run.accepted && run.status === 'awaiting_review' && run.planning?.phase === 'ready' &&
+          !retryNeedsConfirmation(run) && !store.db.get(`inflight:${run.id}`)) {
+          this.runner.check(run, p);
+          store.db.saveRun(run);
+        }
+        this.runner.recoverReadyCandidate(run, p, 'restore');
+      }
       const proseIndexer = this.proseIndexer = new ProseIndexer(store);
       setImmediate(() => { if (this.proseIndexer === proseIndexer) void this.track(proseIndexer.rebuild()).catch(() => {}); });
       this.watcher = new ProjectWatcher(store, () => this.emit({ type: 'snapshot', resource: 'documents' }), () => {});
@@ -410,14 +444,16 @@ export class Service {
       executorVersion: piExecutorVersion,
       checkpointVersion: 1,
       candidateFormat: 2,
+      ...(['manual', 'revision'].includes(mode) ? { revisionCoreRequired: 1 as const } : {}),
       baseSnapshotId: this.store!.db.get<string>('headSnapshot'),
       skillId: mode === 'revision' ? 'webnovel-revision-cascade' : stageSkills[p.stage],
       pipeline:
         mode === 'stage' && p.stage === 'S10'
-          ? { phase: 'prose', epoch: id(), version: 0, previewCalls: 0 }
+          ? { phase: 'prose', epoch: id(), version: 0, previewCalls: 0, coverageVersion: 1 }
           : undefined,
       stage: p.stage,
-      ...(mode === 'stage' && p.stage === 'S05' ? { volumeNaming: { version: 1 as const } } : {}),
+      ...(mode === 'stage' && p.stage === 'S03' ? { worldContract: 2 as const } : {}),
+      ...(mode === 'stage' && p.stage === 'S05' ? { volumeNaming: { version: 2 as const } } : {}),
       chapter: p.chapter,
       batch: activeBatch(p),
       mode,
@@ -441,6 +477,7 @@ export class Service {
       accepted: false,
       toolResults: {}
     };
+    if (mode === 'stage' && chapterNamingStages.includes(run.stage)) run.chapterNaming = makeChapterNaming(this.store!, run, request);
     const creation = approvedCreation(p);
     if (creation)
       run.tagBinding = {
@@ -453,7 +490,7 @@ export class Service {
   }
   initializePlanning(run: Run, origin: 'new' | 'adoption' | 'revision', unified?: boolean) {
     const { s, p } = this.require();
-    const draft = s.db.get<BookSpec>('tagDraft');
+    const draft = currentCreationDraft(s);
     if (!draft) throw new Error('请先在标签与策划中保存合法标签');
     const current = {
       targetWords: p.config.targetWords,
@@ -465,7 +502,7 @@ export class Service {
       throw new Error('项目参数已改变，请重新保存标签输入');
     run.planning = {
       ...((unified ?? p.creationWorkflow === 2) ? { workflowVersion: 2 as const } : {}),
-      directionFormatVersion: 1,
+      directionFormatVersion: draft.bookProfile ? 2 : 1,
       binding: '',
       promptHashes: {},
       spec: structuredClone(draft),
@@ -481,8 +518,10 @@ export class Service {
   }
   launch(r: Run, receipt: unknown = r.id) {
     const { s, runner } = this.require();
-    if (runner.controller || this.chat?.controller || this.coverController)
+    if (runner.controller || this.chat?.controller || this.coverController || this.writingStyles.busy)
       throw new Error('本书已有运行中的模型任务');
+    r.workflowVersion ??= 1;
+    bindWorkflow(r);
     s.db.transaction(() => {
       const execution = new ExecutionRecords(s.db).create(r.id, r.executorId ?? 'legacy', r.executorVersion ?? '1', r.executionId);
       r.executionId = execution.id;
@@ -512,16 +551,33 @@ export class Service {
     const { s, p, runner } = this.require();
     if (runner.controller || this.chat?.controller || this.coverController) throw new Error('请先停止当前任务');
     if (old.accepted || ['discarded', 'running', 'committing'].includes(old.status)) throw new Error('此任务不能重建上下文');
+    if (old.workbench && old.workbench.snapshotId !== s.db.headRef()?.id) throw new Error('画布候选所属版本已变化，请回到共创画布重新建立候选');
     if (old.mode === 'stage' && (old.stage !== p.stage || old.chapter !== p.chapter)) throw new Error('作品已进入其他阶段，请从当前阶段继续，旧任务保留供查阅');
     const r = this.makeRun(old.mode, `${old.request}\n\n作者要求：${instruction || '继续当前任务'}\n按当前规则与正式资料重新核对已有候选后继续。候选尚未接受，不能据此跳过确认。之前错误：${old.error ?? '无'}。`, profileId);
     r.skillId = old.skillId;
+    if (old.design) {
+      r.design = structuredClone(old.design);
+      r.stage = old.stage; r.chapter = old.chapter; r.batch = structuredClone(old.batch);
+      r.worldContract = old.worldContract; r.revisionCoreRequired = old.revisionCoreRequired;
+    }
     r.volumeNaming = upgradesVolumeNaming(old, instruction)
-      ? { version: 1, authorRevision: true } : structuredClone(old.volumeNaming);
+      ? revisedVolumeNaming(old.volumeNaming, instruction, old.changes.find(change => change.path === paths.volumes)?.content ?? (s.db.document(paths.volumes)?.hash ? s.read(paths.volumes).content : undefined), old)
+      : structuredClone(old.volumeNaming);
+    r.chapterNaming = upgradesChapterNaming(old, instruction)
+      ? makeChapterNaming(s, { ...r, facts: old.facts, factRetractions: old.factRetractions }, instruction, old.changes)
+      : old.chapterNaming?.source ? makeChapterNaming(s, r) : structuredClone(old.chapterNaming);
     r.parentRunId = old.parentRunId ?? old.id;
     r.executionId = old.executionId;
     r.rounds = old.rounds;
     r.toolCount = old.toolCount;
     r.usage = structuredClone(old.usage);
+    if (old.creative) {
+      if (instruction.trim()) throw new Error('范围或输入变更请从创作工具建立新任务');
+      r.creative = compileCreative(s, this.skillRoot, old.creative.input, r.id).binding;
+      r.skillId = `creative:${old.creative.input.operation}`;
+      r.tagBinding = undefined;
+      return r;
+    }
     r.steps = structuredClone(old.steps);
     r.repairAttempts = structuredClone(old.repairAttempts);
     r.repairScope = structuredClone(old.repairScope);
@@ -533,6 +589,8 @@ export class Service {
     r.facts = structuredClone(old.facts);
     r.factRetractions = structuredClone(old.factRetractions);
     r.continuity = structuredClone(old.continuity);
+    r.workbench = structuredClone(old.workbench);
+    if (old.revisionCore && !instruction.trim()) r.revisionCore = structuredClone(old.revisionCore);
     if (old.memoryRepair) {
       const compatible = compatibleRunBase(s, old);
       r.memoryRepair = compatible ? structuredClone(old.memoryRepair) : prepareMemoryRepair(s);
@@ -636,7 +694,7 @@ export class Service {
     const { s } = this.require();
     return { path: relative, content, baseHash: s.db.document(relative)?.hash ?? null };
   }
-  private needsMemoryRepair(request: string, profileId?: string) {
+  needsMemoryRepair(request: string, profileId?: string) {
     const { s, p } = this.require();
     if (p.stale.length) return true;
     if (!(s.db.get<string[]>('memoryIssues') ?? []).length) return false;
@@ -676,10 +734,22 @@ export class Service {
     if (
       this.backingUp &&
       commandContracts[command].access !== 'read' &&
-      !['run.cancel', 'terminal.cancel', 'chat.stop', 'embedding.cancel', 'cover.cancel'].includes(command)
+      !['run.cancel', 'terminal.cancel', 'chat.stop', 'embedding.cancel', 'cover.cancel', 'style.cancel'].includes(command)
     )
       throw new Error('正在建立一致备份，请稍后再进行写入或切换项目');
     if (command === 'app.snapshot') return this.snapshot();
+    if (command === 'style.cancel') { this.writingStyles.cancel(str(a.requestId)); return true; }
+    if (command === 'style.recommend') {
+      const input = writingStyleRequestSchema.parse(a);
+      if (input.projectSessionId && (input.projectSessionId !== this.projectSessionId || !this.store)) throw new Error('作品已切换，请重新打开风格设置');
+      if (this.runner?.controller || this.chat?.controller || this.coverController) throw new Error('请等当前任务结束，再推荐风格');
+      const journal = input.projectSessionId ? this.store : this.requestJournal;
+      if (!journal) throw new Error('请求账本未初始化');
+      const profile = this.profiles.find(item => item.id === input.profileId && item.enabled && item.protocol !== 'images');
+      if (!profile?.apiKey) throw new Error('请先选择并配置可用的创作模型');
+      return this.writingStyles.recommend(journal, input, profile, this.tagCatalog(), this.caller ?? invokeModel,
+        this.managementController.signal, input.projectSessionId ? this.store! : undefined);
+    }
     if (command === 'resource.read') {
       const { s } = this.require();
       const resources = a.resources as string[];
@@ -691,7 +761,31 @@ export class Service {
     }
     if (command === 'operation.query') return this.operations.read(this.require().s.db, str(a.id));
     if (command === 'history.preview') { const { s } = this.require(); return garbageCollectionPreview(s.root, s.db.sql); }
-    if (command === 'tags.catalog') return tagBundle(this.skillRoot).taxonomy;
+    if (command === 'tags.catalog') return this.tagCatalog();
+    if (command === 'publishing.refresh') {
+      const prior = this.tagCatalog().publishingSnapshots?.[0];
+      if (!prior) throw new Error('未安装番茄分类目录');
+      try {
+        const catalog = await refreshPublishingCatalog(prior, this.managementController.signal);
+        this.publishingSnapshots = [catalog, ...(this.tagCatalog().publishingSnapshots ?? []).filter(s => s.id !== catalog.id)].slice(0, 20);
+        this.requestJournal?.db.set('publishingCatalogs', this.publishingSnapshots);
+        return { updated: true, catalog, message: '已取得完整分类目录，作品仍保留原有选择。' };
+      } catch (error) {
+        return { updated: false, catalog: prior, message: `目录更新未完成，已保留原目录。${error instanceof Error ? error.message : '请稍后重试'}` };
+      }
+    }
+    if (command === 'publishing.market') {
+      const request = marketRequestSchema.parse(a), catalog = this.tagCatalog().publishingSnapshots?.find(c => c.id === request.catalogId);
+      if (!catalog) throw new Error('分类目录已改变，请刷新');
+      const cache = this.requestJournal?.db.get<Record<string, MarketEvidence>>('marketSnapshots') ?? this.marketSnapshots;
+      const key = marketCacheKey(request), result = await collectMarketEvidence(request, catalog, this.managementController.signal, { cached: cache[key] });
+      if (['ready', 'partial'].includes(result.status) && result.samples.some(s => s.title)) {
+        const entries = Object.entries({ ...cache, [key]: result }).sort((a, b) => b[1].observedAt.localeCompare(a[1].observedAt)).slice(0, 40);
+        this.marketSnapshots = Object.fromEntries(entries); this.requestJournal?.db.set('marketSnapshots', this.marketSnapshots);
+      }
+      return result;
+    }
+    if (command === 'publishing.read') return readBookProfile(this.require().s);
     if (command === 'titles.styleProfile') return loadTitleStyleProfile(this.skillRoot);
     if (command === 'tags.validate') {
       const input = tagInputSchema.parse(a.input);
@@ -700,7 +794,7 @@ export class Service {
           { id: 'preview', config: configSchema.parse({}) } as ProjectState,
           input,
           0,
-          tagBundle(this.skillRoot).taxonomy
+          this.tagCatalog()
         ),
         this.skillRoot
       );
@@ -782,19 +876,24 @@ export class Service {
           premise: z.string(),
           tagInput: tagInputSchema.optional(),
           creationInput: tagInputSchema.optional(),
+          bookProfile: bookProfileSchema.optional(),
           config: configSchema.optional()
         })
         .parse(a);
       if (args.tagInput && args.creationInput) throw new Error('请只提交一份开书输入');
+      if (args.bookProfile && (args.creationInput?.bookProfile || args.tagInput?.bookProfile)) throw new Error('请只提交一份创作与发布分类');
       if (!args.tagInput && !args.creationInput && !args.premise.trim()) throw new Error('原有创建方式需要填写原始设定');
+      const creationCatalog = this.tagCatalog();
+      const rawBookProfile = args.bookProfile ?? args.creationInput?.bookProfile ?? args.tagInput?.bookProfile;
+      const bookProfile = rawBookProfile ? resolveBookProfile(rawBookProfile, creationCatalog.publishingSnapshots ?? []) : null;
       if (args.creationInput) makeCreationSpec({ id: 'preview', config: configSchema.parse(args.config ?? {}) } as ProjectState,
-        args.creationInput, 1, tagBundle(this.skillRoot).taxonomy);
+        args.creationInput, 1, creationCatalog);
       if (args.tagInput)
         makeBookSpec(
           { id: 'preview', config: configSchema.parse(args.config ?? {}) } as ProjectState,
           args.tagInput,
           1,
-          tagBundle(this.skillRoot).taxonomy
+          creationCatalog
         );
       const suppliedTitle = args.title?.trim();
       if (args.creationInput && suppliedTitle) throw new Error('统一开书流程请先确认作品方案，再确定书名');
@@ -802,30 +901,32 @@ export class Service {
       validateExpressionSelection(this.skillRoot, configSchema.parse(args.config ?? {}));
       const locationError = newProjectLocationError(path.resolve(args.parent));
       if (locationError) throw new ApplicationError('VALIDATION_ERROR', locationError);
-      if (/[<>:"/\\|?*\x00-\x1f]/.test(title) || /[. ]$/.test(title))
-        throw new Error('作品名称包含无效路径字符');
+      validateBookTitle(title);
       this.close();
-      const root = path.join(args.parent, `《${title}》创作档案`);
+      const controlledName = path.join(args.parent, `《${storageFileName(title)}》创作档案`);
+      const root = fs.existsSync(controlledName) ? path.join(args.parent, `《${storageFileName(title)}》-${id().slice(0, 8)}创作档案`) : controlledName;
       if (fs.existsSync(root)) throw new Error('同名作品目录已存在，请改名或打开');
       fs.mkdirSync(root, { recursive: true });
       const s = new FileStore(root);
       this.store = s;
       const p = newProject(title, root, args.config ?? {});
+      if (bookProfile) p.config.genre = bookProfile.profile.creativeGenres.join('、') || '未限定';
       if (!suppliedTitle) p.titlePending = true;
       p.revision = 1;
       if (args.tagInput) {
         p.tagEnabled = true;
         p.schemaVersion = 2;
-        s.db.set('tagDraft', makeBookSpec(p, args.tagInput, 1, tagBundle(this.skillRoot).taxonomy));
+        s.db.set('tagDraft', makeBookSpec(p, args.tagInput, 1, creationCatalog));
       }
       if (args.creationInput) {
         p.creationWorkflow = 2;
         p.schemaVersion = 3;
-        p.tagEnabled = !!args.creationInput.selection.reading.main;
-        s.db.set('tagDraft', makeCreationSpec(p, args.creationInput, 1, tagBundle(this.skillRoot).taxonomy));
+        p.tagEnabled = !!args.creationInput.selection.reading.main || !!args.creationInput.bookProfile?.publishing;
+        s.db.set('tagDraft', makeCreationSpec(p, args.creationInput, 1, creationCatalog));
       }
       const premise = args.creationInput?.premise ?? args.tagInput?.premise ?? args.premise;
       const files = initialFiles(p, this.skillRoot, premise);
+      if (bookProfile) files[bookProfilePath] = renderBookProfile(bookProfile.profile, bookProfile.catalog);
       new ProjectCommitService(s).commit(
         Object.entries(files).map(([path, content]) => ({ path, content, baseHash: null })),
         p
@@ -913,10 +1014,9 @@ export class Service {
       return { ok: true, text: result.text };
     }
     const { s, p, runner } = this.require();
-    const chat = this.chat!,
-      records = chat.records;
+    const chat = this.chat!;
     const idle = () => {
-      if (runner.controller || chat.controller || this.coverController)
+      if (runner.controller || chat.controller || this.coverController || this.writingStyles.busy)
         throw new Error('同一本书同时只能运行一个模型任务，请等待或停止当前任务');
     };
     if (command === 'run.page') {
@@ -938,310 +1038,7 @@ export class Service {
           .max(500)
           .parse(a.limit ?? 100)
       );
-    if (command === 'tags.saveDraft' || command === 'creation.saveDraft') {
-      idle();
-      const prior = s.db.get<BookSpec>('tagDraft');
-      if (a.expectedRevision !== (prior?.revision ?? 0))
-        throw new Error('标签输入已由另一个窗口修改，请刷新');
-      const draft = (command === 'creation.saveDraft' || p.creationWorkflow === 2 ? makeCreationSpec : makeBookSpec)(p, a.input, (prior?.revision ?? 0) + 1, tagBundle(this.skillRoot).taxonomy);
-      s.db.set('tagDraft', draft);
-      for (const r of s.db.runs())
-        if ((r.planning || r.naming?.sourceRunId) && !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status)) {
-          setRunStatus(r, 'stale');
-          r.error = '标签或作者输入已更新，旧报告保留为历史';
-          s.db.saveRun(r);
-        }
-      return draft;
-    }
-    if (command === 'tags.start' || command === 'creation.start') {
-      const draft = s.db.get<BookSpec>('tagDraft');
-      if (!draft || draft.inputHash !== a.inputHash) throw new Error('标签输入已改变，请刷新后开始');
-      const requestId = z.string().min(1).max(100).parse(a.requestId);
-      const fingerprint = tagHash({
-        inputHash: draft.inputHash,
-        profileId: a.profileId ?? '',
-        request: a.request ?? ''
-      });
-      const old = s.db.get<{ id: string; fingerprint: string }>(`tagRequest:${requestId}`);
-      if (old) {
-        if (old.fingerprint !== fingerprint) throw new Error('请求编号被用于不同输入');
-        return old.id;
-      }
-      idle();
-      if (
-        s.db
-          .runs()
-          .some(
-            (r) =>
-              !r.accepted &&
-              (r.planning || r.mode === 'stage') &&
-              !['discarded', 'stale', 'failed'].includes(r.status)
-          )
-      )
-        throw new Error('请先继续或放弃已有策划/阶段候选');
-      const origin = approvedCreation(p) ? 'revision' : p.stage === 'S01' ? 'new' : 'adoption';
-      const r = this.makeRun(
-        origin === 'new' ? 'stage' : 'revision',
-        typeof a.request === 'string' ? a.request : '依据标签和作者意图完成策划；旧书保持已接受内容',
-        typeof a.profileId === 'string' ? a.profileId : undefined
-      );
-      this.initializePlanning(r, origin, command === 'creation.start' || p.creationWorkflow === 2);
-      s.db.saveRun(r);
-      s.db.set(`tagRequest:${requestId}`, { id: r.id, fingerprint });
-      return this.launch(r);
-    }
-    if (command === 'creation.confirmPlan') {
-      idle();
-      const r = s.db.run(str(a.id));
-      planningBinding(s, r);
-      if (r.accepted || ['discarded', 'stale'].includes(r.status) || r.planning?.workflowVersion !== 2) throw new Error('不是当前待确认作品方案');
-      runner.check(r, p);
-      if (r.issues.some(v => v.severity === 'error')) throw new Error('请先完成方案校验与独立审核');
-      if (a.proposalHash !== proposalHash(r)) throw new Error('作品方案已改变，请重新查看');
-      r.planning.planApproval = { hash: planCandidateHash(r), planHash: tagHash(r.planning.candidate!.plan), binding: r.planning.binding, at: now() };
-      if (a.warningReason) s.db.event(r.id, 'plan-warning-review', String(a.warningReason));
-      r.responseText = '作品方案已选定。选好书名后即可保存；已有书名的作品可以直接保存。';
-      s.db.saveRun(r);
-      return true;
-    }
-    if (command === 'creation.revisePlan') {
-      idle();
-      const r = s.db.run(str(a.id));
-      planningBinding(s, r);
-      const t = r.planning!;
-      if (r.accepted || !['awaiting_review', 'needs_repair'].includes(r.status) || !t.candidate || !['ready', 'reviewing_contract'].includes(t.phase)) throw new Error('请等待当前作品方案生成完成后再修改');
-      if (a.proposalHash !== proposalHash(r)) throw new Error('作品方案已改变，请查看最新结果后再修改');
-      if (retryNeedsConfirmation(r)) throw new Error('上次请求结果与费用未知，请先核对这次请求');
-      if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools) throw new Error('已达到当前任务调用上限，请先在运行设置中调整限额');
-      t.history.push({ kind: 'author-revision', value: { candidate: structuredClone(t.candidate), instruction: str(a.instruction) } });
-      t.authorRevision = { instruction: str(a.instruction), original: structuredClone(t.candidate) };
-      t.phase = 'contract';
-      t.planApproval = undefined;
-      t.titleSelection = undefined;
-      t.contractReview = undefined;
-      t.promptHashes = {};
-      t.repair = undefined;
-      t.semanticRevisions = 0;
-      t.consecutiveFormatFailures = 0;
-      r.messages = [];
-      r.candidateWrites = {};
-      s.db.event(r.id, 'author-revision', '按作者意见修改当前作品方案，完成后自动检查', { instruction: a.instruction });
-      s.db.saveRun(r);
-      return this.launch(r);
-    }
-    if (command === 'titles.restoreProjection') {
-      idle();
-      if (!p.titleBinding) throw new Error('本书尚无正式命名记录');
-      const actual = fileHash(safePath(s.root, titlePath));
-      if (a.baseHash !== actual) throw new Error('书名展示文件再次改变，请刷新后恢复');
-      const next = structuredClone(p);
-      next.revision++;
-      new ProjectCommitService(s).commit([{ path: titlePath, content: renderTitle(p.titleBinding), baseHash: actual }], next);
-      this.emit({ type: 'snapshot' });
-      return true;
-    }
-    if (command === 'titles.start') {
-      idle();
-      const sourceRunId = typeof a.sourceRunId === 'string' ? a.sourceRunId : undefined;
-      const source = titleSource(s, sourceRunId);
-      const planHash = tagHash(source.plan);
-      if (a.planHash !== planHash) throw new Error('作品方案已改变，请刷新后命名');
-      const rule = a.rule === 'fanqie_experiment' ? 'fanqie_experiment' : 'local';
-      const manualTitle = typeof a.manualTitle === 'string' ? validateBookTitle(a.manualTitle, rule) : undefined;
-      const fingerprint = tagHash({ sourceHash: source.sourceHash, profileId: a.profileId ?? '', rule, manualTitle, instruction: a.instruction ?? '' });
-      const requestId = str(a.requestId), old = s.db.get<{ id: string; fingerprint: string }>(`titleRequest:${requestId}`);
-      if (old) {
-        if (old.fingerprint !== fingerprint) throw new Error('请求编号被用于不同命名输入');
-        return old.id;
-      }
-      const r = this.makeRun('analysis', manualTitle ? '核对作者填写的书名与作品方案' : '依据已确认作品方案生成不同卖点的书名', typeof a.profileId === 'string' ? a.profileId : undefined);
-      r.parentRunId = sourceRunId;
-      r.naming = { sourceRunId, planHash, sourceHash: source.sourceHash, inputHash: source.inputHash,
-        contractRevision: source.contractRevision, rule, manualTitle, instruction: String(a.instruction ?? ''),
-        candidateCount: manualTitle ? 1 : 6, marketResearchVersion: 1, editorialVersion: 2,
-        phase: 'generating', history: [], formatRepairs: 0, semanticRevisions: 0 };
-      s.db.saveRun(r);
-      s.db.set(`titleRequest:${requestId}`, { id: r.id, fingerprint });
-      return this.launch(r);
-    }
-    if (command === 'titles.regenerate') {
-      idle();
-      const r = s.db.run(str(a.id));
-      namingBinding(s, r);
-      const t = r.naming!;
-      if (r.accepted || ['stale', 'discarded'].includes(r.status) || t.phase !== 'ready' || a.batchHash !== tagHash(t.batch)) throw new Error('书名候选已改变或尚未完成审核');
-      const candidateId = str(a.candidateId);
-      if (!t.batch!.candidates.some(v => v.id === candidateId)) throw new Error('书名候选不存在');
-      t.history.push({ batch: structuredClone(t.batch!), review: t.review?.result });
-      t.regenerate = { candidateId, instruction: str(a.instruction), original: structuredClone(t.batch!) };
-      t.candidateCount = t.batch!.candidates.length;
-      t.manualTitle = undefined;
-      if (!t.marketResearchVersion) { t.marketResearchVersion = 1; r.skillHash = undefined; }
-      if (t.editorialVersion !== 2) { t.editorialVersion = 2; r.skillHash = undefined; }
-      t.phase = 'generating';
-      t.review = undefined;
-      r.messages = [];
-      r.error = undefined;
-      if (t.sourceRunId) {
-        const parent = s.db.run(t.sourceRunId);
-        if (parent.planning?.titleSelection?.batchRunId === r.id) { parent.planning.titleSelection = undefined; s.db.saveRun(parent); }
-      }
-      return this.launch(r);
-    }
-    if (command === 'titles.select') {
-      idle();
-      const r = s.db.run(str(a.id)), t = r.naming;
-      if (!t?.batch || a.batchHash !== tagHash(t.batch)) throw new Error('书名候选已改变');
-      const candidate = t.batch.candidates.find(v => v.id === a.candidateId);
-      if (!candidate) throw new Error('书名候选不存在');
-      if (r.accepted && p.titleBinding?.batchRunId === r.id && p.titleBinding.candidate.id === candidate.id && p.titleBinding.batchHash === a.batchHash)
-        return { selected: true };
-      const selection: TitleSelection = { candidate: structuredClone(candidate), batchRunId: r.id, batchHash: tagHash(t.batch),
-        planHash: t.planHash, sourceHash: t.sourceHash, rule: t.rule, at: now() };
-      assertTitleSelection(s, selection, t.sourceRunId, this.skillRoot);
-      if (t.sourceRunId) {
-        const parent = s.db.run(t.sourceRunId);
-        const chosen = parent.planning!.titleSelection;
-        if (chosen?.batchRunId === r.id && chosen.batchHash === selection.batchHash && chosen.candidate.id === candidate.id)
-          return { selected: true, parentRunId: parent.id };
-        parent.planning!.titleSelection = selection;
-        parent.responseText = '方案与书名均已准备好，请统一采纳本阶段结果。';
-        s.db.saveRun(parent);
-        return { selected: true, parentRunId: parent.id };
-      }
-      const next = structuredClone(p);
-      next.title = candidate.title;
-      next.titlePending = false;
-      next.titleBinding = { ...selection, needsReview: false };
-      next.titleReviewRequired = false;
-      next.revision++;
-      next.stale = next.stale.filter(file => file !== titlePath);
-      resolveStoryImpacts(next, [titlePath]);
-      const changes = [this.change(titlePath, renderTitle(next.titleBinding)),
-        this.change(paths.config, updateConfigDocument(s.readAccepted(paths.config).content, next)),
-        this.change(paths.progress, renderProgress(next)),
-        this.change(paths.index, renderIndex(next, [...new Set([...s.db.acceptedDocuments().map(d => d.path), titlePath])]))];
-      r.changes = changes;
-      s.db.saveRun(r);
-      r.accepted = true;
-      setRunStatus(r, 'complete');
-      new ProjectCommitService(s).commit(changes, next, r);
-      this.recent = this.recent.map(item => samePath(item.root, next.root) ? { ...item, title: next.title } : item);
-      this.emit({ type: 'snapshot' });
-      return { selected: true };
-    }
-    if (command === 'tags.reroll') {
-      idle();
-      const r = s.db.run(str(a.id));
-      planningBinding(s, r);
-      const t = r.planning!;
-      if (r.accepted || ['discarded', 'stale'].includes(r.status) || t.phase !== 'awaiting_direction' ||
-          !t.report || a.reportHash !== tagHash(t.report) || t.reportHash !== tagHash(t.report))
-        throw new Error('三个方向已改变或尚未生成完成，请刷新后再生成');
-      validateReport(t.report, t);
-      const keepDirectionIds = z.array(z.string().min(1)).max(1).parse(a.keepDirectionIds);
-      if (keepDirectionIds.some(value => !t.report!.directions.some(direction => direction.id === value)))
-        throw new Error('要保留的方向不存在');
-      const instruction = String(a.instruction ?? '').trim() || (keepDirectionIds.length
-        ? '完整保留指定方向，重新设计另外两个机制不同的方案。'
-        : '保留作者的必须保留项与禁区，重新设计三个机制不同的方案。');
-      t.history.push({ kind: 'report', value: structuredClone(t.report) });
-      t.history.push({ kind: 'reroll_request', value: { keepDirectionIds, instruction, promptHashes: { ...t.promptHashes } } });
-      t.promptHashes = {};
-      t.regenerate = { directionId: keepDirectionIds[0] ?? '', keepDirectionIds, instruction, original: structuredClone(t.report) };
-      t.phase = 'planning';
-      t.planApproval = undefined;
-      t.titleSelection = undefined;
-      t.selectedDirectionId = undefined;
-      t.candidate = undefined;
-      t.contractReview = undefined;
-      t.reportReview = undefined;
-      t.resolutions = {};
-      t.formatRepairs = 0;
-      t.semanticRevisions = 0;
-      t.repair = undefined;
-      r.messages = [];
-      r.changes = [];
-      r.error = undefined;
-      r.issues = [];
-      return this.launch(r);
-    }
-    if (command === 'tags.selectDirection' || command === 'tags.reviseDirection') {
-      idle();
-      const r = s.db.run(str(a.id));
-      planningBinding(s, r);
-      const t = r.planning!;
-      if (
-        r.accepted ||
-        ['discarded', 'stale'].includes(r.status) ||
-        t.phase !== 'awaiting_direction' ||
-        !t.report ||
-        t.reportHash !== tagHash(t.report)
-      )
-        throw new Error('三个方向已改变或尚未生成完成，请刷新后再选择');
-      if (a.reportHash !== tagHash(t.report)) throw new Error('策划报告已改变，请重新查看');
-      validateReport(t.report, t);
-      const directionId = str(a.directionId);
-      if (!t.report.directions.some((d) => d.id === directionId)) throw new Error('方向不存在');
-      t.planApproval = undefined;
-      t.titleSelection = undefined;
-      if (command === 'tags.reviseDirection') {
-        const instruction = z.string().trim().min(1).max(6000).parse(a.instruction);
-        t.history.push({ kind: 'report', value: structuredClone(t.report) });
-        t.history.push({ kind: 'reroll_request', value: { directionId, instruction, promptHashes: { ...t.promptHashes } } });
-        t.promptHashes = {};
-        t.regenerate = { directionId, instruction, original: structuredClone(t.report) };
-        t.phase = 'planning';
-      } else {
-        const resolutions = z
-          .record(z.string(), z.string().trim().min(1).max(4000))
-          .parse(a.resolutions ?? {});
-        if (Object.keys(resolutions).some((id) => !t.report!.assumptions.some((v) => v.id === id)))
-          throw new Error('确认意见引用了未知假设');
-        if (a.acceptAssumptions === true)
-          for (const assumption of t.report.assumptions)
-            if (!assumption.directionIds.length || assumption.directionIds.includes(directionId))
-              resolutions[assumption.id] ??= '作者已确认采用此设定';
-        for (const v of t.report.assumptions)
-          if (
-            v.critical &&
-            (!v.directionIds.length || v.directionIds.includes(directionId)) &&
-            !resolutions[v.id]
-          )
-            throw new Error('请处理关键假设：' + v.text);
-        t.selectedDirectionId = directionId;
-        t.resolutions = resolutions;
-        t.phase = 'contract';
-      }
-      // Author selection starts a new subphase. Its first repair must not be
-      // consumed by the earlier directions; total model/tool budgets stay intact.
-      t.semanticRevisions = 0;
-      t.repair = undefined;
-      r.messages = [];
-      r.changes = [];
-      r.error = undefined;
-      r.issues = [];
-      return this.launch(r);
-    }
-    if (command === 'tags.diff') {
-      const r = s.db.run(str(a.id));
-      if (!r.planning) throw new Error('不是标签策划任务');
-      return { before: approvedCreation(p) ?? null, after: r.planning.candidate ?? null, ...tagImpact(s, r.planning) };
-    }
-    if (command === 'tags.restoreProjection') {
-      idle();
-      const creation = approvedCreation(p);
-      if (!creation) throw new Error('本书尚无正式作品契约');
-      const actual = fileHash(safePath(s.root, contractPath));
-      if (a.baseHash !== actual) throw new Error('展示文件已再次改变，请刷新后恢复');
-      const content = renderContract(creation.spec, creation.contract);
-      if (actual === hash(content)) return true;
-      const next = structuredClone(p);
-      next.revision++;
-      new ProjectCommitService(s).commit([{ path: contractPath, content, baseHash: actual }], next);
-      this.emit({ type: 'snapshot' });
-      return true;
-    }
+    if (creationCommands.has(command)) return handleCreationCommand(this, command, a, idle);
     if (command === 'manuscript.read') return readManuscriptView(s, p.chapter, typeof a.runId === 'string' ? a.runId : undefined, a.includeDraft !== false);
     if (command === 'studio.read') return { ...this.studio(), entities: syncEntities(s) };
     if (command === 'embedding.reindex') {
@@ -1325,6 +1122,78 @@ export class Service {
       }
       return this.launch(r);
     }
+    if (command === 'quality.read') return readQuality(s);
+    if (workbenchCommands.has(command)) return handleWorkbenchCommand(this, command, a, idle);
+    if (command === 'publishing.propose') {
+      idle();
+      const { s } = this.require();
+      const current = readBookProfile(s);
+      if (current.baseHash !== a.baseHash || s.db.headRef()?.id !== a.snapshotId) throw new Error('作品或分类资料已改变，请刷新后再修改');
+      const resolved = resolveBookProfile(a.profile, this.tagCatalog().publishingSnapshots ?? []);
+      const run = this.makeRun('manual', '修改创作题材与发布分类');
+      run.changes = [{ path: bookProfilePath, content: renderBookProfile(resolved.profile, resolved.catalog), baseHash: current.baseHash }];
+      if (JSON.stringify(resolved.profile.creativeGenres) !== JSON.stringify(current.profile.creativeGenres)) {
+        const next = structuredClone(p);
+        next.config.genre = resolved.profile.creativeGenres.join('、') || '未限定';
+        run.changes.push(this.change(paths.config, updateConfigDocument(s.readAccepted(paths.config).content, next)));
+      }
+      bindWorkbenchCandidate(s, run, 'field', ['book:publishing']);
+      s.db.saveRun(run);
+      return run.id;
+    }
+    if (command === 'quality.exportReview') { idle(); return exportReviewPage(s, z.array(z.string()).parse(a.experimentIds)); }
+    if (command === 'quality.importReview') { idle(); return importReviewFeedback(s, Number(a.expectedRevision), a.feedback); }
+    if (command === 'design.list') return designCatalog(this.skillRoot);
+    if (command === 'experience.read') return readExperience(s, Number(a.throughChapter));
+    if (command === 'design.run') return runDesign(this, a.input, typeof a.profileId === 'string' ? a.profileId : undefined, idle);
+    if (command === 'run.reviewProse') {
+      idle();
+      const source = s.db.run(str(a.id));
+      if (source.accepted || proposalHash(source) !== a.proposalHash || !compatibleRunBase(s, source)) throw new Error('修订候选已变化，请重新读取');
+      const prose = source.changes.filter(c => /^07_正文章节\/第\d+章\.md$/.test(c.path));
+      if (!prose.length) throw new Error('没有需要核对的正文候选');
+      const r = this.makeRun('revision', '保留作者最终正文，批量核对人物覆盖及核心记忆，统一采纳修订。', str(a.profileId));
+      const chapters = prose.map(c => Number(c.path.match(/第(\d+)章/)![1])).sort((a, b) => a - b);
+      r.changes = structuredClone(source.changes); r.facts = structuredClone(source.facts);
+      r.workbench = source.workbench ? structuredClone(source.workbench) : undefined;
+      r.revisionCore = { version: 1, sourceRunId: source.id, chapters, proseHashes: Object.fromEntries(chapters.map(chapter => [chapter, hash(prose.find(c => c.path === prosePath(chapter))!.content)])), coverage: {}, reports: {}, phase: 'extract' };
+      r.continuity = { mode: 'retcon', fromChapter: chapters[0] };
+      return this.launch(r);
+    }
+    if (command === 'quality.mutate') { idle(); return mutateQuality(s, Number(a.expectedRevision), a.mutation); }
+    if (command === 'quality.statistics') return qualityStatistics(s, str(a.experimentId));
+    if (command === 'quality.presentation') return blindPresentation(s, str(a.id));
+    if (command === 'quality.voice') {
+      idle();
+      const r = this.makeRun('manual', '应用声音偏好');
+      r.changes = [{ path: voicePath, content: voiceDocument(s, z.array(z.string()).parse(a.ids)), baseHash: s.db.document(voicePath)?.hash ?? null }];
+      s.db.saveRun(r);
+      return r.id;
+    }
+    if (command === 'world.read') return { model: readWorldModel(s), baseHash: s.db.document(paths.world)?.hash ?? null };
+    if (command === 'world.propose') {
+      idle();
+      if ((s.db.document(paths.world)?.hash ?? null) !== a.baseHash) throw new Error('世界设定已更新，请刷新后重试');
+      const content = renderWorldModel(a.model), original = readWorldModel(s), next = readWorldModel(s);
+      Object.assign(next, a.model);
+      if (next.original !== original.original || JSON.stringify(next.source) !== JSON.stringify(original.source)) throw new Error('沿用的原文与来源不能被覆盖');
+      const r = this.makeRun('manual', '更新世界模块');
+      r.changes = [{ path: paths.world, content, baseHash: a.baseHash as string | null }];
+      bindWorkbenchCandidate(s, r, 'world', next.modules.map(m => `world:${m.id}`));
+      s.db.saveRun(r);
+      return r.id;
+    }
+    if (command === 'creative.characters') return rehearsalCharacters(s, z.number().int().positive().parse(a.chapter));
+    if (command === 'creative.run') {
+      idle();
+      const r = this.makeRun('analysis', '独立创作工具', typeof a.profileId === 'string' ? a.profileId : undefined);
+      const compiled = compileCreative(s, this.skillRoot, a.input, r.id);
+      r.creative = compiled.binding;
+      r.skillId = `creative:${compiled.binding.input.operation}`;
+      r.request = creativeOperations.find(operation => operation.id === compiled.binding.input.operation)!.title;
+      r.tagBinding = undefined;
+      return this.launch(r);
+    }
     if (command === 'skill.run') {
       idle();
       const entry = new SkillRegistry(this.skillRoot).get(str(a.skillId));
@@ -1401,211 +1270,7 @@ export class Service {
       );
       return assessment;
     }
-    if (command === 'chat.list') return records.all('conversations');
-    if (command === 'chat.create')
-      return records.create(
-        typeof a.title === 'string' ? a.title : '创作讨论',
-        this.assistant.search.enabled
-      );
-    if (command === 'chat.update') {
-      const c = records.get('conversations', str(a.id));
-      if (typeof a.title === 'string') c.title = z.string().trim().min(1).max(80).parse(a.title);
-      if (typeof a.archived === 'boolean') c.archived = a.archived;
-      if (typeof a.online === 'boolean') c.online = a.online;
-      c.updatedAt = now();
-      return records.save('conversations', c);
-    }
-    if (command === 'chat.read') {
-      const key = str(a.id);
-      return {
-        conversation: records.get('conversations', key),
-        messages: records.all('conversation_messages', key),
-        turns: records.all('conversation_turns', key).map((t) => ({ ...t, messages: [] })),
-        proposals: records.all('action_proposals', key)
-      };
-    }
-    if (command === 'chat.page') return records.page(str(a.id), typeof a.before === 'number' ? a.before : undefined, typeof a.watermark === 'number' ? a.watermark : undefined, typeof a.limit === 'number' ? a.limit : 100);
-    if (command === 'chat.stop') {
-      chat.stop();
-      return true;
-    }
-    if (command === 'chat.send' || command === 'chat.retry' || command === 'run.discuss') {
-      idle();
-      const old = command === 'chat.retry' ? records.get('conversation_turns', str(a.id)) : undefined;
-      if (old && ['running', 'complete'].includes(old.status)) throw new Error('此消息无需重发');
-      if (old && a.confirmRetry !== true) throw new Error('需要明确确认重新请求，可能产生新的费用');
-      if (old?.kind === 'draft') throw new Error('试写重试需要重新建立任务卡');
-      const allowed = z
-        .array(z.string())
-        .max(10)
-        .parse(a.referenceChats ?? []);
-      for (const key of allowed) records.get('conversations', key);
-      let conversationId = old?.conversationId ?? (typeof a.conversationId === 'string' ? a.conversationId : '');
-      if (command === 'run.discuss') {
-        const task = s.db.run(str(a.id));
-        z.string().trim().min(1).parse(a.text);
-        chat.profile(typeof a.profileId === 'string' ? a.profileId : p.config.defaultProfileId, false);
-        conversationId = (records.all('conversations').find(conversation => conversation.runId === task.id && !conversation.archived) ?? records.create(`${stageNames[task.stage]} · 任务对话`, false, task.id)).id;
-      }
-      const turn = chat.prepare(
-        conversationId,
-        old?.request ?? str(a.text),
-        typeof a.profileId === 'string' ? a.profileId : (old?.profileId ?? p.config.defaultProfileId),
-        'discussion', undefined, (prepared) => {
-          prepared.displayedError = old?.displayedError ?? (typeof a.displayedError === 'string' ? a.displayedError : undefined);
-          if (command === 'run.discuss' && a.allowCandidateEdits === true || old?.candidateEdit) {
-            const task = s.db.run(old?.candidateEdit?.runId ?? str(a.id));
-            if ((!old?.candidateEdit || old.candidateEdit.runHash === taskRunHash(task)) && !task.accepted && !task.planning && !task.naming && !task.memoryRepair && ['stage', 'revision'].includes(task.mode) && ['awaiting_review', 'needs_repair'].includes(task.status) && !retryNeedsConfirmation(task))
-              prepared.candidateEdit = { runId: task.id, runHash: taskRunHash(task) };
-          }
-          records.save('conversation_turns', prepared);
-          this.operations.complete(prepared.id);
-        }
-      );
-      const session = this.projectSessionId;
-      void this.track(this.scheduler.run(turn.id, ['foreground'], 10, () => this.executor!.execute({ id: turn.id, kind: 'conversation', referenceChats: allowed })).then(async () => {
-        if (this.store !== s || this.projectSessionId !== session || this.draining) return;
-        const finished = records.get('conversation_turns', turn.id);
-        if (finished.status !== 'complete' || !finished.candidateEdit) return;
-        const proposed = records.all('action_proposals', turn.conversationId).filter(proposal => proposal.turnId === turn.id && proposal.executionSource === 'author_message' && proposal.status === 'pending');
-        if (proposed.length !== 1) return;
-        const proposal = proposed[0];
-        try {
-          // Separate idempotency receipt: never replace the conversation's operation result.
-          await this.invoke('proposal.confirm', { id: proposal.id, version: proposal.version }, { operationId: `candidate-edit:${turn.id}`, projectSessionId: session });
-        } catch (error) {
-          const current = records.get('action_proposals', proposal.id);
-          current.executionError = (error as Error).message;
-          records.save('action_proposals', current);
-          this.emit({ type: 'snapshot', resource: 'chat', resourceId: turn.conversationId });
-        }
-      }));
-      return turn.id;
-    }
-    if (command === 'proposal.create')
-      return chat.propose(str(a.conversationId), '', str(a.profileId), a.proposal);
-    if (command === 'proposal.cancel') {
-      const proposal = records.get('action_proposals', str(a.id));
-      if (proposal.status === 'executed') throw new Error('任务已执行，请在运行记录中停止或放弃');
-      proposal.status = 'cancelled';
-      return records.save('action_proposals', proposal);
-    }
-    if (command === 'proposal.refresh') {
-      const old = records.get('action_proposals', str(a.id));
-      if (old.status === 'executed' || old.status === 'cancelled')
-        throw new Error('已执行或取消的任务不能刷新');
-      const next = chat.propose(
-        old.conversationId,
-        old.turnId,
-        typeof a.profileId === 'string' ? a.profileId : old.profileId,
-        { ...old, ...(a.proposal && typeof a.proposal === 'object' ? a.proposal : {}) }
-      );
-      old.status = 'cancelled';
-      records.save('action_proposals', old);
-      return next;
-    }
-    if (command === 'proposal.confirm') {
-      const proposal = records.get('action_proposals', str(a.id));
-      if (proposal.status === 'executed' && proposal.version === a.version)
-        return { kind: proposal.kind, id: proposal.executionId, alreadyExecuted: true };
-      idle();
-      chat.verify(proposal, str(a.version));
-      if (proposal.resumeRunId) {
-        let current = s.db.run(proposal.resumeRunId);
-        if (current.accepted || current.planning || !['awaiting_review', 'needs_repair', 'paused', 'unknown', 'failed'].includes(current.status)) throw new Error('任务状态已变化，请重新讨论修复方案');
-        if (retryNeedsConfirmation(current) && a.retryUnknown !== true) throw new Error('上次请求结果与费用未知，需明确选择重新请求');
-        this.executor!.restore({ runId: current.id, executorId: current.executorId ?? 'legacy', executorVersion: current.executorVersion ?? '1', checkpointVersion: current.checkpointVersion ?? 1 });
-        const newCandidate = needsNewChapterCandidate(current, p.config);
-        if (!newCandidate && (current.rounds >= p.config.maxRounds || current.toolCount >= p.config.maxTools)) throw new Error('已达到当前任务调用上限，请先在运行设置中调整限额');
-        const instruction = `${proposal.request}\n范围：${proposal.scope}`;
-        records.transaction(() => {
-          if (newCandidate) current = this.rebuildRun(current, proposal.profileId, instruction, true);
-          else if (runner.needsFreshContext(current) || upgradesVolumeNaming(current, instruction)) {
-            current = this.rebuildRun(current, proposal.profileId, instruction);
-            prepareAuthorRevision(current, '');
-          } else prepareAuthorRevision(current, instruction);
-          s.db.saveRun(current);
-          proposal.status = 'executed';
-          proposal.executionId = current.id;
-          records.save('action_proposals', proposal);
-          this.operations.complete({ kind: proposal.kind, id: current.id });
-        });
-        this.launch(current, { kind: proposal.kind, id: current.id });
-        return { kind: proposal.kind, id: current.id };
-      }
-      if (proposal.kind === 'draft') {
-        const turn = chat.prepare(
-          proposal.conversationId,
-          `${proposal.goal}\n范围：${proposal.scope}\n${proposal.request}`,
-          proposal.profileId,
-          'draft',
-          proposal.id,
-          (prepared) => {
-            proposal.status = 'executed';
-            proposal.executionId = prepared.id;
-            records.save('action_proposals', proposal);
-            this.operations.complete({ kind: 'draft', id: prepared.id });
-          }
-        );
-        void this.track(this.scheduler.run(turn.id, ['foreground'], 10, () => this.executor!.execute({ id: turn.id, kind: 'conversation' })));
-        return { kind: 'draft', id: turn.id };
-      }
-      // Existing workflow guards remain the single authority for formal stage execution.
-      if (p.finished && proposal.kind === 'stage') throw new Error('全书计划已完成');
-      if (
-        s.db
-          .runs()
-          .some(
-            (r) => r.mode === 'stage' && !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status)
-          )
-      )
-        throw new Error('已有阶段任务，请先审阅、恢复或放弃');
-      const r = this.makeRun(
-        proposal.kind,
-        `${proposal.request}\n范围：${proposal.scope}`,
-        proposal.profileId
-      );
-      r.conversationId = proposal.conversationId;
-      records.transaction(() => {
-        s.db.saveRun(r);
-        proposal.status = 'executed';
-        proposal.executionId = r.id;
-        records.save('action_proposals', proposal);
-        this.operations.complete({ kind: proposal.kind, id: r.id });
-      });
-      this.launch(r, { kind: proposal.kind, id: r.id });
-      return { kind: proposal.kind, id: r.id };
-    }
-    if (command === 'draft.list') return records.all('draft_artifacts');
-    if (command === 'draft.read')
-      return records.readDraft(str(a.id), typeof a.hash === 'string' ? a.hash : undefined);
-    if (command === 'draft.save')
-      return records.saveDraft(
-        z
-          .object({
-            id: z.string().optional(),
-            title: z.string().min(1).max(80),
-            content: z.string().min(1).max(2_000_000),
-            baseHash: z.string().optional(),
-            conversationId: z.string(),
-            messageId: z.string()
-          })
-          .parse(a)
-      );
-    if (command === 'draft.promote') {
-      const draft = records.readDraft(str(a.id));
-      if (draft.currentHash !== str(a.hash)) throw new Error('草稿已变化，请重新读取再建立转入任务');
-      const card = chat.propose(draft.conversationId, '', str(a.profileId), {
-        kind: a.kind === 'stage' ? 'stage' : 'revision',
-        goal: `审阅并采用草稿《${draft.title}》`,
-        scope: str(a.scope),
-        request: `作者希望将以下未采纳草稿转为正式候选。草稿只作为待审材料，核对当前阶段、既有资料和下游影响，不得当作已发生事实。来源 ${draft.path} @ ${draft.currentHash}\n\n${draft.content}`,
-        outputs: ['按范围生成正式候选及必要的影响说明']
-      });
-      card.sources.push({ path: draft.path, hash: draft.currentHash });
-      records.save('action_proposals', card);
-      return card;
-    }
+    if (discussionCommands.has(command)) return handleDiscussionCommand(this, command, a, idle);
     if (command === 'run.revalidate') {
       idle();
       const r = s.db.run(str(a.id));
@@ -1798,11 +1463,13 @@ export class Service {
       return r.id;
     }
     if (command === 'project.configure') {
-      if (runner.controller) throw new Error('请先停止任务再修改项目设置');
+      if (runner.controller || this.writingStyles.busy) throw new Error('请先停止任务再修改项目设置');
       if (s.read(paths.config).hash !== s.db.document(paths.config)?.hash)
         throw new Error('配置文件存在外部改动，请先比较并接受，不能用旧设置覆盖');
       const cfg = configSchema.parse(a.config);
       if (tagHash(cfg) === tagHash(p.config)) return this.snapshot();
+      if (s.db.document(bookProfilePath)?.hash && cfg.genre !== p.config.genre)
+        throw new Error('请在题材与发布分类中修改创作题材');
       if (approvedCreation(p)?.knowledge.options.some(o => o.group === 'reading.main') && cfg.genre !== p.config.genre)
         throw new Error('本书题材由正式标签契约确定，请在标签与策划中修订主分类');
       validateExpressionSelection(this.skillRoot, cfg);
@@ -1851,6 +1518,14 @@ export class Service {
       if (decision.confirmation && a.retryUnknown !== true) throw new ApplicationError('REMOTE_RESULT_UNKNOWN', '上次请求结果与费用未知，核对后确认才能重新请求', ['authorize_attempt']);
       if (decision.kind === 'inspect' || decision.kind === 'author') throw new ApplicationError(decision.code, decision.detail, ['refresh']);
       const instruction = typeof a.instruction === 'string' ? a.instruction.trim() : '';
+      if (r.creative) {
+        if (instruction) throw new Error('创作工具恢复只继续原范围，修改范围请从创作工具建立新任务');
+        const profileId = typeof a.profileId === 'string' && a.profileId ? a.profileId : r.profileId;
+        const completed = s.db.sql.prepare("SELECT 1 FROM model_attempts WHERE run_id=? AND status='complete'").get(r.id);
+        if (profileId !== r.profileId || !compatibleRunBase(s, r) || decision.confirmation && !completed)
+          r = this.rebuildRun(r, profileId);
+        return this.launch(r);
+      }
       if (r.planning && instruction) throw new ApplicationError('VALIDATION_ERROR', '修改策划想法请使用方案页；恢复任务继续当前已确认的输入');
       if (!instruction && runner.recoverReadyCandidate(r, p, 'continue')) return r.id;
       // Completing an old direction-review checkpoint needs no model/tool call.
@@ -1860,7 +1535,7 @@ export class Service {
         if (r.toolCount >= p.config.maxTools) throw new ApplicationError('TOOL_LIMIT', '已达到工具调用上限，请在运行配置中提高上限后恢复');
       }
       const profileId = typeof a.profileId === 'string' && a.profileId ? a.profileId : r.profileId;
-      if (profileId !== r.profileId || runner.needsFreshContext(r) || upgradesVolumeNaming(r, instruction)) {
+      if (profileId !== r.profileId || runner.needsFreshContext(r) || upgradesVolumeNaming(r, instruction) || upgradesChapterNaming(r, instruction)) {
         r = this.rebuildRun(r, profileId, instruction);
         if (instruction) prepareAuthorRevision(r, '');
       }
@@ -1886,12 +1561,17 @@ export class Service {
       if (r.accepted || r.status === 'discarded') throw new Error('此任务不能恢复');
       if (retryNeedsConfirmation(r) && a.retryUnknown !== true)
         throw new Error('上次请求结果与费用未知，需明确选择重新请求');
+      if (r.creative && typeof a.instruction === 'string' && a.instruction.trim())
+        throw new Error('创作工具恢复只继续原阅读范围和输入，修改范围请建立新任务');
+      if (r.creative && a.retryUnknown === true && retryNeedsConfirmation(r) &&
+          !s.db.sql.prepare("SELECT 1 FROM model_attempts WHERE run_id=? AND status='complete'").get(r.id))
+        return this.launch(this.rebuildRun(r, r.profileId));
       if (r.planning && typeof a.instruction === 'string' && a.instruction.trim())
         throw new Error('策划输入变更请在标签与策划中保存，或使用方向局部重做；恢复只继续已绑定的输入');
       if (command === 'run.resume') {
         if (!['paused', 'unknown', 'needs_repair', 'awaiting_review', 'failed', 'stale'].includes(r.status)) throw new Error('请先处理当前待回答或待授权的事项');
         if (!String(a.instruction ?? '').trim() && runner.recoverReadyCandidate(r, p, 'continue')) return r.id;
-        if (runner.needsFreshContext(r) || upgradesVolumeNaming(r, String(a.instruction ?? '')))
+        if (runner.needsFreshContext(r) || upgradesVolumeNaming(r, String(a.instruction ?? '')) || upgradesChapterNaming(r, String(a.instruction ?? '')))
           return this.launch(this.rebuildRun(r, r.profileId, typeof a.instruction === 'string' ? a.instruction : ''));
       }
       if (command === 'run.answer') {
@@ -1945,6 +1625,7 @@ export class Service {
         r.repairScope = undefined;
         r.memoryReview = undefined;
         r.memoryCompletionHash = undefined;
+        r.chapterCoverage = undefined;
         r.futurePlanReview = undefined;
         r.proseReviewFeedback = undefined;
         // The author supplied a new prose version, so old per-version repair
@@ -1961,384 +1642,7 @@ export class Service {
       s.db.saveRun(r);
       return this.presentRun(r, true);
     }
-    if (command === 'run.accept') {
-      if (runner.controller) throw new Error('任务还在运行');
-      const r = s.db.run(str(a.id));
-      if (r.naming) throw new Error('请在独立命名中选择已审核书名；命名不推进创作阶段');
-      if (r.accepted) {
-        if (a.title !== undefined && String(a.title).trim() !== p.title)
-          throw new Error('此方向已经确认书名，请刷新查看已保存的结果');
-        if (a.proposalHash !== undefined && a.proposalHash !== proposalHash(r))
-          throw new Error('提交编号与候选内容不匹配');
-        return { alreadyAccepted: true };
-      }
-      if (str(a.proposalHash) !== proposalHash(r)) throw new Error('候选内容已改变，请重新打开审阅');
-      runner.recoverReadyCandidate(r, p, 'accept');
-      if (!compatibleRunBase(s, r))
-        throw new Error('生成候选后，作品内容或创作要求已改变。候选已保留，请点击“继续当前任务”核对新资料后再采纳。');
-      if (!['awaiting_review', 'needs_repair'].includes(r.status))
-        throw new Error('请先完成任务并进入候选审阅');
-      if (r.agentRulesHash) assertControllerRules(this.skillRoot, r.agentRulesHash);
-      if (r.planning) planningBinding(s, r);
-      if ((p.tagEnabled || p.creationWorkflow === 2) && r.stage === 'S01' && r.mode === 'stage' && !r.planning)
-        throw new Error('请先完成标签策划与契约审核');
-      if ((r.manifest && contextChanged(s, r.manifest)))
-        throw new Error('候选所依赖的资料已被外部修改；请先核对资料并重新建立任务，旧批准不能沿用');
-      if (r.mode === 'stage' && (p.stage !== r.stage || p.chapter !== r.chapter))
-        throw new Error('阶段已经改变');
-      const confirmsTitle = p.titlePending === true && r.mode === 'stage' && r.stage === 'S01';
-      let confirmedTitle: string | undefined;
-      const unified = r.planning?.workflowVersion === 2;
-      if (unified) {
-        assertPlanApproval(r);
-        const selection = r.planning!.titleSelection;
-        if (confirmsTitle && !selection) throw new Error('请在方案确认后独立生成或核对书名，再统一采纳');
-        if (selection) { assertTitleSelection(s, selection, r.id, this.skillRoot); confirmedTitle = selection.candidate.title; }
-        if (a.title !== undefined && a.title !== confirmedTitle) throw new Error('请通过独立命名核对并选择书名');
-      } else if (confirmsTitle) {
-        confirmedTitle = typeof a.title === 'string' ? a.title.trim() : '';
-        if (!confirmedTitle) throw new Error('故事方向确认后，请填写书名再保存本阶段');
-        if (/[<>:"/\\|?*\x00-\x1f]/.test(confirmedTitle) || /[. ]$/.test(confirmedTitle) || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(confirmedTitle))
-          throw new Error('书名包含无效字符或 Windows 保留名称');
-      } else if (a.title !== undefined && String(a.title).trim() !== p.title) {
-        throw new Error('只能在首次确认故事方向时确定书名');
-      }
-      runner.check(r, p);
-      if (r.issues.some((i) => i.severity === 'error')) {
-        s.db.saveRun(r);
-        throw new Error('候选存在阻断问题，请先修改');
-      }
-      if (r.status === 'needs_repair') {
-        setRunStatus(r, 'awaiting_review');
-        s.db.saveRun(r);
-      }
-      if (!r.changes.length) throw new Error('没有可接受的候选文件');
-      if (a.warningReason) s.db.event(r.id, 'warning-review', String(a.warningReason));
-      let next = r.mode === 'stage' ? advance(p, r.id) : structuredClone(p);
-      if (r.pipeline) next = advance(next, r.id);
-      next.revision++;
-      let changes = candidateChangesForCurrentSettings(s, r);
-      // S02's reviewed creative settings must also become the settings shown by
-      // the client. Otherwise saving a later budget change restores the old
-      // constraints/style over the accepted configuration document.
-      const creativeConfig = r.mode === 'stage' && r.stage === 'S02'
-        ? changes.find(change => change.path === paths.config)
-        : undefined;
-      if (creativeConfig) {
-        const reviewed = parseConfig(creativeConfig.content, p.config);
-        for (const key of ['pov', 'genre', 'style', 'constraints'] as const)
-          next.config[key] = reviewed[key];
-      }
-      const substantiveChanges = changes.filter(change => {
-        const previous = s.db.document(change.path)?.hash;
-        return !previous || !sameStoryText(s.object(previous).toString('utf8'), change.content);
-      }).map(change => change.path);
-      if (r.planning) {
-        const creation = approveTags(r, approvedCreation(p), str(a.proposalHash), r.planning.origin === 'new' ? 1 : nextUnwrittenChapter(p));
-        if (unified) {
-          next.creation = creation;
-          delete next.tags;
-          next.creationWorkflow = 2;
-          next.schemaVersion = 3;
-        } else { next.tags = creation; next.schemaVersion = 2; }
-        next.tagEnabled = selectedIds(r.planning.spec).length > 0;
-        next.config.genre = r.planning.knowledge.options.find((o) => o.group === 'reading.main')?.label ?? next.config.genre;
-        const configured = updateConfigDocument(s.readAccepted(paths.config).content, next);
-        if (changes.find((c) => c.path === paths.config)?.content !== configured)
-          throw new Error('项目配置候选与标签主分类映射不一致，请重新生成契约');
-      }
-      if (confirmedTitle) {
-        next.title = confirmedTitle;
-        next.titlePending = false;
-        if (r.planning?.titleSelection) {
-          next.titleBinding = { ...structuredClone(r.planning.titleSelection), needsReview: false };
-          next.titleReviewRequired = false;
-          changes.push(this.change(titlePath, renderTitle(next.titleBinding)));
-        }
-        const configChange = changes.find(change => change.path === paths.config);
-        const content = updateConfigDocument(configChange?.content ?? s.readAccepted(paths.config).content, next);
-        if (configChange) configChange.content = content;
-        else changes.push(this.change(paths.config, content));
-      }
-      // Merge authoritative evidence records even when a model replaces a whole human-readable ledger.
-      let facts = s.db.facts().map((f) => structuredClone(f));
-      const rebasedFiles = new Set<string>();
-      for (const fact of facts) {
-        if (fact.reviewStatus !== 'accepted') continue;
-        for (const evidence of fact.evidence) {
-          const change = changes.find(change => change.path === evidence.path);
-          if (!change || evidence.hash !== s.db.document(evidence.path)?.hash || substantiveChanges.includes(evidence.path)) continue;
-          const offset = change.content.indexOf(evidence.quote);
-          if (offset < 0 || change.content.indexOf(evidence.quote, offset + 1) >= 0) continue;
-          evidence.hash = hash(change.content);
-          evidence.start = Array.from(change.content.slice(0, offset)).length;
-          evidence.end = evidence.start + Array.from(evidence.quote).length;
-          rebasedFiles.add(primaryPath(fact));
-        }
-      }
-      if (r.mode === 'manual')
-        for (const change of changes.filter((c) => c.path.startsWith('04_'))) {
-          const old = facts.filter((f) => primaryPath(f) === change.path);
-          const supplied = decodeFacts(change.content);
-          if (old.length && !change.content.includes('<!-- wenxu-facts:v1 -->'))
-            throw new Error('此文档含结构化记忆，请保留事实记录并显式修订或撤回，不能静默删除');
-          for (const fact of supplied)
-            if (fact.reviewStatus === 'accepted') {
-              const issues = validateEvidence(s, fact, p.chapter);
-              if (issues.length) throw new Error(issues.join('；'));
-            }
-          facts = [...facts.filter((f) => primaryPath(f) !== change.path), ...supplied];
-        }
-      for (const raw of r.facts) {
-        const f = { ...raw, reviewStatus: 'accepted' as const, acceptedAt: now(), acceptedRunId: r.id };
-        const errors = validateEvidence(s, f, p.chapter, r.pipeline || r.mode === 'revision' ? r.changes : [], r.memoryRepair?.paths);
-        if (errors.length) throw new Error(errors.join('；'));
-        if (facts.some((x) => x.id === f.id))
-          throw new Error(`记忆编号已存在，请新建编号并引用 supersedes：${f.id}`);
-        if (f.supersedes) {
-          const old = facts.find((x) => x.id === f.supersedes);
-          if (!old) throw new Error('被替代记忆不存在');
-          if (!f.replacementReason) throw new Error('替代既有事实必须说明依据和原因');
-          old.state = 'superseded';
-          if (f.fromChapter <= old.fromChapter) {
-            old.reviewStatus = 'retracted';
-            old.toChapter = old.fromChapter;
-          } else old.toChapter = f.fromChapter - 1;
-        }
-        facts.push(f);
-      }
-      for (const retirement of r.factRetractions ?? []) {
-        if (!r.memoryRepair) throw new Error('撤回事实必须经过记忆同步核对');
-        const fact = facts.find(fact => fact.id === retirement.id);
-        if (!fact || !retirement.reason.trim()) throw new Error('撤回记录缺少有效依据');
-        fact.reviewStatus = 'retracted';
-        fact.state = 'superseded';
-        fact.replacementReason = retirement.reason;
-        fact.acceptedAt = now();
-        fact.acceptedRunId = r.id;
-      }
-      const factFiles = new Set([
-        ...facts.map(primaryPath),
-        ...changes.filter((c) => c.path.startsWith('04_')).map((c) => c.path)
-      ]);
-      for (const relative of factFiles) {
-        const fileFacts = facts.filter((f) => primaryPath(f) === relative);
-        const c = changes.find((c) => c.path === relative);
-        if (c) c.content = encodeFacts(c.content, fileFacts);
-        else if (
-          rebasedFiles.has(relative) || (r.factRetractions ?? []).some(item => facts.some(fact => fact.id === item.id && primaryPath(fact) === relative)) || r.facts.some(
-            (f) =>
-              primaryPath(f) === relative ||
-              (f.supersedes && facts.find((x) => x.id === f.supersedes && primaryPath(x) === relative))
-          )
-        )
-          changes.push(this.change(relative, encodeFacts(s.read(relative).content, fileFacts)));
-      }
-      if (r.mode === 'stage' && (r.stage === 'S11' || r.pipeline) && p.chapter === activeBatch(p).end) {
-        const batch = activeBatch(p),
-          behavior = changes.find((c) => c.path === paths.behavior)!,
-          summary = changes.find((c) => c.path === paths.summary)!;
-        const sources = Array.from({ length: batch.end - batch.start + 1 }, (_, i) => {
-          const file = prosePath(batch.start + i);
-          return {
-            path: file,
-            hash: changes.find((c) => c.path === file)
-              ? hash(changes.find((c) => c.path === file)!.content)
-              : (s.db.document(file)?.hash ?? null)
-          };
-        });
-        summary.content += `\n\n## 摘要覆盖回执\n\n- 来源：${sources.map((v) => `${v.path} @ ${v.hash}`).join('；')}\n- 未解决事项：${
-          facts
-            .filter((f) => f.mandatory && f.state === 'active')
-            .map((f) => f.id)
-            .join('、') || '无已登记事项'
-        }\n- 重要遗漏：摘要可能省略细节；须经作者语义审阅，完整行为日志与原文保留。\n`;
-        changes.push(this.change(archivePath(batch), encodeFacts(behavior.content, [])));
-        behavior.content = encodeFacts(
-          `# 情绪与行为记忆\n\n## 下一批起点\n\n${summary.content}\n`,
-          facts.filter((f) => primaryPath(f) === paths.behavior)
-        );
-      }
-      const storyStates = changedStoryStates(s.db.facts(), facts);
-      if (r.memoryRepair) {
-        if (r.memoryRepair.completed.some(item => s.db.document(item.path)?.hash !== item.hash))
-          throw new Error('核对期间原文版本改变，请重新同步');
-        next.stale = next.stale.filter(file => !r.memoryRepair!.paths.includes(file));
-        resolveStoryImpacts(next, r.memoryRepair.paths);
-        for (const chapter of Object.keys(next.chapterStatesBeforeReview ?? {}))
-          if (r.memoryRepair.paths.includes(prosePath(Number(chapter)))) {
-            next.chapters[chapter] = next.chapterStatesBeforeReview![chapter];
-            delete next.chapterStatesBeforeReview![chapter];
-          }
-        finishImpactReview(next);
-      } else if (r.continuity?.mode === 'forward' || r.continuity?.mode === 'extraction' ||
-        r.mode === 'stage' && (r.stage === 'S11' || r.pipeline) && storyStates.length && !next.finished) {
-        const fromChapter = r.continuity?.mode === 'forward' ? r.continuity.fromChapter : nextUnwrittenChapter(next);
-        const changed = changes.filter(change => !s.db.document(change.path)?.hash ||
-          !sameStoryText(s.readAccepted(change.path).content, change.content));
-        const aligned = r.mode === 'stage' && (r.stage === 'S11' || r.pipeline) ? confirmedAlignedPlans(s, r) : new Set<string>();
-        const targets = futurePlanTargets(s, fromChapter, changed.map(change => change.path), storyStates,
-          changed.map(change => change.path), initialFiles(p, this.skillRoot, '')).filter(target => !aligned.has(target.path));
-        if (aligned.size) s.db.event(r.id, 'future-plans-aligned', '独立核对确认以下后续计划仍可执行，无需重复生成', { paths: [...aligned], fingerprint: r.futurePlanReview?.fingerprint });
-        resolveStoryImpacts(next, changed.map(change => change.path));
-        next.stale = next.stale.filter(file => !changed.some(change => change.path === file));
-        if (targets.length && (changed.length || storyStates.length)) {
-          const impact = makeStoryImpact(next, r, changed, storyStates, targets, { mode: 'forward', fromChapter });
-          (next.storyImpacts ??= []).push(impact);
-          next.stale = [...new Set([...next.stale, ...targets.map(target => target.path)])];
-          const record = `\n\n## ${now()} 后续计划待同步\n\n- 生效范围：第 ${fromChapter} 章起；已有正文保持不变\n- 来源任务：${r.id}\n- 起因：${r.request}\n${storyStates.map(state => `- ${state.subject} · ${state.predicate}：${state.before ?? '尚无记录'} → ${state.after}`).join('\n')}\n- 待核对：${targets.map(target => target.path).join('、')}\n`;
-          const current = changes.find(change => change.path === paths.impact)?.content ?? s.readAccepted(paths.impact).content;
-          changes = changes.filter(change => change.path !== paths.impact);
-          changes.push(this.change(paths.impact, current + record));
-        }
-      } else if (unified && r.planning!.origin !== 'new') {
-        const delta = tagImpact(s, r.planning!);
-        const changed = changes.map(v => v.path);
-        const fromChapter = nextUnwrittenChapter(next);
-        const placeholders = initialFiles(p, this.skillRoot, '');
-        const targets = delta.planChanged || delta.authorChanged || delta.changedConstraintIds.length || delta.changedOptionIds.length
-          ? futurePlanTargets(s, fromChapter, [contractPath], [], changed, placeholders) : [];
-        for (const doc of s.db.acceptedDocuments().filter(d => /^(03_|04_)/.test(d.path) || d.path.startsWith('11_') && /书名|简介|开篇|包装/.test(d.path))) {
-          if (changed.includes(doc.path) || targets.some(v => v.path === doc.path) || s.readAccepted(doc.path).content === placeholders[doc.path]) continue;
-          if (delta.planChanged || delta.authorChanged || delta.changedConstraintIds.length || delta.changedOptionIds.length)
-            targets.push({ path: doc.path, reason: '作品方案或创作边界改变，需对照新契约核对；已有正文保持不变', via: [contractPath] });
-        }
-        if (!confirmedTitle && (delta.planChanged || delta.authorChanged || delta.changedConstraintIds.length)) {
-          next.titleReviewRequired = true;
-          if (next.titleBinding) {
-            next.titleBinding.needsReview = true;
-            next.titleBinding.reason = '作品方案或约束已改变，请重新核对书名承诺';
-            changes.push(this.change(titlePath, renderTitle(next.titleBinding)));
-          }
-        }
-        resolveStoryImpacts(next, changed);
-        next.stale = [...new Set([...next.stale.filter(file => !changed.includes(file)), ...targets.map(v => v.path)])];
-        if (targets.length) {
-          const impact = makeStoryImpact(next, r, changes, [], targets, { mode: 'forward', fromChapter });
-          impact.creationChange = { changedClaimIds: delta.changedClaimIds, changedConstraintIds: delta.changedConstraintIds };
-          (next.storyImpacts ??= []).push(impact);
-        }
-        const record = `\n\n## ${now()} 作品方案变更\n\n- 来源任务：${r.id}\n- 变化条目：${delta.changedClaimIds.join('、') || '无'}\n- 后续生效：第 ${fromChapter} 章起；保留当前阶段、写作位置与已有正文\n- 待核对：${targets.map(v => v.path).join('、') || '无'}\n- 书名：${next.titleReviewRequired ? '需在独立命名中核对' : '已核对'}\n`;
-        changes.push(this.change(paths.impact, s.readAccepted(paths.impact).content + record));
-      } else if (r.mode !== 'stage' && r.mode !== 'analysis' && substantiveChanges.length) {
-        const changed = substantiveChanges,
-          earliest = Math.min(...changed.map((f) => Number(f.match(/^07_.*第(\d+)章/)?.[1] ?? Infinity)));
-        const placeholders = initialFiles(p, this.skillRoot, '');
-        const affected = s.db
-          .acceptedDocuments()
-          .map((d) => d.path)
-          .filter(
-            (f) =>
-              !changed.includes(f) &&
-              (!placeholders[f] || s.read(f).content !== placeholders[f]) &&
-              !['00_', '09_'].some((v) => f.startsWith(v)) &&
-              f !== paths.index &&
-              (Number.isFinite(earliest)
-                ? f.startsWith('04_') ||
-                  f.startsWith('05_') ||
-                  f.startsWith('06_') ||
-                  f.startsWith('08_') ||
-                  (f.startsWith('07_') && Number(f.match(/第(\d+)章/)?.[1]) > earliest)
-                : f.startsWith('04_') ||
-                  f.startsWith('05_') ||
-                  f.startsWith('06_') ||
-                  f.startsWith('07_') ||
-                  f.startsWith('08_'))
-          );
-        if (r.planning)
-          affected.push(
-            ...tagImpact(s, r.planning)
-              .affected.map((d) => d.path)
-              .filter(
-                (f) =>
-                  !changed.includes(f) &&
-                  !affected.includes(f) &&
-                  (!placeholders[f] || s.readAccepted(f).content !== placeholders[f])
-              )
-          );
-        next.stale = [...new Set([...p.stale.filter((f) => !changed.includes(f)), ...affected])];
-        resolveStoryImpacts(next, changed);
-        if (affected.length) (next.storyImpacts ??= []).push(makeStoryImpact(next, r,
-          changes.filter(change => changed.includes(change.path)), storyStates,
-          affected.map(file => ({ path: file, reason: '既有设定或正文发生修订，需核对关联影响', via: changed })),
-          r.continuity ?? { mode: 'retcon', fromChapter: Number.isFinite(earliest) ? earliest : 1 }));
-        for (const n of Object.keys(next.chapters))
-          if (!Number.isFinite(earliest) || Number(n) >= earliest) {
-            const state = next.chapters[n];
-            if (state !== 'stale') (next.chapterStatesBeforeReview ??= {})[n] = state;
-            next.chapters[n] = 'stale';
-          }
-        finishImpactReview(next);
-        const record = `\n\n## ${now()} ${r.request}\n\n- 起因：${r.request}\n- 修改章节或规则：${changed.join('、')}\n- 旧事实：以本次基础版本原文为准；${changes.map((c) => `${c.path} @ ${c.baseHash ?? '新文件'}`).join('；')}\n- 新事实：见本次已接受候选；来源任务 ${r.id}\n- 影响起点：${Number.isFinite(earliest) ? `第${earliest}章` : '涉及设定与后续资料'}\n- 已检查文件：${changed.join('、')}\n- 已同步文件：${changed.join('、')}\n- 无需修改及原因：待逐项核对后填写\n- 待核对：${next.stale.join('、') || '无'}\n- 状态：${next.stale.length ? '处理中' : '已闭环'}\n`;
-        changes = changes.filter((c) => c.path !== paths.impact);
-        changes.push(this.change(paths.impact, s.read(paths.impact).content + record));
-      }
-      const all = [
-        ...new Set([...s.db.acceptedDocuments().map((d) => d.path), ...changes.map((c) => c.path)])
-      ];
-      changes = changes.filter((c) => c.path !== paths.progress && c.path !== paths.index);
-      changes.push(
-        this.change(paths.progress, renderProgress(next)),
-        this.change(paths.index, renderIndex(next, all))
-      );
-      if (r.mode === 'stage' && (r.stage === 'S11' || r.pipeline)) {
-        const statusFields = materializeAftermathStatus(changes, p);
-        if (p.chapter < activeBatch(p).end) {
-          const summary = changes.find(change => change.path === paths.summary);
-          if (summary) summary.content = batchSummaryProgress(summary.content, p);
-          else changes.push(this.change(paths.summary, batchSummaryProgress(s.readAccepted(paths.summary).content, p)));
-        }
-        s.db.event(r.id, 'aftermath-status-materialized', '本次批准事务将同步章后状态；故事内容和审核结论保持不变', { fields: statusFields });
-      }
-      r.accepted = true;
-      setRunStatus(r, 'complete');
-      r.updatedAt = now();
-      new ProjectCommitService(s).commit(changes, next, r);
-      this.recent = this.recent.map(item => samePath(item.root, next.root) ? { ...item, title: next.title } : item);
-      rebuildMemory(s);
-      syncEntities(s);
-      for (const row of s.db.sql.prepare('SELECT id,data FROM assessments').all() as {
-        id: string;
-        data: string;
-      }[]) {
-        const value = JSON.parse(row.data) as Assessment;
-        if (value.track === 'candidate' && value.draftId === r.id && value.hash === r.pipeline?.proseHash) {
-          const accepted = { ...value, id: id(), track: 'accepted', snapshotId: s.db.get('headSnapshot') };
-          s.db.sql.prepare('INSERT INTO assessments VALUES(?,?)').run(accepted.id, JSON.stringify(accepted));
-        }
-      }
-      s.db.event(r.id, 'accepted', '作者接受结果，已提交正式文件');
-      if (next.config.backupDirectory) {
-        this.backingUp = true;
-        try {
-          await this.scheduler.run(id(), ['foreground', 'index', 'assessment', 'maintenance'], 20, () => createBackup(s, next.config.backupDirectory, this.managementController.signal));
-        } catch (e) {
-          s.db.event(r.id, 'backup-error', `正式文件已提交，但备份失败：${(e as Error).message}`);
-        } finally {
-          this.backingUp = false;
-        }
-      }
-      const titleResult = confirmedTitle && confirmedTitle !== p.title ? { titleChanged: true } : {};
-      if (a.startNext === true && (r.mode === 'stage' || r.memoryRepair) && !next.finished) {
-        try {
-          if (this.needsMemoryRepair(`完成 ${stageNames[next.stage]}。沿用已接受要求，开始前复核全部必读资料。`, next.config.stageProfiles[next.stage] || next.config.defaultProfileId || r.profileId))
-            return { accepted: true, nextRun: this.startMemoryRepair(next.config.defaultProfileId || r.profileId), ...titleResult };
-          const nextRun = this.makeRun(
-              'stage',
-              `完成 ${stageNames[next.stage]}。沿用已接受要求，开始前复核全部必读资料。`,
-              next.config.stageProfiles[next.stage] || next.config.defaultProfileId || r.profileId
-            );
-          const result = { accepted: true, nextRun: nextRun.id, ...titleResult };
-          this.launch(nextRun, result);
-          return result;
-        } catch (error) {
-          const nextError = `本阶段已保存，下一阶段未能开始：${(error as Error).message}`;
-          s.db.event(r.id, 'next-stage-error', nextError);
-          return { accepted: true, nextError, ...titleResult };
-        }
-      }
-      return { accepted: true, ...titleResult };
-    }
+    if (adoptionCommands.has(command)) return handleAdoptionCommand(this, command, a, idle);
     if (command === 'memory.search')
       return searchMemory(
         s,

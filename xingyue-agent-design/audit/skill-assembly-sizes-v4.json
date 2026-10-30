@@ -1,0 +1,326 @@
+{
+  "unit": "Unicode codepoints including whitespace",
+  "includes": "core file plus skill method plus selected operation instructions",
+  "excludes": [
+    "catalog metadata",
+    "wrapper text",
+    "optional references",
+    "input data",
+    "actual tool schemas"
+  ],
+  "notTokenMeasurement": true,
+  "items": [
+    {
+      "skillId": "concept-forge",
+      "operationId": "create",
+      "coreCharacters": 983,
+      "skillCharacters": 192,
+      "operationCharacters": 119,
+      "instructionBodyCharacters": 1294
+    },
+    {
+      "skillId": "concept-forge",
+      "operationId": "regenerate",
+      "coreCharacters": 983,
+      "skillCharacters": 192,
+      "operationCharacters": 130,
+      "instructionBodyCharacters": 1305
+    },
+    {
+      "skillId": "story-contract",
+      "operationId": "build",
+      "coreCharacters": 983,
+      "skillCharacters": 188,
+      "operationCharacters": 133,
+      "instructionBodyCharacters": 1304
+    },
+    {
+      "skillId": "story-contract",
+      "operationId": "review",
+      "coreCharacters": 983,
+      "skillCharacters": 188,
+      "operationCharacters": 124,
+      "instructionBodyCharacters": 1295
+    },
+    {
+      "skillId": "story-contract",
+      "operationId": "configure",
+      "coreCharacters": 983,
+      "skillCharacters": 188,
+      "operationCharacters": 130,
+      "instructionBodyCharacters": 1301
+    },
+    {
+      "skillId": "co-creation",
+      "operationId": "discuss",
+      "coreCharacters": 983,
+      "skillCharacters": 201,
+      "operationCharacters": 118,
+      "instructionBodyCharacters": 1302
+    },
+    {
+      "skillId": "co-creation",
+      "operationId": "compare",
+      "coreCharacters": 983,
+      "skillCharacters": 201,
+      "operationCharacters": 116,
+      "instructionBodyCharacters": 1300
+    },
+    {
+      "skillId": "co-creation",
+      "operationId": "propose",
+      "coreCharacters": 983,
+      "skillCharacters": 201,
+      "operationCharacters": 122,
+      "instructionBodyCharacters": 1306
+    },
+    {
+      "skillId": "world-design",
+      "operationId": "create",
+      "coreCharacters": 983,
+      "skillCharacters": 198,
+      "operationCharacters": 129,
+      "instructionBodyCharacters": 1310
+    },
+    {
+      "skillId": "character-design",
+      "operationId": "create",
+      "coreCharacters": 983,
+      "skillCharacters": 193,
+      "operationCharacters": 130,
+      "instructionBodyCharacters": 1306
+    },
+    {
+      "skillId": "rolling-outline",
+      "operationId": "book",
+      "coreCharacters": 983,
+      "skillCharacters": 196,
+      "operationCharacters": 117,
+      "instructionBodyCharacters": 1296
+    },
+    {
+      "skillId": "rolling-outline",
+      "operationId": "volume",
+      "coreCharacters": 983,
+      "skillCharacters": 196,
+      "operationCharacters": 112,
+      "instructionBodyCharacters": 1291
+    },
+    {
+      "skillId": "rolling-outline",
+      "operationId": "roadmap",
+      "coreCharacters": 983,
+      "skillCharacters": 196,
+      "operationCharacters": 111,
+      "instructionBodyCharacters": 1290
+    },
+    {
+      "skillId": "rolling-outline",
+      "operationId": "rhythm",
+      "coreCharacters": 983,
+      "skillCharacters": 196,
+      "operationCharacters": 113,
+      "instructionBodyCharacters": 1292
+    },
+    {
+      "skillId": "rolling-outline",
+      "operationId": "batch",
+      "coreCharacters": 983,
+      "skillCharacters": 196,
+      "operationCharacters": 117,
+      "instructionBodyCharacters": 1296
+    },
+    {
+      "skillId": "scene-contract",
+      "operationId": "plan",
+      "coreCharacters": 983,
+      "skillCharacters": 198,
+      "operationCharacters": 144,
+      "instructionBodyCharacters": 1325
+    },
+    {
+      "skillId": "voice-calibration",
+      "operationId": "extract",
+      "coreCharacters": 983,
+      "skillCharacters": 194,
+      "operationCharacters": 112,
+      "instructionBodyCharacters": 1289
+    },
+    {
+      "skillId": "voice-calibration",
+      "operationId": "calibrate",
+      "coreCharacters": 983,
+      "skillCharacters": 194,
+      "operationCharacters": 115,
+      "instructionBodyCharacters": 1292
+    },
+    {
+      "skillId": "voice-calibration",
+      "operationId": "update",
+      "coreCharacters": 983,
+      "skillCharacters": 194,
+      "operationCharacters": 114,
+      "instructionBodyCharacters": 1291
+    },
+    {
+      "skillId": "voice-calibration",
+      "operationId": "pilot",
+      "coreCharacters": 983,
+      "skillCharacters": 194,
+      "operationCharacters": 121,
+      "instructionBodyCharacters": 1298
+    },
+    {
+      "skillId": "chapter-draft",
+      "operationId": "draft",
+      "coreCharacters": 983,
+      "skillCharacters": 208,
+      "operationCharacters": 150,
+      "instructionBodyCharacters": 1341
+    },
+    {
+      "skillId": "chapter-review",
+      "operationId": "review",
+      "coreCharacters": 983,
+      "skillCharacters": 196,
+      "operationCharacters": 149,
+      "instructionBodyCharacters": 1328
+    },
+    {
+      "skillId": "revision",
+      "operationId": "voice",
+      "coreCharacters": 983,
+      "skillCharacters": 206,
+      "operationCharacters": 126,
+      "instructionBodyCharacters": 1315
+    },
+    {
+      "skillId": "revision",
+      "operationId": "local",
+      "coreCharacters": 983,
+      "skillCharacters": 206,
+      "operationCharacters": 133,
+      "instructionBodyCharacters": 1322
+    },
+    {
+      "skillId": "revision",
+      "operationId": "story",
+      "coreCharacters": 983,
+      "skillCharacters": 206,
+      "operationCharacters": 125,
+      "instructionBodyCharacters": 1314
+    },
+    {
+      "skillId": "memory-delta",
+      "operationId": "extract",
+      "coreCharacters": 983,
+      "skillCharacters": 203,
+      "operationCharacters": 149,
+      "instructionBodyCharacters": 1335
+    },
+    {
+      "skillId": "memory-review",
+      "operationId": "review",
+      "coreCharacters": 983,
+      "skillCharacters": 217,
+      "operationCharacters": 158,
+      "instructionBodyCharacters": 1358
+    },
+    {
+      "skillId": "memory-query",
+      "operationId": "answer",
+      "coreCharacters": 983,
+      "skillCharacters": 197,
+      "operationCharacters": 137,
+      "instructionBodyCharacters": 1317
+    },
+    {
+      "skillId": "character-reflection",
+      "operationId": "reflect",
+      "coreCharacters": 983,
+      "skillCharacters": 196,
+      "operationCharacters": 130,
+      "instructionBodyCharacters": 1309
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "continuity",
+      "coreCharacters": 983,
+      "skillCharacters": 189,
+      "operationCharacters": 116,
+      "instructionBodyCharacters": 1288
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "impact",
+      "coreCharacters": 983,
+      "skillCharacters": 189,
+      "operationCharacters": 126,
+      "instructionBodyCharacters": 1298
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "promise",
+      "coreCharacters": 983,
+      "skillCharacters": 189,
+      "operationCharacters": 124,
+      "instructionBodyCharacters": 1296
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "ending",
+      "coreCharacters": 983,
+      "skillCharacters": 189,
+      "operationCharacters": 124,
+      "instructionBodyCharacters": 1296
+    },
+    {
+      "skillId": "market-evidence",
+      "operationId": "research",
+      "coreCharacters": 983,
+      "skillCharacters": 194,
+      "operationCharacters": 132,
+      "instructionBodyCharacters": 1309
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "entity-name",
+      "coreCharacters": 983,
+      "skillCharacters": 207,
+      "operationCharacters": 121,
+      "instructionBodyCharacters": 1311
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "title",
+      "coreCharacters": 983,
+      "skillCharacters": 207,
+      "operationCharacters": 129,
+      "instructionBodyCharacters": 1319
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "blurb",
+      "coreCharacters": 983,
+      "skillCharacters": 207,
+      "operationCharacters": 121,
+      "instructionBodyCharacters": 1311
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "review",
+      "coreCharacters": 983,
+      "skillCharacters": 207,
+      "operationCharacters": 140,
+      "instructionBodyCharacters": 1330
+    },
+    {
+      "skillId": "reader-feedback",
+      "operationId": "analyze",
+      "coreCharacters": 983,
+      "skillCharacters": 202,
+      "operationCharacters": 127,
+      "instructionBodyCharacters": 1312
+    }
+  ]
+}

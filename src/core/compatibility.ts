@@ -2,7 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { z } from 'zod';
 
 // Older executors must not reopen a forward-only review as an unrestricted revision.
-export const databaseVersion = 7;
+export const databaseVersion = 8;
 export const projectIdentitySchema = z.object({
   id: z.string().min(1),
   schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3)])

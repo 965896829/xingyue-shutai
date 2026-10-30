@@ -3,6 +3,7 @@ import type { Fact, Run, Issue } from '../shared/types';
 import type { FileStore } from './storage';
 import { hash } from './domain';
 import { currentSettingsSourceHash } from './runtime-settings';
+import { memoryPaths, updatePath } from './domain';
 
 /** A completed extraction is invalidated by any prose, document or fact edit. */
 export function memoryCompletionHash(run: Run) {
@@ -10,7 +11,8 @@ export function memoryCompletionHash(run: Run) {
     proseHash: run.pipeline?.proseHash ?? run.sourceProseHash,
     changes: run.changes.map(change => ({ path: change.path, hash: hash(change.content) })).sort((a, b) => a.path.localeCompare(b.path)),
     facts: [...run.facts].sort((a, b) => a.id.localeCompare(b.id)),
-    retractions: run.factRetractions ?? []
+    retractions: run.factRetractions ?? [],
+    ...(run.chapterCoverage ? { chapterCoverage: run.chapterCoverage } : {})
   }));
 }
 
@@ -31,7 +33,12 @@ export function memoryReviewInput(store: FileStore, run: Run) {
       if (!fact) throw new Error('待撤回记忆不存在');
       return { id: retirement.id, action: 'retract', fact, reason: retirement.reason };
     }),
-    ...(run.memoryRepair?.completed ?? []).map(item => ({ id: `document:${item.path}`, action: 'review_document', reason: item.reason, path: item.path }))
+    ...(run.memoryRepair?.completed ?? []).map(item => ({ id: `document:${item.path}`, action: 'review_document', reason: item.reason, path: item.path })),
+    ...Object.entries(run.revisionCore?.coverage ?? {}).map(([chapter, coverage]) => ({ id: `revision-coverage:${chapter}`, action: 'review_coverage', path: run.changes.find(c => c.path.startsWith('07_') && hash(c.content) === coverage.proseHash)?.path, reason: '核对修订后全部出场人物的覆盖、状态变化及事实是否与完整最终正文一致。' + JSON.stringify({ coverage, facts: run.facts, previousFacts: store.db.facts().filter(f => f.fromChapter <= Number(chapter)) }) })),
+    ...(run.revisionCore ? run.changes.filter(c => memoryPaths.some(path => path === c.path) || run.revisionCore!.chapters.some(chapter => c.path === updatePath(chapter))).map(c => ({ id: `revision-document:${c.path}`, action: 'review_document', path: c.path, reason: '核对本轮台账与最终正文、已有事实一致；未知信息保持未知，不能凭格式补齐而发明人物经历、事件或关系。' })) : []),
+    ...(run.chapterCoverage ? [{ id: 'chapter-character-coverage', action: 'review_coverage',
+      path: run.changes.find(change => change.path.startsWith('07_') && hash(change.content) === run.chapterCoverage!.proseHash)?.path,
+      reason: '核对全部出场及提及人物是否遗漏，各人状态、变化或无变化是否有正文依据；不要把一时情绪变为长期人格。' + JSON.stringify({ coverage: run.chapterCoverage, facts: run.facts }) }] : [])
   ];
   const files = [...new Set([...items.flatMap(item => item.fact ? item.fact.evidence.map(e => e.path) : item.path ? [item.path] : []), ...(run.memoryRepair?.sources ?? [])])];
   const sources = files.map(path => {
@@ -58,7 +65,7 @@ export function memoryReviewMatches(store: FileStore, run: Run, input = memoryRe
 }
 
 export function memoryReviewIssues(store: FileStore, run: Run) {
-  if (!run.facts.length && !run.factRetractions?.length && !run.memoryRepair) return [];
+  if (!run.facts.length && !run.factRetractions?.length && !run.memoryRepair && !run.chapterCoverage && !run.revisionCore) return [];
   const input = memoryReviewInput(store, run);
   if (!memoryReviewMatches(store, run, input)) return ['新增或修订的记忆尚未完成独立证据核对'];
   return run.memoryReview!.issues;
@@ -105,11 +112,11 @@ export function parseMemoryDecisions(raw: string, items: { id: string; fact?: Fa
   return parsed.decisions;
 }
 
-export function memoryDecisionIssues(decisions: MemoryDecision[], items: { id: string; fact?: Fact; path?: string }[], onIssue?: (issue: Issue) => void) {
+export function memoryDecisionIssues(decisions: MemoryDecision[], items: { id: string; fact?: Fact; path?: string; action?: string }[], onIssue?: (issue: Issue) => void) {
   return decisions.filter(item => item.verdict !== 'supported').map(decision => {
     const item = items.find(item => item.id === decision.id)!;
     const message = `${item.fact?.subject ?? item.path ?? '记忆'}：${decision.reason}`;
-    onIssue?.({ code: 'memory_review', severity: 'error', message, ...(item.fact ? { factId: item.fact.id } : item.path ? { path: item.path } : {}) });
+    onIssue?.({ code: item.action === 'review_coverage' ? 'chapter_coverage_review' : 'memory_review', severity: 'error', message, ...(item.fact ? { factId: item.fact.id } : item.path ? { path: item.path } : {}) });
     return message;
   });
 }

@@ -1,0 +1,101 @@
+{
+  "designVersion": "V7",
+  "baselineVersion": "0.4.82",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "verificationDate": "2026-10-29",
+  "completed": [
+    {
+      "check": "prior-v6-preservation",
+      "result": "passed",
+      "priorPackageFiles": 434,
+      "byteIdenticalFiles": 431,
+      "updatedEntryFiles": [
+        "README.md",
+        "audit/source-index.md",
+        "manifest.json"
+      ],
+      "method": "与保留 V6 ZIP 逐字节比较。原 README 与 manifest 另存保留副本；旧版审计和案例未改。"
+    },
+    {
+      "check": "architecture-design-static",
+      "result": "passed",
+      "checks": 658,
+      "typescriptContractFiles": 10,
+      "typeWitnesses": 12,
+      "designInputHashes": 138,
+      "toolchainInputHashes": 72,
+      "method": "实际 Ajv schema 与 TypeScript strict、noUncheckedIndexedAccess、noEmit；注册、宿主合同连接、案例定义、阶段顺序、来源形态和输入 SHA-256 校验。未执行产品或案例行为。"
+    },
+    {
+      "check": "prompt-and-registry-preservation",
+      "result": "passed",
+      "skills": 19,
+      "operations": 48,
+      "bindings": 50,
+      "promptSources": 112,
+      "newPromptSources": 0,
+      "method": "112 项来源与旧版哈希一致，V6 提示词正文完整保留。包保持 active=false，adapter unavailable。"
+    },
+    {
+      "check": "architecture-case-definitions",
+      "result": "passed",
+      "defined": 24,
+      "tiers": {
+        "app_integration": 14,
+        "local_contract": 8,
+        "performance": 2
+      },
+      "executed": 0,
+      "method": "检查定义完整性与 not_run 状态，不执行案例；另保留 40 个 V6 案例。"
+    },
+    {
+      "check": "semantic-cross-review",
+      "result": "passed",
+      "method": "复核原状态源复用、整请求视角隔离、章节核心同版采纳、投影重建、26 与 19 的映射边界、按需调用、旧任务恢复与 R0—R5 次序。"
+    },
+    {
+      "check": "report-visual-qa",
+      "result": "passed",
+      "pages": 34,
+      "method": "最终 34 页全部使用 view_image 原始尺寸逐页检查；文字、表格、分页及页眉页脚无实质问题。"
+    }
+  ],
+  "report": {
+    "file": "xingyue-agent-optimization.docx",
+    "pages": 34,
+    "sha256": "02723f3c1d9cd1de01a460fe74c746715dc10d2077f83629fc648a986ce59bd4"
+  },
+  "sourceCount": 302,
+  "sourcesAddedInV7": {
+    "fixedCommitCode": 20,
+    "officialResearch": 6
+  },
+  "evaluationCases": {
+    "v7Defined": 24,
+    "v7Tiers": {
+      "app_integration": 14,
+      "local_contract": 8,
+      "performance": 2
+    },
+    "v7Executed": 0,
+    "v6Retained": 40,
+    "v6ExecutedThisRun": 0,
+    "earlierSuites": "按旧版原范围保留",
+    "behaviorallyExecutedThisRun": 0
+  },
+  "historicalAudit": {
+    "v6": "保留旧审计及原执行范围；本轮未重跑旧 V6 checker，不把旧 1752 项静态检查记为本轮执行。"
+  },
+  "notExecuted": [
+    "产品代码或客户端功能接入",
+    "24 个 V7 架构案例行为执行",
+    "40 个 V6 质量案例行为执行",
+    "真实模型、embedding 与付费调用",
+    "真人读者盲评",
+    "百万字真实作品连续性和性能试验",
+    "完整应用构建、迁移与发布",
+    "远端 GitHub 仓库修改",
+    "个人 ChatGPT Skill 安装"
+  ],
+  "scopeNote": "本轮完成既有优化方案的 V7 架构整合、Word 与工程包更新、静态合同验证和逐页排版检查。架构开发文档不额外注入模型请求，设计蓝图不等于已实现功能。代码来源按已审计固定基线引用；实施先核对实际 HEAD。"
+}

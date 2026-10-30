@@ -10,6 +10,7 @@
 | `build-main.mjs` | `npm run build` 间接调用 | 构建 Electron 主进程、预加载、业务进程和文档进程。 |
 | `bundle-dependencies.mjs` | `build-main.mjs` 调用 | 核对生成代码只外部引用 Node/Electron，保留打包输入及生产依赖树的许可到 `dist/third-party-licenses`。安装包排除重复 `node_modules`；若增加外部依赖，构建先失败，须重新验证打包边界。 |
 | `check-deliverables.mjs` | `node scripts/check-deliverables.mjs <本次测试日志>` | 检查文档、资源锁和已生成的安装包；非默认发布目录通过 `WENXU_RELEASE_DIR` 指定。每次交付显式提供本次日志，不使用脚本内的历史默认日志作为新版本证据。 |
+| `verify-v7-release.mjs` | `node scripts/verify-v7-release.mjs <本次测试日志>` | 核对 `release/xingyue-v7` 中的版本、前端、Electron 程序及全部 Skill 资源，生成带版本号的交付清单。显式提供本次日志；脚本将显式日志标为专项范围，不能据此宣称全量回归。保留既有付费调用账本，不调用模型。 |
 | `generate-contract-schemas.mjs` | `node scripts/generate-contract-schemas.mjs` | 从类型生成 `src/shared/contract-shapes.json` 和 `contract-schemas.ts`；修改契约后运行，并审阅差异、执行类型检查及回归。 |
 | `create-icon.mjs`、`export-brand.cjs` | `node scripts/create-icon.mjs` | 前者启动 Electron，后者使用 `nativeImage` 导出图标；二者是调用链，不是重复脚本。会更新品牌资源。 |
 
@@ -35,6 +36,8 @@
 
 - 只把可复用、说明了输入输出的工具放入 `scripts/`；回归断言放入 `tests/*.test.ts`，合成输入放入 `tests/fixtures/`。
 - `refactor-baseline.mjs`、`refactor-audit.mjs`、两份 `refactor-*-benchmark.ts` 及 `docs/refactor/*-evidence/` 中的一次性执行脚本已于 2026-10-28 退役。它们绑定旧基线、旧界面与旧打包限制，不是当前发布门槛。对应历史报告保留。
+- `finalize-v7-evidence.mjs` 已于 2026-10-30 退役。它绑定固定历史性能样本，并会覆盖当前交付清单；保留历史性能报告，当前安装包使用上表的 `verify-v7-release.mjs` 核对。
 - 新的容量验证默认输出到 `.test-output/large-book/`；需要保留多次结果时使用 `npm run test:large-book -- --output=<独立目录>`。性能分析只对合成样本运行。
 - 构建产物、日志、截图和临时模型响应放在忽略目录中。包含作者作品或配置的备份先归档，不整目录清空。
 - 历史输出移到项目外后，原路径到归档位置的对应关系记录在本机 `.test-output/repository-cleanup-20261028/`。源码与详细原因见[清理记录](../docs/maintenance/repository-cleanup-2026-10-28.md)。
+- 本次无引用代码、资源及旧安装包的处理见 [2026-10-30 清理记录](../docs/maintenance/repository-cleanup-2026-10-30.md)。

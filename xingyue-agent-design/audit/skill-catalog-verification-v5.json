@@ -1,0 +1,5978 @@
+{
+  "designVersion": "V5",
+  "status": "passed",
+  "scope": "static design-artifact verification only",
+  "checkedAt": "2026-10-29T04:46:57.089Z",
+  "skills": 19,
+  "operations": 42,
+  "bindings": 44,
+  "promptResources": 78,
+  "preservedV4PromptResources": 57,
+  "addedV5PromptResources": 21,
+  "worldModules": 12,
+  "evaluationCases": 32,
+  "evaluationCasesExecuted": 0,
+  "evaluationRouteCoverage": {
+    "skills": 4,
+    "operations": 8,
+    "hostCases": 17,
+    "byKind": {
+      "local_contract": 17,
+      "model_output": 13,
+      "human_blind": 2
+    }
+  },
+  "checks": [
+    {
+      "name": "path-contained-vnext/skill-catalog-v5.json",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skill-catalog-v5.json",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skill-catalog-v5.json",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skill-catalog-v5.schema.json",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skill-catalog-v5.schema.json",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skill-catalog-v5.schema.json",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skill-catalog-v4.json",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skill-catalog-v4.json",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skill-catalog-v4.json",
+      "passed": true
+    },
+    {
+      "name": "catalog-json-schema",
+      "passed": true,
+      "errors": null
+    },
+    {
+      "name": "skill-count-and-unique-ids",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-skill-packages",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-story-contract",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-co-creation",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-world-design",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-character-design",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-revision",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-memory-review",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-memory-query",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-packaging",
+      "passed": true
+    },
+    {
+      "name": "unique-operations-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "operation-count",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-operations",
+      "passed": true
+    },
+    {
+      "name": "only-three-world-operations-added",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/prompt-map.json",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/prompt-map.json",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/prompt-map.json",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v4/prompt-map.json",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v4/prompt-map.json",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v4/prompt-map.json",
+      "passed": true
+    },
+    {
+      "name": "provenance-resource-count-and-unique-ids",
+      "passed": true
+    },
+    {
+      "name": "v4-provenance-resource-count",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P01",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P02",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P03",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P04",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P05",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P06",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P07",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P08",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P09",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P10",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P11",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P12",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P13",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P14",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P15",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P16",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P17",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P18",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P19",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P20",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P21",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P22",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P23",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P24",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P25",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P26",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P27",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P28",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P29",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P30",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P31",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P32",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P33",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P34",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P35",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P36",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P37",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P38",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P39",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P40",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P41",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P42",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P43",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P44",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P45",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P46",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P47",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P48",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P49",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P50",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P51",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P52",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P53",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P54",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P55",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P56",
+      "passed": true
+    },
+    {
+      "name": "preserved-v4-provenance-P57",
+      "passed": true
+    },
+    {
+      "name": "v5-provenance-resource-ids",
+      "passed": true
+    },
+    {
+      "name": "path-contained-runtime/agent.vnext.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-runtime/agent.vnext.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-runtime/agent.vnext.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P01",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/concept-forge.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/concept-forge.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/concept-forge.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P02",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/story-contract.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/story-contract.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/story-contract.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P03",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/co-creation-editor.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/co-creation-editor.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/co-creation-editor.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P04",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/object-lenses.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/object-lenses.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/object-lenses.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P05",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/rolling-outline.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/rolling-outline.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/rolling-outline.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P06",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/scene-contract.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/scene-contract.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/scene-contract.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P07",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/voice-calibration.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/voice-calibration.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/voice-calibration.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P08",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/pilot-scenes.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/pilot-scenes.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/pilot-scenes.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P09",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/chapter-draft.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/chapter-draft.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/chapter-draft.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P10",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/chapter-review.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/chapter-review.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/chapter-review.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P11",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/voice-revision.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/voice-revision.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/voice-revision.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P12",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/local-repair.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/local-repair.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/local-repair.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P13",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/memory-delta-v3.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/memory-delta-v3.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/memory-delta-v3.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P14",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/memory-review-v3.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/memory-review-v3.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/memory-review-v3.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P15",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/memory-query-v3.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/memory-query-v3.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/memory-query-v3.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P16",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/character-reflection-v3.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/character-reflection-v3.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/character-reflection-v3.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P17",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/market-evidence.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/market-evidence.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/market-evidence.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P18",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/reader-feedback.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/reader-feedback.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/reader-feedback.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P19",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/ending-audit.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/ending-audit.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/ending-audit.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P20",
+      "passed": true
+    },
+    {
+      "name": "path-contained-modules/fanqie-editorial.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-modules/fanqie-editorial.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-modules/fanqie-editorial.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P21",
+      "passed": true
+    },
+    {
+      "name": "path-contained-modules/prose-voice.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-modules/prose-voice.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-modules/prose-voice.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P22",
+      "passed": true
+    },
+    {
+      "name": "path-contained-modules/continuity.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-modules/continuity.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-modules/continuity.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P23",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/requirements-and-directions.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/requirements-and-directions.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/requirements-and-directions.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P24",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts/memory-delta.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts/memory-delta.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts/memory-delta.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P25",
+      "passed": true
+    },
+    {
+      "name": "path-contained-runtime/agent.compat.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-runtime/agent.compat.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-runtime/agent.compat.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P26",
+      "passed": true
+    },
+    {
+      "name": "path-contained-creation/direction-planning/planner.system.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-creation/direction-planning/planner.system.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-creation/direction-planning/planner.system.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P27",
+      "passed": true
+    },
+    {
+      "name": "path-contained-creation/tags/prompts/contract.system.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-creation/tags/prompts/contract.system.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-creation/tags/prompts/contract.system.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P28",
+      "passed": true
+    },
+    {
+      "name": "path-contained-creation/tags/prompts/reviewer.system.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-creation/tags/prompts/reviewer.system.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-creation/tags/prompts/reviewer.system.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P29",
+      "passed": true
+    },
+    {
+      "name": "path-contained-creation/title-market-editing/writer.system.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-creation/title-market-editing/writer.system.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-creation/title-market-editing/writer.system.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P30",
+      "passed": true
+    },
+    {
+      "name": "path-contained-creation/title-market-editing/reviewer.system.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-creation/title-market-editing/reviewer.system.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-creation/title-market-editing/reviewer.system.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P31",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-project-bootstrap/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-project-bootstrap/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-project-bootstrap/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P32",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-premise-lab/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-premise-lab/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-premise-lab/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P33",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-project-config/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-project-config/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-project-config/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P34",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-world-engine/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-world-engine/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-world-engine/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P35",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-character-engine/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-character-engine/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-character-engine/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P36",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-volume-architect/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-volume-architect/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-volume-architect/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P37",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-chapter-roadmap/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-chapter-roadmap/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-chapter-roadmap/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P38",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-rhythm-designer/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-rhythm-designer/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-rhythm-designer/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P39",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-batch-outline/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-batch-outline/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-batch-outline/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P40",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-chapter-planner/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-chapter-planner/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-chapter-planner/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P41",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-chapter-drafter/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-chapter-drafter/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-chapter-drafter/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P42",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-chapter-reviewer/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-chapter-reviewer/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-chapter-reviewer/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P43",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-memory-extractor/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-memory-extractor/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-memory-extractor/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P44",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-voice-profile/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-voice-profile/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-voice-profile/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P45",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-prose-polisher/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-prose-polisher/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-prose-polisher/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P46",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-continuity-audit/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-continuity-audit/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-continuity-audit/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P47",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-revision-cascade/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-revision-cascade/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-revision-cascade/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P48",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-market-research/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-market-research/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-market-research/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P49",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-name-governance/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-name-governance/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-name-governance/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P50",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-packaging/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-packaging/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-packaging/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P51",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-reader-feedback/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-reader-feedback/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-reader-feedback/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P52",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-narrative-telemetry/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-narrative-telemetry/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-narrative-telemetry/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P53",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-batch-close/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-batch-close/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-batch-close/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P54",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-context-retriever/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-context-retriever/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-context-retriever/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P55",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-project-validator/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-project-validator/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-project-validator/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P56",
+      "passed": true
+    },
+    {
+      "name": "path-contained-compat/skills/webnovel-memory-audit/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-compat/skills/webnovel-memory-audit/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-compat/skills/webnovel-memory-audit/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-P57",
+      "passed": true
+    },
+    {
+      "name": "path-contained-runtime/agent.v5.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-runtime/agent.v5.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-runtime/agent.v5.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P01",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/concept-forge-create.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/concept-forge-create.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/concept-forge-create.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P02",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/concept-forge-regenerate.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/concept-forge-regenerate.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/concept-forge-regenerate.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P03",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/world-design-core.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/world-design-core.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/world-design-core.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P04",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/world-design-profile.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/world-design-profile.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/world-design-profile.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P05",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/world-design-inherit.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/world-design-inherit.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/world-design-inherit.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P06",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/world-design-create.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/world-design-create.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/world-design-create.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P07",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/world-design-stress-test.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/world-design-stress-test.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/world-design-stress-test.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P08",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/co-creation-propose.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/co-creation-propose.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/co-creation-propose.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P09",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/story-contract-build.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/story-contract-build.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/story-contract-build.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P10",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/market-evidence-research.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/market-evidence-research.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/market-evidence-research.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P11",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/packaging-title.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/packaging-title.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/packaging-title.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P12",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/packaging-review.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/packaging-review.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/packaging-review.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P13",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/scene-contract-plan.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/scene-contract-plan.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/scene-contract-plan.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P14",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/chapter-draft-draft.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/chapter-draft-draft.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/chapter-draft-draft.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P15",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/memory-delta-extract.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/memory-delta-extract.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/memory-delta-extract.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P16",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/canon-audit-continuity.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/canon-audit-continuity.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/canon-audit-continuity.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P17",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/canon-audit-impact.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/canon-audit-impact.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/canon-audit-impact.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P18",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/canon-audit-promise.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/canon-audit-promise.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/canon-audit-promise.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P19",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/packaging-blurb.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/packaging-blurb.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/packaging-blurb.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P20",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/prompts-v5/memory-review-review.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/prompts-v5/memory-review-review.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/prompts-v5/memory-review-review.md",
+      "passed": true
+    },
+    {
+      "name": "source-hash-V5P21",
+      "passed": true
+    },
+    {
+      "name": "v5-core-resource",
+      "passed": true
+    },
+    {
+      "name": "source-ids-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "source-ids-story-contract",
+      "passed": true
+    },
+    {
+      "name": "source-ids-co-creation",
+      "passed": true
+    },
+    {
+      "name": "source-ids-world-design",
+      "passed": true
+    },
+    {
+      "name": "source-ids-character-design",
+      "passed": true
+    },
+    {
+      "name": "source-ids-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "source-ids-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "source-ids-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "source-ids-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "source-ids-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "source-ids-revision",
+      "passed": true
+    },
+    {
+      "name": "source-ids-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "source-ids-memory-review",
+      "passed": true
+    },
+    {
+      "name": "source-ids-memory-query",
+      "passed": true
+    },
+    {
+      "name": "source-ids-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "source-ids-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "source-ids-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "source-ids-packaging",
+      "passed": true
+    },
+    {
+      "name": "source-ids-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/registry.design.json",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/registry.design.json",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/registry.design.json",
+      "passed": true
+    },
+    {
+      "name": "registry-version",
+      "passed": true
+    },
+    {
+      "name": "design-not-activated",
+      "passed": true
+    },
+    {
+      "name": "registry-skill-ids",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/concept-forge/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/concept-forge/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/concept-forge/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/concept-forge/references/create.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/concept-forge/references/create.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/concept-forge/references/create.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/concept-forge/references/regenerate.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/concept-forge/references/regenerate.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/concept-forge/references/regenerate.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-concept-forge",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-story-contract",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/story-contract/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/story-contract/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/story-contract/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-story-contract",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-story-contract",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-story-contract",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/story-contract/references/build.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/story-contract/references/build.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/story-contract/references/build.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/story-contract/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/story-contract/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/story-contract/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/story-contract/references/configure.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/story-contract/references/configure.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/story-contract/references/configure.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-story-contract",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-co-creation",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/co-creation/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/co-creation/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/co-creation/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-co-creation",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-co-creation",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-co-creation",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/co-creation/references/discuss.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/co-creation/references/discuss.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/co-creation/references/discuss.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/co-creation/references/compare.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/co-creation/references/compare.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/co-creation/references/compare.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/co-creation/references/propose.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/co-creation/references/propose.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/co-creation/references/propose.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-co-creation",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-world-design",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/world-design/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/world-design/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/world-design/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-world-design",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-world-design",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-world-design",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/world-design/references/create.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/world-design/references/create.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/world-design/references/create.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/world-design/references/profile.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/world-design/references/profile.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/world-design/references/profile.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/world-design/references/inherit.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/world-design/references/inherit.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/world-design/references/inherit.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/world-design/references/stress-test.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/world-design/references/stress-test.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/world-design/references/stress-test.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-world-design",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-character-design",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/character-design/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/character-design/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/character-design/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-character-design",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-character-design",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-character-design",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/character-design/references/create.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/character-design/references/create.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/character-design/references/create.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-character-design",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/rolling-outline/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/rolling-outline/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/rolling-outline/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/rolling-outline/references/book.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/rolling-outline/references/book.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/rolling-outline/references/book.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/rolling-outline/references/volume.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/rolling-outline/references/volume.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/rolling-outline/references/volume.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/rolling-outline/references/roadmap.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/rolling-outline/references/roadmap.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/rolling-outline/references/roadmap.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/rolling-outline/references/rhythm.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/rolling-outline/references/rhythm.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/rolling-outline/references/rhythm.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/rolling-outline/references/batch.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/rolling-outline/references/batch.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/rolling-outline/references/batch.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/scene-contract/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/scene-contract/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/scene-contract/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/scene-contract/references/plan.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/scene-contract/references/plan.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/scene-contract/references/plan.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-scene-contract",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/voice-calibration/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/voice-calibration/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/voice-calibration/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/voice-calibration/references/extract.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/voice-calibration/references/extract.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/voice-calibration/references/extract.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/voice-calibration/references/calibrate.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/voice-calibration/references/calibrate.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/voice-calibration/references/calibrate.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/voice-calibration/references/update.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/voice-calibration/references/update.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/voice-calibration/references/update.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/voice-calibration/references/pilot.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/voice-calibration/references/pilot.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/voice-calibration/references/pilot.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/chapter-draft/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/chapter-draft/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/chapter-draft/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/chapter-draft/references/draft.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/chapter-draft/references/draft.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/chapter-draft/references/draft.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/chapter-review/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/chapter-review/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/chapter-review/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/chapter-review/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/chapter-review/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/chapter-review/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-chapter-review",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-revision",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/revision/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/revision/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/revision/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-revision",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-revision",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-revision",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/revision/references/voice.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/revision/references/voice.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/revision/references/voice.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/revision/references/local.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/revision/references/local.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/revision/references/local.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-revision.local:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/revision/references/story.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/revision/references/story.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/revision/references/story.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-revision.story:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-revision",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/memory-delta/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/memory-delta/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/memory-delta/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/memory-delta/references/extract.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/memory-delta/references/extract.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/memory-delta/references/extract.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-memory-delta",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-memory-review",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/memory-review/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/memory-review/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/memory-review/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-memory-review",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-memory-review",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-memory-review",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/memory-review/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/memory-review/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/memory-review/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-memory-review",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-memory-query",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/memory-query/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/memory-query/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/memory-query/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-memory-query",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-memory-query",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-memory-query",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/memory-query/references/answer.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/memory-query/references/answer.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/memory-query/references/answer.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-memory-query",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/character-reflection/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/character-reflection/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/character-reflection/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/character-reflection/references/reflect.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/character-reflection/references/reflect.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/character-reflection/references/reflect.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-character-reflection",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/canon-audit/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/canon-audit/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/canon-audit/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/canon-audit/references/continuity.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/canon-audit/references/continuity.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/canon-audit/references/continuity.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/canon-audit/references/impact.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/canon-audit/references/impact.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/canon-audit/references/impact.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/canon-audit/references/promise.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/canon-audit/references/promise.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/canon-audit/references/promise.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/canon-audit/references/ending.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/canon-audit/references/ending.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/canon-audit/references/ending.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-canon-audit",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/market-evidence/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/market-evidence/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/market-evidence/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/market-evidence/references/research.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/market-evidence/references/research.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/market-evidence/references/research.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-market-evidence",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-packaging",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/packaging/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/packaging/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/packaging/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-packaging",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-packaging",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-packaging",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/packaging/references/entity-name.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/packaging/references/entity-name.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/packaging/references/entity-name.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/packaging/references/title.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/packaging/references/title.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/packaging/references/title.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/packaging/references/blurb.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/packaging/references/blurb.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/packaging/references/blurb.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/packaging/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/packaging/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/packaging/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/packaging/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/packaging/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/packaging/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/packaging/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/packaging/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/packaging/references/review.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-packaging",
+      "passed": true
+    },
+    {
+      "name": "builtin-design-package-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/reader-feedback/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/reader-feedback/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/reader-feedback/SKILL.md.template",
+      "passed": true
+    },
+    {
+      "name": "entry-hash-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "frontmatter-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "skill-method-in-entry-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "unique-binding-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "operation-exists-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "target-binding-route-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "binding-contract-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "workflow-budget-binding-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "one-required-operation-resource-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/blueprints/reader-feedback/references/analyze.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/blueprints/reader-feedback/references/analyze.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/blueprints/reader-feedback/references/analyze.md",
+      "passed": true
+    },
+    {
+      "name": "resource-hash-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-content-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "operation-resource-id-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "consistent-resource-binding-reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "package-content-digest-reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "binding-count",
+      "passed": true
+    },
+    {
+      "name": "operation-binding-coverage",
+      "passed": true
+    },
+    {
+      "name": "operation-instruction-resource-count",
+      "passed": true
+    },
+    {
+      "name": "packaging-discriminants",
+      "passed": true
+    },
+    {
+      "name": "packaging-target-binding-identities",
+      "passed": true
+    },
+    {
+      "name": "entity-name-review-has-no-market-or-publication-promise-dependency",
+      "passed": true
+    },
+    {
+      "name": "book-title-review-has-target-dependencies",
+      "passed": true
+    },
+    {
+      "name": "blurb-review-has-only-required-target-dependencies",
+      "passed": true
+    },
+    {
+      "name": "target-kind-only-on-packaging-review",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skills-v5/migration-map.json",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skills-v5/migration-map.json",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skills-v5/migration-map.json",
+      "passed": true
+    },
+    {
+      "name": "migration-counts",
+      "passed": true
+    },
+    {
+      "name": "migration-operation-routes",
+      "passed": true
+    },
+    {
+      "name": "migration-added-operations",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/world-modules-v5.json",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/world-modules-v5.json",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/world-modules-v5.json",
+      "passed": true
+    },
+    {
+      "name": "world-module-count-and-ids",
+      "passed": true
+    },
+    {
+      "name": "world-modules-design-only",
+      "passed": true
+    },
+    {
+      "name": "author-choice-precedence",
+      "passed": true
+    },
+    {
+      "name": "world-modules-not-genre-mandatory",
+      "passed": true
+    },
+    {
+      "name": "custom-module-data-not-code",
+      "passed": true
+    },
+    {
+      "name": "path-contained-evaluation/platform-world-v5-cases.json",
+      "passed": true
+    },
+    {
+      "name": "file-present-evaluation/platform-world-v5-cases.json",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-evaluation/platform-world-v5-cases.json",
+      "passed": true
+    },
+    {
+      "name": "evaluation-not-executed",
+      "passed": true
+    },
+    {
+      "name": "case-count-and-unique-ids",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-01",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-01",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-01",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-02",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-02",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-02",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-03",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-03",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-03",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-04",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-04",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-04",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-05",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-05",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-05",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-06",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-06",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-06",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-07",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-07",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-07",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-08",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-08",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-08",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-09",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-09",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-09",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-10",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-10",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-10",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-11",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-11",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-11",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-12",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-12",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-12",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-13",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-13",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-13",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-14",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-14",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-14",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-15",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-15",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-15",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-16",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-16",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-16",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-17",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-17",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-17",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-18",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-18",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-18",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-19",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-19",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-19",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-20",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-20",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-20",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-21",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-21",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-21",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-22",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-22",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-22",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-23",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-23",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-23",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-24",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-24",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-24",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-25",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-25",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-25",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-26",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-26",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-26",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-27",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-27",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-27",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-28",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-28",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-28",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-29",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-29",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-29",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-30",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-30",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-30",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-31",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-31",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-31",
+      "passed": true
+    },
+    {
+      "name": "case-shape-V5-PLATFORM-WORLD-32",
+      "passed": true
+    },
+    {
+      "name": "case-route-V5-PLATFORM-WORLD-32",
+      "passed": true
+    },
+    {
+      "name": "host-case-kind-V5-PLATFORM-WORLD-32",
+      "passed": true
+    },
+    {
+      "name": "case-kind-coverage",
+      "passed": true
+    },
+    {
+      "name": "case-route-coverage",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/co-creation-contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/co-creation-contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/co-creation-contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/memory-contracts-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/memory-contracts-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/memory-contracts-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/character-mind-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/character-mind-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/character-mind-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skill-runtime-v4.ts",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skill-runtime-v4.ts",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skill-runtime-v4.ts",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/skill-runtime-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/skill-runtime-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/skill-runtime-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "path-contained-vnext/world-contracts-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "file-present-vnext/world-contracts-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-vnext/world-contracts-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "typescript-strict-actual-json-and-world-contracts",
+      "passed": true,
+      "version": "5.9.3",
+      "strict": true,
+      "noUncheckedIndexedAccess": true,
+      "contractFiles": [
+        "vnext/contracts.ts",
+        "vnext/co-creation-contracts.ts",
+        "vnext/memory-contracts-v3.ts",
+        "vnext/character-mind-v3.ts",
+        "vnext/skill-runtime-v4.ts",
+        "vnext/skill-runtime-v5.ts",
+        "vnext/world-contracts-v5.ts"
+      ],
+      "actualJsonAssignments": [
+        "vnext/skill-catalog-v5.json",
+        "vnext/skills-v5/registry.design.json",
+        "evaluation/platform-world-v5-cases.json",
+        "vnext/world-modules-v5.json"
+      ],
+      "typeWitnesses": [
+        "empty-or-multiple-progression-systems",
+        "independent-subject-applicability",
+        "nullable-early-packaging-context",
+        "four-publication-promise-carriers",
+        "early-promise-supported-by-confirmed-settings",
+        "request-scoped-sample-selection",
+        "removed-legacy-singular-fields"
+      ],
+      "diagnostics": []
+    },
+    {
+      "name": "no-code-comments-contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-co-creation-contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-memory-contracts-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-character-mind-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-skill-runtime-v4.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-skill-runtime-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-world-contracts-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "no-code-comments-check-skill-catalog-v5.mjs",
+      "passed": true
+    },
+    {
+      "name": "path-contained-runtime/agent.v5.md",
+      "passed": true
+    },
+    {
+      "name": "file-present-runtime/agent.v5.md",
+      "passed": true
+    },
+    {
+      "name": "realpath-contained-runtime/agent.v5.md",
+      "passed": true
+    },
+    {
+      "name": "assembly-size-operation-coverage",
+      "passed": true
+    },
+    {
+      "name": "input-files-stable-during-verification",
+      "passed": true
+    }
+  ],
+  "inputFiles": [
+    {
+      "relativePath": "vnext/skill-catalog-v5.json",
+      "sha256": "5c947c84a60543c784ead9fad2ec0dc0d1dfc947843e20f8586150fb291e8e5e"
+    },
+    {
+      "relativePath": "vnext/skill-catalog-v5.schema.json",
+      "sha256": "2cff29b30c124df088d0c0f25f84048ba0d8c56d4a0445634fdcea483a98fdb7"
+    },
+    {
+      "relativePath": "vnext/skill-catalog-v4.json",
+      "sha256": "c333b12d67211638afee2ef5d09a39e8476dcba28c2b1c459266177cef54a2ac"
+    },
+    {
+      "relativePath": "vnext/skills-v5/prompt-map.json",
+      "sha256": "8493234d27d6b68d9f8f5ba1adf54d011fe11b972896b1ba53fdfc7effe66c58"
+    },
+    {
+      "relativePath": "vnext/skills-v4/prompt-map.json",
+      "sha256": "1e580e5e57fd49080589642047801ac3de5eec6fadc10345b977be297eb02aa4"
+    },
+    {
+      "relativePath": "runtime/agent.vnext.md",
+      "sha256": "8dd74207910c69456102f3f8946049c2f005e7cea6d39a1d1829512b771dbbde"
+    },
+    {
+      "relativePath": "vnext/prompts/concept-forge.md",
+      "sha256": "51443c40ebc511649d07f4b00c9ddc0ffff82313cfddb6f42a1ca21fb7efe5d2"
+    },
+    {
+      "relativePath": "vnext/prompts/story-contract.md",
+      "sha256": "7f459db623c3fd242fe520c83bf2f15c752f0d107e82aded95b594425fb9298e"
+    },
+    {
+      "relativePath": "vnext/prompts/co-creation-editor.md",
+      "sha256": "9c883e19e77f81eb1e61029a4b75b3e4913fea41a84d6c2d0f0c3ee5631eef47"
+    },
+    {
+      "relativePath": "vnext/prompts/object-lenses.md",
+      "sha256": "66a009d7c1fd3585186c37f91cca6a47dd890d778bfbbc3185d20f5f228e073e"
+    },
+    {
+      "relativePath": "vnext/prompts/rolling-outline.md",
+      "sha256": "fa038dd0378b2b584fe3a912fc5830646404ee4df42e3482d606c6474be521e2"
+    },
+    {
+      "relativePath": "vnext/prompts/scene-contract.md",
+      "sha256": "2697abbd99b2f7602b2eb73fa5a5d3face9743921407199d5c65f3878848e6fb"
+    },
+    {
+      "relativePath": "vnext/prompts/voice-calibration.md",
+      "sha256": "fae53d9ff1c3cfcf60a700b79bb7299e18c38c1744372f977880a53985d55edc"
+    },
+    {
+      "relativePath": "vnext/prompts/pilot-scenes.md",
+      "sha256": "e7e6eb88ab90c3b24ac49ac02f160dbddcf332fb55583ee296e74c5b6c12f0fe"
+    },
+    {
+      "relativePath": "vnext/prompts/chapter-draft.md",
+      "sha256": "4fb7c634be5a28b3855614421a480a3c7d9cb8c25a031146290d2d98ad30bf31"
+    },
+    {
+      "relativePath": "vnext/prompts/chapter-review.md",
+      "sha256": "2b20f997596885f56127371a03863c98cb02853dbfb181eac8112f601c8175eb"
+    },
+    {
+      "relativePath": "vnext/prompts/voice-revision.md",
+      "sha256": "5b392c86aad2389fd8cbec3d1694a94a0358f4fd43f26374d4addfcf0c31485b"
+    },
+    {
+      "relativePath": "vnext/prompts/local-repair.md",
+      "sha256": "d7ad447ae7a27d724438cec4889ebaeedd97d5cdd1bb179ffce8e2aeb3622615"
+    },
+    {
+      "relativePath": "vnext/prompts/memory-delta-v3.md",
+      "sha256": "019ac54a9ae1f8c8753e4b574f44978c37574160aa43eee957f1d971a08ef8ad"
+    },
+    {
+      "relativePath": "vnext/prompts/memory-review-v3.md",
+      "sha256": "f543040f7f0cf4ea6bc50296b6530c2dba8de196863840932ce0e126a4e91190"
+    },
+    {
+      "relativePath": "vnext/prompts/memory-query-v3.md",
+      "sha256": "6e2f75ac15156926daf98cd77c9500b18f235d43ff350eb7623d26ea28203f11"
+    },
+    {
+      "relativePath": "vnext/prompts/character-reflection-v3.md",
+      "sha256": "1feb2845c34e9537647b4d650eb6e72fd346dd3ca93b3ebba021aded5b65a156"
+    },
+    {
+      "relativePath": "vnext/prompts/market-evidence.md",
+      "sha256": "c622a0cdc1a4736c7d0bafb386babd896f86bc32d9de744978cb34aee902cf63"
+    },
+    {
+      "relativePath": "vnext/prompts/reader-feedback.md",
+      "sha256": "e2a4a9632bcebba21bc5449b4960fb5c28084dfb30fe6e85e67b499125ed3cde"
+    },
+    {
+      "relativePath": "vnext/prompts/ending-audit.md",
+      "sha256": "cd784b02ec86949f6dd1c1867bcca7eb4a724f3c7c84679192e3481ef12df9d7"
+    },
+    {
+      "relativePath": "modules/fanqie-editorial.md",
+      "sha256": "fda2e41503712160b07f9e96245a89ec004a4ce40c78fa5305e4fbfa2c5ce4f2"
+    },
+    {
+      "relativePath": "modules/prose-voice.md",
+      "sha256": "3ed68ac4eef18c7fc30d7f8ba0a0d565554f913cf2ce7e5e9df627f0e27d0440"
+    },
+    {
+      "relativePath": "modules/continuity.md",
+      "sha256": "6057d1f36f666e7e30a470d7b6cb59cf8055024d38646ac206868884c84d5eb4"
+    },
+    {
+      "relativePath": "vnext/prompts/requirements-and-directions.md",
+      "sha256": "25f92445aaf079b6560bdad3d2dc9eaa25449a75c6f9b561897169cc42da1436"
+    },
+    {
+      "relativePath": "vnext/prompts/memory-delta.md",
+      "sha256": "6ef8c5385500988be8c03b55014c9635f0cb409f0416fdbe2eb382c442166f50"
+    },
+    {
+      "relativePath": "runtime/agent.compat.md",
+      "sha256": "c8290e87375f558e4d5f395fff31268d3630a7720ef5879af5c58790b3ec2552"
+    },
+    {
+      "relativePath": "creation/direction-planning/planner.system.md",
+      "sha256": "ae4e32b0888a03284c247387c5eff5dd447a7c7b535c192006ad7ec7ab66d148"
+    },
+    {
+      "relativePath": "creation/tags/prompts/contract.system.md",
+      "sha256": "cafc3e3e464ea4e041db7100127203bfec0b8ca0459eb7438f9b73c8ce0e7d22"
+    },
+    {
+      "relativePath": "creation/tags/prompts/reviewer.system.md",
+      "sha256": "8871a56094e5b2cba029beb025c80c856cf63f0f6623b3b8aeba96ea416c6dfc"
+    },
+    {
+      "relativePath": "creation/title-market-editing/writer.system.md",
+      "sha256": "7c325b2698ab2293323e8dda7c252d940e36e12df1a31bcd00f3eddcf72803d2"
+    },
+    {
+      "relativePath": "creation/title-market-editing/reviewer.system.md",
+      "sha256": "15e376bd0db7528e131e2ee9a551bc5a219389e8a43e0c1686ceab1761465101"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-project-bootstrap/SKILL.md",
+      "sha256": "0e007442cb5797702888d6331417c34afbd86497040c6fc6fcc35a8635df9315"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-premise-lab/SKILL.md",
+      "sha256": "7b367e2eb40008fae2bca70b913e46d9fed309c77e4a976e9725083b8911ed98"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-project-config/SKILL.md",
+      "sha256": "8b1944d3ac81ba535e70ffc79219c7582ba0764036066bc33277b5fdfc3d8559"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-world-engine/SKILL.md",
+      "sha256": "cffee46c0f7e30d7142cc2e45c9a33d6de8428d012f69ee41a0167386df7fa0d"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-character-engine/SKILL.md",
+      "sha256": "ca3347d01ab8ee47d2bd38844c61c9517c19da8a95b409497ee6ece421510cb7"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-volume-architect/SKILL.md",
+      "sha256": "410266c578508353c51525695e528a9dd29f63eece03260594d8c71f4c4cb52c"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-chapter-roadmap/SKILL.md",
+      "sha256": "b8aab22ee5c90838daa6fcbc3f88329c535f915642bd3139321533ee618ce5fd"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-rhythm-designer/SKILL.md",
+      "sha256": "10ad78e13908d357c58cd9ac90a673e17d3eeafbfd71b61676847c42c584b515"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-batch-outline/SKILL.md",
+      "sha256": "db66b91a86bc5b0c67fae81157d517107936e9e1383f409a5522bf2d12bc6294"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-chapter-planner/SKILL.md",
+      "sha256": "09c99ed1c1582f91eacaa47e77787428a7d9f474389bbea419db712422742e43"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-chapter-drafter/SKILL.md",
+      "sha256": "a1e88d5c7027e574560074f690fd37e4a4b5393f6dac0d0e6542783e13a27897"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-chapter-reviewer/SKILL.md",
+      "sha256": "f1b9032e845ce1517a0a9e7ab89f35bb3a70a6d7035e4a1232b53dca3ac03e5b"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-memory-extractor/SKILL.md",
+      "sha256": "6aecb6e4b1a2b37fa20a4b27c99c510253e1fe6fb36ee873681010e7abf16e33"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-voice-profile/SKILL.md",
+      "sha256": "4fe180fb59cbd7bf2bd0faba9f17a7ff1e4467cc38988a7d4b1b1fd6f1ebaf46"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-prose-polisher/SKILL.md",
+      "sha256": "063ea08455cca89e02f7e8aebe82462720137d9145bea9d557cf0eecd8a4c6f8"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-continuity-audit/SKILL.md",
+      "sha256": "ecd40e1cde265d91c5c701e4f5224d5b743d347b31fd01fbce0c51862cec45fe"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-revision-cascade/SKILL.md",
+      "sha256": "160bb1fd8ab3ba4accd4582c6b20e4f9247fbe5fbce1a0cabdffb8e74e45058f"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-market-research/SKILL.md",
+      "sha256": "166fb8bf0b3fc3d8f5cdcd575d0f314fb7e76ce0921f888b792e3365faa87f88"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-name-governance/SKILL.md",
+      "sha256": "545e71e0c039ba573a34054e606b20bc0d7207ba0616d44a546ef742b6455b37"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-packaging/SKILL.md",
+      "sha256": "81be17ffc14159b64a1407d8879e3dbeaf8650042f6811d29b5b36bf039a8c6b"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-reader-feedback/SKILL.md",
+      "sha256": "60d928717d4b9b5e0ac09ed83416716cc8981eea2abcc2ffd69b006a4afb5f7f"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-narrative-telemetry/SKILL.md",
+      "sha256": "10c079bdb0e5c24f6f080b37805a3c8e51bc1a23598237daa4346908dc0c5110"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-batch-close/SKILL.md",
+      "sha256": "426ec007deb74247b76ced88d53bf4fd65b4c763baf787e64d8f3b78fadde122"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-context-retriever/SKILL.md",
+      "sha256": "0ba2534f277fd60429539b1c3194f76d611882eccc8ca57b8e2e9b2f3823e668"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-project-validator/SKILL.md",
+      "sha256": "8e676ba09217f3be3e9a7e2ce1cab8af1d68a0ce65baa90948f1c160a0bff8aa"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-memory-audit/SKILL.md",
+      "sha256": "1155f4fb7c372b175640293def48c5613d9b5f539c47d5ff2062223f4f31ea45"
+    },
+    {
+      "relativePath": "runtime/agent.v5.md",
+      "sha256": "0885941f29bc81a9f29fc1635ff88e740b1f110fa91194d6ce900142c7778d67"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/concept-forge-create.md",
+      "sha256": "7a059e62a7a35c0c8aeb503a2727e5a649e7d25e9c99db391c89ab8323091d0e"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/concept-forge-regenerate.md",
+      "sha256": "aa29d3da5225fbfc2b4aaefbf447c261f1c3d3bb9c0db1c9cd77669310b05897"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/world-design-core.md",
+      "sha256": "0715d5cd2323bbbde7b8dd6aff3d53cf08e116643c26d1f3e829279577dd3182"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/world-design-profile.md",
+      "sha256": "470718a0900044f98ce101673b61afa6552c22f73fe3f74bfd369ec51fe210f0"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/world-design-inherit.md",
+      "sha256": "ba5fb3284d4cf345ada9d6deffdcb3bbb9908e15ece9540128f9a9e95f21ab79"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/world-design-create.md",
+      "sha256": "3b888e632316a3cd29e556584e61783def54abeff48846991af814edcafd7d5e"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/world-design-stress-test.md",
+      "sha256": "5e79b2dde690e5075808c01210b442364349c5ab903bb1402233cc98a4b21beb"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/co-creation-propose.md",
+      "sha256": "a7abc7494d7b03c8291804812bcef8d0a38cc9f80522e32adebeaccdbee3e640"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/story-contract-build.md",
+      "sha256": "c174f810acab363f064870dfb886ab573121220ed32ce84d009b8c24dfdbc244"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/market-evidence-research.md",
+      "sha256": "25a5ec4b31e34205c5ec1e714c0bc920dfc2cbf5ef2826d4ca2a060f49fe1cb3"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/packaging-title.md",
+      "sha256": "def386a74bcfecaff74f7884d1595e7b31aa0f8281a06cdd2cb98bb1a4ec1997"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/packaging-review.md",
+      "sha256": "e95a25862d29a321a641a8f2ce3c002b6dc36452c42543cc74c48197679573ac"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/scene-contract-plan.md",
+      "sha256": "2b051b43fc907925422c8b26cc37a6b20454d80ffd57cd878360a97ac22c5721"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/chapter-draft-draft.md",
+      "sha256": "6c53a1bd536f91cac0eb7f82f008d789dcfedcf55a18db78bd1c909982cb98e0"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/memory-delta-extract.md",
+      "sha256": "fa9260abc2b5d52ce7dc995ad6ce96c84456de4c6b9bb857f51f58e8382b0cdb"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/canon-audit-continuity.md",
+      "sha256": "838e371f9e34cf223a824f13e0b691bed04281a2e23555b4681f538468337fb5"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/canon-audit-impact.md",
+      "sha256": "4be2898daf442c6af11ca47c215f5d362434107bce4c45a1f0e339bedcc4170c"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/canon-audit-promise.md",
+      "sha256": "a1ee3c842bbc70efee0892d669233148d3a084a7dc2ea5e90baa9c9a82a49beb"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/packaging-blurb.md",
+      "sha256": "0c633d5cb386688fa2f703d15cf644263bddafa49506883c00d58afde48b8ab6"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/memory-review-review.md",
+      "sha256": "3c5abf8272087b79b2acd874542effb00b1e861aaedeef5cff356f61853e58e5"
+    },
+    {
+      "relativePath": "vnext/skills-v5/registry.design.json",
+      "sha256": "953d82e6ce01bc50bd9a8557f567edd33c94b376ff1c1e153e7cf54db670f99f"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/concept-forge/SKILL.md.template",
+      "sha256": "62b3d8d945128cdb8c8a28fdcc3595b68cb5304292c82b2f87940ba6c5854db6"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/concept-forge/references/create.md",
+      "sha256": "7a059e62a7a35c0c8aeb503a2727e5a649e7d25e9c99db391c89ab8323091d0e"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/concept-forge/references/regenerate.md",
+      "sha256": "aa29d3da5225fbfc2b4aaefbf447c261f1c3d3bb9c0db1c9cd77669310b05897"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/story-contract/SKILL.md.template",
+      "sha256": "4174ef436c1d6c44cfcea80391ea32508e9f64b961c36968c54429f89a9e8887"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/story-contract/references/build.md",
+      "sha256": "c174f810acab363f064870dfb886ab573121220ed32ce84d009b8c24dfdbc244"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/story-contract/references/review.md",
+      "sha256": "523c49387c242ce7ea1b3454a23452aaabf43a9d9e45933996affaade81a571f"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/story-contract/references/configure.md",
+      "sha256": "533e909dee528f4dcf077b18631241f540c6a786aa953f1d8f875661b96a5ff2"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/co-creation/SKILL.md.template",
+      "sha256": "6c02de4b5c103e4ad1a031e136237bfec50ff4bab944a48486f2cef2775e2bc7"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/co-creation/references/discuss.md",
+      "sha256": "0de5d4bec8c8c0e16fdb04aa16923edd5dcdc265141cf0a757314ce4fb3ce5e9"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/co-creation/references/compare.md",
+      "sha256": "f760b8dc6fa01d91aa83d4115bb8e4e7f69aef8aeedeccfb85eded0bea6f5064"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/co-creation/references/propose.md",
+      "sha256": "a7abc7494d7b03c8291804812bcef8d0a38cc9f80522e32adebeaccdbee3e640"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/world-design/SKILL.md.template",
+      "sha256": "48df6f6730a52da327e70470f1df18007a0497cc3e47a052913f2b8e9a2d7e9c"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/world-design/references/create.md",
+      "sha256": "3b888e632316a3cd29e556584e61783def54abeff48846991af814edcafd7d5e"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/world-design/references/profile.md",
+      "sha256": "470718a0900044f98ce101673b61afa6552c22f73fe3f74bfd369ec51fe210f0"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/world-design/references/inherit.md",
+      "sha256": "ba5fb3284d4cf345ada9d6deffdcb3bbb9908e15ece9540128f9a9e95f21ab79"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/world-design/references/stress-test.md",
+      "sha256": "5e79b2dde690e5075808c01210b442364349c5ab903bb1402233cc98a4b21beb"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/character-design/SKILL.md.template",
+      "sha256": "fd2536662da1df038c7e65316006e8c9ccd6e6c873405aa755539ffa8a0276fe"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/character-design/references/create.md",
+      "sha256": "d30129a4efbf72123cb77897c3f2e1bef134188a00c6efdf59594ab4d2eca48d"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/rolling-outline/SKILL.md.template",
+      "sha256": "9230ffba61e18a8b654c78edd144fee8dc23810eb2763a764ddac3ff3b52ba7e"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/rolling-outline/references/book.md",
+      "sha256": "d26d78514eeff24468af847a96a2ed72f6eb9ddf821e90dc0c8cbc947cf55666"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/rolling-outline/references/volume.md",
+      "sha256": "1992a6cfbd02d05d96e0de39f4c31d27f0df00eaf8266ad30e62a30d4d968ffb"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/rolling-outline/references/roadmap.md",
+      "sha256": "f74b7411c1ccb6fe0f16a494fd894817676a96250f5092a1b76a74235f201643"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/rolling-outline/references/rhythm.md",
+      "sha256": "71837c0e6603262c96fa4610c486b10cdeff62574429e8e0700474b040357f0d"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/rolling-outline/references/batch.md",
+      "sha256": "13ef8772d311b956809302748ce76c0d5ea806204ab8659ae065a610ced8e1d4"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/scene-contract/SKILL.md.template",
+      "sha256": "bd9deb0043e5e5c61e19ebd663ca5d5911bbdc0fb700a867ca0d29e0aea686f3"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/scene-contract/references/plan.md",
+      "sha256": "2b051b43fc907925422c8b26cc37a6b20454d80ffd57cd878360a97ac22c5721"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/voice-calibration/SKILL.md.template",
+      "sha256": "b3477d38499e04637b130d01dcd00e54fa1b13575cd22f18cb7968e6c7ce7831"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/voice-calibration/references/extract.md",
+      "sha256": "d9944db0edfad7eb8d9ecd6575d67ee10e93f55c63f43a2110bbd7238ff31ff8"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/voice-calibration/references/calibrate.md",
+      "sha256": "aa4a4f7cc89a16cf9958fcfb2ccf40b9dc0a69441743b49b9c971845969e7d86"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/voice-calibration/references/update.md",
+      "sha256": "6b9334bbbc20009ebf807dd22b9803be63dfc0d2df71994bb18aef6367d9e101"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/voice-calibration/references/pilot.md",
+      "sha256": "c453448b510bd381bbc5b57f884e5d3fa07161953d89b2d550870e82b9db624f"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/chapter-draft/SKILL.md.template",
+      "sha256": "909dcf584f0f5e0d10f21f4ac6ca277c65db3576757a6a7ed95020732ed4d9b7"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/chapter-draft/references/draft.md",
+      "sha256": "6c53a1bd536f91cac0eb7f82f008d789dcfedcf55a18db78bd1c909982cb98e0"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/chapter-review/SKILL.md.template",
+      "sha256": "080b3c18053a1cf8880e17d78ad50f4a44f1e708bd7bb755114cc7eec9553c69"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/chapter-review/references/review.md",
+      "sha256": "2f5cccb8d31f6bdab5b7575382ec5a56b532df3abfe8541fb280576159581921"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/revision/SKILL.md.template",
+      "sha256": "63474890a9cf2ea9930a875728eed86adcd8060553a219ce40556b7fb2e588ec"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/revision/references/voice.md",
+      "sha256": "4c19de927727be2d351814f6dca227b9634284df4a10f56d2fce4267c83b7d57"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/revision/references/local.md",
+      "sha256": "08edec8e38f6e7bd0f20dc94c2e7a37438838419cf8e52dfc3e8afc769c5fd55"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/revision/references/story.md",
+      "sha256": "8a3b2ba819364f9c15a23d9fb4c297be008aec319221b1c8fc100174314c4bdf"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/memory-delta/SKILL.md.template",
+      "sha256": "9ec71dbbc4464cd6b98274bd2313733c0adb5cc5f6a3e470f039ff1c7f1e60a8"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/memory-delta/references/extract.md",
+      "sha256": "fa9260abc2b5d52ce7dc995ad6ce96c84456de4c6b9bb857f51f58e8382b0cdb"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/memory-review/SKILL.md.template",
+      "sha256": "b8130f90d12f8db26d91d4b2f86d56a2270f29ef39af12d6ba4c438e917a362b"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/memory-review/references/review.md",
+      "sha256": "3c5abf8272087b79b2acd874542effb00b1e861aaedeef5cff356f61853e58e5"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/memory-query/SKILL.md.template",
+      "sha256": "67a96d498ac8ac7dab4bc919212de72062f45a2017aef06416016fd173697c59"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/memory-query/references/answer.md",
+      "sha256": "469128a8460766fda9bc56195e75bf84b76d160a5c922bde5ad46ea1ee11bc1e"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/character-reflection/SKILL.md.template",
+      "sha256": "7650729145c7cd3f8d30216bf4334fdf1da3118a47283f89d88963f99f11ac1b"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/character-reflection/references/reflect.md",
+      "sha256": "cf07dd88be30d00eca8d1baf20d5a113b724463b5fb0ea3255841f489d2e00d6"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/canon-audit/SKILL.md.template",
+      "sha256": "4eaf2edcf31357df373fd68cc5cc66f70a3b36cd6061b88389228b9433669fb7"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/canon-audit/references/continuity.md",
+      "sha256": "838e371f9e34cf223a824f13e0b691bed04281a2e23555b4681f538468337fb5"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/canon-audit/references/impact.md",
+      "sha256": "4be2898daf442c6af11ca47c215f5d362434107bce4c45a1f0e339bedcc4170c"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/canon-audit/references/promise.md",
+      "sha256": "a1ee3c842bbc70efee0892d669233148d3a084a7dc2ea5e90baa9c9a82a49beb"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/canon-audit/references/ending.md",
+      "sha256": "919c51dab67745d446c937655502a9fa78cee07b9640fdad657c7d0a4d1aff75"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/market-evidence/SKILL.md.template",
+      "sha256": "4b7a8927fba8f70f4c462114735a700257d933525be27cf4262bd2c56e1cd28f"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/market-evidence/references/research.md",
+      "sha256": "25a5ec4b31e34205c5ec1e714c0bc920dfc2cbf5ef2826d4ca2a060f49fe1cb3"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/packaging/SKILL.md.template",
+      "sha256": "a8c2c1d69ce270a4f3f7225c655b83beb2763b9a272bf889c07fc2038bfbf815"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/packaging/references/entity-name.md",
+      "sha256": "f7bb661fc74a5af93b02b9f25ea2eccbbf9f103cfdbddc00c69353454b3c1c1b"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/packaging/references/title.md",
+      "sha256": "def386a74bcfecaff74f7884d1595e7b31aa0f8281a06cdd2cb98bb1a4ec1997"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/packaging/references/blurb.md",
+      "sha256": "0c633d5cb386688fa2f703d15cf644263bddafa49506883c00d58afde48b8ab6"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/packaging/references/review.md",
+      "sha256": "e95a25862d29a321a641a8f2ce3c002b6dc36452c42543cc74c48197679573ac"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/reader-feedback/SKILL.md.template",
+      "sha256": "f12756a7d0972682a7f52a27c04bced769ef2e6c4cb549138afb8e56d2433618"
+    },
+    {
+      "relativePath": "vnext/skills-v5/blueprints/reader-feedback/references/analyze.md",
+      "sha256": "b1b1045f85582880d7c2af3c404bb702ec67886cd0058f46d442a50fd6c9cb5c"
+    },
+    {
+      "relativePath": "vnext/skills-v5/migration-map.json",
+      "sha256": "a4834d570674d7ee87e18914b6d5ec176097b448241f4a7f623b390406cd02c7"
+    },
+    {
+      "relativePath": "vnext/world-modules-v5.json",
+      "sha256": "341fa50071c4673e7d5fb72d19a3f3e7ed1b0d04a696c6d73a3eb13e69dca1e4"
+    },
+    {
+      "relativePath": "evaluation/platform-world-v5-cases.json",
+      "sha256": "9e735f1dc70365f14804c0a7115877eef63c1e6f47cc7137313db11ac508d33c"
+    },
+    {
+      "relativePath": "vnext/contracts.ts",
+      "sha256": "7538eadcf729298a6e72749dc221d1b585a231027b803da03a5382f929a79975"
+    },
+    {
+      "relativePath": "vnext/co-creation-contracts.ts",
+      "sha256": "69d71646e3d3b8148b25efdcfb5f9719f1dca65b27683479bac96a6be23131d5"
+    },
+    {
+      "relativePath": "vnext/memory-contracts-v3.ts",
+      "sha256": "fe86966dd0d87c21ae8d9360f54821b5d2d1b707e4d6ad9e6176b88a04ccd8c2"
+    },
+    {
+      "relativePath": "vnext/character-mind-v3.ts",
+      "sha256": "6bb6b0841b3ae938ace6015b497ee447547a7c292ccd3ad5c4b400decfc8c46f"
+    },
+    {
+      "relativePath": "vnext/skill-runtime-v4.ts",
+      "sha256": "9a752888c2f7ee6c6cb09da7fbe47d1b42cf0581d4b13e0eaf655fa76b957c56"
+    },
+    {
+      "relativePath": "vnext/skill-runtime-v5.ts",
+      "sha256": "b1d09411604923772edb8748080ce1bc3af197fd575d181feaf5f5a92d943c07"
+    },
+    {
+      "relativePath": "vnext/world-contracts-v5.ts",
+      "sha256": "57ae1da8c875b4906a382f5d4f208c98665b4f8d842c38fbc56897c93a93fd01"
+    }
+  ],
+  "checkerSha256": "415ff4aee0c523301500e2f8aaee20e3736136804c29c204d53ba0a3a2a99bf9",
+  "limitations": [
+    "Static design-artifact checks only; no application integration",
+    "No model-output, local-host behavior or reader-blind cases executed",
+    "No paid model calls or public-network research executed by this checker",
+    "Prompt-body character counts are not token counts or full-request sizes",
+    "Schema and type conformance do not establish creative quality, runtime correctness or production completeness"
+  ]
+}

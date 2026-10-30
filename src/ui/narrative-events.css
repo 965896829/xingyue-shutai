@@ -12,6 +12,7 @@
 .event-legend i { width: 15px; border-top: 2px solid; }
 .event-tension-key { color: var(--event-tension); }
 .event-emotion-key { color: var(--event-emotion); }
+.event-legend .event-continuation-key { border-top-style: dashed; }
 .event-legend small { margin-left: auto; font-size: 10px; }
 .narrative-events > svg { width: 100%; display: block; height: auto; max-height: 280px; overflow: visible; }
 .narrative-events svg text { font-family: inherit; font-size: 9px; fill: var(--muted); }
@@ -19,11 +20,16 @@
 .event-grid { stroke: var(--line); stroke-dasharray: 3 5; }
 .event-zero { stroke-dasharray: 0; }
 .event-unwritten { fill: var(--inset); opacity: .65; }
-.event-tension-line, .event-emotion-line { fill: none; stroke-width: 2; stroke-linecap: round; }
+.event-tension-line, .event-emotion-line { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .event-tension-line { stroke: var(--event-tension); }
 .event-emotion-line { stroke: var(--event-emotion); }
+.event-continuation { stroke-dasharray: 5 4; opacity: .8; }
 .event-cursor line { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 4; opacity: .6; }
-.event-cursor circle { fill: var(--event-tension); }
+.event-tension-head { fill: var(--event-tension); }
+.event-emotion-head { fill: var(--event-emotion); }
+.event-tension-head.is-writing { animation: event-head-pulse 1.8s ease-in-out infinite; }
+@keyframes event-head-pulse { 50% { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .event-tension-head.is-writing { animation: none; } }
 .narrative-events [data-kind] { --node-color: var(--event-tension); }
 .narrative-events [data-kind='climax'] { --node-color: #dc946f; }
 .narrative-events [data-kind='reversal'] { --node-color: #b29ee8; }

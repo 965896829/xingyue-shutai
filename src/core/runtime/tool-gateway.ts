@@ -5,21 +5,29 @@ import { ApplicationError } from '../../shared/errors';
 import { fingerprint } from './canonical';
 import { RequestError } from '../provider';
 import { normalizeToolArguments } from '../output-normalization';
+import { hostTools, type HostToolRegistry, type ToolEffect } from './tool-contracts';
 
 export interface ToolTicket {
   id: string; runId: string; attemptId: string; toolName: string; version: 1;
-  argsHash: string; effect: 'read' | 'draft_write' | 'candidate_proposal';
+  argsHash: string; effect: ToolEffect; contractHash?: string; outputByteLimit?: number;
   status: 'started' | 'complete'; result?: string; createdAt: string;
 }
-export function beginTool(store: FileStore, runId: string, call: ToolCall, definitions: ToolDefinition[], signal: AbortSignal): ToolTicket {
+export function beginTool(store: FileStore, runId: string, call: ToolCall, definitions: ToolDefinition[], signal: AbortSignal, registry: HostToolRegistry = hostTools, deferChapterCoverage = false): ToolTicket {
   if (signal.aborted) throw new ApplicationError('CANCEL_REQUESTED', '工具执行已取消');
   const definition = definitions.find((definition) => definition.name === call.name);
   if (!definition || ['terminal', 'network', 'commit', 'approve', 'run.accept'].includes(call.name))
     throw new ApplicationError('PERMISSION_DENIED', '此执行器没有该工具权限');
+  const contract = registry.resolve(definition);
   call.arguments = normalizeToolArguments(call.arguments);
   const args: unknown = JSON.parse(call.arguments);
   const schema = z.fromJSONSchema(definition.parameters as Parameters<typeof z.fromJSONSchema>[0]);
-  schema.parse(args);
+  const parsed = schema.safeParse(args);
+  // The chapter handler validates coverage before any mutation, after checking
+  // file permissions/versions, so a rejected batch can retain reusable files.
+  // Every other schema error and every other tool still fails at this boundary.
+  if (!parsed.success && !(deferChapterCoverage && contract.effect === 'candidate_proposal' &&
+      ['propose_changes', 'propose_memory'].includes(call.name) &&
+      parsed.error.issues.every(issue => issue.path[0] === 'coverage'))) throw parsed.error;
   try {
   const row = store.db.sql.prepare("SELECT id FROM model_attempts WHERE run_id=? AND status='complete' ORDER BY rowid DESC LIMIT 1").get(runId);
   const attemptId = row ? String(row.id) : 'legacy';
@@ -29,13 +37,15 @@ export function beginTool(store: FileStore, runId: string, call: ToolCall, defin
   if (previous) {
     const ticket: ToolTicket = JSON.parse(String(previous.data));
     if (ticket.argsHash !== argsHash) throw new ApplicationError('VERSION_CONFLICT', '同一工具调用编号出现不同参数');
+    if (ticket.effect !== contract.effect || ticket.contractHash && ticket.contractHash !== contract.hash)
+      throw new ApplicationError('VERSION_CONFLICT', '工具实现契约已改变，不能沿用旧回执执行');
     if (ticket.status === 'complete') return ticket;
     if (ticket.effect !== 'read') throw new ApplicationError('REMOTE_RESULT_UNKNOWN', '此工具已开始但结果未确认，禁止自动重复执行', ['refresh']);
     return ticket;
   }
   const ticket: ToolTicket = {
     id, runId, attemptId, argsHash, toolName: call.name, version: 1,
-    effect: /^(propose_|submit_)/.test(call.name) ? 'candidate_proposal' : call.name === 'save_draft' ? 'draft_write' : 'read',
+    effect: contract.effect, contractHash: contract.hash, outputByteLimit: contract.outputByteLimit,
     status: 'started', createdAt: new Date().toISOString()
   };
   store.db.transaction(() => {
@@ -57,7 +67,7 @@ export function stopOnToolFailure(error: unknown) {
   if (error && typeof error === 'object' && 'code' in error && /^(?:ERR_SQLITE|SQLITE|ENOSPC|EIO|EACCES|EPERM|EBUSY)/.test(String(error.code))) throw error;
 }
 export function finishTool(store: FileStore, ticket: ToolTicket, result: string, persist: () => void = () => {}) {
-  if (Buffer.byteLength(result) > 10_000_000) throw new ApplicationError('VALIDATION_ERROR', '工具结果超过输出上限');
+  if (Buffer.byteLength(result) > (ticket.outputByteLimit ?? 10_000_000)) throw new ApplicationError('VALIDATION_ERROR', '工具结果超过输出上限');
   const complete = { ...ticket, status: 'complete', result };
   store.db.transaction(() => {
     persist();

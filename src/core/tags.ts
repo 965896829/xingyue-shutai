@@ -14,6 +14,7 @@ import {
   type TagInput,
   type BookSpec,
   type TagKnowledge,
+  worldSuggestionSchema,
   type TagPlanning,
   type PlanningReport,
   type ApprovedTags,
@@ -23,6 +24,9 @@ import type { ProjectState, Run, Issue, Fact } from '../shared/types';
 import type { FileStore } from './storage';
 import { assessTagPolicy, tagPolicyProfileSchema, tagPolicySourceSchema } from '../shared/tag-policy';
 import { approvedCreation, creationPlanSchema, planKinds, payoffStages, type CreationPlan } from '../shared/creation';
+import { bookProfilePath, readBookProfile, renderBookProfile, bundledPublishingCatalog, resolveBookProfile, verifyPublishingSnapshot } from './publishing';
+import { publishingOptions } from '../shared/publishing';
+import { setRunStatus } from './runtime/run-state';
 
 export const contractPath = '02_项目配置/标签创作契约.md';
 export function canonical(value: unknown): string {
@@ -39,6 +43,35 @@ export function canonical(value: unknown): string {
   return JSON.stringify(value) ?? 'null';
 }
 export const tagHash = (value: unknown) => hash(canonical(value));
+export function currentCreationDraft(store: FileStore): BookSpec | undefined {
+  const draft = store.db.get<BookSpec>('tagDraft'), currentHash = store.db.document(bookProfilePath)?.hash;
+  if (!draft || !currentHash || store.db.get('tagDraftPublishingBase') === currentHash) return draft;
+  const current = readBookProfile(store);
+  let result = draft;
+  store.db.transaction(() => {
+    if (tagHash(draft.bookProfile) !== tagHash(current.profile) || draft.publishingCatalog?.id !== current.catalog?.id) {
+      const { inputHash, ...value } = structuredClone(draft);
+      value.revision++;
+      value.bookProfile = current.profile;
+      if (current.catalog) value.publishingCatalog = current.catalog;
+      else delete value.publishingCatalog;
+      value.selection.reading = { main: '', theme: [], role: [], plot: [] };
+      result = bookSpecSchema.parse({ ...value, inputHash: tagHash(value) });
+      store.db.set('tagDraft', result);
+      for (const run of store.db.runs()) if ((run.planning || run.naming?.sourceRunId) && !run.accepted && !['discarded', 'stale', 'failed'].includes(run.status)) {
+        setRunStatus(run, 'stale');
+        run.error = '创作题材或发布分类已更新，旧方案保留为历史';
+        store.db.saveRun(run);
+      }
+    }
+    store.db.set('tagDraftPublishingBase', currentHash);
+  });
+  return result;
+}
+export function modelBookSpec(spec: BookSpec) {
+  const { publishingCatalog, ...input } = spec;
+  return publishingCatalog ? { ...input, publishingCatalogRef: { id: publishingCatalog.id, observedAt: publishingCatalog.observedAt } } : input;
+}
 export function planningFingerprint(r: Pick<Run, 'planning' | 'baseRevision' | 'baseSnapshotId'>) {
   return tagHash({
     spec: r.planning!.spec,
@@ -63,6 +96,8 @@ export function tagBundle(skillRoot: string) {
     if (hash(fs.readFileSync(path.join(root, file))) !== lock[file])
       throw new Error('标签资源已改变：' + file);
   const taxonomy = read('registry/taxonomy.json') as TagCatalog;
+  if (fs.existsSync(path.join(skillRoot, 'platform', 'fanqie.json')))
+    taxonomy.publishingSnapshots = [bundledPublishingCatalog(skillRoot)];
   taxonomy.sources = tagPolicySourceSchema.array().parse(read('sources.json'));
   // An older resource pack without a locked profile remains usable, with unknown policy status.
   if (lock['registry/platform-policy.json'])
@@ -88,7 +123,7 @@ export function tagBundle(skillRoot: string) {
       throw new Error('标签分组数量不符');
   return { taxonomy, genres, cards, rules, recipes, version: tagHash(lock) };
 }
-export function selectedIds(input: TagInput) {
+function legacySelectedIds(input: TagInput) {
   return [
     input.selection.reading.main,
     ...input.selection.reading.theme,
@@ -100,19 +135,35 @@ export function selectedIds(input: TagInput) {
     ...input.selection.content.world
   ].filter(Boolean);
 }
+export function selectedIds(input: TagInput) {
+  const reading = input.bookProfile?.publishing?.reading;
+  return [...legacySelectedIds(input), ...(reading ? [reading.main, ...reading.theme, ...reading.role, ...reading.plot] : [])].filter(Boolean);
+}
+export function creationGenre(spec: BookSpec, knowledge: TagKnowledge, fallback: string) {
+  return spec.bookProfile ? spec.bookProfile.creativeGenres.join('、') || '未限定' : knowledge.options.find(o => o.group === 'reading.main')?.label ?? fallback;
+}
 export function validateTagInput(raw: unknown, catalog: TagCatalog): TagInput {
   const input = tagInputSchema.parse(raw);
   for (const group of catalog.groups) {
     const [section, field] = group.id.split('.') as ['reading' | 'content', string];
     const value = (input.selection[section] as Record<string, string | string[]>)[field];
     const ids = Array.isArray(value) ? value : [value];
-    if (ids.length < group.min || ids.length > group.max || new Set(ids).size !== ids.length)
+    const selected = ids.filter(Boolean);
+    const minimum = input.bookProfile && group.id === 'reading.main' ? 0 : group.min;
+    if (selected.length < minimum || selected.length > group.max || new Set(selected).size !== selected.length)
       throw new Error('标签数量超出本地选择范围，或存在重复选择：' + group.id);
-    for (const id of ids)
+    for (const id of selected)
       if (!catalog.options.some((o) => o.id === id && o.group === group.id && o.status !== 'retired'))
         throw new Error('未知、停用或错分组的标签：' + id);
   }
   return input;
+}
+function profileFields(input: TagInput, catalog: TagCatalog) {
+  if (!input.bookProfile) return {};
+  const resolved = resolveBookProfile(input.bookProfile, catalog.publishingSnapshots ?? []);
+  if (resolved.profile.publishing && [input.selection.reading.main, ...input.selection.reading.theme, ...input.selection.reading.role, ...input.selection.reading.plot].some(Boolean))
+    throw new Error('请分别保存旧标签或新的频道分类，不要混用两套阅读分类');
+  return { bookProfile: resolved.profile, ...(resolved.catalog ? { publishingCatalog: resolved.catalog } : {}) };
 }
 export function makeBookSpec(
   p: ProjectState,
@@ -123,6 +174,7 @@ export function makeBookSpec(
   const valid = validateTagInput(input, catalog);
   const value = {
     ...valid,
+    ...profileFields(valid, catalog),
     projectId: p.id,
     revision,
     taxonomyVersion: catalog.taxonomyVersion,
@@ -138,9 +190,11 @@ export function makeBookSpec(
 export function makeCreationSpec(p: ProjectState, input: unknown, revision: number, catalog: TagCatalog): BookSpec {
   const valid = tagInputSchema.parse(input);
   if (valid.selection.reading.main) return makeBookSpec(p, valid, revision, catalog);
-  if (selectedIds(valid).length) throw new Error('使用平台标签时必须选择主分类；未覆盖题材可只填写创意');
-  if (!valid.premise.trim()) throw new Error('请填写创作想法或选择合法标签');
-  const value = { ...valid, projectId: p.id, revision, taxonomyVersion: catalog.taxonomyVersion,
+  if (selectedIds(valid).length && !valid.bookProfile) throw new Error('使用平台标签时必须选择主分类；未覆盖题材可只填写创意');
+  if (valid.bookProfile) validateTagInput(valid, catalog);
+  const profile = profileFields(valid, catalog);
+  if (!valid.premise.trim() && !valid.bookProfile?.publishing && !valid.bookProfile?.creativeGenres.length) throw new Error('请填写创作想法或选择合法标签');
+  const value = { ...valid, ...profile, projectId: p.id, revision, taxonomyVersion: catalog.taxonomyVersion,
     preferences: { targetWords: p.config.targetWords, pov: p.config.pov, style: p.config.style, constraints: p.config.constraints } };
   return { ...value, inputHash: tagHash(value) };
 }
@@ -148,22 +202,27 @@ export function compileTags(spec: BookSpec, root: string): TagKnowledge {
   const b = tagBundle(root);
   if (spec.taxonomyVersion !== b.taxonomy.taxonomyVersion) throw new Error('标签库版本不匹配；请先审阅迁移');
   const policy = assessTagPolicy(b.taxonomy, spec.selection);
-  if (!selectedIds(spec).length) {
+  if (!selectedIds(spec).length && !spec.bookProfile) {
     if (!spec.premise.trim()) throw new Error('创意开书需要填写想法');
     return { version: b.version, options: [], genre: null, cards: [], rules: [], recipes: [], candidates: [], coverage: [], policy };
   }
   validateTagInput(
-    { selection: spec.selection, premise: spec.premise, mustKeep: spec.mustKeep, mustAvoid: spec.mustAvoid },
+    { selection: spec.selection, premise: spec.premise, mustKeep: spec.mustKeep, mustAvoid: spec.mustAvoid, ...(spec.bookProfile ? { bookProfile: spec.bookProfile } : {}) },
     b.taxonomy
   );
-  const options = selectedIds(spec).map((id) => b.taxonomy.options.find((o) => o.id === id)!);
+  const published = spec.bookProfile?.publishing
+    ? publishingOptions(spec.bookProfile, verifyPublishingSnapshot(spec.publishingCatalog)) : [];
+  const options = [...legacySelectedIds(spec).map((id) => b.taxonomy.options.find((o) => o.id === id)!),
+    ...published.map(o => ({ id: o.id, group: o.group, label: o.label, conceptId: o.conceptId ?? o.id,
+      editorialFlags: [], status: 'active', sourceRef: spec.publishingCatalog!.id, sourceLabel: '番茄公开书库分类' }))];
   const concepts = new Set(options.map((o) => o.conceptId));
   const cards = b.cards.filter((c) => concepts.has(c.conceptId));
   const recipes = b.recipes.filter((r) => r.mainOptionIds.includes(spec.selection.reading.main));
   return {
     version: b.version,
     options,
-    genre: b.genres.find((g) => g.mainOptionId === spec.selection.reading.main),
+    genre: spec.bookProfile ? { creativeGenres: spec.bookProfile.creativeGenres, publishing: spec.bookProfile.publishing,
+      note: '发布分类仅用于平台归类；创作题材可混搭，不自动补入世界规则。' } : b.genres.find((g) => g.mainOptionId === spec.selection.reading.main),
     cards,
     rules: b.rules.filter((r) => r.allOfConceptIds.every((c) => concepts.has(c))),
     recipes: recipes.filter((r) => r.allOfConceptIds.every((c) => concepts.has(c))),
@@ -239,11 +298,12 @@ function validateFrozenReportMetadata(report: PlanningReport, planning: TagPlann
 
 export function validateReport(value: unknown, planning: TagPlanning) {
   // Fill only omitted legacy bookkeeping; never shorten or synthesize story text.
-  const schema = planning.directionFormatVersion === 1 ? planningReportSchema.extend({
+  const schema = planning.directionFormatVersion ? planningReportSchema.extend({
     diagnosis: planningReportSchema.shape.diagnosis.default([]),
     marketClaims: planningReportSchema.shape.marketClaims.default([]),
     unresolvedQuestions: planningReportSchema.shape.unresolvedQuestions.default([]),
     directions: z.array(planningReportSchema.shape.directions.element.extend({
+      worldSuggestions: planning.directionFormatVersion === 2 ? z.array(worldSuggestionSchema).max(12) : z.array(worldSuggestionSchema).max(12).optional(),
       tagCoverage: planningReportSchema.shape.directions.element.shape.tagCoverage.default([])
     })).length(3)
   }) : planningReportSchema;
@@ -254,7 +314,7 @@ export function validateReport(value: unknown, planning: TagPlanning) {
     throw new Error('方向编号重复或推荐不存在');
   if (new Set(report.assumptions.map((a) => a.id)).size !== report.assumptions.length)
     throw new Error('假设编号重复');
-  for (const d of report.directions.filter(d => planning.directionFormatVersion !== 1 || d.tagCoverage.length))
+  for (const d of report.directions.filter(d => !planning.directionFormatVersion || d.tagCoverage.length))
     sameSet(
       d.tagCoverage.map((t) => t.optionId),
       ids,
@@ -273,6 +333,12 @@ export function validateReport(value: unknown, planning: TagPlanning) {
   }
   for (const a of report.assumptions)
     if (a.directionIds.some((id) => !directionIds.includes(id))) throw new Error('假设引用了不存在的方向');
+  for (const direction of report.directions) {
+    const suggestions = direction.worldSuggestions ?? [];
+    if (new Set(suggestions.map(s => s.moduleId)).size !== suggestions.length) throw new Error('同一方向的模块建议重复');
+    if (suggestions.some(s => s.assumptionIds.some(id => !report.assumptions.some(a => a.id === id && (!a.directionIds.length || a.directionIds.includes(direction.id))))))
+      throw new Error('模块建议引用了不存在或属于其他方向的假设');
+  }
   if (planning.regenerate) {
     const { original, directionId, keepDirectionIds } = planning.regenerate;
     if (keepDirectionIds !== undefined && (
@@ -390,7 +456,7 @@ export function planningBinding(store: FileStore, r: Run) {
     throw new Error('策划依据版本已改变');
   if (t.phase === 'ready' && r.changes.length) {
     const configured = structuredClone(store.db.project());
-    configured.config.genre = t.knowledge.options.find((o) => o.group === 'reading.main')?.label ?? configured.config.genre;
+    configured.config.genre = creationGenre(t.spec, t.knowledge, configured.config.genre);
     if (
       candidateChangesForCurrentSettings(store, r).find((c) => c.path === paths.config)?.content !==
       updateConfigDocument(store.readAccepted(paths.config).content, configured)
@@ -418,6 +484,12 @@ export function planningIssues(r: Run): Issue[] {
     const expected = renderContract(t.spec, t.candidate);
     const allowed =
       t.origin === 'new' ? [contractPath, paths.config, paths.seed] : [contractPath, paths.config];
+    if (t.spec.bookProfile) {
+      allowed.push(bookProfilePath);
+      const profiles = r.changes.filter(c => c.path === bookProfilePath);
+      if (profiles.length !== 1 || profiles[0].content !== renderBookProfile(t.spec.bookProfile, t.spec.publishingCatalog ?? null))
+        throw new Error('创作与发布资料与当前策划输入不一致，请重新核对');
+    }
     if (r.facts.length || r.changes.some((c) => !allowed.includes(c.path)))
       throw new Error('标签策划不能改写其他正文或登记事件记忆');
     if (r.changes.find((c) => c.path === contractPath)?.content !== expected)

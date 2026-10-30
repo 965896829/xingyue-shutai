@@ -9,7 +9,7 @@ import { needsNewChapterCandidate } from '../shared/task-revision';
 import { requestErrorText, retryNeedsConfirmation } from '../shared/run-presentation';
 import { taskProblemLinks, taskTurnId } from '../shared/task-links';
 import { WebSearchEvidence } from './WebSearchEvidence';
-import { GenerationStatus } from './GenerationStatus';
+import { GenerationStatus, GenerationStep } from './GenerationStatus';
 import { ContextCompactions } from './ContextMeter';
 import { latestContext, type ContextUsage } from '../shared/context-meter';
 
@@ -124,11 +124,12 @@ export function TaskDiscussion({ conversationId, projectSessionId, run, limits, 
       const turn = data.turns.find(turn => turn.id === message.turnId);
       return <article key={message.id} id={message.role === 'assistant' ? taskTurnId(message.turnId) : undefined} className={message.role === 'user' ? 'user-message' : 'assistant-message'}>
         <small>{message.role === 'user' ? '你' : '任务助手'}{' '}
-          {message.role === 'assistant' && <GenerationStatus activity={turn?.activity} running={message.status === 'running'} fallbackStart={message.createdAt}
+          {message.role === 'assistant' && <GenerationStatus variant="elapsed" activity={turn?.activity} running={message.status === 'running'} fallbackStart={message.createdAt}
             label={{ running: '', complete: '已完成', stopped: '已停止', unknown: '请求结果未知', failed: '未完成' }[message.status]} />}
         </small>
         <LiveMarkdown label="任务对话" binding={{ session: projectSessionId, kind: 'chat', conversation: conversationId, id: message.role === 'user' ? message.id : message.turnId, text: message.content, running: message.status === 'running' }} citations={message.webSearch?.citations} fallback="本次没有返回回答" />
         {message.role === 'assistant' && <>
+          <GenerationStep activity={turn?.activity} running={message.status === 'running'} />
           <WebSearchEvidence state={message.webSearch} running={message.status === 'running'} />
           <ContextCompactions items={turn?.contextCompactions} activity={turn?.activity} running={message.status === 'running'} />
           {turn?.error && <p className="inline-warning">{requestErrorText(turn.error)}</p>}

@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { writingStyleRequestSchema, writingStyleReportSchema } from './writing-style';
+import { bookProfileSchema, bookProfileStateSchema, publishingSnapshotSchema } from './publishing';
+import { marketEvidenceSchema, marketRequestSchema } from './market-evidence';
 import { managementStatusSchema } from './management';
 import { configSchema, profileSchema, protocolSchema, stageIds } from './types';
 import { searchSettingsSchema } from './assistant';
@@ -10,6 +13,13 @@ import { errorCodes } from './errors';
 import { reasoningEffortSchema } from './reasoning';
 import { narrativeDataSchema } from './narrative-curve';
 import { manuscriptViewSchema } from './manuscript-view';
+import { creativeInputSchema } from './creative';
+import { qualityStateSchema, qualityMutationSchema, qualityStatsSchema, worldModelSchema } from './quality';
+import { designInputSchema, designEntrySchema } from './design';
+import { experienceSchema } from './experience';
+import { reviewFeedbackSchema } from './blind-review';
+import { workbenchBindingSchema, workbenchViewSchema } from './workbench';
+import { candidateViewSchema, plotMutationSchema, plotViewSchema, reorderDecisionSchema, reorderPreviewSchema, stateHistorySchema, workbenchMediaSchema, workbenchScopeBindingSchema } from './workbench-visual';
 
 const text = z.string();
 const key = text.min(1);
@@ -46,6 +56,40 @@ function define<I extends z.ZodType, O extends z.ZodType>(input: I, output: O, a
 }
 
 export const commandContracts = {
+  'style.recommend': define(writingStyleRequestSchema, writingStyleReportSchema, 'remote', 'global'),
+  'style.cancel': define(z.strictObject({ requestId: z.string().uuid() }), ok, 'write', 'global'),
+  'publishing.refresh': define(empty, z.object({ updated: ok, catalog: publishingSnapshotSchema, message: text }), 'remote', 'global'),
+  'publishing.market': define(marketRequestSchema, marketEvidenceSchema, 'remote', 'global'),
+  'publishing.read': define(empty, bookProfileStateSchema),
+  'publishing.propose': define(z.strictObject({ profile: bookProfileSchema, baseHash: text.nullable(), snapshotId: key }), key, 'write'),
+  'run.reviewProse': define(z.strictObject({ id: key, proposalHash: key, profileId: key }), key, 'write'),
+  'quality.read': define(empty, qualityStateSchema),
+  'workbench.read': define(z.strictObject({ scope: memoryScopeSchema }), workbenchViewSchema),
+  'workbench.field': define(z.strictObject({ binding: workbenchBindingSchema, fieldId: key, value: text.max(4000) }), key, 'write'),
+  'workbench.lock': define(z.strictObject({ binding: workbenchBindingSchema, fieldId: key, locked: ok }), ok, 'write'),
+  'workbench.discuss': define(z.strictObject({ binding: workbenchBindingSchema }), schemas.conversationSchema, 'write'),
+  'workbench.plot': define(z.strictObject({ scope: memoryScopeSchema, chapter: integer.min(1) }), plotViewSchema),
+  'workbench.plotPropose': define(z.strictObject({ binding: workbenchScopeBindingSchema, baseHash: text.nullable(), mutation: plotMutationSchema }), key, 'write'),
+  'workbench.reorderPreview': define(z.strictObject({ binding: workbenchScopeBindingSchema, order: z.array(integer.min(1)).min(2).max(5000) }), reorderPreviewSchema),
+  'workbench.reorderPropose': define(z.strictObject({ binding: workbenchScopeBindingSchema, order: z.array(integer.min(1)).min(2).max(5000), fingerprint: key, decisions: z.array(reorderDecisionSchema) }), key, 'write'),
+  'workbench.history': define(z.strictObject({ binding: workbenchBindingSchema, compareSnapshotId: optionalText }), stateHistorySchema),
+  'workbench.avatar': define(z.strictObject({ binding: workbenchBindingSchema }), z.strictObject({ metadata: workbenchMediaSchema, dataUrl: text }).nullable()),
+  'workbench.avatarPropose': define(z.strictObject({ binding: workbenchBindingSchema, dataUrl: text.max(4_300_000).nullable(), name: key.max(200), revealedAt: integer.nullable() }), key, 'write'),
+  'workbench.candidates': define(z.strictObject({ binding: workbenchScopeBindingSchema, objectId: optionalText }), z.array(candidateViewSchema)),
+  'workbench.accept': define(z.strictObject({ id: key, fingerprint: key, groups: z.array(key).min(1) }), ok, 'write'),
+  'workbench.branch': define(z.strictObject({ id: key, fingerprint: key, title: key.max(80) }), schemas.draftArtifactSchema, 'write'),
+  'workbench.worldImpact': define(z.strictObject({ binding: workbenchScopeBindingSchema, moduleId: key }), z.array(z.strictObject({ path: key, reason: text }))),
+  'quality.exportReview': define(z.strictObject({ experimentIds: z.array(key).min(1).max(100) }), z.strictObject({ packetId: key, html: text }), 'write'),
+  'quality.importReview': define(z.strictObject({ expectedRevision: integer, feedback: reviewFeedbackSchema }), z.strictObject({ state: qualityStateSchema, imported: integer, duplicate: ok }), 'write'),
+  'design.list': define(empty, z.array(designEntrySchema)),
+  'experience.read': define(z.object({ throughChapter: integer.min(1).max(1000) }).strict(), experienceSchema),
+  'design.run': define(z.object({ input: designInputSchema, profileId: optionalText }).strict(), key, 'write'),
+  'quality.mutate': define(z.strictObject({ expectedRevision: integer, mutation: qualityMutationSchema }), qualityStateSchema, 'write'),
+  'quality.statistics': define(z.strictObject({ experimentId: key }), qualityStatsSchema),
+  'quality.presentation': define(identity, z.object({ id: key, questions: z.array(text), candidates: z.array(z.object({ alias: key, text, hash: key })) })),
+  'quality.voice': define(z.strictObject({ ids: z.array(key).min(1).max(50) }), key, 'write'),
+  'world.read': define(empty, z.object({ model: worldModelSchema, baseHash: text.nullable() })),
+  'world.propose': define(z.strictObject({ model: worldModelSchema, baseHash: text.nullable() }), key, 'write'),
   'management.status': define(empty, managementStatusSchema, 'read', 'global'),
   'management.open': define(empty, ok, 'system', 'global'),
   'management.link': define(empty, text.url(), 'system', 'global'),
@@ -62,7 +106,7 @@ export const commandContracts = {
   'app.chooseFile': { ...define(z.strictObject({ save: flag, name: optionalText }), text.nullable(), 'system', 'global'), timeout: 1_830_000 },
   'app.reveal': define(empty, ok, 'system'),
   'app.openUrl': define(z.strictObject({ url: text.url() }), ok, 'system', 'global'),
-  'project.create': define(z.strictObject({ parent: key, title: text.max(80).optional(), premise: text, tagInput: tagInputSchema.optional(), creationInput: tagInputSchema.optional(), config: configSchema.optional() }), schemas.snapshotSchema, 'lifecycle', 'global'),
+  'project.create': define(z.strictObject({ parent: key, title: text.max(80).optional(), premise: text, tagInput: tagInputSchema.optional(), creationInput: tagInputSchema.optional(), bookProfile: bookProfileSchema.optional(), config: configSchema.optional() }), schemas.snapshotSchema, 'lifecycle', 'global'),
   'project.open': define(z.strictObject({ root: key }), schemas.snapshotSchema, 'lifecycle', 'global'),
   'project.close': define(empty, schemas.snapshotSchema, 'lifecycle', 'global'),
   'project.preview': define(z.strictObject({ title: optionalText, premise: optionalText, config: configSchema.optional() }), z.array(text), 'read', 'global'),
@@ -146,6 +190,8 @@ export const commandContracts = {
   'draft.checkpoint': define(z.strictObject({ id: key, content: optionalText }), ok, 'write'),
   'skills.list': define(empty, z.array(z.object({ id: text, title: text, host: ok, description: text, stage: text, optional: ok, path: text, contract: text, sha256: text, tools: z.array(text) })), 'read', 'global'),
   'expression.catalog': define(empty, schemas.expressionCatalogSchema, 'read', 'global'),
+  'creative.run': define(z.strictObject({ input: creativeInputSchema, profileId: optionalText }), text, 'write'),
+  'creative.characters': define(z.strictObject({ chapter: integer.min(1) }), z.array(z.object({ id: key, name: key }))),
   'skill.run': define(z.strictObject({ skillId: key, request: optionalText, profileId: optionalText, feedback: z.strictObject({ source: key, window: key, sampleSize: integer, synthetic: ok }).optional() }), z.union([text, z.array(text),
     schemas.contextManifestSchema, z.object({ documents: z.array(schemas.documentInfoSchema), issues: z.array(text) }), retrieval.extend({ entities: z.array(entity) }),
     z.object({ batch: z.object({ start: integer, end: integer }), chapter: integer, complete: ok })]), 'write'),
@@ -165,8 +211,11 @@ export const commandContracts = {
   'proposal.cancel': define(identity, schemas.actionProposalSchema, 'write'),
   'draft.list': define(empty, z.array(schemas.draftArtifactSchema)),
   'draft.read': define(z.strictObject({ id: key, hash: optionalText }), draftRead),
+  'draft.fork': define(z.object({ id: key, hash: key, title: key.max(80) }).strict(), schemas.draftArtifactSchema, 'write'),
+  'draft.merge': define(z.object({ id: key, hash: key, chapter: integer.min(1).max(100000), baseHash: text.nullable(), mode: z.enum(['replace', 'append']) }).strict(), key, 'write'),
   'draft.save': define(z.object({ id: optionalText, title: key.max(80), content: key.max(2_000_000), baseHash: optionalText, conversationId: key, messageId: key }), schemas.draftArtifactSchema, 'write'),
   'draft.promote': define(z.strictObject({ id: key, hash: key, profileId: key, kind: z.enum(['stage', 'revision']).optional(), scope: key }), schemas.actionProposalSchema, 'write'),
+  'draft.chapter': define(z.strictObject({ id: key, hash: key, profileId: key }), key, 'write'),
   'assistant.settings': define(empty, settings, 'read', 'global'),
   'assistant.role.save': define(z.strictObject({ id: key, text }), settings, 'write', 'global'),
   'assistant.role.reset': define(identity, settings, 'write', 'global'),

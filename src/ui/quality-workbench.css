@@ -1,0 +1,27 @@
+.modal.quality-workbench { width: min(1040px, 94vw); max-width: 1040px; height: min(820px, 92vh); }
+.quality-tabs { display: flex; gap: 6px; padding: 10px 20px; border-bottom: 1px solid var(--border, #8883); overflow-x: auto; flex-shrink: 0; }
+.quality-tabs button { white-space: nowrap; }
+.quality-body { padding: 20px; overflow: auto; min-height: 0; }
+.quality-body fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 18px; }
+.quality-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.quality-body label { display: grid; gap: 8px; }
+.quality-body input, .quality-body textarea, .quality-body select { width: 100%; min-width: 0; }
+.quality-body textarea { min-height: 96px; resize: vertical; }
+.quality-cards { display: grid; gap: 12px; }
+.quality-cards article, .quality-grid article { border: 1px solid var(--border, #8883); border-radius: 10px; padding: 16px; overflow-wrap: anywhere; }
+.quality-cards h3, .quality-grid h3 { margin: 0 0 12px; font-size: 15px; }
+.quality-cards p { margin: 10px 0; }
+.quality-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.quality-actions input { flex: 1; min-width: 160px; }
+.quality-body .quality-select { display: flex; align-items: center; gap: 10px; }
+.quality-select input { width: auto; }
+.quality-select span { margin-left: auto; white-space: nowrap; font-size: 12px; opacity: .7; }
+.quality-body dl { display: grid; gap: 8px; }
+.quality-body dl div { display: grid; grid-template-columns: 48px 1fr; gap: 8px; }
+.quality-body dd { margin: 0; }
+.quality-body dt { opacity: .65; }
+.quality-prose, .quality-body pre { white-space: pre-wrap; line-height: 1.8; overflow-wrap: anywhere; }
+.quality-body details > summary { cursor: pointer; padding: 10px 0; }
+.quality-body .branch-editor { min-height: 300px; line-height: 1.9; }
+.quality-world { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
+@media (max-width: 700px) { .quality-grid, .quality-world { grid-template-columns: 1fr; } .quality-tabs { padding-inline: 12px; } .quality-body { padding: 14px; } }

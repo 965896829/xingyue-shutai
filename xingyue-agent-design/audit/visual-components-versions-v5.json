@@ -1,0 +1,54 @@
+{
+  "verifiedAt": "2026-10-29",
+  "scope": "Official GitHub releases; package license files read separately; no install or integration tests",
+  "components": [
+    {
+      "repo": "xyflow/xyflow",
+      "version": "@xyflow/react@12.12.0",
+      "publishedAt": "2026-09-24T12:39:56Z",
+      "url": "https://github.com/xyflow/xyflow/releases/tag/%40xyflow/react%4012.12.0"
+    },
+    {
+      "repo": "antvis/G6",
+      "version": "5.1.1",
+      "publishedAt": "2026-04-17T03:19:19Z",
+      "url": "https://github.com/antvis/G6/releases/tag/5.1.1"
+    },
+    {
+      "repo": "cytoscape/cytoscape.js",
+      "version": "v3.34.4",
+      "publishedAt": "2026-10-15T19:12:35Z",
+      "url": "https://github.com/cytoscape/cytoscape.js/releases/tag/v3.34.4"
+    },
+    {
+      "repo": "apache/echarts",
+      "version": "6.1.0",
+      "publishedAt": "2026-05-19T17:38:29Z",
+      "url": "https://github.com/apache/echarts/releases/tag/6.1.0"
+    },
+    {
+      "repo": "visjs/vis-timeline",
+      "version": "v8.5.6",
+      "publishedAt": "2026-10-26T17:20:12Z",
+      "url": "https://github.com/visjs/vis-timeline/releases/tag/v8.5.6"
+    },
+    {
+      "repo": "yjs/yjs",
+      "version": "v13.6.33",
+      "publishedAt": "2026-09-23T16:37:33Z",
+      "url": "https://github.com/yjs/yjs/releases/tag/v13.6.33"
+    }
+  ],
+  "projectStack": {
+    "electron": "44.6.0",
+    "react": "19.3.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.3",
+    "reactQuery": "5.103.1",
+    "pi": "1.4.0"
+  },
+  "referenceCommits": {
+    "novalist": "176673f36923db488b444e2ef2552d5611cb88fb",
+    "storyline": "6aa9800fddd7800d8af3e1fea0ce3023b58fff14"
+  }
+}

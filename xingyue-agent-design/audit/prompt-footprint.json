@@ -1,0 +1,306 @@
+{
+  "head": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "version": "0.4.82",
+  "method": "本地展开systemPrompt及expressionPack；默认配置/题材/第一章；Unicode码点；非token；不计作者资料、工具schema、runner额外指令、消息历史；未调用模型",
+  "outputs": [
+    {
+      "stage": "S01",
+      "mode": "tools",
+      "systemPromptChars": 18517,
+      "expressionChars": 4718,
+      "expressionRules": 48,
+      "totalBeforeRunnerAdditions": 23235
+    },
+    {
+      "stage": "S02",
+      "mode": "tools",
+      "systemPromptChars": 18256,
+      "expressionChars": 4718,
+      "expressionRules": 48,
+      "totalBeforeRunnerAdditions": 22974
+    },
+    {
+      "stage": "S03",
+      "mode": "tools",
+      "systemPromptChars": 18107,
+      "expressionChars": 4718,
+      "expressionRules": 48,
+      "totalBeforeRunnerAdditions": 22825
+    },
+    {
+      "stage": "S04",
+      "mode": "tools",
+      "systemPromptChars": 22606,
+      "expressionChars": 4718,
+      "expressionRules": 48,
+      "totalBeforeRunnerAdditions": 27324
+    },
+    {
+      "stage": "S05",
+      "mode": "tools",
+      "systemPromptChars": 19798,
+      "expressionChars": 4718,
+      "expressionRules": 48,
+      "totalBeforeRunnerAdditions": 24516
+    },
+    {
+      "stage": "S06",
+      "mode": "tools",
+      "systemPromptChars": 18544,
+      "expressionChars": 4718,
+      "expressionRules": 48,
+      "totalBeforeRunnerAdditions": 23262
+    },
+    {
+      "stage": "S07",
+      "mode": "tools",
+      "systemPromptChars": 20660,
+      "expressionChars": 4718,
+      "expressionRules": 48,
+      "totalBeforeRunnerAdditions": 25378
+    },
+    {
+      "stage": "S08",
+      "mode": "tools",
+      "systemPromptChars": 21475,
+      "expressionChars": 4718,
+      "expressionRules": 48,
+      "totalBeforeRunnerAdditions": 26193
+    },
+    {
+      "stage": "S09",
+      "mode": "tools",
+      "systemPromptChars": 21733,
+      "expressionChars": 4718,
+      "expressionRules": 48,
+      "totalBeforeRunnerAdditions": 26451
+    },
+    {
+      "stage": "S10",
+      "mode": "prose",
+      "systemPromptChars": 16377,
+      "expressionChars": 23526,
+      "expressionRules": 192,
+      "totalBeforeRunnerAdditions": 39903,
+      "narrativeStreamExtraChars": 573
+    },
+    {
+      "stage": "S10",
+      "mode": "review",
+      "systemPromptChars": 12710,
+      "expressionChars": 24886,
+      "expressionRules": 204,
+      "totalBeforeRunnerAdditions": 37596
+    },
+    {
+      "stage": "S11",
+      "mode": "memory",
+      "systemPromptChars": 14826,
+      "expressionChars": 4712,
+      "expressionRules": 48,
+      "totalBeforeRunnerAdditions": 19538
+    }
+  ],
+  "expressionModes": [
+    {
+      "mode": "planning",
+      "chars": 4718,
+      "modules": [
+        "IMG",
+        "LEX",
+        "SYN",
+        "VOICE"
+      ],
+      "rules": 48
+    },
+    {
+      "mode": "prose",
+      "chars": 23526,
+      "modules": [
+        "ACT",
+        "CHAR",
+        "DIA",
+        "EMO",
+        "IMG",
+        "LEX",
+        "LIFE",
+        "META",
+        "PLOT",
+        "POV",
+        "SCN",
+        "SER",
+        "STATE",
+        "SYN",
+        "VOICE",
+        "WORLD"
+      ],
+      "rules": 192
+    },
+    {
+      "mode": "review",
+      "chars": 24886,
+      "modules": [
+        "ACT",
+        "CHAR",
+        "DIA",
+        "EDIT",
+        "EMO",
+        "IMG",
+        "LEX",
+        "LIFE",
+        "META",
+        "PLOT",
+        "POV",
+        "SCN",
+        "SER",
+        "STATE",
+        "SYN",
+        "VOICE",
+        "WORLD"
+      ],
+      "rules": 204
+    },
+    {
+      "mode": "record",
+      "chars": 4712,
+      "modules": [
+        "IMG",
+        "LEX",
+        "SYN",
+        "VOICE"
+      ],
+      "rules": 48
+    },
+    {
+      "mode": "revision",
+      "chars": 24851,
+      "modules": [
+        "ACT",
+        "CHAR",
+        "DIA",
+        "EDIT",
+        "EMO",
+        "IMG",
+        "LEX",
+        "LIFE",
+        "META",
+        "PLOT",
+        "POV",
+        "SCN",
+        "SER",
+        "STATE",
+        "SYN",
+        "VOICE",
+        "WORLD"
+      ],
+      "rules": 204
+    },
+    {
+      "mode": "draft",
+      "chars": 23512,
+      "modules": [
+        "ACT",
+        "CHAR",
+        "DIA",
+        "EMO",
+        "IMG",
+        "LEX",
+        "LIFE",
+        "META",
+        "PLOT",
+        "POV",
+        "SCN",
+        "SER",
+        "STATE",
+        "SYN",
+        "VOICE",
+        "WORLD"
+      ],
+      "rules": 192
+    }
+  ],
+  "namingPromptChars": 8901,
+  "loadedBlocks": [
+    {
+      "skill": "webnovel-premise-lab",
+      "outputMode": "tools",
+      "chars": 7934,
+      "blocks": [
+        {
+          "title": "# 网文创作 Agent 内核规则",
+          "chars": 1986
+        },
+        {
+          "title": "当前专项技能：设定拆解与读者承诺 ---",
+          "chars": 1718
+        },
+        {
+          "title": "references/shared-contract.md ---",
+          "chars": 3469
+        },
+        {
+          "title": "references/agent-guidance.md ---",
+          "chars": 557
+        },
+        {
+          "title": "references/templates/设定拆解模板.md ---",
+          "chars": 184
+        }
+      ]
+    },
+    {
+      "skill": "webnovel-chapter-drafter",
+      "outputMode": "prose",
+      "chars": 6539,
+      "blocks": [
+        {
+          "title": "# 网文创作 Agent 内核规则",
+          "chars": 1986
+        },
+        {
+          "title": "当前专项技能：正文候选写作 ---",
+          "chars": 842
+        },
+        {
+          "title": "references/agent-guidance.md ---",
+          "chars": 982
+        },
+        {
+          "title": "references/style-system.md ---",
+          "chars": 2714
+        }
+      ]
+    },
+    {
+      "skill": "webnovel-chapter-reviewer",
+      "outputMode": "review",
+      "chars": 10443,
+      "blocks": [
+        {
+          "title": "# 网文创作 Agent 内核规则",
+          "chars": 1986
+        },
+        {
+          "title": "当前专项技能：证据式章节审阅 ---",
+          "chars": 1339
+        },
+        {
+          "title": "references/shared-contract.md ---",
+          "chars": 3469
+        },
+        {
+          "title": "references/agent-guidance.md ---",
+          "chars": 644
+        },
+        {
+          "title": "references/templates/章节质量评分模板.md ---",
+          "chars": 266
+        },
+        {
+          "title": "references/style-system.md ---",
+          "chars": 2714
+        }
+      ]
+    }
+  ]
+}

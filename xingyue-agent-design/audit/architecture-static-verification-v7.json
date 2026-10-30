@@ -1,0 +1,3539 @@
+{
+  "designVersion": "V7",
+  "status": "passed",
+  "scope": "static design-artifact verification only",
+  "checkedAt": "2026-10-29T06:53:36.669Z",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "checkerSha256": "1cbb26b968f943e366f01aec686f9a9f56bd61ed0ac26eba772a535fdcbb2a44",
+  "staticChecks": 658,
+  "typescriptContractFiles": 10,
+  "virtualTypeWitnesses": 12,
+  "skills": 19,
+  "operations": 48,
+  "bindings": 50,
+  "promptResources": 112,
+  "architectureCaseDefinitions": 24,
+  "architectureCaseTiers": {
+    "local_contract": 8,
+    "app_integration": 14,
+    "performance": 2
+  },
+  "architectureCasesExecuted": 0,
+  "migrationPhases": [
+    "R0",
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5"
+  ],
+  "fixedCodeSources": 20,
+  "officialResearchSources": 6,
+  "hashedDesignInputFiles": 138,
+  "hashedToolchainInputFiles": 72,
+  "behaviorCasesExecuted": 0,
+  "runtimeIntegrationExecuted": false,
+  "modelCalls": 0,
+  "compilation": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "virtualWitnessHash": "d73570deb3d7ac7af06835345030a46cfbe6b7aa0c2c06298915811543afd87b"
+  },
+  "toolchain": {
+    "node": "v24.22.1",
+    "typescript": "5.9.3",
+    "ajv": "8.20.0"
+  },
+  "checks": [
+    {
+      "name": "contained-file:evaluation/check-architecture-v7.mjs",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:evaluation/check-architecture-v7.mjs",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/architecture-policy-v7.json",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/architecture-policy-v7.json",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/skills-v6/registry.design.json",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/skills-v6/registry.design.json",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/skill-catalog-v6.json",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/skill-catalog-v6.json",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/skills-v6/prompt-map.json",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/skills-v6/prompt-map.json",
+      "passed": true
+    },
+    {
+      "name": "contained-file:evaluation/architecture-v7-cases.json",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:evaluation/architecture-v7-cases.json",
+      "passed": true
+    },
+    {
+      "name": "contained-file:audit/architecture-sources-v7.json",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:audit/architecture-sources-v7.json",
+      "passed": true
+    },
+    {
+      "name": "actual-ajv-schema:architecture-policy",
+      "passed": true,
+      "errors": null
+    },
+    {
+      "name": "actual-ajv-schema:architecture-case-definitions",
+      "passed": true,
+      "errors": null
+    },
+    {
+      "name": "actual-ajv-schema:source-index",
+      "passed": true,
+      "errors": null
+    },
+    {
+      "name": "preserved-catalog-and-registry-state",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:concept-forge",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:story-contract",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:co-creation",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:co-creation.rehearse:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:world-design",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:character-design",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:scene-contract",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:voice-calibration.learn-edits:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:chapter-draft.explore:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:chapter-review",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:chapter-review.first-read:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:revision",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:revision.local:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:revision.story:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:memory-delta",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:memory-review",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:memory-query",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:character-reflection",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:canon-audit",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:canon-audit.patterns:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:market-evidence",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:packaging",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "retained-inactive-package:reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "retained-unavailable-unique-binding:reader-feedback.compare:",
+      "passed": true
+    },
+    {
+      "name": "retained-19-skills-48-operations-50-bindings",
+      "passed": true
+    },
+    {
+      "name": "same-catalog-skill-identities",
+      "passed": true
+    },
+    {
+      "name": "same-default-workflow-kinds",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:concept-forge",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:story-contract",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:world-design",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:character-design",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:market-evidence",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:packaging",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:rolling-outline",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:scene-contract",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:chapter-draft",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:chapter-review",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:memory-delta",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:memory-review",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:co-creation",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:voice-calibration",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:memory-query",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:reader-feedback",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:revision",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:character-reflection",
+      "passed": true
+    },
+    {
+      "name": "one-default-workflow-owner:canon-audit",
+      "passed": true
+    },
+    {
+      "name": "all-retained-skills-owned",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:concept-forge.create:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:concept-forge.regenerate:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:story-contract.build:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:story-contract.review:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:story-contract.configure:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:co-creation.discuss:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:co-creation.compare:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:co-creation.propose:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:co-creation.rehearse:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:world-design.create:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:world-design.profile:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:world-design.inherit:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:world-design.stress-test:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:character-design.create:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:rolling-outline.book:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:rolling-outline.volume:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:rolling-outline.roadmap:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:rolling-outline.rhythm:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:rolling-outline.batch:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:scene-contract.plan:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:voice-calibration.extract:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:voice-calibration.calibrate:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:voice-calibration.update:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:voice-calibration.pilot:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:voice-calibration.learn-edits:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:chapter-draft.draft:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:chapter-draft.explore:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:chapter-review.review:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:chapter-review.first-read:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:revision.voice:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:revision.local:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:revision.story:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:memory-delta.extract:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:memory-review.review:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:memory-query.answer:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:character-reflection.reflect:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:canon-audit.continuity:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:canon-audit.impact:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:canon-audit.promise:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:canon-audit.ending:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:canon-audit.patterns:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:market-evidence.research:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:packaging.entity-name:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:packaging.title:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:packaging.blurb:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:packaging.review:entity_name",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:packaging.review:book_title",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:packaging.review:blurb",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:reader-feedback.analyze:",
+      "passed": true
+    },
+    {
+      "name": "exact-inactive-workflow-binding:reader-feedback.compare:",
+      "passed": true
+    },
+    {
+      "name": "full-50-binding-bijection",
+      "passed": true
+    },
+    {
+      "name": "112-distinct-prompt-identities-and-paths",
+      "passed": true
+    },
+    {
+      "name": "contained-file:runtime/agent.vnext.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:runtime/agent.vnext.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P01",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/concept-forge.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/concept-forge.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P02",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/story-contract.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/story-contract.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P03",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/co-creation-editor.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/co-creation-editor.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P04",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/object-lenses.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/object-lenses.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P05",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/rolling-outline.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/rolling-outline.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P06",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/scene-contract.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/scene-contract.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P07",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/voice-calibration.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/voice-calibration.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P08",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/pilot-scenes.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/pilot-scenes.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P09",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/chapter-draft.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/chapter-draft.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P10",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/chapter-review.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/chapter-review.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P11",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/voice-revision.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/voice-revision.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P12",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/local-repair.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/local-repair.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P13",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/memory-delta-v3.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/memory-delta-v3.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P14",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/memory-review-v3.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/memory-review-v3.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P15",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/memory-query-v3.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/memory-query-v3.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P16",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/character-reflection-v3.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/character-reflection-v3.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P17",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/market-evidence.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/market-evidence.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P18",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/reader-feedback.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/reader-feedback.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P19",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/ending-audit.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/ending-audit.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P20",
+      "passed": true
+    },
+    {
+      "name": "contained-file:modules/fanqie-editorial.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:modules/fanqie-editorial.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P21",
+      "passed": true
+    },
+    {
+      "name": "contained-file:modules/prose-voice.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:modules/prose-voice.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P22",
+      "passed": true
+    },
+    {
+      "name": "contained-file:modules/continuity.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:modules/continuity.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P23",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/requirements-and-directions.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/requirements-and-directions.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P24",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts/memory-delta.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts/memory-delta.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P25",
+      "passed": true
+    },
+    {
+      "name": "contained-file:runtime/agent.compat.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:runtime/agent.compat.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P26",
+      "passed": true
+    },
+    {
+      "name": "contained-file:creation/direction-planning/planner.system.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:creation/direction-planning/planner.system.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P27",
+      "passed": true
+    },
+    {
+      "name": "contained-file:creation/tags/prompts/contract.system.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:creation/tags/prompts/contract.system.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P28",
+      "passed": true
+    },
+    {
+      "name": "contained-file:creation/tags/prompts/reviewer.system.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:creation/tags/prompts/reviewer.system.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P29",
+      "passed": true
+    },
+    {
+      "name": "contained-file:creation/title-market-editing/writer.system.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:creation/title-market-editing/writer.system.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P30",
+      "passed": true
+    },
+    {
+      "name": "contained-file:creation/title-market-editing/reviewer.system.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:creation/title-market-editing/reviewer.system.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P31",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-project-bootstrap/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-project-bootstrap/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P32",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-premise-lab/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-premise-lab/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P33",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-project-config/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-project-config/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P34",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-world-engine/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-world-engine/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P35",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-character-engine/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-character-engine/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P36",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-volume-architect/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-volume-architect/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P37",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-chapter-roadmap/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-chapter-roadmap/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P38",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-rhythm-designer/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-rhythm-designer/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P39",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-batch-outline/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-batch-outline/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P40",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-chapter-planner/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-chapter-planner/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P41",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-chapter-drafter/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-chapter-drafter/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P42",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-chapter-reviewer/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-chapter-reviewer/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P43",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-memory-extractor/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-memory-extractor/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P44",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-voice-profile/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-voice-profile/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P45",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-prose-polisher/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-prose-polisher/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P46",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-continuity-audit/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-continuity-audit/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P47",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-revision-cascade/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-revision-cascade/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P48",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-market-research/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-market-research/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P49",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-name-governance/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-name-governance/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P50",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-packaging/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-packaging/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P51",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-reader-feedback/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-reader-feedback/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P52",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-narrative-telemetry/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-narrative-telemetry/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P53",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-batch-close/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-batch-close/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P54",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-context-retriever/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-context-retriever/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P55",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-project-validator/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-project-validator/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P56",
+      "passed": true
+    },
+    {
+      "name": "contained-file:compat/skills/webnovel-memory-audit/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:compat/skills/webnovel-memory-audit/SKILL.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:P57",
+      "passed": true
+    },
+    {
+      "name": "contained-file:runtime/agent.v5.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:runtime/agent.v5.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P01",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/concept-forge-create.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/concept-forge-create.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P02",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/concept-forge-regenerate.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/concept-forge-regenerate.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P03",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/world-design-core.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/world-design-core.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P04",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/world-design-profile.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/world-design-profile.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P05",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/world-design-inherit.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/world-design-inherit.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P06",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/world-design-create.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/world-design-create.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P07",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/world-design-stress-test.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/world-design-stress-test.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P08",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/co-creation-propose.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/co-creation-propose.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P09",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/story-contract-build.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/story-contract-build.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P10",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/market-evidence-research.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/market-evidence-research.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P11",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/packaging-title.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/packaging-title.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P12",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/packaging-review.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/packaging-review.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P13",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/scene-contract-plan.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/scene-contract-plan.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P14",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/chapter-draft-draft.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/chapter-draft-draft.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P15",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/memory-delta-extract.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/memory-delta-extract.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P16",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/canon-audit-continuity.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/canon-audit-continuity.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P17",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/canon-audit-impact.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/canon-audit-impact.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P18",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/canon-audit-promise.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/canon-audit-promise.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P19",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/packaging-blurb.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/packaging-blurb.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P20",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v5/memory-review-review.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v5/memory-review-review.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V5P21",
+      "passed": true
+    },
+    {
+      "name": "contained-file:runtime/agent.v6.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:runtime/agent.v6.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P01",
+      "passed": true
+    },
+    {
+      "name": "contained-file:runtime/agent.reader-prefix.v6.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:runtime/agent.reader-prefix.v6.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P02",
+      "passed": true
+    },
+    {
+      "name": "contained-file:runtime/agent.character-turn.v6.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:runtime/agent.character-turn.v6.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P03",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/co-creation.shared.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/co-creation.shared.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P04",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/rolling-outline.shared.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/rolling-outline.shared.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P05",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/voice-calibration.shared.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/voice-calibration.shared.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P06",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/chapter-draft.shared.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/chapter-draft.shared.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P07",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/chapter-review.shared.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/chapter-review.shared.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P08",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/revision.shared.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/revision.shared.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P09",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/canon-audit.shared.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/canon-audit.shared.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P10",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/reader-feedback.shared.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/reader-feedback.shared.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P11",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/concept-forge.create.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/concept-forge.create.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P12",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/concept-forge.regenerate.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/concept-forge.regenerate.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P13",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/story-contract.build.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/story-contract.build.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P14",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/co-creation.propose.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/co-creation.propose.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P15",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/co-creation.rehearse.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/co-creation.rehearse.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P16",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/co-creation.rehearse.method.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/co-creation.rehearse.method.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P17",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/rolling-outline.volume.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/rolling-outline.volume.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P18",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/rolling-outline.batch.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/rolling-outline.batch.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P19",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/scene-contract.plan.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/scene-contract.plan.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P20",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/voice-calibration.update.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/voice-calibration.update.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P21",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/voice-calibration.learn-edits.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/voice-calibration.learn-edits.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P22",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/chapter-draft.draft.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/chapter-draft.draft.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P23",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/chapter-draft.explore.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/chapter-draft.explore.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P24",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/chapter-review.review.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/chapter-review.review.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P25",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/chapter-review.first-read.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/chapter-review.first-read.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P26",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/chapter-review.first-read.method.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/chapter-review.first-read.method.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P27",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/revision.voice.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/revision.voice.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P28",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/revision.local.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/revision.local.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P29",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/memory-delta.extract.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/memory-delta.extract.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P30",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/memory-review.review.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/memory-review.review.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P31",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/canon-audit.patterns.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/canon-audit.patterns.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P32",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/reader-feedback.compare.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/reader-feedback.compare.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P33",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/prompts-v6/reader-feedback.analyze.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/prompts-v6/reader-feedback.analyze.md",
+      "passed": true
+    },
+    {
+      "name": "retained-prompt-hash:V6P34",
+      "passed": true
+    },
+    {
+      "name": "policy-preserves-one-state-authority",
+      "passed": true
+    },
+    {
+      "name": "scope-and-contracts-reuse",
+      "passed": true
+    },
+    {
+      "name": "whole-request-and-feedback-isolation-declared",
+      "passed": true
+    },
+    {
+      "name": "explicit-effects-and-host-recovery",
+      "passed": true
+    },
+    {
+      "name": "core-same-version-and-optional-projections",
+      "passed": true
+    },
+    {
+      "name": "R0-through-R5-exact-order",
+      "passed": true
+    },
+    {
+      "name": "24-unique-sequential-not-run-cases",
+      "passed": true
+    },
+    {
+      "name": "case-tier-counts-8-14-2",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-01",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-02",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-03",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-04",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-05",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-06",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-07",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-08",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-09",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-10",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-11",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-12",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-13",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-14",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-15",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-16",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-17",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-18",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-19",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-20",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-21",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-22",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-23",
+      "passed": true
+    },
+    {
+      "name": "case-private-oracle:V7-A-24",
+      "passed": true
+    },
+    {
+      "name": "contained-file:evaluation/quality-creative-v6-cases.json",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:evaluation/quality-creative-v6-cases.json",
+      "passed": true
+    },
+    {
+      "name": "contained-file:evaluation/platform-world-v5-cases.json",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:evaluation/platform-world-v5-cases.json",
+      "passed": true
+    },
+    {
+      "name": "contained-file:evaluation/skills-v4-cases.json",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:evaluation/skills-v4-cases.json",
+      "passed": true
+    },
+    {
+      "name": "26-unique-source-identities",
+      "passed": true
+    },
+    {
+      "name": "20-fixed-code-sources-and-six-official-sources",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C01",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C02",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C03",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C04",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C05",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C06",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C07",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C08",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C09",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C10",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C11",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C12",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C13",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C14",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C15",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C16",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C17",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C18",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C19",
+      "passed": true
+    },
+    {
+      "name": "fixed-commit-code-url:V7C20",
+      "passed": true
+    },
+    {
+      "name": "contained-file:design/agent-architecture-v7.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:design/agent-architecture-v7.md",
+      "passed": true
+    },
+    {
+      "name": "contained-file:design/current-architecture-audit-v7.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:design/current-architecture-audit-v7.md",
+      "passed": true
+    },
+    {
+      "name": "contained-file:design/implementation-backlog-v7.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:design/implementation-backlog-v7.md",
+      "passed": true
+    },
+    {
+      "name": "contained-file:design/acceptance-protocol-v7.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:design/acceptance-protocol-v7.md",
+      "passed": true
+    },
+    {
+      "name": "contained-file:design/codex-handoff-v7.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:design/codex-handoff-v7.md",
+      "passed": true
+    },
+    {
+      "name": "contained-file:design/optimization-plan-v7.md",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:design/optimization-plan-v7.md",
+      "passed": true
+    },
+    {
+      "name": "backlog-phase-heading-order",
+      "passed": true
+    },
+    {
+      "name": "document-no-renderer-citation-tokens:design/agent-architecture-v7.md",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/agent-architecture-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/task-loop.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/agent-architecture-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/storage.ts",
+      "passed": true
+    },
+    {
+      "name": "document-no-renderer-citation-tokens:design/current-architecture-audit-v7.md",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/electron/main.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/electron/worker.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/task-loop.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/executor.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/model-gateway.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/tool-gateway.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/commit-kernel.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/storage.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/storage.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/shared/types.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/snapshot-codec.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/service.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/service.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runner.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/domain.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/skill-registry.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/tool-gateway.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/memory-studio.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/context-compiler.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/storage.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/memory-studio.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runner.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runner.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/refactor-runtime.test.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/refactor-crash.test.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/memory-safety.test.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/current-architecture-audit-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/scale.ts",
+      "passed": true
+    },
+    {
+      "name": "document-no-renderer-citation-tokens:design/implementation-backlog-v7.md",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/implementation-backlog-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/storage.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/implementation-backlog-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/task-loop.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/implementation-backlog-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/storage.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/implementation-backlog-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/snapshot-codec.ts",
+      "passed": true
+    },
+    {
+      "name": "document-no-renderer-citation-tokens:design/acceptance-protocol-v7.md",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/acceptance-protocol-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/scale.ts",
+      "passed": true
+    },
+    {
+      "name": "document-no-renderer-citation-tokens:design/codex-handoff-v7.md",
+      "passed": true
+    },
+    {
+      "name": "document-no-renderer-citation-tokens:design/optimization-plan-v7.md",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/package.json",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/electron/main.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/electron/worker.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/task-loop.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/service.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runner.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/skill-registry.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/storage.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/memory-studio.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/shared/types.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/context-compiler.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/snapshot-codec.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/tool-gateway.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/model-gateway.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/domain.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/refactor-crash.test.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/scale.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/operations.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/commit-kernel.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/scheduler.ts",
+      "passed": true
+    },
+    {
+      "name": "document-fixed-code-reference:design/optimization-plan-v7.md:/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/execution-records.ts",
+      "passed": true
+    },
+    {
+      "name": "ten-root-typescript-contract-files",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/architecture-contracts-v7.ts",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/architecture-contracts-v7.ts",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/character-mind-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/character-mind-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/co-creation-contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/co-creation-contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/contracts.ts",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/memory-contracts-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/memory-contracts-v3.ts",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/quality-creative-contracts-v6.ts",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/quality-creative-contracts-v6.ts",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/skill-runtime-v4.ts",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/skill-runtime-v4.ts",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/skill-runtime-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/skill-runtime-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/skill-runtime-v6.ts",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/skill-runtime-v6.ts",
+      "passed": true
+    },
+    {
+      "name": "contained-file:vnext/world-contracts-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "consistent-input-read:vnext/world-contracts-v5.ts",
+      "passed": true
+    },
+    {
+      "name": "new-typescript-has-no-comments",
+      "passed": true
+    },
+    {
+      "name": "strict-noUncheckedIndexedAccess-typescript",
+      "passed": true,
+      "diagnostics": []
+    },
+    {
+      "name": "no-javascript-or-witness-file-emitted",
+      "passed": true
+    },
+    {
+      "name": "all-design-input-hashes-stable",
+      "passed": true
+    },
+    {
+      "name": "all-toolchain-input-hashes-stable",
+      "passed": true
+    }
+  ],
+  "inputFiles": [
+    {
+      "relativePath": "evaluation/check-architecture-v7.mjs",
+      "sha256": "1cbb26b968f943e366f01aec686f9a9f56bd61ed0ac26eba772a535fdcbb2a44"
+    },
+    {
+      "relativePath": "vnext/architecture-policy-v7.json",
+      "sha256": "3f0420beb76dff6241c037bbd65398b97f355fce6795e38a86b5595e1b29c94a"
+    },
+    {
+      "relativePath": "vnext/skills-v6/registry.design.json",
+      "sha256": "627acbbbc75003438b20a4bec4794579404af5c7da4ed2fed30e26e947b999d5"
+    },
+    {
+      "relativePath": "vnext/skill-catalog-v6.json",
+      "sha256": "6c7de0eda8f06b27a095d2a4f11e4a0f11b06ef39c2c6fba609abcf2b179d824"
+    },
+    {
+      "relativePath": "vnext/skills-v6/prompt-map.json",
+      "sha256": "0111bc2fc570b2653b642fb68bbd2c15461d2c51590819e4fcf532d7ddd8d215"
+    },
+    {
+      "relativePath": "evaluation/architecture-v7-cases.json",
+      "sha256": "d81c1909701d115867668b66faf6873ea10502436a3e9166a05c31d28d8cb41b"
+    },
+    {
+      "relativePath": "audit/architecture-sources-v7.json",
+      "sha256": "68b702472cd64a663708d4a38d202f86ce20be2059267e611a5e8618da3e9cd5"
+    },
+    {
+      "relativePath": "runtime/agent.vnext.md",
+      "sha256": "8dd74207910c69456102f3f8946049c2f005e7cea6d39a1d1829512b771dbbde"
+    },
+    {
+      "relativePath": "vnext/prompts/concept-forge.md",
+      "sha256": "51443c40ebc511649d07f4b00c9ddc0ffff82313cfddb6f42a1ca21fb7efe5d2"
+    },
+    {
+      "relativePath": "vnext/prompts/story-contract.md",
+      "sha256": "7f459db623c3fd242fe520c83bf2f15c752f0d107e82aded95b594425fb9298e"
+    },
+    {
+      "relativePath": "vnext/prompts/co-creation-editor.md",
+      "sha256": "9c883e19e77f81eb1e61029a4b75b3e4913fea41a84d6c2d0f0c3ee5631eef47"
+    },
+    {
+      "relativePath": "vnext/prompts/object-lenses.md",
+      "sha256": "66a009d7c1fd3585186c37f91cca6a47dd890d778bfbbc3185d20f5f228e073e"
+    },
+    {
+      "relativePath": "vnext/prompts/rolling-outline.md",
+      "sha256": "fa038dd0378b2b584fe3a912fc5830646404ee4df42e3482d606c6474be521e2"
+    },
+    {
+      "relativePath": "vnext/prompts/scene-contract.md",
+      "sha256": "2697abbd99b2f7602b2eb73fa5a5d3face9743921407199d5c65f3878848e6fb"
+    },
+    {
+      "relativePath": "vnext/prompts/voice-calibration.md",
+      "sha256": "fae53d9ff1c3cfcf60a700b79bb7299e18c38c1744372f977880a53985d55edc"
+    },
+    {
+      "relativePath": "vnext/prompts/pilot-scenes.md",
+      "sha256": "e7e6eb88ab90c3b24ac49ac02f160dbddcf332fb55583ee296e74c5b6c12f0fe"
+    },
+    {
+      "relativePath": "vnext/prompts/chapter-draft.md",
+      "sha256": "4fb7c634be5a28b3855614421a480a3c7d9cb8c25a031146290d2d98ad30bf31"
+    },
+    {
+      "relativePath": "vnext/prompts/chapter-review.md",
+      "sha256": "2b20f997596885f56127371a03863c98cb02853dbfb181eac8112f601c8175eb"
+    },
+    {
+      "relativePath": "vnext/prompts/voice-revision.md",
+      "sha256": "5b392c86aad2389fd8cbec3d1694a94a0358f4fd43f26374d4addfcf0c31485b"
+    },
+    {
+      "relativePath": "vnext/prompts/local-repair.md",
+      "sha256": "d7ad447ae7a27d724438cec4889ebaeedd97d5cdd1bb179ffce8e2aeb3622615"
+    },
+    {
+      "relativePath": "vnext/prompts/memory-delta-v3.md",
+      "sha256": "019ac54a9ae1f8c8753e4b574f44978c37574160aa43eee957f1d971a08ef8ad"
+    },
+    {
+      "relativePath": "vnext/prompts/memory-review-v3.md",
+      "sha256": "f543040f7f0cf4ea6bc50296b6530c2dba8de196863840932ce0e126a4e91190"
+    },
+    {
+      "relativePath": "vnext/prompts/memory-query-v3.md",
+      "sha256": "6e2f75ac15156926daf98cd77c9500b18f235d43ff350eb7623d26ea28203f11"
+    },
+    {
+      "relativePath": "vnext/prompts/character-reflection-v3.md",
+      "sha256": "1feb2845c34e9537647b4d650eb6e72fd346dd3ca93b3ebba021aded5b65a156"
+    },
+    {
+      "relativePath": "vnext/prompts/market-evidence.md",
+      "sha256": "c622a0cdc1a4736c7d0bafb386babd896f86bc32d9de744978cb34aee902cf63"
+    },
+    {
+      "relativePath": "vnext/prompts/reader-feedback.md",
+      "sha256": "e2a4a9632bcebba21bc5449b4960fb5c28084dfb30fe6e85e67b499125ed3cde"
+    },
+    {
+      "relativePath": "vnext/prompts/ending-audit.md",
+      "sha256": "cd784b02ec86949f6dd1c1867bcca7eb4a724f3c7c84679192e3481ef12df9d7"
+    },
+    {
+      "relativePath": "modules/fanqie-editorial.md",
+      "sha256": "fda2e41503712160b07f9e96245a89ec004a4ce40c78fa5305e4fbfa2c5ce4f2"
+    },
+    {
+      "relativePath": "modules/prose-voice.md",
+      "sha256": "3ed68ac4eef18c7fc30d7f8ba0a0d565554f913cf2ce7e5e9df627f0e27d0440"
+    },
+    {
+      "relativePath": "modules/continuity.md",
+      "sha256": "6057d1f36f666e7e30a470d7b6cb59cf8055024d38646ac206868884c84d5eb4"
+    },
+    {
+      "relativePath": "vnext/prompts/requirements-and-directions.md",
+      "sha256": "25f92445aaf079b6560bdad3d2dc9eaa25449a75c6f9b561897169cc42da1436"
+    },
+    {
+      "relativePath": "vnext/prompts/memory-delta.md",
+      "sha256": "6ef8c5385500988be8c03b55014c9635f0cb409f0416fdbe2eb382c442166f50"
+    },
+    {
+      "relativePath": "runtime/agent.compat.md",
+      "sha256": "c8290e87375f558e4d5f395fff31268d3630a7720ef5879af5c58790b3ec2552"
+    },
+    {
+      "relativePath": "creation/direction-planning/planner.system.md",
+      "sha256": "ae4e32b0888a03284c247387c5eff5dd447a7c7b535c192006ad7ec7ab66d148"
+    },
+    {
+      "relativePath": "creation/tags/prompts/contract.system.md",
+      "sha256": "cafc3e3e464ea4e041db7100127203bfec0b8ca0459eb7438f9b73c8ce0e7d22"
+    },
+    {
+      "relativePath": "creation/tags/prompts/reviewer.system.md",
+      "sha256": "8871a56094e5b2cba029beb025c80c856cf63f0f6623b3b8aeba96ea416c6dfc"
+    },
+    {
+      "relativePath": "creation/title-market-editing/writer.system.md",
+      "sha256": "7c325b2698ab2293323e8dda7c252d940e36e12df1a31bcd00f3eddcf72803d2"
+    },
+    {
+      "relativePath": "creation/title-market-editing/reviewer.system.md",
+      "sha256": "15e376bd0db7528e131e2ee9a551bc5a219389e8a43e0c1686ceab1761465101"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-project-bootstrap/SKILL.md",
+      "sha256": "0e007442cb5797702888d6331417c34afbd86497040c6fc6fcc35a8635df9315"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-premise-lab/SKILL.md",
+      "sha256": "7b367e2eb40008fae2bca70b913e46d9fed309c77e4a976e9725083b8911ed98"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-project-config/SKILL.md",
+      "sha256": "8b1944d3ac81ba535e70ffc79219c7582ba0764036066bc33277b5fdfc3d8559"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-world-engine/SKILL.md",
+      "sha256": "cffee46c0f7e30d7142cc2e45c9a33d6de8428d012f69ee41a0167386df7fa0d"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-character-engine/SKILL.md",
+      "sha256": "ca3347d01ab8ee47d2bd38844c61c9517c19da8a95b409497ee6ece421510cb7"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-volume-architect/SKILL.md",
+      "sha256": "410266c578508353c51525695e528a9dd29f63eece03260594d8c71f4c4cb52c"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-chapter-roadmap/SKILL.md",
+      "sha256": "b8aab22ee5c90838daa6fcbc3f88329c535f915642bd3139321533ee618ce5fd"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-rhythm-designer/SKILL.md",
+      "sha256": "10ad78e13908d357c58cd9ac90a673e17d3eeafbfd71b61676847c42c584b515"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-batch-outline/SKILL.md",
+      "sha256": "db66b91a86bc5b0c67fae81157d517107936e9e1383f409a5522bf2d12bc6294"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-chapter-planner/SKILL.md",
+      "sha256": "09c99ed1c1582f91eacaa47e77787428a7d9f474389bbea419db712422742e43"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-chapter-drafter/SKILL.md",
+      "sha256": "a1e88d5c7027e574560074f690fd37e4a4b5393f6dac0d0e6542783e13a27897"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-chapter-reviewer/SKILL.md",
+      "sha256": "f1b9032e845ce1517a0a9e7ab89f35bb3a70a6d7035e4a1232b53dca3ac03e5b"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-memory-extractor/SKILL.md",
+      "sha256": "6aecb6e4b1a2b37fa20a4b27c99c510253e1fe6fb36ee873681010e7abf16e33"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-voice-profile/SKILL.md",
+      "sha256": "4fe180fb59cbd7bf2bd0faba9f17a7ff1e4467cc38988a7d4b1b1fd6f1ebaf46"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-prose-polisher/SKILL.md",
+      "sha256": "063ea08455cca89e02f7e8aebe82462720137d9145bea9d557cf0eecd8a4c6f8"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-continuity-audit/SKILL.md",
+      "sha256": "ecd40e1cde265d91c5c701e4f5224d5b743d347b31fd01fbce0c51862cec45fe"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-revision-cascade/SKILL.md",
+      "sha256": "160bb1fd8ab3ba4accd4582c6b20e4f9247fbe5fbce1a0cabdffb8e74e45058f"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-market-research/SKILL.md",
+      "sha256": "166fb8bf0b3fc3d8f5cdcd575d0f314fb7e76ce0921f888b792e3365faa87f88"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-name-governance/SKILL.md",
+      "sha256": "545e71e0c039ba573a34054e606b20bc0d7207ba0616d44a546ef742b6455b37"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-packaging/SKILL.md",
+      "sha256": "81be17ffc14159b64a1407d8879e3dbeaf8650042f6811d29b5b36bf039a8c6b"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-reader-feedback/SKILL.md",
+      "sha256": "60d928717d4b9b5e0ac09ed83416716cc8981eea2abcc2ffd69b006a4afb5f7f"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-narrative-telemetry/SKILL.md",
+      "sha256": "10c079bdb0e5c24f6f080b37805a3c8e51bc1a23598237daa4346908dc0c5110"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-batch-close/SKILL.md",
+      "sha256": "426ec007deb74247b76ced88d53bf4fd65b4c763baf787e64d8f3b78fadde122"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-context-retriever/SKILL.md",
+      "sha256": "0ba2534f277fd60429539b1c3194f76d611882eccc8ca57b8e2e9b2f3823e668"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-project-validator/SKILL.md",
+      "sha256": "8e676ba09217f3be3e9a7e2ce1cab8af1d68a0ce65baa90948f1c160a0bff8aa"
+    },
+    {
+      "relativePath": "compat/skills/webnovel-memory-audit/SKILL.md",
+      "sha256": "1155f4fb7c372b175640293def48c5613d9b5f539c47d5ff2062223f4f31ea45"
+    },
+    {
+      "relativePath": "runtime/agent.v5.md",
+      "sha256": "0885941f29bc81a9f29fc1635ff88e740b1f110fa91194d6ce900142c7778d67"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/concept-forge-create.md",
+      "sha256": "7a059e62a7a35c0c8aeb503a2727e5a649e7d25e9c99db391c89ab8323091d0e"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/concept-forge-regenerate.md",
+      "sha256": "aa29d3da5225fbfc2b4aaefbf447c261f1c3d3bb9c0db1c9cd77669310b05897"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/world-design-core.md",
+      "sha256": "0715d5cd2323bbbde7b8dd6aff3d53cf08e116643c26d1f3e829279577dd3182"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/world-design-profile.md",
+      "sha256": "470718a0900044f98ce101673b61afa6552c22f73fe3f74bfd369ec51fe210f0"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/world-design-inherit.md",
+      "sha256": "ba5fb3284d4cf345ada9d6deffdcb3bbb9908e15ece9540128f9a9e95f21ab79"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/world-design-create.md",
+      "sha256": "3b888e632316a3cd29e556584e61783def54abeff48846991af814edcafd7d5e"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/world-design-stress-test.md",
+      "sha256": "5e79b2dde690e5075808c01210b442364349c5ab903bb1402233cc98a4b21beb"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/co-creation-propose.md",
+      "sha256": "a7abc7494d7b03c8291804812bcef8d0a38cc9f80522e32adebeaccdbee3e640"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/story-contract-build.md",
+      "sha256": "c174f810acab363f064870dfb886ab573121220ed32ce84d009b8c24dfdbc244"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/market-evidence-research.md",
+      "sha256": "25a5ec4b31e34205c5ec1e714c0bc920dfc2cbf5ef2826d4ca2a060f49fe1cb3"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/packaging-title.md",
+      "sha256": "def386a74bcfecaff74f7884d1595e7b31aa0f8281a06cdd2cb98bb1a4ec1997"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/packaging-review.md",
+      "sha256": "e95a25862d29a321a641a8f2ce3c002b6dc36452c42543cc74c48197679573ac"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/scene-contract-plan.md",
+      "sha256": "2b051b43fc907925422c8b26cc37a6b20454d80ffd57cd878360a97ac22c5721"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/chapter-draft-draft.md",
+      "sha256": "6c53a1bd536f91cac0eb7f82f008d789dcfedcf55a18db78bd1c909982cb98e0"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/memory-delta-extract.md",
+      "sha256": "fa9260abc2b5d52ce7dc995ad6ce96c84456de4c6b9bb857f51f58e8382b0cdb"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/canon-audit-continuity.md",
+      "sha256": "838e371f9e34cf223a824f13e0b691bed04281a2e23555b4681f538468337fb5"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/canon-audit-impact.md",
+      "sha256": "4be2898daf442c6af11ca47c215f5d362434107bce4c45a1f0e339bedcc4170c"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/canon-audit-promise.md",
+      "sha256": "a1ee3c842bbc70efee0892d669233148d3a084a7dc2ea5e90baa9c9a82a49beb"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/packaging-blurb.md",
+      "sha256": "0c633d5cb386688fa2f703d15cf644263bddafa49506883c00d58afde48b8ab6"
+    },
+    {
+      "relativePath": "vnext/prompts-v5/memory-review-review.md",
+      "sha256": "3c5abf8272087b79b2acd874542effb00b1e861aaedeef5cff356f61853e58e5"
+    },
+    {
+      "relativePath": "runtime/agent.v6.md",
+      "sha256": "9a5d490f77f551df9d49cd37e283c5919e8a4e052a42559f5495a717ab623f69"
+    },
+    {
+      "relativePath": "runtime/agent.reader-prefix.v6.md",
+      "sha256": "e9fc74f9fcfb184d2f2ee4ff82e5ba0cf23f8b367c4d087a09065ddd8ff35c5f"
+    },
+    {
+      "relativePath": "runtime/agent.character-turn.v6.md",
+      "sha256": "00b7bc5f2d80f6bc1f1c5b73ab8d28c0e91a4ecddb0da970bbcd8fce880b8b9c"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/co-creation.shared.md",
+      "sha256": "0261b0831a767249d8588ba427c850912272d80ececb4d25765b5d6089049172"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/rolling-outline.shared.md",
+      "sha256": "af42fb6b30e5f0480a96287a68c121629a88459778a7c849637a4703f3d01c5a"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/voice-calibration.shared.md",
+      "sha256": "4b9e2330dd1572e5825a4e7f051d5764682ce941fbb801cd834a97fea9f31a76"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/chapter-draft.shared.md",
+      "sha256": "2941673b2b725a9482ffaef88d8181744c6c861f4cfb5b527b2fdbd36bba41fb"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/chapter-review.shared.md",
+      "sha256": "515d3393326b7f60850b595b6bb8119960eb6286636470221178ba2b134f7668"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/revision.shared.md",
+      "sha256": "633471afcc3efbe4f60b9c724819c22b9cdd367851f7f8eda81d5532ee870b0d"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/canon-audit.shared.md",
+      "sha256": "2f9f0bb2457bca3453adfa32cb7701a7dcc52324b9bbd390adb4bf02160173d0"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/reader-feedback.shared.md",
+      "sha256": "6b0770055c2631b3050267e62e104068d39b86edd4ee633caf32ef9ae5bb6d6d"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/concept-forge.create.md",
+      "sha256": "6a301152c2dbf0858ce6e9da11966b48f7bf6f63b1c42f227f52555b9c2cbe04"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/concept-forge.regenerate.md",
+      "sha256": "36dd86925c6c3e55550dcaa83afca91f2727411f9a35e4ba7a689d9381290da5"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/story-contract.build.md",
+      "sha256": "50b6dec098d845e91aab19825101793e4fb388f5ae28231db8b98ec2b93198b0"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/co-creation.propose.md",
+      "sha256": "63067e7041f69f1de9d780b82bf92d34e0711030b6cd59106634a0839ec9c5a7"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/co-creation.rehearse.md",
+      "sha256": "9bc4df076175cc7457c1e87bfdc4d8e80e8006b5d5862cdb632406db36403d47"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/co-creation.rehearse.method.md",
+      "sha256": "e40d5ffc78afef16a0a5605c41cc7b118f50b625c9568e52600bcea723db6d65"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/rolling-outline.volume.md",
+      "sha256": "f6e5f8d82149936a18e002aab9e3ef10512dea315e7a891160546fb45f246a43"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/rolling-outline.batch.md",
+      "sha256": "5818a8f9e6eb970984f945ff9675d2bd5bc6a7a07d3ae84564b9fb3040a50e8b"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/scene-contract.plan.md",
+      "sha256": "3bc2b57d7036772cdd8894dfa5681023dd54ba5a6e0b3c8cd5ba18a19943cd59"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/voice-calibration.update.md",
+      "sha256": "7387fc19c8265a1602c4b6d66c46f7e31bbfff5f3834c024d6d73bfd8f5101dd"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/voice-calibration.learn-edits.md",
+      "sha256": "b5ccb4375592bbb05ab618ce53e6e747dd84050cf86413d903c3ceacf61aff5e"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/chapter-draft.draft.md",
+      "sha256": "5e1e1e24b325115a2bd9487cbcb1d34d5f919aac553e9050e096cd5c2c01cd78"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/chapter-draft.explore.md",
+      "sha256": "016ba283cd5d7df6883249ccf5293c4bc53294bff8f99bb58c73def453fa7007"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/chapter-review.review.md",
+      "sha256": "3b3251b60c42677ebede879c06e76aa83380eab701330e3e282616eb47fc0a79"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/chapter-review.first-read.md",
+      "sha256": "31b9b15901f81d9b2d15d21d608dd0082bb4144cd7282cf306d4e7a4ef152789"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/chapter-review.first-read.method.md",
+      "sha256": "b0f3ce5e819ae1514a891c8d6e24eca3973b040a4b984b4dce7aba6586e97f8b"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/revision.voice.md",
+      "sha256": "c6d87677f3eb5595512d93f352e3cd8e497a851edaf63493190cf72cfef39b5d"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/revision.local.md",
+      "sha256": "8312fcd91c4a2828552afc4ac566f18f6197fead0cdb88c2dcad47d37a99d287"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/memory-delta.extract.md",
+      "sha256": "c1a282a3390f6c76a675aed1e97a4abefae050830bd59d8efceff79c65140d8c"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/memory-review.review.md",
+      "sha256": "69bee38ddba4769459384d22bc4dcb14b5e5e29605357ca3b67c375945be1623"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/canon-audit.patterns.md",
+      "sha256": "894ebbcc0d502266f780313c1db68adbe300f21129fa22c4c973ac48349751f7"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/reader-feedback.compare.md",
+      "sha256": "f5232b494285d17cb038b7f5c22bcf1e954b1f5fd3471cbfadab97d55074fdb2"
+    },
+    {
+      "relativePath": "vnext/prompts-v6/reader-feedback.analyze.md",
+      "sha256": "3bbc059c81d179b4fbcd1a8f71f1b29fc8837f59e243baec9d7fcefac7cbba07"
+    },
+    {
+      "relativePath": "evaluation/quality-creative-v6-cases.json",
+      "sha256": "92be0d6139b9509cb49d114c95edb4bfcfaff50844266c8d4f4d4e5e601041a8"
+    },
+    {
+      "relativePath": "evaluation/platform-world-v5-cases.json",
+      "sha256": "9e735f1dc70365f14804c0a7115877eef63c1e6f47cc7137313db11ac508d33c"
+    },
+    {
+      "relativePath": "evaluation/skills-v4-cases.json",
+      "sha256": "972f51f8ed6a178dc61028670104294d6623b67a84c37761ed7b2dcef7b4de48"
+    },
+    {
+      "relativePath": "design/agent-architecture-v7.md",
+      "sha256": "fa2444a53a10b430f17e3c1df5d99e162d5f941056b8ce70fd4a4badb6964fa1"
+    },
+    {
+      "relativePath": "design/current-architecture-audit-v7.md",
+      "sha256": "054273562490014e3346f8389de61815a0a6f55170b711517f91fcc07c6b0a7e"
+    },
+    {
+      "relativePath": "design/implementation-backlog-v7.md",
+      "sha256": "79711aaac08186731b949185092b206f44e3f30c004c63bf3202cc2ad294a41d"
+    },
+    {
+      "relativePath": "design/acceptance-protocol-v7.md",
+      "sha256": "0b6c0bebbd2440815aa3e38b257a8ecbc14d755746d0420b44bd52ec10932080"
+    },
+    {
+      "relativePath": "design/codex-handoff-v7.md",
+      "sha256": "1232bc068445fd333609e7a8331c882e8259272bccab1e22954a198c0883b387"
+    },
+    {
+      "relativePath": "design/optimization-plan-v7.md",
+      "sha256": "70e176bbb4f42891b1c1ef56aba8f1b48fa74592ec05fdc339ceb7528158c658"
+    },
+    {
+      "relativePath": "vnext/architecture-contracts-v7.ts",
+      "sha256": "ef4daec0032eb9ca432e13458ec930dd862be828d8b56db3e52f11e3197596fa"
+    },
+    {
+      "relativePath": "vnext/character-mind-v3.ts",
+      "sha256": "6bb6b0841b3ae938ace6015b497ee447547a7c292ccd3ad5c4b400decfc8c46f"
+    },
+    {
+      "relativePath": "vnext/co-creation-contracts.ts",
+      "sha256": "69d71646e3d3b8148b25efdcfb5f9719f1dca65b27683479bac96a6be23131d5"
+    },
+    {
+      "relativePath": "vnext/contracts.ts",
+      "sha256": "7538eadcf729298a6e72749dc221d1b585a231027b803da03a5382f929a79975"
+    },
+    {
+      "relativePath": "vnext/memory-contracts-v3.ts",
+      "sha256": "fe86966dd0d87c21ae8d9360f54821b5d2d1b707e4d6ad9e6176b88a04ccd8c2"
+    },
+    {
+      "relativePath": "vnext/quality-creative-contracts-v6.ts",
+      "sha256": "0914c8ff82ab449357a75dc888eb90c36e4f917a87351425140160ee38357553"
+    },
+    {
+      "relativePath": "vnext/skill-runtime-v4.ts",
+      "sha256": "9a752888c2f7ee6c6cb09da7fbe47d1b42cf0581d4b13e0eaf655fa76b957c56"
+    },
+    {
+      "relativePath": "vnext/skill-runtime-v5.ts",
+      "sha256": "b1d09411604923772edb8748080ce1bc3af197fd575d181feaf5f5a92d943c07"
+    },
+    {
+      "relativePath": "vnext/skill-runtime-v6.ts",
+      "sha256": "8620456a7a34f50fc3ac9b820911b8d7111814decc0bbfb6f43adaeba2523599"
+    },
+    {
+      "relativePath": "vnext/world-contracts-v5.ts",
+      "sha256": "57ae1da8c875b4906a382f5d4f208c98665b4f8d842c38fbc56897c93a93fd01"
+    }
+  ],
+  "externalInputs": [
+    {
+      "reference": "[repository]/package.json",
+      "sha256": "1cebf9dc7f8d3dbc21cde89149496a8460b2071279cbd70c5588f8653fdc086c"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/typescript.js",
+      "sha256": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/package.json",
+      "sha256": "822ef7ca6452205657b6288b066481ecf508bfbf43455d715cf7d3ec457561e6"
+    },
+    {
+      "reference": "[repository]/node_modules/ajv/dist/ajv.js",
+      "sha256": "edaed56fc546f5551b0d6dc2ff2a9cc25c2d6c83318a086eaa8c3ad0b2479297"
+    },
+    {
+      "reference": "[repository]/node_modules/ajv/package.json",
+      "sha256": "1f9033ee5a6515e7d76938b7072941862d1ed228a6879cc7fe10cdeb75107989"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es5.d.ts",
+      "sha256": "c430d44666289dae81f30fa7b2edebf186ecc91a2d4c71266ea6ae76388792e1"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2015.d.ts",
+      "sha256": "45b7ab580deca34ae9729e97c13cfd999df04416a79116c3bfb483804f85ded4"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2016.d.ts",
+      "sha256": "3facaf05f0c5fc569c5649dd359892c98a85557e3e0c847964caeb67076f4d75"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2017.d.ts",
+      "sha256": "e44bb8bbac7f10ecc786703fe0a6a4b952189f908707980ba8f3c8975a760962"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2018.d.ts",
+      "sha256": "5e1c4c362065a6b95ff952c0eab010f04dcd2c3494e813b493ecfd4fcb9fc0d8"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2019.d.ts",
+      "sha256": "68d73b4a11549f9c0b7d352d10e91e5dca8faa3322bfb77b661839c42b1ddec7"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2020.d.ts",
+      "sha256": "5efce4fc3c29ea84e8928f97adec086e3dc876365e0982cc8479a07954a3efd4"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2021.d.ts",
+      "sha256": "feecb1be483ed332fad555aff858affd90a48ab19ba7272ee084704eb7167569"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2022.d.ts",
+      "sha256": "ee7bad0c15b58988daa84371e0b89d313b762ab83cb5b31b8a2d1162e8eb41c2"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2023.d.ts",
+      "sha256": "27bdc30a0e32783366a5abeda841bc22757c1797de8681bbe81fbc735eeb1c10"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.dom.d.ts",
+      "sha256": "080941d9f9ff9307f7e27a83bcd888b7c8270716c39af943532438932ec1d0b9"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.dom.iterable.d.ts",
+      "sha256": "2e80ee7a49e8ac312cc11b77f1475804bee36b3b2bc896bead8b6e1266befb43"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.dom.asynciterable.d.ts",
+      "sha256": "d7a3c8b952931daebdfc7a2897c53c0a1c73624593fa070e46bd537e64dcd20a"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.webworker.importscripts.d.ts",
+      "sha256": "80e18897e5884b6723488d4f5652167e7bb5024f946743134ecc4aa4ee731f89"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.scripthost.d.ts",
+      "sha256": "cd034f499c6cdca722b60c04b5b1b78e058487a7085a8e0d6fb50809947ee573"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2015.core.d.ts",
+      "sha256": "c57796738e7f83dbc4b8e65132f11a377649c00dd3eee333f672b8f0a6bea671"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2015.collection.d.ts",
+      "sha256": "dc2df20b1bcdc8c2d34af4926e2c3ab15ffe1160a63e58b7e09833f616efff44"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2015.generator.d.ts",
+      "sha256": "515d0b7b9bea2e31ea4ec968e9edd2c39d3eebf4a2d5cbd04e88639819ae3b71"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2015.iterable.d.ts",
+      "sha256": "0559b1f683ac7505ae451f9a96ce4c3c92bdc71411651ca6ddb0e88baaaad6a3"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2015.promise.d.ts",
+      "sha256": "0dc1e7ceda9b8b9b455c3a2d67b0412feab00bd2f66656cd8850e8831b08b537"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2015.proxy.d.ts",
+      "sha256": "ce691fb9e5c64efb9547083e4a34091bcbe5bdb41027e310ebba8f7d96a98671"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2015.reflect.d.ts",
+      "sha256": "8d697a2a929a5fcb38b7a65594020fcef05ec1630804a33748829c5ff53640d0"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2015.symbol.d.ts",
+      "sha256": "4ff2a353abf8a80ee399af572debb8faab2d33ad38c4b4474cff7f26e7653b8d"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts",
+      "sha256": "fb0f136d372979348d59b3f5020b4cdb81b5504192b1cacff5d1fbba29378aa1"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2016.array.include.d.ts",
+      "sha256": "d15bea3d62cbbdb9797079416b8ac375ae99162a7fba5de2c6c505446486ac0a"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2016.intl.d.ts",
+      "sha256": "68d18b664c9d32a7336a70235958b8997ebc1c3b8505f4f1ae2b7e7753b87618"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2017.arraybuffer.d.ts",
+      "sha256": "eb3d66c8327153d8fa7dd03f9c58d351107fe824c79e9b56b462935176cdf12a"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2017.date.d.ts",
+      "sha256": "38f0219c9e23c915ef9790ab1d680440d95419ad264816fa15009a8851e79119"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2017.object.d.ts",
+      "sha256": "69ab18c3b76cd9b1be3d188eaf8bba06112ebbe2f47f6c322b5105a6fbc45a2e"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2017.sharedmemory.d.ts",
+      "sha256": "a680117f487a4d2f30ea46f1b4b7f58bef1480456e18ba53ee85c2746eeca012"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2017.string.d.ts",
+      "sha256": "2f11ff796926e0832f9ae148008138ad583bd181899ab7dd768a2666700b1893"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2017.intl.d.ts",
+      "sha256": "4de680d5bb41c17f7f68e0419412ca23c98d5749dcaaea1896172f06435891fc"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2017.typedarrays.d.ts",
+      "sha256": "954296b30da6d508a104a3a0b5d96b76495c709785c1d11610908e63481ee667"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2018.asyncgenerator.d.ts",
+      "sha256": "ac9538681b19688c8eae65811b329d3744af679e0bdfa5d842d0e32524c73e1c"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2018.asynciterable.d.ts",
+      "sha256": "0a969edff4bd52585473d24995c5ef223f6652d6ef46193309b3921d65dd4376"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2018.intl.d.ts",
+      "sha256": "9e9fbd7030c440b33d021da145d3232984c8bb7916f277e8ffd3dc2e3eae2bdb"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2018.promise.d.ts",
+      "sha256": "811ec78f7fefcabbda4bfa93b3eb67d9ae166ef95f9bff989d964061cbf81a0c"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2018.regexp.d.ts",
+      "sha256": "717937616a17072082152a2ef351cb51f98802fb4b2fdabd32399843875974ca"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2019.array.d.ts",
+      "sha256": "d7e7d9b7b50e5f22c915b525acc5a49a7a6584cf8f62d0569e557c5cfc4b2ac2"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2019.object.d.ts",
+      "sha256": "71c37f4c9543f31dfced6c7840e068c5a5aacb7b89111a4364b1d5276b852557"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2019.string.d.ts",
+      "sha256": "576711e016cf4f1804676043e6a0a5414252560eb57de9faceee34d79798c850"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2019.symbol.d.ts",
+      "sha256": "89c1b1281ba7b8a96efc676b11b264de7a8374c5ea1e6617f11880a13fc56dc6"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2019.intl.d.ts",
+      "sha256": "74f7fa2d027d5b33eb0471c8e82a6c87216223181ec31247c357a3e8e2fddc5b"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2020.bigint.d.ts",
+      "sha256": "d6d7ae4d1f1f3772e2a3cde568ed08991a8ae34a080ff1151af28b7f798e22ca"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2020.date.d.ts",
+      "sha256": "063600664504610fe3e99b717a1223f8b1900087fab0b4cad1496a114744f8df"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2020.promise.d.ts",
+      "sha256": "934019d7e3c81950f9a8426d093458b65d5aff2c7c1511233c0fd5b941e608ab"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2020.sharedmemory.d.ts",
+      "sha256": "52ada8e0b6e0482b728070b7639ee42e83a9b1c22d205992756fe020fd9f4a47"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2020.string.d.ts",
+      "sha256": "3bdefe1bfd4d6dee0e26f928f93ccc128f1b64d5d501ff4a8cf3c6371200e5e6"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2020.symbol.wellknown.d.ts",
+      "sha256": "59fb2c069260b4ba00b5643b907ef5d5341b167e7d1dbf58dfd895658bda2867"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2020.intl.d.ts",
+      "sha256": "639e512c0dfc3fad96a84caad71b8834d66329a1f28dc95e3946c9b58176c73a"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2020.number.d.ts",
+      "sha256": "368af93f74c9c932edd84c58883e736c9e3d53cec1fe24c0b0ff451f529ceab1"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2021.promise.d.ts",
+      "sha256": "af3dd424cf267428f30ccfc376f47a2c0114546b55c44d8c0f1d57d841e28d74"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2021.string.d.ts",
+      "sha256": "995c005ab91a498455ea8dfb63aa9f83fa2ea793c3d8aa344be4a1678d06d399"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2021.weakref.d.ts",
+      "sha256": "959d36cddf5e7d572a65045b876f2956c973a586da58e5d26cde519184fd9b8a"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2021.intl.d.ts",
+      "sha256": "965f36eae237dd74e6cca203a43e9ca801ce38824ead814728a2807b1910117d"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2022.array.d.ts",
+      "sha256": "3925a6c820dcb1a06506c90b1577db1fdbf7705d65b62b99dce4be75c637e26b"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2022.error.d.ts",
+      "sha256": "0a3d63ef2b853447ec4f749d3f368ce642264246e02911fcb1590d8c161b8005"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2022.intl.d.ts",
+      "sha256": "8cdf8847677ac7d20486e54dd3fcf09eda95812ac8ace44b4418da1bbbab6eb8"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2022.object.d.ts",
+      "sha256": "8444af78980e3b20b49324f4a16ba35024fef3ee069a0eb67616ea6ca821c47a"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2022.string.d.ts",
+      "sha256": "3287d9d085fbd618c3971944b65b4be57859f5415f495b33a6adc994edd2f004"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2022.regexp.d.ts",
+      "sha256": "b4b67b1a91182421f5df999988c690f14d813b9850b40acd06ed44691f6727ad"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2023.array.d.ts",
+      "sha256": "df83c2a6c73228b625b0beb6669c7ee2a09c914637e2d35170723ad49c0f5cd4"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2023.collection.d.ts",
+      "sha256": "436aaf437562f276ec2ddbee2f2cdedac7664c1e4c1d2c36839ddd582eeb3d0a"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2023.intl.d.ts",
+      "sha256": "8e3c06ea092138bf9fa5e874a1fdbc9d54805d074bee1de31b99a11e2fec239d"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.decorators.d.ts",
+      "sha256": "8e7f8264d0fb4c5339605a15daadb037bf238c10b654bb3eee14208f860a32ea"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.decorators.legacy.d.ts",
+      "sha256": "782dec38049b92d4e85c1585fbea5474a219c6984a35b004963b00beb1aab538"
+    },
+    {
+      "reference": "[repository]/node_modules/typescript/lib/lib.es2023.full.d.ts",
+      "sha256": "785921608325fa246b450f05b238f4b3ed659f1099af278ce9ebbc9416a13f1d"
+    }
+  ],
+  "limitations": [
+    "Static design-file verification only. No application handler, model request, tool execution, formal commit, recovery path, cache boundary or user interface is executed.",
+    "All 24 V7 scenario definitions remain not_run with executionCount 0. Passing schema and type checks does not execute local_contract, app_integration or performance cases.",
+    "The retained V6 model_output and human_blind evaluations are not executed. No literary quality, reader preference, commercial performance or million-character runtime conclusion is inferred.",
+    "TypeScript compilation and Ajv checks apply to design artifacts. Runtime model-tool schemas, adapters and implementation validators remain unavailable.",
+    "Source checks validate declared fixed-commit and official URL forms; they do not browse, re-fetch or prove the contents of the cited remote pages.",
+    "SHA-256 checks bind this output to observed local inputs. They do not make a model-generated result canonical or authorize a product implementation.",
+    "No network request, provider call, paid model use or change to the source repository is performed."
+  ]
+}

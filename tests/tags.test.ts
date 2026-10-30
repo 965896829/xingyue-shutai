@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { Service } from '../src/core/service';
+import { fixtureCoverage, fixtureAuditEvidence } from './fixtures/chapter-coverage';
 import {
   profileSchema,
   stageIds,
@@ -19,6 +20,7 @@ import {
   validateContract,
   validatePlanningReview,
   planningBinding,
+  planningIssues,
   tagHash,
   tagContext,
   contractPath
@@ -35,7 +37,9 @@ import { approvedCreation, planKinds, recommendedTitleIds, type CreationPlan } f
 import { validateTitleBatch, titleSource, titlePath, namingBinding } from '../src/core/title-naming';
 import { loadTitleStyleProfile } from '../src/core/title-style';
 import { titleStyleProfileSchema, type TitleStyleProfile } from '../src/shared/title-style';
-import { creationDirectionId, runHasCurrentBasis } from '../src/shared/run-presentation';
+import { creationDirectionId, creationTaskState, runHasCurrentBasis } from '../src/shared/run-presentation';
+import { bookProfilePath, bundledPublishingCatalog, readBookProfile, renderBookProfile } from '../src/core/publishing';
+import type { BookProfile } from '../src/shared/publishing';
 import { runSchema } from '../src/shared/contract-schemas';
 import { PublicSearch } from '../src/core/search';
 import { prepareTitleMarketResearch } from '../src/core/title-market-research';
@@ -235,6 +239,7 @@ function reportFor(t: TagPlanning): PlanningReport {
       firstVolumeChange: '稳定供水',
       longRunRisk: '避免重复维修',
       intentChanges: [],
+      ...(t.directionFormatVersion === 2 ? { worldSuggestions: [{ moduleId: 'society-factions', state: 'enabled' as const, reason: '维修协作需要明确组织分工', assumptionIds: [] }] } : {}),
       tagCoverage: t.knowledge.options.map((o) => ({
         optionId: o.id,
         implementation: '方向' + n + '中的实现',
@@ -414,6 +419,7 @@ async function setup(overrides?: {
   config?: Record<string, unknown>;
   unified?: boolean;
   idea?: boolean;
+  creationInput?: TagInput;
 }) {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-tags-'));
   let service: Service;
@@ -460,7 +466,7 @@ async function setup(overrides?: {
     parent,
     ...(overrides?.untitled || overrides?.unified ? {} : { title: '标签测试' }),
     premise: '测试',
-    ...(overrides?.unified ? { creationInput: overrides.idea ? { ...emptyTagInput(), premise: input.premise, mustKeep: input.mustKeep, mustAvoid: input.mustAvoid } : input } : overrides?.legacy ? {} : { tagInput: input }),
+    ...(overrides?.unified ? { creationInput: overrides.creationInput ?? (overrides.idea ? { ...emptyTagInput(), premise: input.premise, mustKeep: input.mustKeep, mustAvoid: input.mustAvoid } : input) } : overrides?.legacy ? {} : { tagInput: input }),
     config: { defaultProfileId: model.id, expressionRules: { enabled: false }, ...overrides?.config }
   });
   return { service, parent };
@@ -620,6 +626,54 @@ async function chooseTitle(s: Service, run: ReturnType<Service['makeRun']>, cand
   const t = s.store!.db.run(run.id).naming!;
   return s.invoke('titles.select', { id: run.id, batchHash: t.review!.hash, candidateId: candidateId ?? t.batch!.candidates[0].id });
 }
+
+for (const channel of [null, 'male', 'female'] as const) test(`新分类开书 ${channel ?? '暂不发布'} 完成方案后可确认、生成书名并采纳，旧错误本地重查且越界仍被阻止`, async () => {
+  const catalog = bundledPublishingCatalog(skill);
+  const profile: BookProfile = { creativeGenres: ['城市建设'], publishing: channel ? {
+    platform: 'fanqie', form: 'original_long', channel, snapshotId: catalog.id,
+    reading: { main: catalog.options.find(o => o.channel === channel && o.group === 'reading.main')!.id, theme: [], role: [], plot: [] }
+  } : null };
+  let calls = 0;
+  const { service } = await setup({ unified: true, creationInput: { ...emptyTagInput(), premise: input.premise, bookProfile: profile },
+    caller: standard => async (...args) => { calls++; return standard(...args); } });
+  service.assistant.search.enabled = false;
+  try {
+    const directions = await start(service);
+    assert.equal(directions.status, 'awaiting_input', directions.error ?? JSON.stringify(directions.issues));
+    let run = await select(service, directions.id);
+    assert.equal(run.planning!.phase, 'ready');
+    assert.deepEqual(run.issues, [], '正式创作与发布投影属于策划范围');
+    const managed = run.changes.find(c => c.path === bookProfilePath)!;
+    assert.equal(managed.content, renderBookProfile(profile, channel ? catalog : null));
+    const checkInvalid = (change: (copy: typeof run) => void) => {
+      const copy = structuredClone(run); change(copy);
+      assert.ok(planningIssues(copy).some(issue => issue.severity === 'error'));
+    };
+    checkInvalid(copy => { copy.changes = copy.changes.filter(c => c.path !== bookProfilePath); });
+    checkInvalid(copy => { copy.changes.push(structuredClone(managed)); });
+    checkInvalid(copy => { copy.changes.find(c => c.path === bookProfilePath)!.content = renderBookProfile({ ...profile, creativeGenres: ['被擅自替换'] }, channel ? catalog : null); });
+    checkInvalid(copy => { copy.changes.push({ path: prosePath(1), content: '不允许改写正文', baseHash: null }); });
+    checkInvalid(copy => { copy.facts.push({} as any); });
+    const before = { candidate: structuredClone(run.planning!.candidate), reportHash: run.planning!.reportHash, calls, rounds: run.rounds, usage: structuredClone(run.usage) };
+    run.issues = [{ code: 'tag_planning', severity: 'error', message: '标签策划不能改写其他正文或登记事件记忆' }];
+    assert.equal(creationTaskState(run).title, '作品方案需要核对');
+    service.store!.db.saveRun(run);
+    const root = service.store!.root; service.close(); await service.invoke('project.open', { root });
+    run = service.store!.db.run(run.id);
+    assert.deepEqual(run.issues, []);
+    assert.equal(creationTaskState(run).title, '作品方案已准备好');
+    assert.deepEqual({ candidate: run.planning!.candidate, reportHash: run.planning!.reportHash, calls, rounds: run.rounds, usage: run.usage }, before);
+    run = await confirmPlan(service, run);
+    const naming = await namePlan(service, run.id);
+    assert.equal(naming.status, 'awaiting_review', naming.error ?? JSON.stringify(naming.issues));
+    await chooseTitle(service, naming);
+    run = service.store!.db.run(run.id);
+    await service.invoke('run.accept', { id: run.id, proposalHash: run.proposalHash!, startNext: false });
+    assert.equal(service.store!.db.project().stage, 'S02');
+    assert.equal(service.store!.db.project().titlePending, false);
+    assert.deepEqual(readBookProfile(service.store!).profile, profile);
+  } finally { await service.drain(); }
+});
 
 test('作者直接修改作品方案：复用已选方向，仅重写方案和自动审核，不重跑选方向或沿用旧书名授权', async () => {
   const requests: string[] = [], revisionInputs: unknown[] = [];
@@ -1117,6 +1171,12 @@ test('统一方案采纳后实际走通保留的十一阶段和逐章正文流�
       if (args[3][0]?.name.startsWith('submit_')) return standard(...args);
       const p = active.store!.db.project();
       if (!args[3].length) {
+        const input = JSON.parse(args[2][0].content);
+        if (input.items) {
+          const memory = { decisions: input.items.map((item: any) => ({ id: item.id, verdict: 'supported', reason: '离线夹具逐项核对同版本原文。', evidence: fixtureAuditEvidence(item, input.sources) })) };
+          const plans = { decisions: (input.plans ?? []).map((plan: any) => ({ path: plan.path, verdict: 'consistent', reason: '夹具计划与本章一致。', planQuote: input.sources.find((source: any) => source.path === plan.path).content.slice(0, 24), proseQuote: input.sources.find((source: any) => source.path === input.prose.path).content.slice(0, 24) })) };
+          return plainResult(input.plans ? { memory, plans } : memory);
+        }
         if (args[1].includes('rubric narrative-1')) return plainResult({ values: { pressure: 3, payoff: 3, emotion: 3, revelation: null, relationship: null }, quotes: [fixture(p, prosePath(p.chapter), active).slice(-12)], note: '合成流程验证' });
         return { ...plainResult(null), text: fixture(p, prosePath(p.chapter), active) };
       }
@@ -1124,7 +1184,7 @@ test('统一方案采纳后实际走通保留的十一阶段和逐章正文流�
       if (args[2].at(-1)?.role === 'tool') return { ...plainResult(null), text: '候选已完成' };
       const running = active.store!.db.runs().find(r => r.status === 'running')!;
       const outputs = running.pipeline?.phase === 'review' ? [qualityPath(p.chapter)] : stageOutputs(running.pipeline?.phase === 'memory' ? 'S11' : running.stage, p);
-      return result('propose_changes', { changes: outputs.map(file => ({ path: file, content: fixture(p, file, active), baseHash: active.store!.db.document(file)?.hash ?? null })) });
+      return result('propose_changes', { changes: outputs.map(file => ({ path: file, content: fixture(p, file, active), baseHash: active.store!.db.document(file)?.hash ?? null })), ...(running.pipeline?.phase === 'memory' ? { facts: [], complete: true, coverage: fixtureCoverage(active, running) } : {}) });
     }
   });
   active = service;
@@ -1913,7 +1973,7 @@ test('标签约束贯穿聊天与完整工作流，正文证据随一次采纳�
           const source = (file: string) => input.sources.find((s: any) => s.path === file).content;
           return { text: JSON.stringify({
             memory: { decisions: input.items.map((item: any) => ({ id: item.id, verdict: 'supported', reason: '合成原文支持该记录',
-              evidence: [{ path: item.fact.evidence[0].path, quote: source(item.fact.evidence[0].path).slice(-12) }] })) },
+              evidence: fixtureAuditEvidence(item, input.sources) })) },
             plans: { decisions: input.plans.map((plan: any) => ({ path: plan.path, verdict: 'consistent',
               reason: '本章兑现既有标签承诺，未改变后续安排的行动条件', planQuote: source(plan.path).slice(0, 24), proseQuote: source(input.prose.path).slice(0, 24) })) }
           }), calls: [], native: {}, usage: { input: 1, output: 1, cost: 0, currency: 'USD' }, stop: 'complete' };
@@ -1983,6 +2043,8 @@ test('标签约束贯穿聊天与完整工作流，正文证据随一次采纳�
             id: crypto.randomUUID(),
             name: 'propose_memory',
             arguments: JSON.stringify({
+              coverage: fixtureCoverage(s, r),
+              complete: true,
               facts: [
                 {
                   id: 'tag-event-' + p.chapter,

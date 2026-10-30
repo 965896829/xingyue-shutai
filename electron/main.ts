@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { storageFileName } from '../src/shared/file-names';
 import { validateReasoning } from '../src/shared/reasoning';
 import { updateReasoningPreference, checkReasoningRevision, sameModelExecution } from '../src/core/reasoning-preferences';
 import {
@@ -376,7 +377,7 @@ async function handle(command: Command, a: Record<string, unknown>) {
   if (command === 'app.chooseFile') {
     if (a.save === true) {
       const result = await dialog.showSaveDialog(win, {
-        defaultPath: typeof a.name === 'string' ? a.name : '作品.docx',
+        defaultPath: storageFileName(typeof a.name === 'string' ? a.name : '作品.docx', '作品.docx'),
         filters: [{ name: '作品文档', extensions: ['md', 'txt', 'docx'] }]
       });
       if (result.canceled || !result.filePath) return null;

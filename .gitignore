@@ -21,3 +21,4 @@ analysis-*/
 *.log
 .env*
 !.env.example
+xingyue-agent-design-pack-v7.zip

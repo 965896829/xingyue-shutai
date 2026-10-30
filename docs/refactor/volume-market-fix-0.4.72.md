@@ -73,5 +73,5 @@ S05 仍输出 `05_长篇大纲/分卷大纲.md`：容量表和各卷原字段不
 - 完整回归：701 项通过，0 失败、0 跳过。包含 S01—S11 全流程、每阶段调整执行参数后重启、旧档案字节保留等测试。[完整日志](D:/AIkehuduan/output/volume-market-fix-0.4.72-20261027/full-test.log)
 - 针对性验证：20 项通过。[针对性日志](D:/AIkehuduan/output/volume-market-fix-0.4.72-20261027/focused-test.log)
 - 构建及 NSIS 打包成功；167 个 skill 资源与包内文件逐字节一致，131 个 runtime 资源通过锁校验，26 个注册 skill 有效，包内未重复装入 `node_modules` 源树。
-- 安装包：[星月书台 Setup 0.4.72.exe](<D:/AIkehuduan/release/星月书台 Setup 0.4.72.exe>)，126,713,988 字节。SHA-256：`3849e7f3208effdceb00ed3e9c5e3c51437cc1504295b2267d42390d9dd12a21`。
+- 历史安装包 `星月书台 Setup 0.4.72.exe`，当前工程已不保留该文件；原大小 126,713,988 字节。SHA-256：`3849e7f3208effdceb00ed3e9c5e3c51437cc1504295b2267d42390d9dd12a21`。
 - 这次约 14 分 18 秒的完整回归是离线测试耗时，不是作者作品生成时间，也未计作模型性能对比。

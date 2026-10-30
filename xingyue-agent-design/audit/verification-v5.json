@@ -1,0 +1,89 @@
+{
+  "designVersion": "V5",
+  "baselineVersion": "0.4.82",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "verificationDate": "2026-10-29",
+  "completed": [
+    {
+      "check": "repository-baseline",
+      "result": "passed",
+      "method": "重新读取 main 与固定提交；38 项本轮代码证据，含远端补取的实际 UI 与投影实现。"
+    },
+    {
+      "check": "prior-v4-resources",
+      "result": "passed",
+      "byteIdenticalFiles": 175,
+      "exceptions": [
+        "README.md",
+        "audit/source-index.md",
+        "manifest.json"
+      ],
+      "method": "与保留的 V4 ZIP 逐字节比较，其余前序文件保留；57 项旧提示资源和 V4 蓝图未变。"
+    },
+    {
+      "check": "skill-and-contract-static",
+      "result": "passed",
+      "checks": 1323,
+      "skills": 19,
+      "operations": 42,
+      "bindings": 44,
+      "method": "真实 JSON、七份合同、严格 TypeScript 与 noUncheckedIndexedAccess、哈希和绑定特化；详见 skill-catalog-verification-v5.json。"
+    },
+    {
+      "check": "public-evidence-consistency",
+      "result": "passed",
+      "checks": 79,
+      "artifactMapping": {
+        "v5-fanqie-taxonomy-snapshot.json": "data/fanqie/taxonomy-2026-10-29.json",
+        "v5-fanqie-male-reading-crosswalk.json": "data/fanqie/male-reading-crosswalk-2026-10-29.json",
+        "v5-fanqie-title-evidence.json": "data/fanqie/title-evidence-2026-10-29.json",
+        "v5-platform-world-cases.json": "evaluation/platform-world-v5-cases.json"
+      },
+      "method": "公开分类、154 项旧 ID 映射、榜单与书籍关联、日期和待执行案例结构；详见 public-evidence-verification-v5.json。"
+    },
+    {
+      "check": "semantic-cross-review",
+      "result": "passed",
+      "method": "修正多成长体系、早期命名可空版本、按请求匹配样本、审核 targetKind 独立依赖、分类四表面、实例时间边界；保留作者自由与旧合同迁移。"
+    },
+    {
+      "check": "code-comments",
+      "result": "passed",
+      "method": "TS/MJS scanner、Python tokenizer 与 SQL 检查；交付代码不含注释。"
+    },
+    {
+      "check": "report-visual-qa",
+      "result": "passed",
+      "pages": 31,
+      "method": "全部 31 页逐页以原始尺寸查看 PNG，三组复核；无裁切、重叠、缺字或表格分页缺陷。"
+    },
+    {
+      "check": "standalone-preview",
+      "result": "passed",
+      "method": "原创示意 Playwright 交互与 1024/736/320 布局、明暗主题验证；不等于生产图谱回归。"
+    }
+  ],
+  "report": {
+    "file": "xingyue-agent-optimization.docx",
+    "pages": 31,
+    "sha256": "8cc502e004e454140bac5c1506ab2e4e61d93fd87da33ea31d2b453e2aa72eea"
+  },
+  "sourceCount": 262,
+  "evaluationCases": {
+    "v5Defined": 32,
+    "v4Retained": 36,
+    "behaviorallyExecutedThisRun": 0,
+    "status": "not_executed"
+  },
+  "notExecuted": [
+    "V5 功能接入客户端",
+    "真实模型与 embedding 调用",
+    "32 个 V5 产品与质量案例执行",
+    "真人读者盲评",
+    "百万字真实作品性能与质量基准",
+    "完整应用迁移和 Windows 发布",
+    "远端仓库修改或部署",
+    "个人 ChatGPT Skill 安装"
+  ],
+  "scopeNote": "完成优化方案、提示词、类型和模块合同、公开证据与迁移设计；静态一致性不代表生产实现或市场效果。V1 至 V4 记录仍是各版本当时的验证结果。"
+}

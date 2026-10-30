@@ -48,7 +48,7 @@ Windows 安装包使用 `npm run dist`，输出到 `release/`；可运行目录�
 
 执行器接入见 [Pi 接入记录](docs/refactor/pi-integration-0.4.78.md)、[执行器能力与兼容边界](docs/refactor/executor-capability-matrix.md)。核心数据约定见[数据权威](docs/refactor/data-authority.md)与[分层记忆设计](docs/12_分层记忆与按需召回设计.md)。
 
-[源码与目录清理记录](docs/maintenance/repository-cleanup-2026-10-28.md)说明已退役脚本、保留项和本机归档的查找方法。
+[源码与目录清理记录](docs/maintenance/repository-cleanup-2026-10-30.md)说明本次退役脚本、未引用资源、旧安装包与恢复方法；更早的输出归档见 [2026-10-28 记录](docs/maintenance/repository-cleanup-2026-10-28.md)。
 
 ## 验证与边界
 

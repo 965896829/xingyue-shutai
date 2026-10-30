@@ -1,4 +1,8 @@
 import fs from 'node:fs';
+import { validateWorkbenchLocks } from './workbench-locks';
+import { validatePlotChanges } from './workbench-plot';
+import { validateMediaChanges } from './workbench-media';
+import { captureCommittedEdit } from './quality';
 import { syncGeneration } from '../shared/generation';
 import { syncRunFailure } from '../shared/recovery';
 import { contractPath, renderContract, tagHash } from './tags';
@@ -9,6 +13,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { checkDatabaseCompatibility, databaseVersion } from './compatibility';
 import { decodeSnapshot, encodeSnapshot, type StoredSnapshot } from './snapshot-codec';
 import { indexProse } from './prose-index';
+import { updateFactIndex } from './fact-index';
 import { assertRunTransition } from './runtime/run-state';
 import { ApplicationError } from '../shared/errors';
 import { fingerprint } from './runtime/canonical';
@@ -46,8 +51,17 @@ export const proposalHash = (run: Run) => {
       pipeline: run.pipeline,
       planning: run.planning,
       ...(run.naming ? { naming: run.naming } : {}),
+      ...(run.volumeNaming?.version === 2 ? { volumeNaming: run.volumeNaming } : {}),
+      ...(run.chapterNaming ? { chapterNaming: run.chapterNaming } : {}),
       tagBinding: run.tagBinding,
-      skill: run.skillHash
+      skill: run.skillHash,
+      ...(run.workflowBinding ? { workflowBinding: run.workflowBinding } : {}),
+      ...(run.chapterCoverage ? { chapterCoverage: run.chapterCoverage } : {})
+      ,...(run.revisionCore ? { revisionCore: run.revisionCore } : {})
+      ,...(run.revisionCoreRequired ? { revisionCoreRequired: run.revisionCoreRequired } : {})
+      ,...(run.worldContract ? { worldContract: run.worldContract } : {})
+      ,...(run.design ? { design: run.design } : {})
+      ,...(run.workbench ? { workbench: run.workbench } : {})
     };
   return run.candidateFormat === 2 ? fingerprint({ format: 2, runId: run.id, projectId: run.projectId, ...payload }) : hash(JSON.stringify(payload));
 };
@@ -176,6 +190,12 @@ export class Database {
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS events(seq INTEGER PRIMARY KEY AUTOINCREMENT,run_id TEXT NOT NULL,kind TEXT NOT NULL,text TEXT NOT NULL,at TEXT NOT NULL,data TEXT);
       CREATE TABLE IF NOT EXISTS facts(id TEXT PRIMARY KEY,data TEXT NOT NULL,source_hash TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS fact_world_timeline ON facts(json_extract(data,'$.worldId'),json_extract(data,'$.timelineId'));
+      CREATE TABLE IF NOT EXISTS fact_ledgers(id TEXT PRIMARY KEY,path TEXT NOT NULL,data TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS fact_ledger_path ON fact_ledgers(path);
+      CREATE TABLE IF NOT EXISTS fact_ledger_versions(path TEXT PRIMARY KEY,hash TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS fact_source_index(fact_id TEXT NOT NULL REFERENCES fact_ledgers(id) ON DELETE CASCADE,path TEXT NOT NULL,hash TEXT NOT NULL,PRIMARY KEY(fact_id,path,hash));
+      CREATE INDEX IF NOT EXISTS fact_source_path ON fact_source_index(path);
       CREATE TABLE IF NOT EXISTS applied_transactions(id TEXT PRIMARY KEY,applied_at TEXT NOT NULL);
       CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(path UNINDEXED,content,tokenize='trigram');
       CREATE TABLE IF NOT EXISTS document_fts_rows(path TEXT PRIMARY KEY,hash TEXT NOT NULL,fts_rowid INTEGER NOT NULL);
@@ -341,9 +361,13 @@ export class Database {
     const insert = this.sql.prepare('INSERT INTO facts VALUES(?,?,?)');
     for (const f of facts) insert.run(f.id, JSON.stringify(f), f.evidence.map((e) => e.hash).join(','));
     this.set('indexRevision', revision);
+    this.set('factLedgerIndexValid', false);
   }
-  facts(): Fact[] {
-    return (this.sql.prepare('SELECT data FROM facts').all() as { data: string }[]).map((r) =>
+  facts(scope?: { worldId: string; timelineId: string }): Fact[] {
+    const rows = scope
+      ? this.sql.prepare("SELECT data FROM facts WHERE json_extract(data,'$.worldId')=? AND json_extract(data,'$.timelineId')=? ORDER BY rowid").all(scope.worldId, scope.timelineId)
+      : this.sql.prepare('SELECT data FROM facts').all();
+    return (rows as { data: string }[]).map((r) =>
       JSON.parse(r.data)
     );
   }
@@ -353,6 +377,10 @@ export class Database {
   }
   snapshot(key: string): CanonicalSnapshot {
     return structuredClone(this.cachedSnapshot(key));
+  }
+  snapshotInfo(key: string): Omit<CanonicalSnapshot, 'facts'> {
+    const { facts: _, ...snapshot } = this.cachedSnapshot(key);
+    return structuredClone(snapshot);
   }
   snapshotDocument(key: string, relative: string) {
     return this.cachedSnapshot(key).documents[relative];
@@ -624,6 +652,9 @@ export class FileStore {
     }
     if (this.recoveryConflicts().length)
       throw new ApplicationError('VERSION_CONFLICT', '有未处理的提交恢复冲突，请先比较并恢复或放弃该次提交', ['refresh']);
+    validateWorkbenchLocks(this, changes);
+    validatePlotChanges(this, changes, !run || run.mode === 'manual');
+    validateMediaChanges(this, changes);
     for (const c of changes)
       if (
         c.path === contractPath &&
@@ -791,6 +822,7 @@ export class FileStore {
           .run(c.path, new TextDecoder().decode(raw));
         this.db.sql.prepare('INSERT INTO document_fts_rows VALUES(?,?,?) ON CONFLICT(path) DO UPDATE SET hash=excluded.hash,fts_rowid=excluded.fts_rowid').run(c.path, c.newHash, indexedRow.lastInsertRowid);
         indexProse(this.db.sql, c.path, c.newHash, raw.toString('utf8'));
+        if (j.run) captureCommittedEdit(this, c.path, c.baseHash, c.newHash, j.run.mode === 'manual' || j.run.revisionCore && this.db.run(j.run.revisionCore.sourceRunId).mode === 'manual' ? 'author' : 'model', j.run.chapter);
       }
       this.db.set('project', j.project);
       if (j.run) this.db.saveRun(j.run);
@@ -804,25 +836,7 @@ export class FileStore {
         child.status = 'complete'; child.accepted = true; child.updatedAt = now();
         this.db.saveRun(child);
       }
-      const facts: Fact[] = [];
-      for (const doc of this.db.acceptedDocuments()) {
-        if (!doc.path.startsWith('04_') || !doc.hash) continue;
-        const match = this.object(doc.hash)
-          .toString('utf8')
-          .match(/<!-- wenxu-facts:v1 -->\s*```json\s*\n([\s\S]*?)\n```/);
-        if (match) facts.push(...JSON.parse(match[1]).map((f: unknown) => factSchema.parse(f)));
-      }
-      for (const f of facts) {
-        if (f.reviewStatus === 'accepted' && f.state !== 'superseded' && f.evidence.some((e) => this.db.document(e.path)?.hash !== e.hash)) {
-          f.state = 'disputed';
-          f.reviewStatus = 'disputed';
-        }
-        for (const e of f.evidence)
-          this.db.sql
-            .prepare('INSERT OR IGNORE INTO dependencies VALUES(?,?,?,?)')
-            .run(e.path, e.hash, f.id, 'fact');
-      }
-      this.db.replaceFacts(facts, j.project.revision);
+      updateFactIndex(this, j.changes.map(change => change.path), j.project.revision);
       for (const c of j.changes) {
         const affected = this.db.sql
           .prepare('SELECT dependent,kind FROM dependencies WHERE source_path=? AND source_hash<>?')
@@ -852,7 +866,8 @@ export class FileStore {
       }
       for (const row of this.db.sql.prepare("SELECT id,dependent FROM review_queue WHERE status='pending'").all()) {
         const dependent = String(row.dependent);
-        const fact = facts.find(fact => fact.id === dependent);
+        const rowFact = this.db.sql.prepare('SELECT data FROM facts WHERE id=?').get(dependent) ?? this.db.sql.prepare('SELECT data FROM fact_ledgers WHERE id=?').get(dependent);
+        const fact = rowFact ? JSON.parse(String(rowFact.data)) as Fact : undefined;
         const resolved = fact
           ? fact.reviewStatus === 'retracted' || fact.state === 'superseded' || fact.reviewStatus === 'accepted' && fact.evidence.every(e => this.db.document(e.path)?.hash === e.hash && !pendingSource(j.project, e.path))
           : !!this.db.document(dependent) && !pendingSource(j.project, dependent);

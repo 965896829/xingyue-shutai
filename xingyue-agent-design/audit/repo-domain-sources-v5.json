@@ -1,0 +1,230 @@
+[
+  {
+    "id": "V5C01",
+    "title": "现有桌面技术栈与依赖",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/package.json",
+    "note": "完整文件；Electron/React/Vite/TypeScript/Pi版本及直接依赖；2026-10-29 核验"
+  },
+  {
+    "id": "V5C02",
+    "title": "用户快照标签库与范围",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/resources/skill/tags/registry/taxonomy.json",
+    "note": "1–95；482项、8组、19主分类、来源未独立实时核验；2026-10-29 核验"
+  },
+  {
+    "id": "V5C03",
+    "title": "平台规则与未知边界",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/resources/skill/tags/registry/platform-policy.json",
+    "note": "完整文件；阅读标签、内容标签、可用性、组合分开；2026-10-29 核验"
+  },
+  {
+    "id": "V5C04",
+    "title": "标签规则来源记录",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/resources/skill/tags/sources.json",
+    "note": "完整文件；用户快照和两项官方公告；2026-10-29 核验"
+  },
+  {
+    "id": "V5C05",
+    "title": "19项题材创作策略草案",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/resources/skill/tags/registry/genre-profiles.json",
+    "note": "完整文件；编辑建议并非平台定义；2026-10-29 核验"
+  },
+  {
+    "id": "V5C06",
+    "title": "标签与创意合同",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/shared/tags.ts",
+    "note": "7–19,31–92,106–156；固定8组与限额、三案合同；2026-10-29 核验"
+  },
+  {
+    "id": "V5C07",
+    "title": "标签加载与编译",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/tags.ts",
+    "note": "50–186；资源锁、校验、自由创意与按需知识；2026-10-29 核验"
+  },
+  {
+    "id": "V5C08",
+    "title": "标签选择与范围说明",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/TagWorkspace.tsx",
+    "note": "33–205；主分类、分组搜索、上限、来源说明；2026-10-29 核验"
+  },
+  {
+    "id": "V5C09",
+    "title": "新建作品与已有设定入口",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/App.tsx",
+    "note": "1817–1923；默认创意、可选标签、已有设定、可选额外评分；2026-10-29 核验"
+  },
+  {
+    "id": "V5C10",
+    "title": "现有世界设计方法",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/resources/skill/runtime/skills/webnovel-world-engine/SKILL.md",
+    "note": "23–32；作者设定、四层知情、条件能力、重复使用与代价；2026-10-29 核验"
+  },
+  {
+    "id": "V5C11",
+    "title": "世界模板必填字段",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/domain.ts",
+    "note": "51,86；固定八栏目及世界文件路径；2026-10-29 核验"
+  },
+  {
+    "id": "V5C12",
+    "title": "世界模板生成与指令",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/skill.ts",
+    "note": "61,115；所有项目生成并要求八栏目；2026-10-29 核验"
+  },
+  {
+    "id": "V5C13",
+    "title": "阶段输出结构硬要求",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/skill-output-contract.ts",
+    "note": "47–73；S03八栏目输出与字段限制；2026-10-29 核验"
+  },
+  {
+    "id": "V5C14",
+    "title": "世界栏目实际验证",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/validation.ts",
+    "note": "35–55；缺失/空字段阻断及checkWorldFields；2026-10-29 核验"
+  },
+  {
+    "id": "V5C15",
+    "title": "作品方案与书名合同",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/shared/creation.ts",
+    "note": "6–57,60–156；plan条目、承诺、标题、规则、版本；2026-10-29 核验"
+  },
+  {
+    "id": "V5C16",
+    "title": "命名的来源、验证与采纳",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/title-naming.ts",
+    "note": "43–193,200–245；方案绑定、冻结、去重、回执、审核；2026-10-29 核验"
+  },
+  {
+    "id": "V5C17",
+    "title": "现有番茄书名联网研究",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/title-market-research.ts",
+    "note": "19–81,84–186；公开词、官方书页、同批复用、降级与非榜单声明；2026-10-29 核验"
+  },
+  {
+    "id": "V5C18",
+    "title": "书名研究记录与风格样本",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/shared/title-style.ts",
+    "note": "1–34；时间来源、样本和分析结构，暂无rank字段；2026-10-29 核验"
+  },
+  {
+    "id": "V5C19",
+    "title": "官方书页和目录读取",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/fanqie-catalogue.ts",
+    "note": "5–76；规范化URL、有界公开GET、分类简介和目录来源hash；2026-10-29 核验"
+  },
+  {
+    "id": "V5C20",
+    "title": "已有角色卡、有向图和故事视图",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/ManuscriptInspector.tsx",
+    "note": "9–94；固定提交远端补读，含12边直接关系图和双时间标签；2026-10-29 核验"
+  },
+  {
+    "id": "V5C21",
+    "title": "已有记忆视角、分页、来源和修订UI",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/MemoryStudio.tsx",
+    "note": "完整文件；固定提交远端补读；2026-10-29 核验"
+  },
+  {
+    "id": "V5C22",
+    "title": "Markdown与事实的只读投影",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/manuscript-view.ts",
+    "note": "19–145；解析、ID、草稿叠加、来源过滤，当前Markdown权威；2026-10-29 核验"
+  },
+  {
+    "id": "V5C23",
+    "title": "投影视图数据合同",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/shared/manuscript-view.ts",
+    "note": "1–15；字段、角色、关系类别和来源；2026-10-29 核验"
+  },
+  {
+    "id": "V5C24",
+    "title": "投影缓存与更新时机",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/useManuscriptView.ts",
+    "note": "7–25；固定提交远端补读，不逐token重建；2026-10-29 核验"
+  },
+  {
+    "id": "V5C25",
+    "title": "同响应实时节点协议",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/shared/narrative-events.ts",
+    "note": "15–104；UTF-16、可选sideband、锚点、坏数据不重试正文；2026-10-29 核验"
+  },
+  {
+    "id": "V5C26",
+    "title": "有来源曲线保存与查询",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/narrative-curves.ts",
+    "note": "23–133；正文hash、五维、计划/候选/正式分层；2026-10-29 核验"
+  },
+  {
+    "id": "V5C27",
+    "title": "现有曲线入口与范围切换",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/NarrativePanel.tsx",
+    "note": "22–65；固定提交远端补读，本章/走势/维度与批次/全书；2026-10-29 核验"
+  },
+  {
+    "id": "V5C28",
+    "title": "实时节点与正文定位",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/NarrativePlayback.tsx",
+    "note": "12–91；固定提交远端补读，已显示前缀门槛和来源；2026-10-29 核验"
+  },
+  {
+    "id": "V5C29",
+    "title": "已有五维对照",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/NarrativeComparison.tsx",
+    "note": "8–27；固定提交远端补读，复用已存判断，缺项留空；2026-10-29 核验"
+  },
+  {
+    "id": "V5C30",
+    "title": "UI流与节点更新隔离",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/useLiveStream.ts",
+    "note": "14–20,47–87；动画帧合并、session/epoch/version/seq过滤；2026-10-29 核验"
+  },
+  {
+    "id": "V5C31",
+    "title": "实时节点版本保护",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/shared/live-narrative.ts",
+    "note": "4–49；重写清除旧节点、旧epoch/transport过滤；2026-10-29 核验"
+  },
+  {
+    "id": "V5C32",
+    "title": "创意标签与命名工作流测试源码",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/tags.test.ts",
+    "note": "50–164,498–624,741–1112,1333–1355,1811–1898；本轮未执行；2026-10-29 核验"
+  },
+  {
+    "id": "V5C33",
+    "title": "书名研究测试源码",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/title-market-research.test.ts",
+    "note": "16–150；固定提交远端补读，本轮未执行；2026-10-29 核验"
+  },
+  {
+    "id": "V5C34",
+    "title": "投影与草稿测试源码",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/manuscript-studio.test.ts",
+    "note": "28–141；固定提交远端补读，本轮未执行；2026-10-29 核验"
+  },
+  {
+    "id": "V5C35",
+    "title": "曲线来源与缺值测试源码",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/narrative-curves.test.ts",
+    "note": "19–138；固定提交远端补读，本轮未执行；2026-10-29 核验"
+  },
+  {
+    "id": "V5C36",
+    "title": "同请求节点与恢复测试源码",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/narrative-events.test.ts",
+    "note": "23–195；固定提交远端补读，本轮未执行；2026-10-29 核验"
+  },
+  {
+    "id": "V5C37",
+    "title": "现有实时书名证据展示",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/TitleMarketEvidence.tsx",
+    "note": "3–20；固定提交远端补读，来源/时间/brief；2026-10-29 核验"
+  },
+  {
+    "id": "V5C38",
+    "title": "现有书名选择工作区",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/ui/TitleWorkspace.tsx",
+    "note": "完整文件；固定提交远端补读，显示研究记录及离线样本；2026-10-29 核验"
+  }
+]

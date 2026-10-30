@@ -1,81 +1,92 @@
-import { setRunStatus } from './runtime/run-state';
-import { saveNarrativeRecord, saveNarrativeEvents } from './narrative-curves';
-import { NarrativeDecoder, decodeNarrativeResponse, narrativeStreamInstruction } from '../shared/narrative-events';
-import { callModel } from './runtime/model-gateway';
-import { updateGeneration, type GenerationPhase } from '../shared/generation';
-import { withTaskReasoning } from '../shared/reasoning';
-import { retryNeedsConfirmation, pendingOutputCodes, visibleRunIssues } from '../shared/run-presentation';
-import { beginTool, finishTool, stopOnToolFailure, type ToolTicket } from './runtime/tool-gateway';
-import { spawn, type ChildProcess } from 'node:child_process';
-import { driveTagPlanning, planningRulesHash } from './tag-planning';
-import { approvedCreation } from '../shared/creation';
-import { driveTitleNaming, namingBinding, namingRulesHash } from './title-naming';
-import { prepareVolumeMarketResearch, volumeNamingContext } from './volume-market-research';
-import type { CatalogueReader } from './fanqie-catalogue';
-import { planningIssues, planningBinding, contractPath, tagFactIssues, tagContext } from './tags';
+import { spawn,type ChildProcess } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
+import { designPrompt, assertDesign } from './design-operations';
 import { z } from 'zod';
-import {
-  type Run,
-  type SecretProfile,
-  type ToolDefinition,
-  type ToolCall,
-  type ProjectState,
-  type AppEvent
-} from '../shared/types';
-import { FileStore, fileHash, safePath } from './storage';
-import { assertRequestFits, countInput } from './context-budget';
-import { chapterEditorial, attachEditorial } from './prose-editorial-context';
-import { contextPayload, contextChanged, fitContext } from './context-compiler';
-import { preloadOutputTargets } from './runtime/context-preload';
-import { chapterAuditInput, canCombineChapterAudit, chapterAuditInstruction, parseChapterAudit, memoryAuditInstruction, planAuditInstruction, compactAuditInstruction } from './chapter-audit';
-import { candidateChangesForCurrentSettings, compatibleRunBase, compatibleSettingsSnapshot } from './runtime-settings';
-import {
-  hash,
-  now,
-  paths,
-  prosePath,
-  stageOutputs,
-  activeBatch,
-  batchPath,
-  updatePath,
-  countWords
-} from './domain';
-import { memoryPaths } from './domain';
-import { id, qualityPath, detailPath } from './domain';
-import { retrieveMemory, scopedRead, writingScope, syncEntities } from './memory-studio';
-import { NarrativeTelemetry, requestGuard, recordUsage, syncUsage } from './telemetry';
-import { stageSkills, SkillRegistry, skillAllowsPath } from './skill-registry';
-import type { MemoryScope } from '../shared/studio';
-import type { PublicSearch } from './search';
 import { searchSettingsSchema } from '../shared/assistant';
-import { usesNativeSearch } from '../shared/web-search';
-import { acceptNativeSearch, nativeSearchOptions } from './native-web-search';
-import type { RetrievalBudget } from './embeddings';
-import { assembleContext, validateEvidence } from './memory';
-import { systemPrompt } from './skill';
-import { controllerRules, assertControllerRules, taskEnvelope, automaticRepairLimit } from './agent-control';
-import { runTaskLoop } from './runtime/task-loop';
-import { loadNamingRules, readNamingModules, type NamingRules } from './naming';
-import { validateCandidate, validateCoverage } from './validation';
-import { invokeModel, RequestError, requestBody } from './provider';
-import { expressionFingerprint, expressionPack, bindExpressionRules } from './expression-rules';
-import { memoryReviewInput, memoryReviewIssues, memoryReviewMatches, parseMemoryDecisions, memoryDecisionIssues, memoryCompletionHash, type MemoryDecision } from './memory-review';
-import { futurePlanReviewInput, futurePlanReviewMatches, parseFuturePlanReview } from './future-plan-review';
-import { continuityIssues } from './story-impact';
-import { applyMemoryRepairResponse, memoryRepairRequest, finishMemoryRepairReport } from './memory-repair';
+import { approvedCreation } from '../shared/creation';
 import { ApplicationError } from '../shared/errors';
+import { generationOperation, updateGeneration, type GenerationOperation, type GenerationPhase } from '../shared/generation';
+import { narrativeStreamInstruction } from '../shared/narrative-events';
+import { withTaskReasoning } from '../shared/reasoning';
+import { recoveryDecision,setFailure } from '../shared/recovery';
+import { pendingOutputCodes,retryNeedsConfirmation,visibleRunIssues } from '../shared/run-presentation';
+import type { MemoryScope } from '../shared/studio';
+import {
+type AppEvent,
+type ProjectState,
+type Run,
+type SecretProfile,
+type ToolCall,
+type ToolDefinition
+} from '../shared/types';
+import { usesNativeSearch } from '../shared/web-search';
+import { assertControllerRules,automaticRepairLimit,controllerRules,taskEnvelope } from './agent-control';
+import { canCombineChapterAudit,chapterAuditInput,chapterAuditInstruction,compactAuditInstruction,memoryAuditInstruction,parseChapterAudit,planAuditInstruction } from './chapter-audit';
+import { assertRequestFits,countInput } from './context-budget';
+import { contextChanged,contextPayload,fitContext } from './context-compiler';
+import {
+activeBatch,
+batchPath,
+countWords,
+hash,
+id,
+now,
+paths,
+prosePath,
+qualityPath,
+stageOutputs,
+updatePath
+} from './domain';
+import type { RetrievalBudget } from './embeddings';
+import { bindExpressionRules,expressionFingerprint,expressionPack } from './expression-rules';
 import { classifyFailure } from './failures';
-import { setFailure, recoveryDecision } from '../shared/recovery';
+import type { CatalogueReader } from './fanqie-catalogue';
+import { futurePlanReviewInput,futurePlanReviewMatches,parseFuturePlanReview } from './future-plan-review';
+import { assembleContext,validateEvidence } from './memory';
+import { memoryCompletionHash,memoryDecisionIssues,memoryReviewInput,memoryReviewIssues,memoryReviewMatches,parseMemoryDecisions,type MemoryDecision } from './memory-review';
+import { retrieveMemory,scopedRead,syncEntities,writingScope } from './memory-studio';
+import { loadNamingRules,readNamingModules,type NamingRules } from './naming';
+import { saveNarrativeRecord } from './narrative-curves';
+import { acceptNativeSearch,nativeSearchOptions } from './native-web-search';
 import { normalizeCandidate } from './output-normalization';
-import { templateFields } from './validation';
-import { planCandidateRepair, assertRepairWrite, assertRepairFacts, repairContext } from './runtime/candidate-repair';
-import { prepareDocumentDrafts, draftSummary, supportsDocumentDrafts, documentDraftInstructions, draftCompletionChanges } from './runtime/document-drafts';
-import { changeSubmissionSchema, factSubmissionSchema, materializeChanges, materializeFacts, sourceReuseInstructions } from './runtime/source-reuse';
+import { RequestError,invokeModel,requestBody } from './provider';
+import { candidateChangesForCurrentSettings,compatibleRunBase,compatibleSettingsSnapshot } from './runtime-settings';
+import { assertRepairCoverage,assertRepairFacts,assertRepairWrite,planCandidateRepair,repairContext } from './runtime/candidate-repair';
+import { preloadOutputTargets } from './runtime/context-preload';
+import { documentDraftInstructions,draftCompletionChanges,draftSummary,prepareDocumentDrafts,supportsDocumentDrafts } from './runtime/document-drafts';
+import { RejectedFactProposal,clearFailedChanges,rejectFactProposal,reuseFailedChanges } from './runtime/failed-proposal';
+import { callModel } from './runtime/model-gateway';
 import { sharedRuleBlock } from './runtime/prompt-cache';
 import { reviewWithRepair } from './runtime/review-receipts';
-import { readValidatedReview, saveValidatedReview } from './runtime/validated-review-cache';
-import { RejectedFactProposal, rejectFactProposal, reuseFailedChanges, clearFailedChanges } from './runtime/failed-proposal';
+import { setRunStatus } from './runtime/run-state';
+import { changeSubmissionSchema,factSubmissionSchema,materializeChanges,materializeFacts,sourceReuseInstructions } from './runtime/source-reuse';
+import { runTaskLoop } from './runtime/task-loop';
+import { beginTool,finishTool,stopOnToolFailure,type ToolTicket } from './runtime/tool-gateway';
+import { readValidatedReview,saveValidatedReview } from './runtime/validated-review-cache';
+import type { PublicSearch } from './search';
+import { systemPrompt } from './skill';
+import { worldCandidateIssues } from './world-model';
+import { isPublishingConfigChange } from './publishing';
+import { assertWorkbenchCandidate } from './workbench-candidates';
+import { driveRevisionCore, revisionCoreIssues, requiresRevisionCore } from './workflows/revision-core';
+import { SkillRegistry,skillAllowsPath,stageSkills } from './skill-registry';
+import { FileStore,fileHash,safePath } from './storage';
+import { continuityIssues } from './story-impact';
+import { planningRulesHash } from './tag-planning';
+import { contractPath,planningBinding,planningIssues,tagContext,tagFactIssues } from './tags';
+import { NarrativeTelemetry,recordUsage,requestGuard,syncUsage } from './telemetry';
+import { namingBinding,namingRulesHash } from './title-naming';
+import { templateFields,validateCandidate,validateCoverage } from './validation';
+import { prepareVolumeMarketResearch,volumeNamingContext } from './volume-market-research';
+import { volumeRenameIssues } from './volume-naming';
+import { alignChapterTitle, chapterNamingContext, chapterRenameIssues, chapterTitleIssues } from './chapter-naming';
+import { driveChapterWorkflow } from './workflows/chapter';
+import { driveCreativeWorkflow } from './workflows/creative';
+import { driveCreationWorkflow } from './workflows/creation';
+import { bindWorkflow } from './runtime/workflow-contract';
+import { chapterCoverageIssues, validateChapterCoverage, withChapterCoverageTools } from './chapter-memory';
+import { taskModelOptions } from './runtime/model-capabilities';
+import { driveRevisionWorkflow } from './workflows/revision';
 
 const object = (properties: Record<string, unknown>, required: string[] = Object.keys(properties)) => ({
   type: 'object',
@@ -149,11 +160,8 @@ export const toolDefinitions: ToolDefinition[] = [
 ].filter((t) => !['terminal', 'network'].includes(t.name));
 export type Caller = typeof invokeModel;
 export class AgentRunner {
-  private cacheOptions(run: Run, profile: SecretProfile) {
-    if (profile.protocol !== 'responses' || !/^gpt-(?:5\.6-(?:sol|terra|luna)|6(?:\.1)?-(?:sol|astra|luna))(?:-\d{4}-\d{2}-\d{2})?$/.test(profile.model) ||
-        run.mode !== 'stage' || run.naming || run.planning || !/^S(?:0[1-9]|10|11)$/.test(run.stage))
-      return { singleToolCall: supportsDocumentDrafts(run) };
-    return { cacheTools: toolDefinitions.filter(t => !['public_search', 'extract_pages'].includes(t.name)), singleToolCall: true };
+  cacheOptions(run: Run, profile: SecretProfile) {
+    return taskModelOptions(run, profile, toolDefinitions);
   }
   private prepareFacts(r: Run, p: ProjectState, submission: { facts?: unknown[] }) {
     if (r.stage !== 'S11' && r.mode !== 'revision' && r.pipeline?.phase !== 'memory')
@@ -180,19 +188,19 @@ export class AgentRunner {
   searchSettings = () => searchSettingsSchema.parse({});
   research?: (signal: AbortSignal, run: Run) => PublicSearch;
   readVolumeCatalogue?: CatalogueReader;
-  private search: PublicSearch | null = null;
+  search: PublicSearch | null = null;
   toolsFor(run: Run) {
     const phase = run.pipeline?.phase;
     const skillId = phase === 'review' ? 'webnovel-chapter-reviewer' : phase === 'memory' ? 'webnovel-memory-extractor' : run.skillId ?? stageSkills[run.stage];
     const allowed = new SkillRegistry(this.skillRoot).get(skillId).tools;
     const profile = this.profiles().find(item => item.id === run.profileId);
     const native = profile && usesNativeSearch(profile, this.searchSettings());
-    return toolDefinitions.filter(
+    return withChapterCoverageTools(run, toolDefinitions.filter(
       (t) =>
         allowed.includes(t.name) && !(phase === 'review' && ['propose_memory', 'read_naming_rules'].includes(t.name)) &&
         !(phase === 'memory' && t.name === 'read_naming_rules') && (!['public_search', 'extract_pages'].includes(t.name) ||
           (run.skillId === 'webnovel-market-research' && !native && this.searchSettings().provider !== 'openai'))
-    );
+    ));
   }
   retrieve?: (
     query: string,
@@ -212,8 +220,8 @@ export class AgentRunner {
   ) {
     this.telemetry = new NarrativeTelemetry(store, emit, caller, skillRoot);
   }
-  event(run: Run, kind: string, text: string) {
-    if (kind === 'tool') this.activity(run, 'tools');
+  event(run: Run, kind: string, text: string, operation?: GenerationOperation) {
+    if (kind === 'tool') this.activity(run, 'tools', operation);
     this.store.db.event(run.id, kind, text);
     this.emit({ type: 'run-event', resource: 'runs', resourceId: run.id, runId: run.id, text });
   }
@@ -223,8 +231,8 @@ export class AgentRunner {
     this.store.db.saveRun(run);
     this.emit({ type: 'snapshot', resource: 'runs', resourceId: run.id, resourceVersion: run.stateVersion });
   }
-  activity(run: Run, phase: GenerationPhase) {
-    if (updateGeneration(run, phase)) this.save(run);
+  activity(run: Run, phase: GenerationPhase, operation?: GenerationOperation) {
+    if (updateGeneration(run, phase, now(), operation)) this.save(run);
   }
   stop() {
     this.controller?.abort();
@@ -250,22 +258,26 @@ export class AgentRunner {
       (r.mode === 'revision'
         ? '当前是作者授权的修订任务，不推进阶段。已失效事实只用于定位冲突，不能当作当前依据。请检查明确范围内的相关文件，提出候选与有来源的记忆替代。\n'
         : '') +
-      systemPrompt(this.skillRoot, p, r.stage, naming, r.skillId ?? stageSkills[r.stage], {
-        legacyVolumeNaming: !r.volumeNaming, namingGenre: r.volumeNaming?.research?.genre
-      }) +
+      (r.design ? designPrompt(this.store, this.skillRoot, r) : systemPrompt(this.skillRoot, p, r.stage, naming, r.skillId ?? stageSkills[r.stage], {
+        legacyVolumeNaming: !r.volumeNaming, volumeNamingVersion: r.volumeNaming?.version, chapterNamingVersion: r.chapterNaming?.version, namingGenre: r.volumeNaming?.research?.genre, worldModules: !!r.worldContract, worldSystems: r.worldContract === 2
+      })) +
       (r.mode === 'analysis'
         ? '\n当前为独立研究任务，不推进章节。上文阶段产物要求不适用。只可通过 propose_changes 提议 11_创作研究/ 下的 Markdown 报告，保留日期、来源网址、样本范围、假设与未知。不可更改正文、台账或登记书内事实。仅调用此请求实际提供的工具。'
-        : '') + expression.prompt + (r.volumeNaming
+        : '') + expression.prompt + (r.volumeNaming?.version === 2
+          ? '\n分卷标题采用与番茄商业书名一致的编辑标准：题材辨识、具体看点、阅读期待、顺口自然与事实兑现。名称指向本卷真实冲突、破局或回报，不默认偏好含蓄短句；允许自然的长卖点名与转折，避免整组同句式。遵守分卷命名参考，原模板与未授权剧情不变。'
+          : r.volumeNaming
           ? '\n分卷标题的适用范围：上述规划说明与表达规则不能把卷名压成行动清单或阶段摘要。卷名按分卷命名参考处理角色口吻、意象、留白与整组递进；剧情说明仍须具体，既定事实与原模板不变。'
           : '') + (r.skillId === 'webnovel-market-research'
           ? `\n联网配置：${JSON.stringify(this.searchSettings())}。Responses 模型且搜索来源不是 tavily 时，使用请求提供的 OpenAI 原生 web_search；无需额外搜索 Key。只搜索公开主题词，不发送原稿或私密资料。保留可点击来源与核对日期，未搜索或搜索失败不得声称已核实。`
           : '') + (supportsDocumentDrafts(r) ? sharedRuleBlock('document-drafts', documentDraftInstructions) : '') + sharedRuleBlock('source-reuse', sourceReuseInstructions);
     return { expression, system };
   }
-  private contextResident(r: Run, p: ProjectState, naming = loadNamingRules(this.skillRoot)) {
-    if (r.pipeline) return { resident: { system: systemPrompt(this.skillRoot, p, 'S10', naming, undefined, { outputMode: 'prose' }) + expressionPack(this.skillRoot, p.config, 'prose').prompt + narrativeStreamInstruction, ...taskEnvelope(this.store, this.skillRoot, r), authorPremise: this.store.db.get('premise'), task: r.request, chapter: p.chapter, batch: r.batch }, toolCount: 0 };
+  contextResident(r: Run, p: ProjectState, naming = loadNamingRules(this.skillRoot)) {
+    const titleSourceIssues = chapterTitleIssues(this.store, r, []);
+    if (titleSourceIssues.length) throw new Error(titleSourceIssues[0].message);
+    if (r.pipeline) return { resident: { system: systemPrompt(this.skillRoot, p, 'S10', naming, undefined, { outputMode: 'prose', chapterNamingVersion: r.chapterNaming?.version }) + expressionPack(this.skillRoot, p.config, 'prose').prompt + narrativeStreamInstruction, ...taskEnvelope(this.store, this.skillRoot, r), ...chapterNamingContext(r), authorPremise: this.store.db.get('premise'), task: r.request, chapter: p.chapter, batch: r.batch }, toolCount: 0 };
     const tools = this.toolsFor(r), { system } = this.taskRules(r, p, naming);
-    return { resident: { system, tools, task: r.request, ...taskEnvelope(this.store, this.skillRoot, r), authorPremise: this.store.db.get('premise'), existingCandidates: r.changes, documentDrafts: draftSummary(r), ...volumeNamingContext(r) }, toolCount: tools.length };
+    return { resident: { system, tools, task: r.request, ...taskEnvelope(this.store, this.skillRoot, r), authorPremise: this.store.db.get('premise'), existingCandidates: r.changes, documentDrafts: draftSummary(r), ...volumeNamingContext(r), ...chapterNamingContext(r) }, toolCount: tools.length };
   }
   previewContext(r: Run, profile: SecretProfile) {
     const p = this.store.db.project();
@@ -293,7 +305,8 @@ export class AgentRunner {
     if (r.memoryRepair) return false;
     if (r.naming) return !!r.skillHash && r.skillHash !== namingRulesHash(this.skillRoot, p, r.naming);
     if (r.planning) return !!r.skillHash && r.skillHash !== planningRulesHash(this.skillRoot, p, r.planning);
-    if (r.pipeline) return !!r.skillHash && r.skillHash !== this.chapterRulesHash(p);
+    if (chapterTitleIssues(this.store, r, []).length) return true;
+    if (r.pipeline) return !!r.skillHash && r.skillHash !== this.chapterRulesHash(p, undefined, r.chapterNaming?.version);
     return !this.taskRulesMatch(r, p, hash(this.taskRules(r, p).system + JSON.stringify(this.toolsFor(r))));
   }
   private async retrieveForRun(query: string, r: Run, p: ProjectState) {
@@ -326,7 +339,7 @@ export class AgentRunner {
     this.store.db.set(`inflight:${r.id}`, false);
     return result;
   }
-  private async enrichContext(r: Run, p: ProjectState, profile: SecretProfile) {
+  async enrichContext(r: Run, p: ProjectState, profile: SecretProfile) {
     if (!this.retrieve || !r.manifest) return;
     const result = await this.retrieveForRun(r.request, r, p);
     if (result.semantic === 'disabled') return;
@@ -372,9 +385,10 @@ export class AgentRunner {
       p = this.store.db.project(),
       selectedProfile = this.profiles().find((x) => x.id === r.profileId),
       profile = selectedProfile && withTaskReasoning(selectedProfile, r);
+    bindWorkflow(r);
     const creation = approvedCreation(p);
     if (!profile?.apiKey) throw new Error('请先设置模型 API Key');
-    if (!r.memoryRepair && (!profile.tools || profile.capabilities.tools === 'failed'))
+    if (!r.memoryRepair && !r.creative && !r.revisionCore && (!profile.tools || profile.capabilities.tools === 'failed'))
       throw new Error('此配置的工具调用未启用或测试失败，请在模型设置中启用并通过工具续轮测试');
     if (profile.version !== r.profileVersion) throw new Error('模型配置版本已改变，请新建任务以保留准确来源');
     if (!compatibleRunBase(this.store, r)) throw new Error('项目已改变，需重新建立任务上下文');
@@ -396,40 +410,20 @@ export class AgentRunner {
     const signal = this.controller.signal;
     this.search = this.research?.(signal, r) ?? null;
     try {
+      if (r.creative) { await driveCreativeWorkflow(this, r, p, profile, signal); return; }
       const rules = controllerRules(this.skillRoot);
       if (r.agentRulesHash) assertControllerRules(this.skillRoot, r.agentRulesHash);
       r.agentRulesHash = rules.hash;
       r.error = undefined;
-      if (r.naming) {
-        await driveTitleNaming({ store: this.store, root: this.skillRoot, run: r, project: p, writer: profile,
-          profiles: this.profiles, caller: this.caller, signal, save: () => this.save(r), event: text => this.event(r, 'title-phase', text),
-          searchSettings: this.searchSettings(), search: this.search, onActivity: phase => this.activity(r, phase) });
-        return;
-      }
+      if (r.revisionCore) { await driveRevisionCore(this, r, p, profile, signal); return; }
+      if ((!r.memoryRepair || r.naming) && await driveCreationWorkflow(this, r, p, profile, signal)) return;
       if (r.memoryRepair) {
-        await this.driveMemoryRepair(r, p, profile, signal);
-        return;
-      }
-      if (r.planning) {
-        await driveTagPlanning({
-          store: this.store,
-          root: this.skillRoot,
-          run: r,
-          project: p,
-          writer: profile,
-          profiles: this.profiles,
-          caller: this.caller,
-          signal,
-          save: () => this.save(r),
-          onActivity: phase => this.activity(r, phase),
-          event: (text) => this.event(r, 'tag-phase', text)
-        });
-        if (r.planning.phase === 'ready') this.check(r, p);
+        await driveRevisionWorkflow(this, r, p, profile, signal);
         return;
       }
       const naming = loadNamingRules(this.skillRoot);
       if (r.pipeline) {
-        await this.driveChapter(r, p, profile, signal, naming);
+        await driveChapterWorkflow(this, r, p, profile, signal, naming);
         return;
       }
       await prepareVolumeMarketResearch({ store: this.store, root: this.skillRoot, run: r, project: p, profile,
@@ -462,6 +456,7 @@ export class AgentRunner {
             existingCandidates: r.changes,
             documentDrafts: draftSummary(r),
             ...volumeNamingContext(r),
+            ...chapterNamingContext(r),
             repairScope: repairContext(r),
             ...contextPayload(r.manifest)
           })
@@ -569,7 +564,7 @@ export class AgentRunner {
           content: r.messages.findLast(message => message.role === 'tool' && message.callId === call.id)?.content ?? '' }),
         finish: async result => {
         if (result.calls.length) {
-          if (r.mode === 'stage' && r.stage === 'S11' && this.completedToolBatch(r) &&
+          if (r.mode === 'stage' && r.stage === 'S11' && this.completedToolBatch(r, ['propose_changes', 'propose_memory']) &&
               r.memoryCompletionHash === memoryCompletionHash(r)) {
             this.check(r, p);
             if (!r.issues.some(issue => issue.severity === 'error' && issue.code !== 'memory_review')) {
@@ -637,11 +632,12 @@ export class AgentRunner {
     }
   }
   /** Purely local recovery: never issues a request, approves a candidate, or changes formal files. */
-  private completedToolBatch(r: Run) {
+  completedToolBatch(r: Run, submissionNames?: readonly string[]) {
     // A queued repair/user instruction must reach the model before a previous
     // tool receipt can be considered again. Otherwise failed audits spin locally.
     if (r.messages.at(-1)?.role !== 'tool') return false;
     const assistant = r.messages.findLast(message => message.role === 'assistant');
+    if (submissionNames && !assistant?.calls?.some(call => submissionNames.includes(call.name))) return false;
     return !!assistant?.calls?.length && assistant.calls.every(call => {
       const response = r.messages.findLast(message => message.role === 'tool' && message.callId === call.id);
       if (!response) return false;
@@ -703,7 +699,8 @@ export class AgentRunner {
     this.store.db.event(r.id, 'local-recovery', draftChanges ? '分段内容已通过完整性与来源检查，已合成待审阅候选；未调用模型、未采纳或推进阶段。' : '内部检查已完成，已有候选可直接审阅；未调用模型、未采纳或推进阶段。', { source, previousError, finalizedDrafts: !!draftChanges });
     return true;
   }
-  private queueRepair(r: Run, p: ProjectState, issues: Run['issues'], phase = 'stage') {
+  queueRepair(r: Run, p: ProjectState, issues: Run['issues'], phase = 'stage') {
+    if (issues.some(issue => issue.code === 'revision_core_required')) return false;
     const errors = issues.filter(issue => issue.severity === 'error');
     if (!errors.length) { r.repairScope = undefined; return false; }
     if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools || (r.repairAttempts?.[phase] ?? 0) >= automaticRepairLimit) {
@@ -711,7 +708,7 @@ export class AgentRunner {
       return false;
     }
     r.repairScope = planCandidateRepair(r, errors, phase);
-    if (!r.repairScope.paths.length && !r.repairScope.factIds?.length) {
+    if (!r.repairScope.paths.length && !r.repairScope.factIds?.length && !r.repairScope.coverage) {
       setFailure(r, classifyFailure(new ApplicationError('VALIDATION_ERROR', '检查问题尚未定位到可修复的文件或事实，候选已保留；请查看具体问题，不会重新生成全部内容。')));
       this.store.db.event(r.id, 'repair-diagnosis', '问题未定位，保持全部候选与事实不变', { issues: r.repairScope.unresolvedIssues });
       return false;
@@ -746,11 +743,19 @@ export class AgentRunner {
     r.issues = validateCandidate(
       r.stage,
       p,
-      r.planning ? r.changes.filter((c) => c.path !== paths.config) : r.memoryRepair ? r.changes.filter(change => this.store.db.document(change.path)?.hash !== hash(change.content)) : r.changes,
+      r.planning || r.mode === 'manual' && isPublishingConfigChange(this.store, r.changes) ? r.changes.filter((c) => c.path !== paths.config) : r.memoryRepair ? r.changes.filter(change => this.store.db.document(change.path)?.hash !== hash(change.content)) : r.changes,
       this.skillRoot,
       r.mode
     );
     r.issues.push(...continuityIssues(this.store, r));
+    r.issues.push(...worldCandidateIssues(this.store, r.changes, r.mode === 'manual', !!r.worldContract));
+    r.issues.push(...volumeRenameIssues(r));
+    r.issues.push(...chapterRenameIssues(r), ...chapterTitleIssues(this.store, r));
+    try { assertWorkbenchCandidate(this.store, r); } catch (e) { r.issues.push({ code: 'workbench_scope', severity: 'error', message: (e as Error).message }); }
+    try { assertDesign(this.store, r); } catch (e) { r.issues.push({ code: 'operation_scope', severity: 'error', message: (e as Error).message }); }
+    r.issues.push(...revisionCoreIssues(this.store, r));
+    if (requiresRevisionCore(this.store, r))
+      r.issues.push({ code: 'revision_core_required', severity: 'error', message: '请核对最终正文与人物记忆后统一保存' });
     for (const draft of r.documentDrafts ?? [])
       r.issues.push({ code: 'document_draft_pending', severity: 'error', path: draft.path, message: `已保存 ${draft.chunks} 段草稿，尚未完成整份文件，继续生成后再审阅。` });
     if (r.planning) {
@@ -762,7 +767,7 @@ export class AgentRunner {
       }
     }
     if (r.mode === 'analysis') {
-      r.issues = [];
+      r.issues = r.issues.filter(issue => issue.code === 'operation_scope');
       for (const c of r.changes)
         if (!c.path.startsWith('11_创作研究/'))
           r.issues.push({
@@ -802,7 +807,7 @@ export class AgentRunner {
     }
     for (const message of memoryReviewIssues(this.store, r)) {
       const exact = r.memoryReview?.targets?.filter(issue => issue.message === message &&
-        (issue.factId ? r.facts.some(fact => fact.id === issue.factId) : issue.path && r.memoryRepair?.paths.includes(issue.path)));
+        (issue.code === 'chapter_coverage_review' || (issue.factId ? r.facts.some(fact => fact.id === issue.factId) : issue.path && r.memoryRepair?.paths.includes(issue.path))));
       if (exact?.length) { r.issues.push(...exact); continue; }
       const facts = r.facts.filter(fact => message.startsWith(`${fact.subject}：`));
       const file = r.memoryRepair?.paths.find(file => message.startsWith(`${file}：`));
@@ -818,7 +823,7 @@ export class AgentRunner {
         report = r.changes.find((c) => c.path === updatePath(p.chapter));
       const actual = countWords(prose.content),
         reported = report?.content.match(/正文实际字数[：:]\s*(\d+)/)?.[1];
-      if (Number(reported) !== actual)
+      if (report && Number(reported) !== actual)
         r.issues.push({
           code: 'aftermath_words',
           severity: 'error',
@@ -889,22 +894,23 @@ export class AgentRunner {
           code: 'behavior_update',
           severity: 'error',
           path: paths.behavior,
-          message: '章后更新必须记录本章行为与承接'
+          message: '本章人物行为与承接记录尚未生成，请继续完成章后更新'
         });
       if (p.chapter === activeBatch(p).end && !r.changes.some((c) => c.path === paths.summary))
         r.issues.push({ code: 'batch_summary', severity: 'error', path: paths.summary, message: '批次末必须生成批次人物摘要' });
     }
+    r.issues.push(...chapterCoverageIssues(this.store, r));
     r.issues = [
       ...new Map(
         r.issues.map((issue) => [JSON.stringify([issue.code, issue.path, issue.factId, issue.message]), issue])
       ).values()
     ];
   }
-  private chapterRulesHash(p: ProjectState, naming = loadNamingRules(this.skillRoot)) {
+  chapterRulesHash(p: ProjectState, naming = loadNamingRules(this.skillRoot), chapterNamingVersion?: 1) {
     const registry = new SkillRegistry(this.skillRoot);
-    return hash(JSON.stringify(['webnovel-chapter-drafter', 'webnovel-chapter-reviewer', 'webnovel-memory-extractor'].map(key => registry.load(key).hash)) + naming.hash + expressionFingerprint(this.skillRoot, p.config));
+    return hash(JSON.stringify(['webnovel-chapter-drafter', 'webnovel-chapter-reviewer', 'webnovel-memory-extractor'].map(key => registry.load(key, { chapterNamingVersion }).hash)) + naming.hash + expressionFingerprint(this.skillRoot, p.config));
   }
-  private redirectProseRepair(r: Run, p: ProjectState) {
+  redirectProseRepair(r: Run, p: ProjectState) {
     if (r.pipeline?.phase !== 'review') return false;
     const reportPath = qualityPath(r.chapter);
     const errors = r.issues.filter(i => i.severity === 'error' && i.path === reportPath);
@@ -926,380 +932,13 @@ export class AgentRunner {
     r.pipeline.narrative = undefined;
     r.sourceProseHash = undefined; r.repairScope = undefined;
     r.changes = r.changes.filter(c => c.path === prosePath(r.chapter));
-    r.facts = []; r.memoryReview = undefined; r.messages = [];
+    r.facts = []; r.memoryReview = undefined; r.chapterCoverage = undefined; r.messages = [];
     for (const file of [reportPath, ...stageOutputs('S11', p)]) if (r.candidateWrites) delete r.candidateWrites[file];
     this.store.db.event(r.id, 'prose-repair', '根据独立审核意见修订当前章，之后重新审核；未进入下一章', { reviewRef, proseHash: r.proseReviewFeedback.proseHash, repair: r.repairAttempts.prose });
     this.save(r);
     return true;
   }
-  private async driveChapter(
-    r: Run,
-    p: ProjectState,
-    fallback: SecretProfile,
-    signal: AbortSignal,
-    naming: NamingRules
-  ): Promise<void> {
-    const pipeline = r.pipeline!;
-    const select = (role: 'writing' | 'extraction' | 'review') => {
-      const key =
-        p.config.modelRouting[role] ||
-        (role === 'writing' ? r.profileId : p.config.modelRouting.writing || r.profileId);
-      const profile = this.profiles().find((x) => x.id === key);
-      if (!profile) throw new Error('所选分工模型已移除，请重新选择');
-      if (!profile.apiKey || !profile.enabled) throw new Error('分工模型不可用');
-      const binding = r.modelBindings?.[role];
-      if (binding && (binding.id !== profile.id || binding.version !== profile.version))
-        throw new Error('分工模型配置已改变，请重新建立任务');
-      (r.modelBindings ??= {})[role] = { id: profile.id, version: profile.version };
-      return withTaskReasoning(profile, r);
-    };
-    const expressionVersion = expressionFingerprint(this.skillRoot, p.config);
-    const lock = this.chapterRulesHash(p, naming);
-    if (r.skillHash && r.skillHash !== lock) throw new Error('任务规则或工具契约发生变化，请重新组装上下文');
-    r.skillHash = lock;
-    const writer = select('writing'),
-      reviewer = select('review'),
-      extractor = select('extraction');
-    const { resident } = this.contextResident(r, p, naming);
-    const reviewReferences = r.pipeline?.phase !== 'prose' ? r.manifest?.referenceSources : undefined;
-    r.manifest = assembleContext(this.store, p, 'S10', r.request, writer, false, { resident });
-    // Keep a completed review's evidence through memory extraction and approval;
-    // only a new prose draft can replace that review and its source versions.
-    r.manifest.referenceSources = reviewReferences;
-    await this.enrichContext(r, p, writer);
-    fitContext(r.manifest, writer, resident);
-    const context = {
-      ...taskEnvelope(this.store, this.skillRoot, r),
-      task: r.request,
-      authorPremise: this.store.db.get('premise'),
-      ...contextPayload(r.manifest),
-      chapter: p.chapter,
-      batch: r.batch
-    };
-    setRunStatus(r, 'running');
-    this.save(r);
-    const call = async (
-      profile: SecretProfile,
-      system: string,
-      messages: Run['messages'],
-      tools: ToolDefinition[],
-      delta?: (text: string) => void
-    ) => {
-      if (signal.aborted) throw new RequestError('作者已停止执行', false);
-      assertControllerRules(this.skillRoot, r.agentRulesHash!);
-      if (r.rounds >= p.config.maxRounds) throw new ApplicationError('ROUND_LIMIT', '已达到本任务轮数上限。可审阅内容或在设置提高上限后继续。');
-      if (expressionFingerprint(this.skillRoot, this.store.db.project().config) !== expressionVersion)
-        throw new Error('表达规则已改变，请重新组装上下文');
-      if (this.profiles().find((v) => v.id === profile.id)?.version !== profile.version)
-        throw new Error('模型配置在运行期间改变');
-      if (
-        !compatibleRunBase(this.store, r) ||
-        contextChanged(this.store, r.manifest!)
-      )
-        throw new Error('任务依据已改变');
-      syncUsage(this.store, r);
-      this.telemetry.foregroundReserved = requestGuard(
-        profile,
-        system,
-        messages,
-        tools,
-        r,
-        p.config.stageBudget,
-        this.telemetry.reserved
-      );
-      r.rounds++;
-      this.store.db.set(`inflight:${r.id}`, true);
-      this.save(r);
-      const result = await callModel(this.store, r, pipeline.phase, this.caller, profile, system, messages, tools, signal, delta, { ...this.cacheOptions(r, profile), onActivity: phase => this.activity(r, phase) }).finally(() => {
-        this.telemetry.foregroundReserved = 0;
-      });
-      this.store.db.set(`inflight:${r.id}`, false);
-      recordUsage(this.store, r, result.usage, {
-        phase: pipeline.phase,
-        profileId: profile.id,
-        profileVersion: profile.version,
-        usage: result.usage
-      });
-      assertControllerRules(this.skillRoot, r.agentRulesHash!);
-      if (signal.aborted) throw new RequestError('作者已停止执行', false);
-      if (result.stop === 'length' || result.stop === 'filtered') throw new Error('输出未完成，候选已保留');
-      return result;
-    };
-    if (pipeline.phase === 'prose') {
-      if (p.config.preview.enabled && !(r.steps ?? []).some((s) => s.phase === 'assessment:plan'))
-        await this.telemetry.final(
-          r,
-          this.store.readAccepted(detailPath(r.chapter)).content,
-          reviewer,
-          'plan',
-          detailPath(r.chapter)
-        );
-      const file = prosePath(r.chapter);
-      let draft = '',
-        lastFlush = 0;
-      const expression = expressionPack(this.skillRoot, p.config, 'prose');
-      bindExpressionRules(r, expression.binding);
-      const system = `${systemPrompt(this.skillRoot, p, 'S10', naming, undefined, { outputMode: 'prose' })}\n正文候选由宿主保存，再安排独立校验。${expression.prompt}\n${narrativeStreamInstruction}`;
-      let written = false;
-      await runTaskLoop({ executorId: r.executorId, signal,
-        event: event => { if (event.type === 'turn_end') this.store.db.event(r.id, 'pi-turn', '正文候选已保存', { phase: 'prose', round: r.rounds }); },
-        next: async () => {
-        if (written) return;
-        const repair = r.repairAttempts?.prose ?? 0;
-        draft = '';
-        let decoded: ReturnType<typeof decodeNarrativeResponse> | undefined, activated = false;
-        const activate = () => {
-          if (activated) return;
-          activated = true; pipeline.epoch = id(); pipeline.version++;
-          pipeline.narrative = { version: 1, epoch: pipeline.epoch, events: [] };
-        };
-        const emitNodes = () => this.emit({ type: 'narrative-event', resource: 'runs', runId: r.id,
-          epoch: pipeline.epoch, draftVersion: pipeline.version, data: pipeline.narrative });
-        const messages: Run['messages'] = [
-          {
-            role: 'user',
-            content: JSON.stringify({
-              ...context,
-              repair: repair ? r.issues : undefined,
-              reviewFeedback: r.proseReviewFeedback,
-              prior: r.changes.find((c) => c.path === file)?.content
-            })
-          }
-        ];
-        return { profile: writer, system, messages, tools: [],
-        request: async delta => {
-          const decoder = new NarrativeDecoder((text) => {
-          activate();
-          delta(text);
-          draft += text;
-          pipeline.version++;
-          const c = { path: file, content: draft, baseHash: this.store.db.document(file)?.hash ?? null };
-          r.changes = [...r.changes.filter((x) => x.path !== file), c];
-          this.emit({
-            type: 'prose-delta',
-            resource: 'runs',
-            runId: r.id,
-            projectId: p.id,
-            snapshotId: r.baseSnapshotId,
-            epoch: pipeline.epoch,
-            draftVersion: pipeline.version,
-            text,
-            textOffset: draft.length - text.length
-          });
-          if (p.config.preview.enabled) this.telemetry.checkpoint(r, draft, reviewer);
-          if (Date.now() - lastFlush > 800) {
-            this.store.db.saveRun(r);
-            lastFlush = Date.now();
-          }
-          }, event => {
-            pipeline.narrative!.events = [...pipeline.narrative!.events, event];
-            emitNodes(); this.store.db.saveRun(r);
-          });
-          try {
-            const result = await call(writer, system, messages, [], text => decoder.push(text));
-            decoded = decodeNarrativeResponse(result.text);
-            return { ...result, text: decoded.text };
-          } finally { decoder.finish(); }
-        },
-        received: async result => {
-        if (result.calls.length) throw new Error('正文子调用返回了工具内容，未作为正文保存');
-        activate();
-        draft = result.text;
-        pipeline.version++;
-        pipeline.narrative = { version: 1, epoch: pipeline.epoch, events: decoded?.events ?? [] };
-        emitNodes();
-        this.store.putObject(draft);
-        r.changes = [
-          ...r.changes.filter((x) => x.path !== file),
-          { path: file, content: draft, baseHash: this.store.db.document(file)?.hash ?? null }
-        ];
-        r.issues = validateCandidate('S10', p, r.changes, this.skillRoot, 'revision').filter(
-          (i) => i.path === file
-        );
-        this.save(r);
-        return true;
-        },
-        execute: async () => { throw new Error('正文子调用不允许工具'); },
-        finish: async () => {
-        if (!r.issues.some((i) => i.severity === 'error')) { written = true; return false; }
-        this.save(r);
-        if (repair >= automaticRepairLimit) {
-          setRunStatus(r, 'needs_repair');
-          this.save(r);
-          return false;
-        }
-        (r.repairAttempts ??= {}).prose = repair + 1;
-        this.save(r);
-        return true;
-        } };
-      } });
-      if (!written) return;
-      pipeline.proseHash = hash(draft);
-      try { saveNarrativeEvents(this.store, r, draft); }
-      catch { /* Optional node indexing cannot block the manuscript. */ }
-      r.sourceProseHash = pipeline.proseHash;
-      pipeline.phase = 'review';
-      r.messages = [];
-      this.save(r);
-    }
-    const prose = r.changes.find((c) => c.path === prosePath(r.chapter));
-    if (!prose || hash(prose.content) !== pipeline.proseHash) throw new Error('候选正文与核对版本不一致');
-    for (const phase of ['review', 'memory'] as const) {
-      if (pipeline.phase !== phase) continue;
-      const stage = phase === 'memory' ? 'S11' : 'S10',
-        profile = phase === 'memory' ? extractor : reviewer;
-      const skillId = phase === 'memory' ? 'webnovel-memory-extractor' : 'webnovel-chapter-reviewer';
-      const expression = expressionPack(this.skillRoot, p.config, phase === 'memory' ? 'record' : 'review');
-      bindExpressionRules(r, expression.binding);
-      const system = `${systemPrompt(this.skillRoot, p, stage, naming, skillId, { outputMode: phase })}\n本阶段为 ${phase}。${phase === 'memory' ? '记忆与正文一起待作者确认。证据 hash 使用候选哈希；同步字段填待提交。' : `质量报告路径：${qualityPath(r.chapter)}。`}实际字数 ${countWords(prose.content)}；候选哈希 ${pipeline.proseHash}。${expression.prompt}${phase === 'memory' ? sharedRuleBlock('source-reuse', sourceReuseInstructions) : ''}`;
-      if (!r.messages.length) {
-        if (phase === 'memory') {
-          // The Skill requires current ledgers before updating them. Supply each
-          // exact full version once instead of forcing a model round to re-read
-          // excerpts, and bind these sources to the same external-change guard.
-          for (const file of memoryPaths) {
-            const doc = this.store.readAccepted(file);
-            if (fileHash(safePath(this.store.root, file)) !== doc.hash) throw new Error(`记忆资料有未确认的外部变化：${file}`);
-            r.manifest!.sources = r.manifest!.sources.filter(source => source.path !== file);
-            r.manifest!.sources.push({ path: file, hash: doc.hash, content: doc.content,
-              ranges: [{ start: 0, end: Array.from(doc.content).length }], mode: 'full', required: true,
-              reason: '章后提取必读的完整当前记忆，未变内容须保留', layer: 'summary', category: 'derived_summary', sourceSnapshotId: r.manifest!.snapshotId });
-          }
-          r.manifest!.estimatedTokens = countInput(profile, contextPayload(r.manifest!)).tokens;
-          this.save(r);
-        }
-        preloadOutputTargets(this.store, r, p, r.manifest!);
-        const input = {
-            ...context,
-            ...taskEnvelope(this.store, this.skillRoot, r),
-            ...contextPayload(r.manifest!),
-            prose: { ...prose, hash: pipeline.proseHash },
-            existingCandidates: r.changes.filter(c => c.path !== prose.path && (phase !== 'memory' || c.path !== qualityPath(r.chapter))),
-            repairScope: repairContext(r),
-            expectedOutputs: phase === 'memory' ? stageOutputs('S11', p) : [qualityPath(r.chapter)]
-        };
-        if (phase === 'review') {
-          const report = chapterEditorial(this.store, p, r.manifest!, { ...prose, hash: pipeline.proseHash! });
-          const attached = attachEditorial(input, report, value => {
-            try {
-              requestGuard(profile, system, [{ role: 'user', content: JSON.stringify(value) }], this.toolsFor(r), r, p.config.stageBudget, this.telemetry.reserved);
-              return true;
-            } catch (error) {
-              if (error instanceof ApplicationError && ['MODEL_CONFIGURATION', 'BUDGET_EXCEEDED', 'BUDGET_UNCONFIRMED'].includes(error.code)) return false;
-              throw error;
-            }
-          });
-          r.manifest!.referenceSources = attached.references;
-          r.messages.push({ role: 'user', content: JSON.stringify(attached.input) });
-          this.store.db.event(r.id, 'editorial-evidence', '本地正文线索已交给本次审稿判断', { ...report,
-            included: attached.included, omitted: attached.omitted, modelRequests: 0 });
-        } else r.messages.push({ role: 'user', content: JSON.stringify(input) });
-      }
-      const lastAssistant = [...r.messages].reverse().find((m) => m.role === 'assistant');
-      for (const tool of lastAssistant?.calls ?? [])
-        if (!r.messages.some((m) => m.role === 'tool' && m.callId === tool.id))
-          if (!(await this.execute(r, p, tool, signal, naming))) return;
-      let completed = false;
-      const locallySubmitted = () => {
-        const last = r.messages.at(-1);
-        const completedExtraction = phase === 'memory' && r.memoryCompletionHash === memoryCompletionHash(r);
-        // Older saved runs may already contain the redundant final assistant
-        // message. The bound extraction receipt still permits local validation;
-        // queued user repairs and unacknowledged tool batches must reach the model.
-        if (!this.completedToolBatch(r) && !(completedExtraction && last?.role === 'assistant' && !last.calls?.length)) return false;
-        // Files alone never prove that extraction is complete. The explicit final
-        // fact submission is bound to every file and fact, including an empty set.
-        if (phase === 'memory' && !completedExtraction) return false;
-        return true;
-      };
-      let redirected = false;
-      await runTaskLoop({ executorId: r.executorId, signal,
-        event: event => { if (event.type === 'turn_end') this.store.db.event(r.id, 'pi-turn', '章节子阶段回执已保存', { phase, round: r.rounds }); },
-        next: async () => {
-        if (this.redirectProseRepair(r, p)) {
-          redirected = true;
-          return;
-        }
-        if (locallySubmitted()) {
-          this.check(r, p);
-          const localIssues = r.issues.filter(issue => issue.code !== 'pipeline_pending' &&
-            (phase === 'memory' ? issue.code !== 'memory_review' : issue.path === qualityPath(r.chapter)));
-          // A completed submission with a local error needs precise repair
-          // feedback, never an otherwise empty "finish" request or a stale audit.
-          const repair = this.queueRepair(r, p, localIssues, phase);
-          if (!repair && localIssues.some(issue => issue.severity === 'error')) {
-            setRunStatus(r, 'needs_repair'); this.save(r); return;
-          }
-          if (!repair) {
-          if (phase === 'memory') await this.auditMemory(r, p, reviewer, signal);
-          this.check(r, p);
-          const issues = r.issues.filter(issue => issue.code !== 'pipeline_pending' && (phase === 'memory' || issue.path === qualityPath(r.chapter)));
-          const auditRepair = this.queueRepair(r, p, issues, phase);
-          if (!auditRepair && issues.some(issue => issue.severity === 'error')) {
-            setRunStatus(r, 'needs_repair'); this.save(r); return;
-          }
-          if (!auditRepair) {
-          this.event(r, 'local-phase-complete', `${phase === 'memory' ? '记忆提取及独立证据审核' : '独立正文审稿'}已完成，省去模型结束说明轮`);
-          completed = true; return;
-          }
-          }
-        }
-        return { profile, system, messages: r.messages, tools: this.toolsFor(r),
-        request: delta => call(profile, system, r.messages, this.toolsFor(r), delta),
-        received: async result => {
-        r.messages.push({
-          role: 'assistant',
-          content: result.text,
-          calls: result.calls,
-          native: result.native
-        });
-        this.save(r);
-        return true;
-        },
-        execute: async tool => ({ proceed: await this.execute(r, p, tool, signal, naming),
-          content: r.messages.findLast(message => message.role === 'tool' && message.callId === tool.id)?.content ?? '' }),
-        finish: async result => {
-        if (!result.calls.length) {
-          if (phase === 'memory') await this.auditMemory(r, p, reviewer, signal);
-          this.check(r, p);
-          if (this.redirectProseRepair(r, p)) {
-            redirected = true;
-            return false;
-          }
-          const issues = r.issues.filter(issue => issue.code !== 'pipeline_pending' && (phase === 'memory' || issue.path === qualityPath(r.chapter)));
-          if (this.queueRepair(r, p, issues, phase)) return true;
-          if (issues.some(issue => issue.severity === 'error')) {
-            setRunStatus(r, 'needs_repair');
-            this.save(r);
-            return false;
-          }
-          completed = true;
-          return false;
-        }
-        this.save(r);
-        return true;
-        } };
-      } });
-      if (redirected) {
-        if (r.pipeline!.phase === 'prose') await this.driveChapter(r, p, fallback, signal, naming);
-        return;
-      }
-      if (r.status !== 'running') return;
-      if (!completed) throw new Error('本阶段达到调用上限，候选已保留');
-      if (phase === 'review') {
-        if (p.config.preview.enabled) await this.telemetry.final(r, prose.content, reviewer);
-        pipeline.phase = 'memory';
-        r.messages = [];
-      } else {
-        pipeline.phase = 'ready';
-      }
-      this.save(r);
-    }
-    this.check(r, p);
-    setRunStatus(r, r.issues.some((i) => i.severity === 'error') ? 'needs_repair' : 'awaiting_review');
-    this.save(r);
-  }
-  private async memoryCall(r: Run, p: ProjectState, profile: SecretProfile, signal: AbortSignal, phase: string, instruction: string, input: unknown, continuation: Run['messages'] = []) {
+  async memoryCall(r: Run, p: ProjectState, profile: SecretProfile, signal: AbortSignal, phase: string, instruction: string, input: unknown, continuation: Run['messages'] = []) {
     const verify = () => {
       if (signal.aborted) throw new RequestError('作者已停止执行', false);
       assertControllerRules(this.skillRoot, r.agentRulesHash!);
@@ -1355,8 +994,8 @@ export class AgentRunner {
   private planReceiptBinding(r: Run, p: ProjectState, profile: SecretProfile, input: ReturnType<typeof futurePlanReviewInput>) {
     return { policy: this.auditBinding(r, p, profile), kind: 'future-plans', input };
   }
-  private async auditMemory(r: Run, p: ProjectState, profile: SecretProfile, signal: AbortSignal) {
-    if (!r.facts.length && !r.factRetractions?.length && !r.memoryRepair) return;
+  async auditMemory(r: Run, p: ProjectState, profile: SecretProfile, signal: AbortSignal) {
+    if (!r.facts.length && !r.factRetractions?.length && !r.memoryRepair && !r.chapterCoverage && !r.revisionCore) return;
     if (r.facts.some(fact => validateEvidence(this.store, fact, p.chapter, r.pipeline || r.mode === 'revision' ? r.changes : [], r.memoryRepair?.paths).length)) return;
     const input = memoryReviewInput(this.store, r);
     const policy = hash(JSON.stringify(this.auditBinding(r, p, profile)));
@@ -1405,7 +1044,7 @@ export class AgentRunner {
     }
     for (let at = 0; !combined && at < pending.length; at += 12) {
       const items = pending.slice(at, at + 12);
-      const pageSources = input.sources.filter(source => r.memoryRepair?.sources.includes(source.path) ||
+      const pageSources = input.sources.filter(source => !!r.revisionCore || r.memoryRepair?.sources.includes(source.path) ||
         r.memoryRepair && (r.memoryRepair.impacts?.some(impact => impact.creationChange) ? /^(03_|04_|05_|06_)/ : /^(05_|06_)/).test(source.path) || items.some(item => item.path === source.path || item.fact?.evidence.some(e => e.path === source.path)));
       const receipt = await this.reviewReceipt(r, p, profile, signal, 'memory-evidence-review',
         memoryAuditInstruction + compactAuditInstruction, { items, sources: pageSources, scope: input.scope, impacts: input.impacts },
@@ -1438,55 +1077,7 @@ export class AgentRunner {
     if (cached) this.event(r, 'future-plan-review-reused', '正文与后续计划未变更，复用已有核对结论');
     this.save(r);
   }
-  private async driveMemoryRepair(r: Run, p: ProjectState, profile: SecretProfile, signal: AbortSignal) {
-    setRunStatus(r, 'running');
-    r.error = undefined;
-    this.save(r);
-    // Applying one file invalidates its review receipt; keep the batch feedback
-    // available to the remaining files throughout this correction pass.
-    const repairFeedback = r.memoryReview?.issues.join('；') ?? '';
-    while (r.memoryRepair!.cursor < r.memoryRepair!.paths.length) {
-      const file = r.memoryRepair!.paths[r.memoryRepair!.cursor];
-      let error = repairFeedback;
-      for (let attempt = 0; attempt <= automaticRepairLimit; attempt++) {
-        const raw = await this.memoryCall(r, p, profile, signal, 'memory-synchronization',
-          '按本次记忆同步任务处理一个文件。不把待核对文稿当作事实。逐条依据新版本复核；只有确实受影响时才修改，保留其余内容。遵守 formatRequirements，字段名称及原分节保持一致，已经完成的状态写在字段内容中。records 和 withdrawn 必须是数组。', { ...memoryRepairRequest(this.store, r, file, this.skillRoot), correction: error });
-        try {
-          applyMemoryRepairResponse(this.store, r, file, raw, this.skillRoot);
-          this.save(r);
-          error = '';
-          break;
-        } catch (failure) {
-          error = (failure as Error).message;
-          this.event(r, 'memory-sync-repair', `${file}：${error}`);
-          if (attempt === automaticRepairLimit) throw failure;
-        }
-      }
-      if (error) throw new Error(error);
-    }
-    finishMemoryRepairReport(this.store, r);
-    await this.auditMemory(r, p, profile, signal);
-    this.check(r, p);
-    if (r.issues.some(issue => issue.severity === 'error') && (r.repairAttempts?.memory_sync ?? 0) < automaticRepairLimit) {
-      (r.repairAttempts ??= {}).memory_sync = (r.repairAttempts?.memory_sync ?? 0) + 1;
-      const issues = r.issues.map(issue => issue.message);
-      r.memoryRepair!.cursor = 0;
-      r.memoryRepair!.completed = [];
-      r.changes = [];
-      r.facts = [];
-      r.factRetractions = [];
-      r.memoryReview = { fingerprint: '', issues };
-      this.save(r);
-      await this.driveMemoryRepair(r, p, profile, signal);
-      return;
-    }
-    r.responseText = r.issues.some(issue => issue.severity === 'error')
-      ? '记忆同步已生成，但仍有需要修正的证据或内容。正式文稿尚未改变。'
-      : '已核对受影响的原文和记忆，并保留无需修改的内容。请统一审阅这次修正，接受后恢复正常创作。';
-    setRunStatus(r, r.issues.some(issue => issue.severity === 'error') ? 'needs_repair' : 'awaiting_review');
-    this.save(r);
-  }
-  private async execute(
+  async execute(
     r: Run,
     p: ProjectState,
     call: ToolCall,
@@ -1501,7 +1092,8 @@ export class AgentRunner {
     let ticket: ToolTicket | undefined;
     let result: unknown;
     try {
-      ticket = beginTool(this.store, r.id, call, this.toolsFor(r), signal);
+      ticket = beginTool(this.store, r.id, call, this.toolsFor(r), signal, undefined,
+        r.pipeline?.phase === 'memory' && r.pipeline.coverageVersion === 1);
       if (ticket.status === 'complete') {
         r.messages.push({ role: 'tool', callId: call.id, content: ticket.result! });
         this.save(r);
@@ -1511,7 +1103,7 @@ export class AgentRunner {
       const a = JSON.parse(call.arguments);
       r.toolCount++;
       if (r.toolCount > p.config.maxTools) throw new ApplicationError('TOOL_LIMIT', '已达到工具调用上限');
-      this.event(r, 'tool', `${call.name}${a.path ? ' · ' + a.path : ''}`);
+      this.event(r, 'tool', `${call.name}${a.path ? ' · ' + a.path : ''}`, generationOperation(call.name));
       if (call.name === 'public_search' || call.name === 'extract_pages') {
         if (!this.search) throw new Error('搜索服务不可用');
         result =
@@ -1550,22 +1142,28 @@ export class AgentRunner {
       } else if (call.name === 'search_memory')
         result = await this.retrieveForRun(z.object({ query: z.string() }).parse(a).query, r, p);
       else if (call.name === 'propose_changes') {
-        const v = z.object({ changes: z.array(changeSubmissionSchema).max(80), reuseChangesFrom: z.string().optional(), narrative: z.unknown().optional(), facts: z.array(factSubmissionSchema).optional(), complete: z.boolean().optional() }).parse(a);
+        const v = z.object({ changes: z.array(changeSubmissionSchema).max(80), reuseChangesFrom: z.string().optional(), narrative: z.unknown().optional(), facts: z.array(factSubmissionSchema).optional(), complete: z.boolean().optional(), coverage: z.unknown().optional() }).parse(a);
         if (v.reuseChangesFrom) {
           if (v.changes.length || v.facts === undefined) throw new Error('复用失败提案时 changes 必须为空，并提供修正后的 facts');
           v.changes = reuseFailedChanges(this.store, r, v.reuseChangesFrom);
         }
         if (v.complete !== undefined && v.facts === undefined) throw new Error('完成事实提取时必须同时提交 facts，允许空数组');
+        if (v.coverage !== undefined && v.facts === undefined) throw new Error('人物覆盖须与同一批 facts 一起提交，允许空数组');
+        if ((r.volumeNaming?.renameOnly || r.chapterNaming?.renameOnly) && v.facts !== undefined) throw new Error('本次只修改名称，不能重新提交故事记忆');
         const prepared = prepareDocumentDrafts(r, materializeChanges(this.store, r, p, v.changes));
         let completed = candidateChangesForCurrentSettings(this.store, { ...r, changes: prepared.completed });
         const labels = Object.values(templateFields(this.skillRoot)).flat();
         completed = completed.map(change => {
+          if (r.volumeNaming?.renameOnly || r.chapterNaming?.renameOnly) return change;
           const normalized = normalizeCandidate(change, labels);
           if (normalized.edits.length) this.store.db.event(r.id, 'format-normalized', '已自动规范候选字段格式', { path: change.path, fields: normalized.edits });
-          return normalized.change;
+          return alignChapterTitle(r, normalized.change);
         });
         const checked = [...prepared.touched.filter(d => !completed.some(c => c.path === d.path)), ...completed];
         assertRepairWrite(r, checked);
+        assertDesign(this.store, r, checked);
+        const renameIssues = [...volumeRenameIssues(r, checked), ...chapterRenameIssues(r, checked), ...chapterTitleIssues(this.store, r, completed)];
+        if (renameIssues.length) throw new Error(renameIssues[0].message);
         for (const c of checked) {
           if (c.path === contractPath) throw new Error('标签契约由宿主生成，请通过标签策划提出修订');
           safePath(this.store.root, c.path);
@@ -1598,9 +1196,13 @@ export class AgentRunner {
             throw new ApplicationError('REPAIR_EXHAUSTED', '自动修复已达两次，候选已保留，可核对后恢复任务');
         }
         let factSubmission: ReturnType<AgentRunner['prepareFacts']> | undefined;
+        let coverage: Run['chapterCoverage'];
         try {
           factSubmission = v.facts === undefined ? undefined : this.prepareFacts({ ...r,
             changes: [...r.changes.filter(c => !completed.some(n => n.path === c.path)), ...completed] }, p, v);
+          coverage = r.pipeline?.coverageVersion === 1 && (v.complete || v.coverage !== undefined)
+            ? validateChapterCoverage(this.store, { ...r, facts: factSubmission?.facts ?? r.facts }, v.coverage === undefined ? r.chapterCoverage : v.coverage) : undefined;
+          if (coverage) assertRepairCoverage(r, coverage);
         } catch (error) {
           stopOnToolFailure(error);
           // File preparation above is pure. Nothing in this batch has changed
@@ -1623,6 +1225,7 @@ export class AgentRunner {
         }
         if (factSubmission) {
           r.facts = factSubmission.facts;
+          if (coverage) r.chapterCoverage = coverage;
           r.memoryCompletionHash = v.complete ? memoryCompletionHash(r) : undefined;
         }
         if (v.changes.some(c => c.append)) this.store.db.event(r.id, 'document-draft-saved', '当前分段已保存，后续断开可从此处继续', { drafts: draftSummary(r), completed: completed.map(c => c.path) });
@@ -1641,8 +1244,14 @@ export class AgentRunner {
           issues: visibleRunIssues(r).filter(i => phaseIssues.includes(i))
         };
       } else if (call.name === 'propose_memory') {
-        const submission = z.object({ facts: z.array(factSubmissionSchema), complete: z.boolean().optional() }).parse(a);
-        r.facts = this.prepareFacts(r, p, submission).facts;
+        if (r.volumeNaming?.renameOnly || r.chapterNaming?.renameOnly) throw new Error('本次只修改名称，不能重新提交故事记忆');
+        const submission = z.object({ facts: z.array(factSubmissionSchema), complete: z.boolean().optional(), coverage: z.unknown().optional() }).parse(a);
+        const facts = this.prepareFacts(r, p, submission).facts;
+        const coverage = r.pipeline?.coverageVersion === 1 && (submission.complete || submission.coverage !== undefined)
+          ? validateChapterCoverage(this.store, { ...r, facts }, submission.coverage === undefined ? r.chapterCoverage : submission.coverage) : undefined;
+        if (coverage) assertRepairCoverage(r, coverage);
+        r.facts = facts;
+        if (coverage) r.chapterCoverage = coverage;
         r.memoryCompletionHash = submission.complete ? memoryCompletionHash(r) : undefined;
         this.check(r, p);
         result = { proposed: submission.facts.length, extractionComplete: submission.complete === true,

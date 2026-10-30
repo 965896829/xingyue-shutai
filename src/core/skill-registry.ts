@@ -5,6 +5,7 @@ import { hash } from './domain';
 import { safePath } from './storage';
 import { sharedRuleBlock } from './runtime/prompt-cache';
 import type { StageId } from '../shared/types';
+import { chapterNamingSkills } from './chapter-naming';
 
 const entrySchema = z.object({
   id: z.string(),
@@ -95,15 +96,17 @@ export class SkillRegistry {
     if (JSON.stringify(contract.tools) !== JSON.stringify(entry.tools)) throw new Error('技能工具契约不一致');
     return { ...entry, host: hostSkills.has(skillId) };
   }
-  load(skillId: string, options: { outputMode?: SkillOutputMode; legacyVolumeNaming?: boolean } = {}) {
+  load(skillId: string, options: { outputMode?: SkillOutputMode; legacyVolumeNaming?: boolean; volumeNamingVersion?: 1 | 2; chapterNamingVersion?: 1 } = {}) {
     const entry = this.get(skillId),
       current = this.read(entry.path),
       controller = this.controller();
     if (hash(current) !== entry.sha256) throw new Error('技能版本与注册表不一致');
     // Resuming a pre-0.4.72 run must retain its exact specialist prompt, not gain a new paid preflight.
-    const content = options.legacyVolumeNaming && skillId === 'webnovel-volume-architect'
-      ? this.read('skills/webnovel-volume-architect/legacy-0.4.71.md') : current;
+    const content = skillId !== 'webnovel-volume-architect' ? current
+      : options.volumeNamingVersion === 2 ? this.read('skills/webnovel-volume-architect/commercial-v2.md')
+      : options.legacyVolumeNaming ? this.read('skills/webnovel-volume-architect/legacy-0.4.71.md') : current;
     const files = new Set<string>(['references/shared-contract.md', 'references/agent-guidance.md']);
+    if (options.chapterNamingVersion === 1 && chapterNamingSkills.includes(skillId)) files.add('references/chapter-naming-commercial.md');
     for (const match of content.matchAll(/`(\.\.\/\.\.\/references\/[^`]+\.md)`/g)) {
       const relative = path.posix.normalize(path.posix.join(path.posix.dirname(entry.path), match[1]));
       if (!relative.includes('/naming/')) files.add(relative);

@@ -12,11 +12,13 @@
 }
 .work-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 5px;
   padding: 9px 22px;
   border-bottom: 1px solid var(--line);
 }
 .work-tabs button {
+  white-space: nowrap;
   background: transparent;
   color: var(--muted);
   border: 0;

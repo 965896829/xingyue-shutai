@@ -4,6 +4,7 @@ export interface GenerationActivity {
   startedAt: string;
   updatedAt: string;
   phase: GenerationPhase;
+  operation?: GenerationOperation;
   stoppedAt?: string;
 }
 export interface GenerationOwner {
@@ -11,9 +12,34 @@ export interface GenerationOwner {
   activity?: GenerationActivity;
 }
 export const generationLabels: Record<GenerationPhase, string> = {
-  preparing: '正在准备', compacting: '正在整理上下文', waiting: '正在思考', thinking: '正在思考', responding: '正在回复',
+  preparing: '正在准备', compacting: '正在整理上下文', waiting: '正在等待回复', thinking: '正在思考', responding: '正在回复',
   tool_input: '正在生成结果', tools: '正在执行工具', searching: '正在联网搜索', checking: '正在检查结果', retrying: '正在恢复连接'
 };
+const operationLabels = {
+  read_book: '正在读取作品资料',
+  read_document: '正在读取作品资料',
+  read_task_candidate: '正在核对当前候选',
+  search_memory: '正在检索作品记忆',
+  search_history: '正在回查聊天记录',
+  read_rule: '正在查阅创作规则',
+  read_naming_rules: '正在查阅命名规则',
+  public_search: '正在检索公开资料',
+  extract_pages: '正在读取网页内容',
+  propose_action: '正在整理执行方案',
+  propose_changes: '正在整理文稿候选',
+  propose_memory: '正在整理作品记忆',
+  validate: '正在核对生成结果',
+  ask_author: '正在整理待确认问题'
+};
+export type GenerationOperation = keyof typeof operationLabels;
+export function generationOperation(name: string): GenerationOperation | undefined {
+  return Object.hasOwn(operationLabels, name) ? name as GenerationOperation : undefined;
+}
+export function generationActivityLabel(activity?: GenerationActivity) {
+  const operation = activity?.operation && generationOperation(activity.operation);
+  if (operation && (activity.phase === 'tools' || activity.phase === 'searching')) return operationLabels[operation];
+  return generationLabels[activity?.phase ?? 'preparing'] ?? '正在处理';
+}
 /** A resumed execution gets its own clock; time spent waiting for the author is excluded. */
 export function syncGeneration(owner: GenerationOwner, at = new Date().toISOString()) {
   if (owner.status === 'running') {
@@ -21,11 +47,11 @@ export function syncGeneration(owner: GenerationOwner, at = new Date().toISOStri
       owner.activity = { startedAt: at, updatedAt: at, phase: 'preparing' };
   } else if (owner.activity && !owner.activity.stoppedAt) owner.activity.stoppedAt = at;
 }
-export function updateGeneration(owner: GenerationOwner, phase: GenerationPhase, at = new Date().toISOString()) {
+export function updateGeneration(owner: GenerationOwner, phase: GenerationPhase, at = new Date().toISOString(), operation?: GenerationOperation) {
   if (owner.status !== 'running') return false;
   syncGeneration(owner, at);
-  if (owner.activity!.phase === phase) return false;
-  owner.activity = { ...owner.activity!, phase, updatedAt: at };
+  if (owner.activity!.phase === phase && owner.activity!.operation === operation) return false;
+  owner.activity = { ...owner.activity!, phase, operation, updatedAt: at };
   return true;
 }
 export function elapsedGeneration(activity: GenerationActivity, now = Date.now()) {

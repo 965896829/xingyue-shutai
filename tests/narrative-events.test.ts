@@ -12,6 +12,7 @@ import { fakeProfile, fakeResult, isolatedRoot, refactorFixture } from './fixtur
 import { fixture, sampleProse } from './fixtures/workflow';
 import { RequestError } from '../src/core/provider';
 import type { AppEvent, StageId } from '../src/shared/types';
+import { fixtureCoverage } from './fixtures/chapter-coverage';
 
 const first = '林川翻过手里的旧账本，看见那行被人涂改的名字。';
 const second = '门外的👩‍🔧停下脚步，说水已经送到每家门口。';
@@ -144,6 +145,11 @@ async function runChapter(metadata: boolean, interrupted = false) {
     phases.push(run.pipeline!.phase);
     assert.ok(!JSON.stringify(messages).includes('<!--wenxu-event'), '下游请求只能收到纯正文');
     if (!tools.length) {
+      const input = JSON.parse(messages[0].content);
+      if (input.items) return fakeResult(JSON.stringify({ decisions: input.items.map((item: { id: string; path: string }) => ({
+        id: item.id, verdict: 'supported', reason: '离线覆盖记录与正文版本一致',
+        evidence: [{ path: item.path, quote: input.sources.find((source: { path: string }) => source.path === item.path).content.slice(0, 30) }]
+      })) }));
       assert.match(system, /正文同步节点/);
       for (let i = 0; i < stream.length; i += 11) delta?.(stream.slice(i, i + 11));
       if (metadata) assert.ok(emitted.some(e => e.type === 'narrative-event'), '本次响应结束前已经发出节点');
@@ -153,7 +159,7 @@ async function runChapter(metadata: boolean, interrupted = false) {
     const project = service.store!.db.project();
     const outputs = run.pipeline!.phase === 'review' ? [qualityPath(1)] : stageOutputs('S11', project);
     return { ...fakeResult(''), stop: 'tools', calls: [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes: outputs.map(file => service.change(file, fixture(project, file, service))) }) },
-      ...(run.pipeline!.phase === 'memory' ? [{ id: crypto.randomUUID(), name: 'propose_memory', arguments: JSON.stringify({ facts: [], complete: true }) }] : [])] };
+      ...(run.pipeline!.phase === 'memory' ? [{ id: crypto.randomUUID(), name: 'propose_memory', arguments: JSON.stringify({ facts: [], complete: true, coverage: fixtureCoverage(service, run) }) }] : [])] };
   });
   service.profiles = [{ ...fakeProfile, contextLimit: 1000000, outputLimit: 4096 }];
   await service.invoke('project.create', { parent: isolatedRoot('narrative-events'), title: '叙事事件隔离验收', premise: '伤员求医',
@@ -166,7 +172,8 @@ async function runChapter(metadata: boolean, interrupted = false) {
   try {
     await service.runner!.drive(run.id);
     const done = service.store!.db.run(run.id);
-    assert.equal(done.changes.find(c => c.path === prosePath(1))?.content, prose);
+    const expected = interrupted ? prose : prose.replace('# 本章正文', '# 第001章：具体事件与原因');
+    assert.equal(done.changes.find(c => c.path === prosePath(1))?.content, expected);
     assert.ok(!JSON.stringify(done.changes).includes('<!--wenxu-event'));
     return { done, phases, emitted, record: readNarrativeData(service.store!, 1, run.id).eventRecord };
   } finally { await service.drain(); }
@@ -177,11 +184,15 @@ test('S10 正文同一请求实时发节点，完整流程请求数、Skill 文�
   for (const result of [original, current]) {
     assert.equal(result.done.status, 'awaiting_review', JSON.stringify({ error: result.done.error, issues: result.done.issues, phases: result.phases }));
     assert.equal(result.done.pipeline?.phase, 'ready');
-    assert.deepEqual(result.phases, ['prose', 'review', 'memory']);
+    assert.deepEqual(result.phases, ['prose', 'review', 'memory', 'memory']);
     assert.ok(!result.done.repairAttempts?.prose);
   }
   assert.deepEqual(current.done.changes.map(c => c.path).sort(), original.done.changes.map(c => c.path).sort());
   assert.equal(current.record?.events.length, 1); assert.equal(original.record?.events.length, 0);
+  const saved = current.done.changes.find(change => change.path === prosePath(1))!.content;
+  assert.equal(current.record!.source.hash, hash(saved));
+  assert.deepEqual(visibleNarrativeEvents(current.record!.events, saved), current.record!.events);
+  assert.equal(current.record!.events[0].start, saved.indexOf(current.record!.events[0].anchor));
   assert.equal(current.emitted.filter(e => e.type === 'prose-delta').map(e => e.text).join(''), sampleProse(200));
 });
 

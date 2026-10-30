@@ -28,7 +28,7 @@ export function rejectFactProposal(store: FileStore, run: Run, changes: Submissi
   return new RejectedFactProposal({ error: error.message, saved: false, candidateWrites: 'none', reuseChangesFrom: id,
     versions: changes.map(c => ({ path: c.path, baseHash: c.baseHash,
       hash: run.changes.find(old => old.path === c.path) ? hash(run.changes.find(old => old.path === c.path)!.content) : c.baseHash })),
-    next: '本批文件和事实均未写入，原有候选及正式版本不变。只修正事实后调用 propose_changes：changes:[]、reuseChangesFrom:上述编号、facts:修正后的本批事实、complete:true。无需重读这些未变台账或重发原补丁；宿主重用文件提案并重新执行所有版本、权限和证据校验。事件evidence只放正文原文；身份对应使用entityIds/aliases，不能把规划作为事件发生证据。' });
+    next: '本批文件、事实和人物覆盖均未写入，原有候选及正式版本不变。修正 facts/coverage 后调用 propose_changes：changes:[]、reuseChangesFrom:上述编号、facts:修正后的本批事实、coverage:与本章正文和事实一致的人物覆盖（本任务要求时）、complete:true。无需重读这些未变台账或重发原补丁；宿主重用文件提案并重新执行所有版本、权限和证据校验。事件evidence只放正文原文；身份对应使用entityIds/aliases，不能把规划作为事件发生证据。' });
 }
 export function reuseFailedChanges(store: FileStore, run: Run, id: string): Submission[] {
   const saved = store.db.get<SavedProposal>(key(run));

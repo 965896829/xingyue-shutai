@@ -24,6 +24,6 @@
 - 安装包内 UI、主进程和 worker 与本次构建逐字节对比；skill 目录清单及各文件散列与源码一致。详见 [打包校验记录](../../output/task-retry-layout-0.4.80-20261028/package-verification.json)。
 - 本次没有真实模型调用，没有覆盖安装，没有修改原有作品和模型配置。离线测试确认重新生成入口与请求次数，不代表完成了真实模型整章质量验收。
 
-安装包：[星月书台 Setup 0.4.80.exe](../../release/星月书台%20Setup%200.4.80.exe)。
+历史安装包：`星月书台 Setup 0.4.80.exe`；已于 2026-10-30 清理，见[清理记录](../maintenance/repository-cleanup-2026-10-30.md)。
 
 证据：[相关回归日志](../../output/task-retry-layout-0.4.80-20261028/regression-tests.log)、[点击请求记录](../../output/playwright/task-retry-click-result-0.4.80.json)、[宽窗口](../../output/playwright/task-retry-wide-0.4.80.png)、[窄窗口](../../output/playwright/task-retry-narrow-0.4.80.png)。

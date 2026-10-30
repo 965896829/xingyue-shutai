@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { creationPlanSchema, type TitleSelection } from './creation';
 import type { TagPolicyAssessment, TagPolicyProfile, TagPolicySource } from './tag-policy';
+import { bookProfileSchema, publishingSnapshotSchema, type PublishingSnapshot } from './publishing';
+import { worldModuleIds } from './quality';
 
 const text = z.string().trim().min(1).max(12000);
 const ids = (max = 30) => z.array(z.string().min(1).max(100)).max(max);
@@ -15,7 +17,8 @@ export const tagInputSchema = z
     selection: tagSelectionSchema,
     premise: z.string().max(20000),
     mustKeep: z.array(text).max(30),
-    mustAvoid: z.array(text).max(30)
+    mustAvoid: z.array(text).max(30),
+    bookProfile: bookProfileSchema.optional()
   })
   .strict();
 export type TagInput = z.infer<typeof tagInputSchema>;
@@ -40,6 +43,7 @@ export interface TagOption {
   definitionStatus?: string;
 }
 export interface TagCatalog {
+  publishingSnapshots?: PublishingSnapshot[];
   taxonomyVersion: string;
   counts?: { reading: number; content: number; total: number };
   groups: {
@@ -56,6 +60,7 @@ export interface TagCatalog {
   sources?: TagPolicySource[];
 }
 export interface BookSpec extends TagInput {
+  publishingCatalog?: PublishingSnapshot;
   projectId: string;
   revision: number;
   taxonomyVersion: string;
@@ -65,6 +70,7 @@ export interface BookSpec extends TagInput {
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 export const bookSpecSchema = tagInputSchema
   .extend({
+    publishingCatalog: publishingSnapshotSchema.optional(),
     projectId: text,
     revision: z.number().int().positive(),
     taxonomyVersion: text,
@@ -103,6 +109,12 @@ const coverageSchema = z
       .strict()
   )
   .max(30);
+export const worldSuggestionSchema = z.object({
+  moduleId: z.string().refine(id => worldModuleIds.includes(id as typeof worldModuleIds[number]) || /^custom:[a-z][a-z0-9-]{0,60}$/.test(id), '未知世界模块'),
+  state: z.enum(['enabled', 'disabled', 'undecided']),
+  reason: z.string().trim().min(1).max(800),
+  assumptionIds: ids(8)
+}).strict();
 export const planningReportSchema = z
   .object({
     positioning: text,
@@ -135,6 +147,7 @@ export const planningReportSchema = z
             firstVolumeChange: text,
             longRunRisk: text,
             intentChanges: z.array(text).max(20),
+            worldSuggestions: z.array(worldSuggestionSchema).max(12).optional(),
             tagCoverage: coverageSchema
           })
           .strict()
@@ -147,13 +160,17 @@ export const planningReportSchema = z
   })
   .strict();
 export type PlanningReport = z.infer<typeof planningReportSchema>;
+export const legacyPlanningReportSchema = planningReportSchema.extend({ directions: z.array(planningReportSchema.shape.directions.element.omit({ worldSuggestions: true })).length(3) });
 /** New direction requests omit editorial bookkeeping. Persisted reports retain
  * the established shape so selection, history and contract work stay compatible. */
 export const concisePlanningReportSchema = planningReportSchema
   .omit({ diagnosis: true, marketClaims: true, unresolvedQuestions: true })
   .extend({
-    directions: z.array(planningReportSchema.shape.directions.element.omit({ tagCoverage: true })).length(3)
+    directions: z.array(planningReportSchema.shape.directions.element.omit({ tagCoverage: true, worldSuggestions: true })).length(3)
   });
+export const modularPlanningReportSchema = concisePlanningReportSchema.extend({
+  directions: z.array(concisePlanningReportSchema.shape.directions.element.extend({ worldSuggestions: z.array(worldSuggestionSchema).max(12) })).length(3)
+});
 export const tagConstraintSchema = z
   .object({
     id: text,
@@ -233,7 +250,7 @@ export const creationContractSchema = contractCandidateSchema
 export interface TagPlanning {
   workflowVersion?: 2;
   /** Absent on existing tasks: keep their original prompt and output contract. */
-  directionFormatVersion?: 1;
+  directionFormatVersion?: 1 | 2;
   planApproval?: { hash: string; planHash: string; binding: string; at: string };
   titleSelection?: TitleSelection;
   binding: string;

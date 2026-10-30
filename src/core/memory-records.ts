@@ -41,7 +41,8 @@ export function validateEvidence(
   chapter: number,
   candidates: Change[] = [],
   reviewingSources: string[] = [],
-  project: ProjectState = store.db.project()
+  project: ProjectState = store.db.project(),
+  sourceCache?: Map<string, { content: string; hash: string }>
 ): string[] {
   const errors: string[] = [];
   if (fact.tagRefs || fact.planRefs) {
@@ -72,7 +73,8 @@ export function validateEvidence(
       if (pendingSource(project, source.path) && !reviewingSources.includes(source.path))
         throw new Error('来源因前文修订待核对');
       if (!candidate && (!d || d.hash !== source.hash)) throw new Error('来源不是当前已接受版本');
-      const original = candidate ? null : store.read(source.path);
+      const original = candidate ? null : sourceCache?.get(source.path) ?? store.read(source.path);
+      if (original) sourceCache?.set(source.path, original);
       if (original && original.hash !== source.hash)
         throw new Error('来源文件存在未确认的外部改动');
       const sourceChapter = source.path.match(/^07_.*第(\d+)章/);

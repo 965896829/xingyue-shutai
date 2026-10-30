@@ -129,5 +129,8 @@
   "workflows.json": "ff6851ad69515d48feb217aa687cb356ae5e756e10a9687f718d9bb181fed935",
   "references/agent-guidance.md": "8d00b3886de67f0cdec5e56124060da15d7796d100acb23e6bba58a36f659d0f",
   "references/volume-naming.md": "e8069f351ccf419242d7e0bfea282f7b41d25d671eb80ae70e28cc1dd3ec7433",
-  "skills/webnovel-volume-architect/legacy-0.4.71.md": "853a4bd99f37062f2d84cf9f6785de2f756ccf6b42ed9996dc5047580e2652a8"
+  "skills/webnovel-volume-architect/legacy-0.4.71.md": "853a4bd99f37062f2d84cf9f6785de2f756ccf6b42ed9996dc5047580e2652a8",
+  "skills/webnovel-volume-architect/commercial-v2.md": "9a8c58b9a860a7164504b220b07990aa2550235b67730b28087e1582fb5ef870",
+  "references/volume-naming-commercial.md": "9772b1931f46679908ff3e29a4e9ab6759e5069e41810d9ba7fe83b4a563f3bf",
+  "references/chapter-naming-commercial.md": "5c7f9782c4cb73d541f4a39b0240373fb7b5a4315dce5df63a54d66f473cf175"
 }

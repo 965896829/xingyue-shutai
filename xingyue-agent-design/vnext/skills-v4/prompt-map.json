@@ -1,0 +1,502 @@
+{
+  "note": "追溯关系不触发旧提示词再次注入。旧任务按原资源运行；新模式使用 V4 核心、所选蓝图与一个操作。",
+  "prompts": [
+    {
+      "promptId": "P01",
+      "path": "runtime/agent.vnext.md",
+      "sha256": "8dd74207910c69456102f3f8946049c2f005e7cea6d39a1d1829512b771dbbde",
+      "usedBySkillIds": [],
+      "classification": "previous_core"
+    },
+    {
+      "promptId": "P02",
+      "path": "vnext/prompts/concept-forge.md",
+      "sha256": "51443c40ebc511649d07f4b00c9ddc0ffff82313cfddb6f42a1ca21fb7efe5d2",
+      "usedBySkillIds": [
+        "concept-forge"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P03",
+      "path": "vnext/prompts/story-contract.md",
+      "sha256": "7f459db623c3fd242fe520c83bf2f15c752f0d107e82aded95b594425fb9298e",
+      "usedBySkillIds": [
+        "story-contract"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P04",
+      "path": "vnext/prompts/co-creation-editor.md",
+      "sha256": "9c883e19e77f81eb1e61029a4b75b3e4913fea41a84d6c2d0f0c3ee5631eef47",
+      "usedBySkillIds": [
+        "co-creation",
+        "revision",
+        "canon-audit"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P05",
+      "path": "vnext/prompts/object-lenses.md",
+      "sha256": "66a009d7c1fd3585186c37f91cca6a47dd890d778bfbbc3185d20f5f228e073e",
+      "usedBySkillIds": [
+        "co-creation",
+        "world-design",
+        "character-design",
+        "rolling-outline"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P06",
+      "path": "vnext/prompts/rolling-outline.md",
+      "sha256": "fa038dd0378b2b584fe3a912fc5830646404ee4df42e3482d606c6474be521e2",
+      "usedBySkillIds": [
+        "rolling-outline"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P07",
+      "path": "vnext/prompts/scene-contract.md",
+      "sha256": "2697abbd99b2f7602b2eb73fa5a5d3face9743921407199d5c65f3878848e6fb",
+      "usedBySkillIds": [
+        "scene-contract"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P08",
+      "path": "vnext/prompts/voice-calibration.md",
+      "sha256": "fae53d9ff1c3cfcf60a700b79bb7299e18c38c1744372f977880a53985d55edc",
+      "usedBySkillIds": [
+        "voice-calibration"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P09",
+      "path": "vnext/prompts/pilot-scenes.md",
+      "sha256": "e7e6eb88ab90c3b24ac49ac02f160dbddcf332fb55583ee296e74c5b6c12f0fe",
+      "usedBySkillIds": [
+        "voice-calibration"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P10",
+      "path": "vnext/prompts/chapter-draft.md",
+      "sha256": "4fb7c634be5a28b3855614421a480a3c7d9cb8c25a031146290d2d98ad30bf31",
+      "usedBySkillIds": [
+        "chapter-draft"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P11",
+      "path": "vnext/prompts/chapter-review.md",
+      "sha256": "2b20f997596885f56127371a03863c98cb02853dbfb181eac8112f601c8175eb",
+      "usedBySkillIds": [
+        "chapter-review"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P12",
+      "path": "vnext/prompts/voice-revision.md",
+      "sha256": "5b392c86aad2389fd8cbec3d1694a94a0358f4fd43f26374d4addfcf0c31485b",
+      "usedBySkillIds": [
+        "revision"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P13",
+      "path": "vnext/prompts/local-repair.md",
+      "sha256": "d7ad447ae7a27d724438cec4889ebaeedd97d5cdd1bb179ffce8e2aeb3622615",
+      "usedBySkillIds": [
+        "revision"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P14",
+      "path": "vnext/prompts/memory-delta-v3.md",
+      "sha256": "019ac54a9ae1f8c8753e4b574f44978c37574160aa43eee957f1d971a08ef8ad",
+      "usedBySkillIds": [
+        "memory-delta"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P15",
+      "path": "vnext/prompts/memory-review-v3.md",
+      "sha256": "f543040f7f0cf4ea6bc50296b6530c2dba8de196863840932ce0e126a4e91190",
+      "usedBySkillIds": [
+        "memory-review",
+        "canon-audit"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P16",
+      "path": "vnext/prompts/memory-query-v3.md",
+      "sha256": "6e2f75ac15156926daf98cd77c9500b18f235d43ff350eb7623d26ea28203f11",
+      "usedBySkillIds": [
+        "memory-query"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P17",
+      "path": "vnext/prompts/character-reflection-v3.md",
+      "sha256": "1feb2845c34e9537647b4d650eb6e72fd346dd3ca93b3ebba021aded5b65a156",
+      "usedBySkillIds": [
+        "character-design",
+        "character-reflection"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P18",
+      "path": "vnext/prompts/market-evidence.md",
+      "sha256": "c622a0cdc1a4736c7d0bafb386babd896f86bc32d9de744978cb34aee902cf63",
+      "usedBySkillIds": [
+        "market-evidence"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P19",
+      "path": "vnext/prompts/reader-feedback.md",
+      "sha256": "e2a4a9632bcebba21bc5449b4960fb5c28084dfb30fe6e85e67b499125ed3cde",
+      "usedBySkillIds": [
+        "reader-feedback"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P20",
+      "path": "vnext/prompts/ending-audit.md",
+      "sha256": "cd784b02ec86949f6dd1c1867bcca7eb4a724f3c7c84679192e3481ef12df9d7",
+      "usedBySkillIds": [
+        "canon-audit"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P21",
+      "path": "modules/fanqie-editorial.md",
+      "sha256": "fda2e41503712160b07f9e96245a89ec004a4ce40c78fa5305e4fbfa2c5ce4f2",
+      "usedBySkillIds": [],
+      "classification": "optional_reference"
+    },
+    {
+      "promptId": "P22",
+      "path": "modules/prose-voice.md",
+      "sha256": "3ed68ac4eef18c7fc30d7f8ba0a0d565554f913cf2ce7e5e9df627f0e27d0440",
+      "usedBySkillIds": [],
+      "classification": "optional_reference"
+    },
+    {
+      "promptId": "P23",
+      "path": "modules/continuity.md",
+      "sha256": "6057d1f36f666e7e30a470d7b6cb59cf8055024d38646ac206868884c84d5eb4",
+      "usedBySkillIds": [],
+      "classification": "optional_reference"
+    },
+    {
+      "promptId": "P24",
+      "path": "vnext/prompts/requirements-and-directions.md",
+      "sha256": "25f92445aaf079b6560bdad3d2dc9eaa25449a75c6f9b561897169cc42da1436",
+      "usedBySkillIds": [],
+      "classification": "historical_alternative"
+    },
+    {
+      "promptId": "P25",
+      "path": "vnext/prompts/memory-delta.md",
+      "sha256": "6ef8c5385500988be8c03b55014c9635f0cb409f0416fdbe2eb382c442166f50",
+      "usedBySkillIds": [],
+      "classification": "historical_alternative"
+    },
+    {
+      "promptId": "P26",
+      "path": "runtime/agent.compat.md",
+      "sha256": "c8290e87375f558e4d5f395fff31268d3630a7720ef5879af5c58790b3ec2552",
+      "usedBySkillIds": [],
+      "classification": "previous_core"
+    },
+    {
+      "promptId": "P27",
+      "path": "creation/direction-planning/planner.system.md",
+      "sha256": "ae4e32b0888a03284c247387c5eff5dd447a7c7b535c192006ad7ec7ab66d148",
+      "usedBySkillIds": [
+        "concept-forge"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P28",
+      "path": "creation/tags/prompts/contract.system.md",
+      "sha256": "cafc3e3e464ea4e041db7100127203bfec0b8ca0459eb7438f9b73c8ce0e7d22",
+      "usedBySkillIds": [
+        "story-contract"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P29",
+      "path": "creation/tags/prompts/reviewer.system.md",
+      "sha256": "8871a56094e5b2cba029beb025c80c856cf63f0f6623b3b8aeba96ea416c6dfc",
+      "usedBySkillIds": [
+        "story-contract"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P30",
+      "path": "creation/title-market-editing/writer.system.md",
+      "sha256": "7c325b2698ab2293323e8dda7c252d940e36e12df1a31bcd00f3eddcf72803d2",
+      "usedBySkillIds": [
+        "packaging"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P31",
+      "path": "creation/title-market-editing/reviewer.system.md",
+      "sha256": "15e376bd0db7528e131e2ee9a551bc5a219389e8a43e0c1686ceab1761465101",
+      "usedBySkillIds": [
+        "packaging"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P32",
+      "path": "compat/skills/webnovel-project-bootstrap/SKILL.md",
+      "sha256": "0e007442cb5797702888d6331417c34afbd86497040c6fc6fcc35a8635df9315",
+      "usedBySkillIds": [],
+      "classification": "host_service"
+    },
+    {
+      "promptId": "P33",
+      "path": "compat/skills/webnovel-premise-lab/SKILL.md",
+      "sha256": "7b367e2eb40008fae2bca70b913e46d9fed309c77e4a976e9725083b8911ed98",
+      "usedBySkillIds": [
+        "concept-forge"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P34",
+      "path": "compat/skills/webnovel-project-config/SKILL.md",
+      "sha256": "8b1944d3ac81ba535e70ffc79219c7582ba0764036066bc33277b5fdfc3d8559",
+      "usedBySkillIds": [
+        "story-contract"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P35",
+      "path": "compat/skills/webnovel-world-engine/SKILL.md",
+      "sha256": "cffee46c0f7e30d7142cc2e45c9a33d6de8428d012f69ee41a0167386df7fa0d",
+      "usedBySkillIds": [
+        "world-design"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P36",
+      "path": "compat/skills/webnovel-character-engine/SKILL.md",
+      "sha256": "ca3347d01ab8ee47d2bd38844c61c9517c19da8a95b409497ee6ece421510cb7",
+      "usedBySkillIds": [
+        "character-design"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P37",
+      "path": "compat/skills/webnovel-volume-architect/SKILL.md",
+      "sha256": "410266c578508353c51525695e528a9dd29f63eece03260594d8c71f4c4cb52c",
+      "usedBySkillIds": [
+        "rolling-outline"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P38",
+      "path": "compat/skills/webnovel-chapter-roadmap/SKILL.md",
+      "sha256": "b8aab22ee5c90838daa6fcbc3f88329c535f915642bd3139321533ee618ce5fd",
+      "usedBySkillIds": [
+        "rolling-outline"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P39",
+      "path": "compat/skills/webnovel-rhythm-designer/SKILL.md",
+      "sha256": "10ad78e13908d357c58cd9ac90a673e17d3eeafbfd71b61676847c42c584b515",
+      "usedBySkillIds": [
+        "rolling-outline"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P40",
+      "path": "compat/skills/webnovel-batch-outline/SKILL.md",
+      "sha256": "db66b91a86bc5b0c67fae81157d517107936e9e1383f409a5522bf2d12bc6294",
+      "usedBySkillIds": [
+        "rolling-outline"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P41",
+      "path": "compat/skills/webnovel-chapter-planner/SKILL.md",
+      "sha256": "09c99ed1c1582f91eacaa47e77787428a7d9f474389bbea419db712422742e43",
+      "usedBySkillIds": [
+        "scene-contract"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P42",
+      "path": "compat/skills/webnovel-chapter-drafter/SKILL.md",
+      "sha256": "a1e88d5c7027e574560074f690fd37e4a4b5393f6dac0d0e6542783e13a27897",
+      "usedBySkillIds": [
+        "chapter-draft"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P43",
+      "path": "compat/skills/webnovel-chapter-reviewer/SKILL.md",
+      "sha256": "f1b9032e845ce1517a0a9e7ab89f35bb3a70a6d7035e4a1232b53dca3ac03e5b",
+      "usedBySkillIds": [
+        "chapter-review"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P44",
+      "path": "compat/skills/webnovel-memory-extractor/SKILL.md",
+      "sha256": "6aecb6e4b1a2b37fa20a4b27c99c510253e1fe6fb36ee873681010e7abf16e33",
+      "usedBySkillIds": [
+        "memory-delta"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P45",
+      "path": "compat/skills/webnovel-voice-profile/SKILL.md",
+      "sha256": "4fe180fb59cbd7bf2bd0faba9f17a7ff1e4467cc38988a7d4b1b1fd6f1ebaf46",
+      "usedBySkillIds": [
+        "voice-calibration"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P46",
+      "path": "compat/skills/webnovel-prose-polisher/SKILL.md",
+      "sha256": "063ea08455cca89e02f7e8aebe82462720137d9145bea9d557cf0eecd8a4c6f8",
+      "usedBySkillIds": [
+        "revision"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P47",
+      "path": "compat/skills/webnovel-continuity-audit/SKILL.md",
+      "sha256": "ecd40e1cde265d91c5c701e4f5224d5b743d347b31fd01fbce0c51862cec45fe",
+      "usedBySkillIds": [
+        "canon-audit"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P48",
+      "path": "compat/skills/webnovel-revision-cascade/SKILL.md",
+      "sha256": "160bb1fd8ab3ba4accd4582c6b20e4f9247fbe5fbce1a0cabdffb8e74e45058f",
+      "usedBySkillIds": [
+        "revision",
+        "canon-audit"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P49",
+      "path": "compat/skills/webnovel-market-research/SKILL.md",
+      "sha256": "166fb8bf0b3fc3d8f5cdcd575d0f314fb7e76ce0921f888b792e3365faa87f88",
+      "usedBySkillIds": [
+        "market-evidence"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P50",
+      "path": "compat/skills/webnovel-name-governance/SKILL.md",
+      "sha256": "545e71e0c039ba573a34054e606b20bc0d7207ba0616d44a546ef742b6455b37",
+      "usedBySkillIds": [
+        "packaging"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P51",
+      "path": "compat/skills/webnovel-packaging/SKILL.md",
+      "sha256": "81be17ffc14159b64a1407d8879e3dbeaf8650042f6811d29b5b36bf039a8c6b",
+      "usedBySkillIds": [
+        "packaging"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P52",
+      "path": "compat/skills/webnovel-reader-feedback/SKILL.md",
+      "sha256": "60d928717d4b9b5e0ac09ed83416716cc8981eea2abcc2ffd69b006a4afb5f7f",
+      "usedBySkillIds": [
+        "reader-feedback"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P53",
+      "path": "compat/skills/webnovel-narrative-telemetry/SKILL.md",
+      "sha256": "10c079bdb0e5c24f6f080b37805a3c8e51bc1a23598237daa4346908dc0c5110",
+      "usedBySkillIds": [
+        "reader-feedback"
+      ],
+      "classification": "source_only_not_injected"
+    },
+    {
+      "promptId": "P54",
+      "path": "compat/skills/webnovel-batch-close/SKILL.md",
+      "sha256": "426ec007deb74247b76ced88d53bf4fd65b4c763baf787e64d8f3b78fadde122",
+      "usedBySkillIds": [],
+      "classification": "host_service"
+    },
+    {
+      "promptId": "P55",
+      "path": "compat/skills/webnovel-context-retriever/SKILL.md",
+      "sha256": "0ba2534f277fd60429539b1c3194f76d611882eccc8ca57b8e2e9b2f3823e668",
+      "usedBySkillIds": [],
+      "classification": "host_service"
+    },
+    {
+      "promptId": "P56",
+      "path": "compat/skills/webnovel-project-validator/SKILL.md",
+      "sha256": "8e676ba09217f3be3e9a7e2ce1cab8af1d68a0ce65baa90948f1c160a0bff8aa",
+      "usedBySkillIds": [],
+      "classification": "host_service"
+    },
+    {
+      "promptId": "P57",
+      "path": "compat/skills/webnovel-memory-audit/SKILL.md",
+      "sha256": "1155f4fb7c372b175640293def48c5613d9b5f539c47d5ff2062223f4f31ea45",
+      "usedBySkillIds": [],
+      "classification": "host_service"
+    }
+  ]
+}

@@ -30,6 +30,7 @@ export const searchSettingsSchema = z.object({
 export type SearchSettings = z.infer<typeof searchSettingsSchema>;
 export interface Conversation {
   id: string;
+  objectBinding?: import('./workbench').WorkbenchBinding;
   runId?: string;
   title: string;
   createdAt: string;
@@ -134,6 +135,7 @@ export interface ActionProposal {
   executionError?: string;
 }
 export interface DraftArtifact {
+  parent?: { id: string; hash: string };
   id: string;
   title: string;
   path: string;

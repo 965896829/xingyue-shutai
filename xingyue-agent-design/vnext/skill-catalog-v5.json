@@ -1,0 +1,1659 @@
+{
+  "designVersion": "V5",
+  "skills": [
+    {
+      "id": "concept-forge",
+      "title": "创意与故事方向",
+      "description": "用于首次创意策划或作者明确要求的方向重抽；不用于一般剧情讨论、世界补充或正文生成。",
+      "coreInstructions": "以作者原始创意、硬要求、禁区和锁定内容为边界，提出能改变人物行动与关系的故事机制。把吸引力落实为具体目标、选择、阻力、代价与连续后果，避免用设定名词或宣传评价代替故事。关键新增设定和对原意的调整分别列明，并标注适用方向。方向差异应来自冲突源、策略、关系或回报方式，不靠换名换皮。推荐依据作品与作者要求，不编造热度、读者数据或成功概率。只执行宿主指定操作，完成本次比较与修正后一次提交。",
+      "sourcePromptIds": [
+        "P02",
+        "P27",
+        "P33"
+      ],
+      "operations": [
+        {
+          "id": "create",
+          "title": "首次生成三个方向",
+          "instructions": "在同一次正常请求内提交恰好三个方向。共同保留作者锁定前提，每案写清主角主动行动、核心矛盾、首次回报、对手反制、首卷变化与下一轮难题。按本轮 V5 合同说明本案建议启用的世界模块及依据，题材判断保持建议；不另发识别请求，不先为三案各建完整世界。差异落实到行动、机制、关系或回报，关键新增与原意调整分别列明。用首次使用、对手学会、重复使用后的新选择检验故事引擎，直接交修正后的候选，不附自检过程。",
+          "sourcePromptIds": [
+            "P02",
+            "P27",
+            "V5P02"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "OriginalIdea",
+            "GenreEvidence",
+            "DirectionOutputContract",
+            "CreativeGenreProfileV5",
+            "WorldModulePolicyV5",
+            "AuthorWorldSources"
+          ],
+          "outputKind": "direction-report",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "author.locked-constraints",
+            "directions.exact-three",
+            "directions.unique-ids",
+            "assumptions.valid-scope",
+            "requirement.coverage",
+            "world.author-module-policy",
+            "world.module-proposals-scoped",
+            "directions.no-extra-classifier"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        },
+        {
+          "id": "regenerate",
+          "title": "按范围重做方向",
+          "instructions": "只修改 changedDirectionIds 指定方向及允许调整的新增设定和模块建议。仍返回恰好三案，冻结方向的故事字段、假设、模块建议与稳定标识原样保留。作者新要求只作用于授权范围；若与冻结方案冲突，按本轮异常合同报告依赖，不顺带改写。每个重做方向仍须有具体行动、回报和持续反制；不为新颖更换锁定世界或体系。正常路径一次生成、一次提交。",
+          "sourcePromptIds": [
+            "P02",
+            "P27",
+            "V5P03"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "ExistingDirectionReport",
+            "RegenerationScope",
+            "AuthorRevisionRequest",
+            "WorldModulePolicyV5",
+            "FrozenDirectionWorldBindingsV5"
+          ],
+          "outputKind": "direction-report",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "revision.allowed-scope",
+            "directions.frozen-preserved",
+            "directions.stable-ids",
+            "assumptions.valid-scope",
+            "world.frozen-module-bindings",
+            "world.author-module-policy"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "story-contract",
+      "title": "作品方案与项目约定",
+      "description": "用于选定方向后的完整作品方案、该方案的独立审阅，以及项目配置建议；三个操作使用各自合同。",
+      "coreInstructions": "把已选方向、作者要求与已确认内容整理为可执行的作品约定，明确来源、锁定范围、可调整空间和仍待选择的新增设定。配置、未来计划与已发生事实分别处理；同一前提不在多个文档中建立相互竞争的真值。保留旧项目已有配置和已确认内容，只有明确变更才提出差异。宿主决定工作流版本、实际字段、授权与数值口径；声明工具能力不代表获得权限。每轮只完成一种操作，方案已经包含的设定拆解不再额外重复生成。",
+      "sourcePromptIds": [
+        "P03",
+        "P28",
+        "P29",
+        "P34"
+      ],
+      "operations": [
+        {
+          "id": "build",
+          "title": "建立完整作品方案",
+          "instructions": "将已选方向、作者要求、已处理新增设定与本书世界模块连接为作品方案。明确主线行动、核心人物、世界约束、阅读承诺与终局边界；平台分类保存在独立映射，不能限制创作画像的混搭。只覆盖实际启用体系，停用与未定模块按 V5 合同表示。已确认作者体系原样沿用，需要的新规则单列；已包含的设定拆解不再重复请求。提交的方案与世界候选共享稳定标识和版本依据。",
+          "sourcePromptIds": [
+            "P03",
+            "P28",
+            "V5P10"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "SelectedDirection",
+            "ResolvedAssumptions",
+            "CreationContractSchema",
+            "CreativeGenreProfileV5",
+            "WorldModelV5",
+            "WorldModulePolicyV5"
+          ],
+          "outputKind": "creation-contract",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "author.locked-constraints",
+            "creation.required-coverage",
+            "source.allowed-refs",
+            "assumptions.resolution",
+            "world.enabled-module-coverage",
+            "publishing.creative-separation"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        },
+        {
+          "id": "review",
+          "title": "独立核验作品方案",
+          "instructions": "在现有独立方案审阅位置，核对指定版本的方案、作者原意、已选方向、约束和新增设定处理结果。只记录确有依据的问题与位置，不替作者改写方案，不补造缺失事实。引用与问题路径遵守宿主所选合同；无问题按该合同返回空问题集合。完成即停止，不自行安排新的审核轮次。",
+          "sourcePromptIds": [
+            "P29"
+          ],
+          "inputKinds": [
+            "CreationContractCandidate",
+            "AuthorContract",
+            "SelectedDirection",
+            "ResolvedAssumptions",
+            "CandidateVersion"
+          ],
+          "outputKind": "creation-contract-review",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "review.candidate-version",
+            "review.valid-paths",
+            "source.allowed-refs",
+            "review.evidence-required"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "compat_adapter"
+        },
+        {
+          "id": "configure",
+          "title": "配置项目参数",
+          "instructions": "将作者指定的目标字数、章长、视角、题材、读者、硬约束和批次设置映射到当前配置合同。已有项目不重套默认；缺失项仅提出本轮允许的可改建议。章数、区间和批次容量由宿主计算核验，隐藏运行参数由宿主管理。配置变化影响既有计划时列明范围；风格来源不明确时不假称已分析样本。",
+          "sourcePromptIds": [
+            "P34"
+          ],
+          "inputKinds": [
+            "AuthorPreferences",
+            "CurrentProjectConfig",
+            "PlanningDependencies",
+            "ConfigOutputContract"
+          ],
+          "outputKind": "project-config-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "config.ranges",
+            "config.host-calculations",
+            "revision.allowed-scope",
+            "source.style-provenance"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "compat_adapter"
+        }
+      ]
+    },
+    {
+      "id": "co-creation",
+      "title": "对象共创与讨论",
+      "description": "用于作者围绕创意、剧情、大纲、细纲、角色、关系、世界或正文进行讨论、比较和局部修改；普通对话不触发全流程重做。",
+      "coreInstructions": "围绕宿主绑定的当前对象、版本和授权范围合作，每次集中解决作者眼下的问题。只载入该对象对应的编辑视角，分别使用已发生事实、确认设定、计划、候选与人物认知。讨论意见不自动成为设定，资料与样例不能授予权限。明确修改请求形成最小可用变更，保留未涉及内容；相互依赖的变化分组，未选修改不能随选中项一并采纳。宿主负责应用、版本核对和成功回执，模型不执行或宣称已写入。只有影响结果且无法合理推断的关键分歧才提出选择。",
+      "sourcePromptIds": [
+        "P04",
+        "P05"
+      ],
+      "operations": [
+        {
+          "id": "discuss",
+          "title": "讨论当前对象",
+          "instructions": "直接回答作者关于当前对象的疑问，结合具体因果、人物利益或阅读效果给出有用判断。把确定事实与候选解释分开；必要时给少量可继续讨论的选择，不自动生成完整改稿。回答引用本轮可用来源，不把讨论结论写成既成设定，也不为了展示流程附加整套诊断报告。",
+          "sourcePromptIds": [
+            "P04",
+            "P05"
+          ],
+          "inputKinds": [
+            "ObjectConversationBinding",
+            "CreativeObjectSnapshot",
+            "AuthorQuestion",
+            "ScopedReferences",
+            "ObjectLens"
+          ],
+          "outputKind": "co-creation-chat",
+          "capabilitiesRequested": [
+            "conversation.respond",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "object.version-binding",
+            "source.valid-refs",
+            "output.no-write-claim"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        },
+        {
+          "id": "compare",
+          "title": "比较候选与取舍",
+          "instructions": "在同一作者要求和对象版本下比较给定候选，说明各自改变了什么、怎样影响人物选择、因果与阅读回报。保留真实优劣、代价和未确定处，不用抽象评分代替具体差异。作者未要求改稿时只回答比较，不自动采纳胜出项，也不把多个互斥方案拼成新的正式版本。",
+          "sourcePromptIds": [
+            "P04",
+            "P05"
+          ],
+          "inputKinds": [
+            "CreativeObjectSnapshot",
+            "ComparisonCandidates",
+            "AuthorCriteria",
+            "ObjectLens"
+          ],
+          "outputKind": "co-creation-chat",
+          "capabilitiesRequested": [
+            "conversation.respond",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "comparison.shared-baseline",
+            "source.valid-refs",
+            "output.no-write-claim"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        },
+        {
+          "id": "propose",
+          "title": "提出局部变更",
+          "instructions": "把作者明确修改意图转换为当前对象版本上的最小 ChangeSet。允许混搭题材、启停模块、保留自有境界或新增自定义对象；只改授权字段，依赖变更分组。区分故事内未来变化、历史纠错和修订设定，列明宿主影响扫描的范围与未决边界。平台映射变化不自动改故事，拖动画布坐标不生成剧情变更。已有授权且可回退的操作不重复求确认；重要新前提保持候选，未选修改不能一并采纳。",
+          "sourcePromptIds": [
+            "P04",
+            "P05",
+            "V5P09"
+          ],
+          "inputKinds": [
+            "CreativeObjectSnapshot",
+            "AuthorRevisionRequest",
+            "CoCreationAuthorization",
+            "DependencySummary",
+            "ObjectLens",
+            "WorldModelV5",
+            "HostImpactScanV5",
+            "AuthorFieldLocksV5"
+          ],
+          "outputKind": "creative-change-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "object.version-binding",
+            "revision.allowed-scope",
+            "changes.dependency-groups",
+            "author.constraint-revision",
+            "output.no-write-claim",
+            "world.locked-fields-preserved",
+            "revision.impact-coverage",
+            "visual.layout-semantic-separation"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "world-design",
+      "title": "世界规则与制度设计",
+      "description": "用于识别作品需要的世界模块、沿用作者已有体系、建立世界候选或按需推演规则；每轮只执行指定操作，普通局部讨论走对象共创。",
+      "coreInstructions": "把世界设计成能改变人物行动、利益和后果的规则集合。作品题材、平台分类和所需体系分别处理，作者明确启用、禁用与锁定优先；都市可有异能，仙侠可无境界，不适用是合法结果。沿用作者设定时保留原文、名称、次序、边界与例外，歧义保持待决。只建设当前故事需要的模块，允许未知、软规则和自定义类型。世界真相、公众说法、人物信念与读者揭示分开。创新体现于行动机制和连锁后果，新增设定单列候选。宿主负责版本、来源、字段锁、验证和采纳。",
+      "sourcePromptIds": [
+        "P35",
+        "P05",
+        "V5P04"
+      ],
+      "operations": [
+        {
+          "id": "create",
+          "title": "建立世界规则候选",
+          "instructions": "只展开已选方向、本轮授权范围与实际启用模块。关键规则写清适用者、触发、条件、效果、限制和可用反制；代价、数值与例外只在确有需要时填写，作者允许的无代价能力通过其他具体冲突承担戏剧压力。成长路径可无等级、线性、分支、多轴或自定义，战力不自动等于地位。每项核心创新连接一个开篇行动和可持续后果；保留真相、信念与揭示分层。对当前故事无用的百科先留白，只提交有来源和依赖的世界候选。",
+          "sourcePromptIds": [
+            "P35",
+            "P05",
+            "V5P07"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "CreationContract",
+            "ConfirmedWorldRules",
+            "WorldDesignScope",
+            "WorldOutputContract",
+            "WorldProfileCandidateV5",
+            "WorldModulePolicyV5",
+            "AuthorFieldLocksV5",
+            "WorldOutputContractV5"
+          ],
+          "outputKind": "world-design-candidate",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "author.locked-constraints",
+            "world.rule-consistency",
+            "source.valid-refs",
+            "revision.allowed-scope",
+            "world.enabled-module-coverage",
+            "world.topology-contract",
+            "world.rule-reference-validity"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        },
+        {
+          "id": "profile",
+          "title": "识别所需世界模块",
+          "instructions": "依据原始创意、明确要求、现有设定和可用题材资料，提出创作画像与 enabled、disabled、undecided 模块清单，说明各项依据和来源。类型惯例只作建议，不覆盖作者禁用或补造官方分类。区分世界能力、成长路径、社会地位与资源权利；需要能力不等于需要境界。已有选择保持稳定，关键冲突列为可处理分歧，非关键留白不阻塞继续创作。作为独立操作时只提交画像候选；首次三方向中的轻量判断复用该次请求。",
+          "sourcePromptIds": [
+            "P35",
+            "V5P05"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "OriginalIdea",
+            "ExistingWorldSources",
+            "PlatformTaxonomySnapshotV5",
+            "WorldModulePolicyV5"
+          ],
+          "outputKind": "world-profile-candidate",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "author.locked-constraints",
+            "world.author-module-policy",
+            "taxonomy.scope-provenance",
+            "world.inference-not-canon"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        },
+        {
+          "id": "inherit",
+          "title": "沿用与整理作者已有体系",
+          "instructions": "逐项整理作者提供的世界、境界、能力与制度，保存原文来源及标准化候选。名称、排序、能力边界、限制、例外和作者锁定内容保持一致；不能把常见模板当缺失事实补入。区分等价整理、解释候选与待决歧义，给出覆盖和未解析片段。作者允许补缺时只补开放字段，新增内容单列。条件依赖和非线性路线按原意表示，不强转为线性等级。宿主核对原文覆盖与字段锁后按已有授权采纳。",
+          "sourcePromptIds": [
+            "P35",
+            "V5P06"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "AuthorWorldSources",
+            "ExistingWorldModelV5",
+            "WorldImportScopeV5",
+            "SourceCoordinateContract"
+          ],
+          "outputKind": "world-inheritance-candidate",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "author.locked-constraints",
+            "world.author-source-coverage",
+            "world.locked-fields-preserved",
+            "source.coordinate-unit",
+            "world.normalization-equivalence"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        },
+        {
+          "id": "stress-test",
+          "title": "推演世界规则与故事后果",
+          "instructions": "针对指定规则与合法已知状态推演首次应用、弱者利用、对手学习、规模扩散和重复使用后的边界案例。检查资源与制度后果、反制是否真实、例外是否有依据，以及人物仍需做什么选择。悬疑侧重信息可得性、误导和证据闭合；现实题材侧重职业制度与利益。软世界保留作者允许的神秘，不强迫数值化。只提交有依据的问题和修订候选；不自动改规则，不模拟出不存在的已发生事件，不因本技能存在逐章追加调用。",
+          "sourcePromptIds": [
+            "P35",
+            "V5P08"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "WorldModelV5",
+            "ScopedMemoryPacket",
+            "WorldStressScopeV5",
+            "ScenarioSeeds"
+          ],
+          "outputKind": "world-stress-report",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "author.locked-constraints",
+            "world.assumptions-explicit",
+            "world.author-module-policy",
+            "review.evidence-required",
+            "world.simulation-not-canon"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v5_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "character-design",
+      "title": "角色内核与群像设计",
+      "description": "用于建立或增补指定角色的稳定内核、关系和初始设定；不负责每章动态状态提取。",
+      "coreInstructions": "让角色具备可解释的选择：长期欲望、眼前利益、不能失去之物、价值冲突、常用策略、盲点和关系中的表达方式。配角拥有自己的目的与代价，不能只为主角提供功能。声音通过注意力、说话意图和关系压力形成辨识，不强制每人都带创伤、秘密或口头禅。稳定内核、初始状态、未来计划、他人评价和模型解释分别保存。作者锁定的人格与经历不暗改，候选设定不自动成为正史。日常讨论交共创操作，章后状态由统一记忆提取处理。",
+      "sourcePromptIds": [
+        "P36",
+        "P05",
+        "P17"
+      ],
+      "operations": [
+        {
+          "id": "create",
+          "title": "建立角色候选",
+          "instructions": "依据当前故事与世界设计指定角色和必要关系，写出其自主目标、利益矛盾、典型权衡和表达倾向，让相似性格的人也能通过选择与观察区分。区分作者给定、关键新增和仍待验证的解释。初始信念可以错误，但须明确这是人物认知。既有角色只补本轮授权部分，不把外貌修改扩展为经历重写。",
+          "sourcePromptIds": [
+            "P36",
+            "P05"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "CreationContract",
+            "ConfirmedWorldRules",
+            "CharacterRosterScope",
+            "ExistingCharacterCores"
+          ],
+          "outputKind": "character-design-candidate",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "author.locked-constraints",
+            "characters.identity-uniqueness",
+            "characters.core-state-separation",
+            "belief.world-separation",
+            "revision.allowed-scope"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v4_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "rolling-outline",
+      "title": "长篇分层规划",
+      "description": "用于全书、分卷、章节路线、节奏和批次细纲中的一个指定层级；实际规划窗口和阶段门槛由宿主给定。",
+      "coreInstructions": "按当前层级安排人物目标、阻力、主动选择、阶段兑现和后果，让后续问题从已有变化生长。全书保留核心要求、主线和终局里程碑，近期才展开可执行场景；不要提前冻结几百章细节。查阅当前范围的未兑现承诺与前章结果，避免只换地图、敌人或力量等级重复矛盾。快慢、日常、余波与强冲突均须服务本段功能。计划始终是未来候选，已采纳正文和锁定里程碑保持不变。窗口与完整批次要求服从实际工作流版本，不凭提示词绕过旧门槛。",
+      "sourcePromptIds": [
+        "P06",
+        "P37",
+        "P38",
+        "P39",
+        "P40"
+      ],
+      "operations": [
+        {
+          "id": "book",
+          "title": "全书主线与里程碑",
+          "instructions": "建立全书层的核心问题、人物长期选择、主要关系变化、阶段承诺和终局回应。检验中段能否持续形成新处境，避免只有开头和终点。远期只保留当前必要的方向及依赖，不展开逐章细纲；对未确定部分保留调整空间。修改时限定可编辑范围，列出受影响的里程碑。",
+          "sourcePromptIds": [
+            "P06",
+            "P05"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "CreationContract",
+            "BookMilestones",
+            "PlanningWindow",
+            "PromiseLedger"
+          ],
+          "outputKind": "book-outline-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "planning.window",
+            "author.locked-constraints",
+            "planning.not-canon",
+            "changes.dependency-groups"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        },
+        {
+          "id": "volume",
+          "title": "当前卷设计",
+          "instructions": "规划本卷入口状态、人物目标、主要阻力、转折选择、关键代价和卷末实质变化，说明哪些承诺本卷兑现、哪些继续保留。卷间问题应来自本卷后果，不能只换地点或实力级别。卷名依本轮合同一并处理，不另开命名代理；已确认卷结构只修改授权范围。",
+          "sourcePromptIds": [
+            "P06",
+            "P37"
+          ],
+          "inputKinds": [
+            "BookMilestones",
+            "CurrentVolumeState",
+            "PlanningWindow",
+            "PromiseLedger",
+            "AuthorContract"
+          ],
+          "outputKind": "volume-outline-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "planning.window",
+            "author.locked-constraints",
+            "promises.scope",
+            "planning.not-canon"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        },
+        {
+          "id": "roadmap",
+          "title": "章节路线",
+          "instructions": "为指定章段安排每章承担的行动、信息、关系或回报变化，使前后章由人物选择和后果连接。近期具体到可执行冲突，较远处保留意图；精度与数量服从本轮窗口。指出某章改动对后续计划的具体影响，保留未受影响条目，不把预期事件当作已经发生。",
+          "sourcePromptIds": [
+            "P06",
+            "P38"
+          ],
+          "inputKinds": [
+            "VolumeOutline",
+            "PlanningWindow",
+            "ChapterRoadmap",
+            "CurrentCharacterStates",
+            "PromiseLedger"
+          ],
+          "outputKind": "chapter-roadmap-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "planning.window",
+            "planning.chapter-coverage",
+            "planning.not-canon",
+            "revision.allowed-scope"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        },
+        {
+          "id": "rhythm",
+          "title": "章段节奏",
+          "instructions": "依据当前章段功能调整紧张、松弛、发现、关系推进和兑现顺序，指出具体哪一处行动或信息承担变化。保留有功能的日常、恢复与停顿，不为每章套相同冲突链或机械情绪峰值。节奏建议不得擅改关键结果与知情边界；模型估计与真实读者数据明确区分。",
+          "sourcePromptIds": [
+            "P06",
+            "P39"
+          ],
+          "inputKinds": [
+            "ChapterRoadmap",
+            "PlanningWindow",
+            "ReaderPromises",
+            "AuthorStylePreferences"
+          ],
+          "outputKind": "rhythm-plan-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "planning.window",
+            "planning.locked-outcomes",
+            "evidence.not-fabricated",
+            "planning.not-canon"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "compat_adapter"
+        },
+        {
+          "id": "batch",
+          "title": "近期批次细纲",
+          "instructions": "仅细化宿主指定窗口内的章节，写明参与人物、即时目标、阻力、关键选择、结果与必要衔接。细纲固定因果骨架，给对白和表达保留空间；预期状态保持计划属性。旧工作流要求整批完整时必须交齐，新滚动窗口仅在已启用的工作流版本下使用，不自行缩短任务。",
+          "sourcePromptIds": [
+            "P06",
+            "P40"
+          ],
+          "inputKinds": [
+            "ChapterRoadmap",
+            "RhythmPlan",
+            "PlanningWindow",
+            "ScopedMemoryPacket",
+            "AuthorContract"
+          ],
+          "outputKind": "batch-outline-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "planning.window",
+            "workflow.stage-gates",
+            "planning.chapter-coverage",
+            "planning.not-canon"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "scene-contract",
+      "title": "单章与场景合同",
+      "description": "用于生成当前章写作必须的场景约束、人物入场条件和结果；不产出正文或正式记忆。",
+      "coreInstructions": "把已确认计划变成当前章可写的场景，明确人物此刻想要什么、如何行动、阻力为何回应以及结果改变什么。将作者硬要求、必要因果、知情边界与关键结果固定，普通动作和修辞留给正文。分别标明读者、视角人物及其他角色可知的信息，误信与客观事实不能混用。承接人物可靠的入场状态、名称、资源和时间，不把旧情绪自动延长。选择本章应兑现或推进的承诺；预期离场变化仍是计划。关键缺失使用本轮合同的阻断字段，不增添无谓审批。",
+      "sourcePromptIds": [
+        "P07",
+        "P41"
+      ],
+      "operations": [
+        {
+          "id": "plan",
+          "title": "规划当前章场景",
+          "instructions": "为当前章节确定场景目标、参与者入场状态、冲突、主动选择、代价或限制、实际后果与承接点。只读取场景涉及的已启用世界规则和相关记忆，使用者能力、资源、资格与知情分别核对。世界规则要通过行动和结果起作用；不为展示体系加入无用讲解。保留尚未揭示的真相、允许的未知和作者锁定结果，必要新增前提另列候选。场景计划与世界、人物和承诺版本绑定，不提前把计划写入事实。",
+          "sourcePromptIds": [
+            "P07",
+            "P41",
+            "V5P14"
+          ],
+          "inputKinds": [
+            "ApprovedChapterPlan",
+            "ScopedMemoryPacket",
+            "CharacterEntryStates",
+            "NameMap",
+            "VoiceSlice",
+            "AuthorContract",
+            "WorldRuleSliceV5",
+            "WorldModelVersion",
+            "PublicationPromiseV5"
+          ],
+          "outputKind": "scene-contract",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "memory.readiness",
+            "scene.knowledge-boundaries",
+            "scene.required-beats",
+            "source.valid-refs",
+            "planning.not-canon",
+            "world.rule-slice-version",
+            "world.character-capability-scope",
+            "plan.not-fact"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "voice-calibration",
+      "title": "作品声音与试写",
+      "description": "用于提炼声音档案、在固定场景比较文风或依据作者选择更新档案；没有样本时明确按描述提出建议。",
+      "coreInstructions": "为本书建立可观察、可选择、适用范围清楚的声音。将作者要求、已启用档案、样本与新候选分开，样本只供分析表达，不提供本书事实。围绕叙述距离、节奏、词汇、注意力、人物、对白、信息、情绪、回报与衔接提炼正向做法，并保留例外。没有证据不编造比例，不把长句、直白说明或有意复现一律视为问题。试写固定事实与结果，改变表达取向；只有作者选择支持的特征才能成为更新候选。操作彼此可独立运行，不默认连续调用。",
+      "sourcePromptIds": [
+        "P08",
+        "P09",
+        "P45"
+      ],
+      "operations": [
+        {
+          "id": "extract",
+          "title": "提炼声音档案",
+          "instructions": "从真正提供的样本与作者描述提炼十维声音候选，写明可观察做法、适用场景、例外和来源。区分值得继承的特点与病句、无效重复等问题。无样本时据要求提出建议并明确来源，不声称完成样本分析；证据不足的维度保留待验证，不生成试写凑齐结果。",
+          "sourcePromptIds": [
+            "P08",
+            "P45"
+          ],
+          "inputKinds": [
+            "AuthorStylePreferences",
+            "StyleSamples",
+            "CurrentVoiceProfile",
+            "StyleSourceMetadata"
+          ],
+          "outputKind": "voice-profile-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "voice.source-provenance",
+            "voice.no-story-facts",
+            "evidence.not-fabricated"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        },
+        {
+          "id": "calibrate",
+          "title": "提炼并试写",
+          "instructions": "在同一次正常请求中给出声音候选和宿主指定数量的短试写。各版本共享人物、知情、关键行动、结果和长度区间，仅改变叙述距离、观察重点、节奏与对白方式。每案突出少量可辨差别，不靠增加新设定或换剧情获胜。差异说明放独立字段，不夹入试写正文。",
+          "sourcePromptIds": [
+            "P08"
+          ],
+          "inputKinds": [
+            "AuthorStylePreferences",
+            "StyleSamples",
+            "SceneContract",
+            "RequestedVariantCount",
+            "SharedFactConstraints"
+          ],
+          "outputKind": "voice-calibration-batch",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "voice.variant-count",
+            "voice.shared-facts",
+            "voice.source-provenance",
+            "voice.prose-clean"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        },
+        {
+          "id": "update",
+          "title": "按选择更新声音",
+          "instructions": "依据作者明确选择、拒绝或说明形成当前档案的最小更新，标明支持每项变化的证据和适用范围。一次偏好不能自动升级为全书禁词或所有场景的规则；与既有要求冲突时列明差异。未选候选保持未启用，宿主负责版本与启用状态，模型不宣布已经替换档案。",
+          "sourcePromptIds": [
+            "P08"
+          ],
+          "inputKinds": [
+            "CurrentVoiceProfile",
+            "AuthorSelections",
+            "PreferenceEvidence",
+            "VoiceUpdateScope"
+          ],
+          "outputKind": "voice-profile-change-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "object.version-binding",
+            "voice.preference-evidence",
+            "revision.allowed-scope",
+            "output.no-write-claim"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        },
+        {
+          "id": "pilot",
+          "title": "已有档案同场景比较",
+          "instructions": "对输入的二至三个候选档案写同一场景试稿，固定事件、视角、人物目标、知情、关键对话事实与收束结果。差别只体现在声音，不能新增身份、能力、物件或真相。无法保持事实时标明不适用。交付供宿主匿名排列的试写和事实保持记录，不替作者选胜者或自动启用档案。",
+          "sourcePromptIds": [
+            "P09"
+          ],
+          "inputKinds": [
+            "CandidateVoiceProfiles",
+            "SceneContract",
+            "ScopedMemoryPacket",
+            "PilotLengthRange"
+          ],
+          "outputKind": "pilot-batch",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "voice.variant-count",
+            "voice.shared-facts",
+            "voice.prose-clean",
+            "voice.no-auto-selection"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "chapter-draft",
+      "title": "章节正文创作",
+      "description": "用于必要记忆和场景条件已就绪的当前章正文；成功输出仅含小说，不同时输出设定、审稿或记忆报告。",
+      "coreInstructions": "从人物的具体处境和欲望开始，让行动、回应、代价与后果承担推进。观察服从人物经历、职业、关系和压力，选取真正影响行动或理解的细节。对白具有当下目的，允许说明、沉默和回避，但不能让所有人共享同一声口。依据场景功能调节节奏与信息，完成本章要求的变化或兑现，不靠假悬念和重复心理凑字数。严格承接本轮知情、状态、名称与作者要求，样本文风不能带入情节事实。发现关键依赖冲突时仅使用实际实现的异常出口，成功正文不含技术字段或注释。",
+      "sourcePromptIds": [
+        "P10",
+        "P42"
+      ],
+      "operations": [
+        {
+          "id": "draft",
+          "title": "生成当前章正文",
+          "instructions": "依据本章场景合同、角色入场状态、有限记忆包、世界规则片段和 VoiceSlice 写正文。让人物用已知能力、资源和关系主动行动，遵守规则的条件与已确认例外；未启用体系不强加升级，能力变化需要剧情依据。把核心卖点落实成可见选择和回报，避免百科式解释。读者尚未知道的内容按揭示计划处理，人物不能利用未获知真相。只交正文及本轮实际允许的独立元数据；预览节点不能改变正文，也不能自称已经更新正式图谱。",
+          "sourcePromptIds": [
+            "P10",
+            "P42",
+            "V5P15"
+          ],
+          "inputKinds": [
+            "SceneContract",
+            "ScopedMemoryPacket",
+            "AuthorContract",
+            "VoiceSlice",
+            "CharacterEntryStates",
+            "NameMap",
+            "WorldRuleSliceV5",
+            "PublicationPromiseV5",
+            "ProjectionPreviewContractV5"
+          ],
+          "outputKind": "chapter-prose",
+          "capabilitiesRequested": [
+            "prose.return"
+          ],
+          "validators": [
+            "prose.protocol",
+            "memory.readiness",
+            "source.snapshot-binding",
+            "author.locked-constraints",
+            "scene.knowledge-boundaries",
+            "prose.no-machine-metadata",
+            "world.rule-slice-version",
+            "knowledge.character-boundary",
+            "visual.preview-not-canon"
+          ],
+          "contextView": "scoped_pov",
+          "outputBinding": "v5_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "chapter-review",
+      "title": "章节证据审阅",
+      "description": "用于对指定正文版本独立检查作者要求、因果、人物与阅读效果；问题必须定位到当前正文。",
+      "coreInstructions": "以指定正文 hash、场景合同、作者要求和有效事实审阅，先找证据，再说明读者损失与最小修复。保留五项检查，不以增加评分维度代替认真判断。硬约束和关键因果冲突可阻断，可定位的阅读问题要求修订，审美偏好作为非阻断意见。重复、句式与用词命中只是线索，必要解释、有效停顿和角色惯用表达应保留。同一原因的表现合并记录，修改建议不能补造身份或提前揭示真相。本轮只审阅，不改写正文、生成记忆或自发追加审核。",
+      "sourcePromptIds": [
+        "P11",
+        "P43"
+      ],
+      "operations": [
+        {
+          "id": "review",
+          "title": "审核指定正文",
+          "instructions": "按当前 ReviewReport 合同完整提交一次，五项 checks 各一次并提供当前文本依据。问题绑定正文 hash、原文位置、原因和最小修复；严重度与 checks 结果保持一致。无证据的风格偏好不判错，发现修复必须改变剧情时明确影响。版本不符先指出过期，不沿用旧引文或自称已经通过宿主校验。",
+          "sourcePromptIds": [
+            "P11",
+            "P43"
+          ],
+          "inputKinds": [
+            "ChapterProseCandidate",
+            "CandidateHash",
+            "SceneContract",
+            "AuthorContract",
+            "ScopedReviewMemory",
+            "VoiceProfile",
+            "LocalDiagnosticHints"
+          ],
+          "outputKind": "chapter-review-report",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "review.candidate-hash",
+            "review.five-checks",
+            "review.evidence-required",
+            "review.severity-consistency",
+            "source.valid-refs"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v3_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "revision",
+      "title": "有界修订与剧情变更",
+      "description": "用于已有证据的文字修复、指定问题处理或作者明确授权的剧情改动；不同操作采用文字补丁或有版本变更合同。",
+      "coreInstructions": "核对当前正文或对象版本、授权范围、问题依据和必须保留的内容，优先做最小有效修改。已经成立的语言、人物选择与节奏不顺手重写，未涉及部分保持不变。措辞、重复说明和信息顺序可以局部修；身份、动机、机制、行动结果或知情改变属于剧情变更，不能伪装为润色。范围补丁与剧情变更使用各自合同，由宿主校验并应用。超出授权只报告具体影响与未解决问题，不自行扩大范围。新正文 hash 需要重新绑定审阅与记忆，旧回执不能证明新稿通过。",
+      "sourcePromptIds": [
+        "P12",
+        "P13",
+        "P04",
+        "P46",
+        "P48"
+      ],
+      "operations": [
+        {
+          "id": "voice",
+          "title": "改善局部表达",
+          "instructions": "只修复能说明读者损失的表达问题，如指代不清、解释重复、对白立场错位或节奏妨碍理解。先判断命中表达是否有功能，不用禁词、错字、碎句或无用生活细节制造自然感。保持事实、人物目标和结果；没有明确问题时可交空补丁。必须新增剧情才能解决时列明需求，不夹带改设定。",
+          "sourcePromptIds": [
+            "P12",
+            "P46"
+          ],
+          "inputKinds": [
+            "ChapterProseCandidate",
+            "CandidateHash",
+            "AllowedTextRanges",
+            "VoiceProfile",
+            "ReaderImpactFindings"
+          ],
+          "outputKind": "prose-patch-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "patch.base-hash",
+            "patch.allowed-ranges",
+            "patch.non-overlap",
+            "patch.anchor-match",
+            "revision.plot-escalation"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v3_adapter_required"
+        },
+        {
+          "id": "local",
+          "title": "修复已确认问题",
+          "instructions": "针对输入的问题与允许段落提交范围补丁，提供准确原文、稳定锚点、替换片段和已处理问题。修复因果表达、衔接与局部冲突时保住名称、数量、时序、关系结果和知情，范围外内容不动。无法在授权内解决则保留未解决项。宿主应用后重新计算 hash 并安排必要复审，不沿用旧版通过结论。",
+          "sourcePromptIds": [
+            "P13"
+          ],
+          "inputKinds": [
+            "ChapterProseCandidate",
+            "CandidateHash",
+            "ConfirmedFindings",
+            "AllowedTextRanges",
+            "PreservationConstraints"
+          ],
+          "outputKind": "prose-patch-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "patch.base-hash",
+            "patch.allowed-ranges",
+            "patch.non-overlap",
+            "patch.anchor-match",
+            "revision.issue-coverage"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v3_adapter_required"
+        },
+        {
+          "id": "story",
+          "title": "提出剧情修订",
+          "instructions": "依据作者明确授权提出影响剧情的有版本变更，分清未来计划调整、事实纠错与追溯改设定。复用对象变更和依赖组合同，列明动机、行动、结果或知情变化及其已知影响，不伪装成保事实文字补丁。宿主先提供依赖范围；未授权关联对象只列影响，不自动重写后文或宣布完整覆盖。",
+          "sourcePromptIds": [
+            "P04",
+            "P48",
+            "P13"
+          ],
+          "inputKinds": [
+            "CreativeObjectSnapshot",
+            "AuthorRevisionRequest",
+            "CoCreationAuthorization",
+            "DependencySummary",
+            "AffectedCanonReferences"
+          ],
+          "outputKind": "creative-change-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "object.version-binding",
+            "revision.allowed-scope",
+            "changes.dependency-groups",
+            "author.constraint-revision",
+            "impact.host-scope"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v3_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "memory-delta",
+      "title": "章后事实与人物状态",
+      "description": "用于对指定版本正文批量提取事实、事件和人物状态增量；与既有记忆提取合并，不逐角色启动模型。",
+      "coreInstructions": "从指定正文版本、有效旧状态与来源提取有证据的稀疏变化，按场景和事件顺序处理。区分客观事件、人物发言、明确内心、持有信念与模型解释，计划不是已发生事实。核对所有实际参与或受影响角色，允许无变化、证据不足、仅提及与身份待解析，不为填表制造心理。回忆状态落在对应故事时段，旧情绪不自动覆盖当前。稳定人格与作者锁定内容不由本轮推断重写。候选正文的增量仍是候选，正文及依赖版本变化须重新核验，只有宿主能确认正式同步。",
+      "sourcePromptIds": [
+        "P14",
+        "P44"
+      ],
+      "operations": [
+        {
+          "id": "extract",
+          "title": "批量提取本章增量",
+          "instructions": "从指定正文与有效入场状态批量提取世界、人物七维变化和逐人覆盖，引用正文 hash、原句和明确单位的位置。区分规则被应用、人物相信某规则、规则出现新证据及作者真正修改规则；一次异常不自动成为新世界法则。境界、资格、资源和知情分别记录，未启用模块无需补空表。回忆与当前变化按时段分开，人物可无变化或依据不足。只产有来源稀疏候选，遵守实际 read-set；正式图谱与记忆由宿主同版提交。",
+          "sourcePromptIds": [
+            "P14",
+            "P44",
+            "V5P16"
+          ],
+          "inputKinds": [
+            "ChapterProseCandidate",
+            "CandidateHash",
+            "ReadSetV3",
+            "PreviousCharacterStates",
+            "EntityRoster",
+            "MemoryExtractionScope",
+            "WorldModelV5",
+            "WorldRuleSliceV5",
+            "SourceCoordinateContract"
+          ],
+          "outputKind": "chapter-memory-delta",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "memory.body-hash",
+            "memory.read-set",
+            "source.codepoint-evidence",
+            "characters.coverage",
+            "memory.sparse-delta",
+            "belief.world-separation",
+            "memory.time-binding",
+            "world.rule-observation-distinction",
+            "source.coordinate-unit",
+            "visual.preview-not-canon"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v5_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "memory-review",
+      "title": "记忆与角色状态核验",
+      "description": "用于既有独立记忆审核位置，核验当前正文对应的事实增量与人物覆盖；不新增固定审核链。",
+      "coreInstructions": "以当前正文、确认设定和有效旧状态核验增量，分别判断 supported、contradicted 与 unclear，并给必要来源。提取结果不能作为自身成立的证据，衍生台账也不能替代原文。检查角色身份、覆盖、事件顺序、时间范围和信息获得过程，区分发言、内心、信念与世界真相。回忆不得覆盖现在，一次情绪不得改写稳定人格，情绪是否持续不能仅由章数间隔决定。来源或版本失效时明确指出，不补造事实、不改写正文、不宣告采纳。完成当前审核即停止。",
+      "sourcePromptIds": [
+        "P15"
+      ],
+      "operations": [
+        {
+          "id": "review",
+          "title": "核验本章记忆候选",
+          "instructions": "在原有独立记忆审核位置核验本章候选与指定正文、世界及读集版本。检查人物覆盖、引用单位、身份与时段，区分已观察事件、规则解释、人物误信和作者决定；一次规则异常不能无依据升格为新法则。检查境界、资源、资格、关系与心理变化的证据，允许无变化或无法判定。正式状态未就绪时由宿主按实际合同处理，不能因为可视化元数据可选而跳过核心记忆要求。只交问题，不另起逐角色审核。",
+          "sourcePromptIds": [
+            "P15",
+            "V5P21"
+          ],
+          "inputKinds": [
+            "ChapterProseCandidate",
+            "CandidateHash",
+            "ChapterMemoryDelta",
+            "ReadSetV3",
+            "PreviousCharacterStates",
+            "MemoryEvidence",
+            "WorldModelV5",
+            "SourceCoordinateContract"
+          ],
+          "outputKind": "memory-review-report",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "review.candidate-hash",
+            "memory.read-set",
+            "review.evidence-required",
+            "characters.coverage",
+            "belief.world-separation",
+            "memory.time-binding",
+            "source.valid-refs",
+            "world.rule-observation-distinction",
+            "source.coordinate-unit",
+            "memory.required-state-coverage"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v5_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "memory-query",
+      "title": "有来源的故事记忆问答",
+      "description": "用于作者查询事实、人物知情、历史状态或完整清单；查询范围与结果完整性由宿主明确提供。",
+      "coreInstructions": "根据宿主确定的项目、分支、编辑版本、故事时间、叙述范围与视角回答。区分当前正史在过去时点的状态和旧编辑版本当时保存的内容，不能混用。人物确信不等于世界真相，作者知道的信息不自动属于人物。精确和全量查询由宿主执行，模型负责解释有效结果及来源。检索未命中不是不存在的证据，有限召回不冒充全部记录。资料不足、投影未就绪或查询未完成时说明实际缺口，不用猜测填满答案。回答不改变设定、人物状态或历史版本。",
+      "sourcePromptIds": [
+        "P16"
+      ],
+      "operations": [
+        {
+          "id": "answer",
+          "title": "回答记忆查询",
+          "instructions": "先遵守已确定的查询范围，再使用宿主返回的记录与证据回答当前问题。需要全部结果时要求完整分页或明确完整性标记，不把 Top-k 片段写成全量结论。历史知情按获取信息事件过滤，引用原文也不能带入视角未知信息。标明事实、信念和推断的区别，并说明无法确认的部分；只回答，不更新记忆。",
+          "sourcePromptIds": [
+            "P16"
+          ],
+          "inputKinds": [
+            "AuthorMemoryQuestion",
+            "MemoryQueryScopeV3",
+            "ScopedQueryResults",
+            "QueryCompleteness",
+            "SourceEvidence"
+          ],
+          "outputKind": "sourced-memory-answer",
+          "capabilitiesRequested": [
+            "conversation.respond",
+            "memory.query.scoped",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "query.scope",
+            "query.completeness",
+            "source.valid-refs",
+            "query.perspective-filter",
+            "output.no-write-claim"
+          ],
+          "contextView": "scoped_query",
+          "outputBinding": "v3_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "character-reflection",
+      "title": "重大事件后的角色反思",
+      "description": "仅用于宿主选定的重大转折、持续价值冲突或作者指定的人物反思；普通章节不自动逐人运行。",
+      "coreInstructions": "依据指定人物的稳定内核、当前状态和有来源经历，提出可能改变其自我认识、关系判断或目标权衡的解释。只使用人物能够经历或获知的信息，保留犹豫、矛盾与仍未改变的部分。明确区分正文已经写出的内心、作者确认的心理和本轮候选解释，不补造成长所需的旧事。反思不自动修改人格、阵营、感情、信念或长期目标。没有足够依据可以不提出候选。按本轮事件批量处理指定人物，选择、后续描写与正式状态生效仍由作者和宿主决定。",
+      "sourcePromptIds": [
+        "P17"
+      ],
+      "operations": [
+        {
+          "id": "reflect",
+          "title": "生成反思候选",
+          "instructions": "围绕输入的转折、目标受挫或关系变化，为指定角色给出必要的经历理解及可能影响，并引用支持事件。单次情绪不能直接推出永久人格改变，人物可以尚未想明白或暂不改变。所有新增解释保持候选，无充分依据时返回无必要候选及简短原因。不写后台模拟日志，不额外为每个角色启动请求。",
+          "sourcePromptIds": [
+            "P17"
+          ],
+          "inputKinds": [
+            "ReflectionTrigger",
+            "ScopedCharacterExperiences",
+            "CharacterCores",
+            "CurrentCharacterStates",
+            "ReflectionRoster"
+          ],
+          "outputKind": "character-interpretation-candidates",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "reflection.trigger-scope",
+            "source.valid-refs",
+            "query.perspective-filter",
+            "characters.core-state-separation",
+            "reflection.candidate-only"
+          ],
+          "contextView": "scoped_pov",
+          "outputBinding": "v3_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "canon-audit",
+      "title": "跨章连续性与承诺审阅",
+      "description": "用于指定范围的连续性检查、修订影响解释、承诺清单核验和卷末或全书收束审阅。",
+      "coreInstructions": "以有效正文、确认设定、人物状态和承诺来源审阅指定范围。事实、角色认知、未来计划与作者有意留白分别处理，问题必须有可定位证据和具体影响。依赖发现、查询完整性、失效与重放由宿主负责，模型只能解释收到的范围，不能凭叙述宣告覆盖全书。区分需要修订的矛盾、可选改进与仍待后文判断之处，给出最小处理范围，不用新设定替旧问题补洞。已采纳或已发布内容不自动重写，审阅结果保持问题记录或候选建议。",
+      "sourcePromptIds": [
+        "P20",
+        "P47",
+        "P48"
+      ],
+      "operations": [
+        {
+          "id": "continuity",
+          "title": "检查跨章连续性",
+          "instructions": "按宿主提供的完整性范围核对指定正文、世界规则、人物状态、资源与承诺。区分世界真相、误信、软规则留白和正式例外，不能因为题材惯例不同就判错。检查规则条件、成长路径、物品和资格转移、信息揭示与人物行动是否有依据；给出冲突位置和关联版本。资料不完整时限定结论，未检索到不等于不存在。问题和修订候选分别提交，不自动修改已采纳内容。",
+          "sourcePromptIds": [
+            "P47",
+            "P15",
+            "V5P17"
+          ],
+          "inputKinds": [
+            "ContinuityAuditScope",
+            "AcceptedProseReferences",
+            "ScopedCanonStates",
+            "SourceEvidence",
+            "QueryCompleteness",
+            "WorldModelV5",
+            "WorldRuleSliceV5",
+            "ProjectionQueryScopeV5"
+          ],
+          "outputKind": "continuity-audit-report",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "memory.query.scoped",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "audit.scope",
+            "query.completeness",
+            "source.valid-refs",
+            "review.evidence-required",
+            "belief.world-separation",
+            "world.rule-scope",
+            "audit.coverage-limits",
+            "knowledge.character-boundary"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v5_adapter_required"
+        },
+        {
+          "id": "impact",
+          "title": "解释变更影响",
+          "instructions": "解释宿主实际扫描出的变更影响及覆盖边界，连接世界规则、人物信念、场景、承诺、书名和投影。区分必须重新核验、可保留与待人工判断，不能自行宣称已发现全书全部依赖。作者只改布局时无剧情影响；修订世界事实或正文时沿来源与查询依赖评估。保持未授权对象，语义变化需要重算时不能盲用旧增量。只交影响解释与分组建议，执行和恢复由宿主负责。",
+          "sourcePromptIds": [
+            "P48",
+            "P04",
+            "V5P18"
+          ],
+          "inputKinds": [
+            "ProposedChangeSet",
+            "HostDependencyImpactSet",
+            "DependencyCompleteness",
+            "AffectedObjectSnapshots",
+            "AuthorAuthorization",
+            "HostImpactScanV5",
+            "WorldModelV5",
+            "PublicationPromiseV5"
+          ],
+          "outputKind": "change-impact-analysis",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "impact.host-scope",
+            "impact.completeness-label",
+            "source.valid-refs",
+            "revision.allowed-scope",
+            "output.no-write-claim",
+            "revision.impact-coverage",
+            "visual.layout-semantic-separation",
+            "revision.readset-bound"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v5_adapter_required"
+        },
+        {
+          "id": "promise",
+          "title": "核验阅读承诺",
+          "instructions": "依据宿主完整承诺查询和来源范围，检查作品方案、标题、简介与正文提出的承诺是否得到实际推进或兑现。区分计划兑现、正文已兑现、延期、放弃候选和证据不足；不能把提纲或模拟事件当成完成。世界或开篇修订破坏题面承诺时标记需复核，不能擅自改名。对吸引力给具体编辑判断，禁止以模型评分伪装读者数据。只交当前审阅结果，不追加重复审核。",
+          "sourcePromptIds": [
+            "P20",
+            "P47",
+            "V5P19"
+          ],
+          "inputKinds": [
+            "PromiseLedger",
+            "PromiseAuditScope",
+            "AcceptedProseReferences",
+            "QueryCompleteness",
+            "AuthorIntentRecords",
+            "PublicationPromiseV5",
+            "WorldModelV5",
+            "PromiseQueryCoverageV5"
+          ],
+          "outputKind": "promise-audit-report",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "memory.query.scoped",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "audit.scope",
+            "query.completeness",
+            "source.valid-refs",
+            "promises.evidence-status",
+            "planning.not-canon",
+            "title.promise-version-bound",
+            "audit.coverage-limits",
+            "promise.plan-observation-separation"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v5_adapter_required"
+        },
+        {
+          "id": "ending",
+          "title": "卷末与完结审阅",
+          "instructions": "核对本卷或全书的核心矛盾、人物选择、关键关系与阅读承诺是否获得相称结果，结果是否来自前文行动，代价和余波是否处理。卷末可留后续问题，但主要目标须有实质变化；开放结局不能掩盖未成立的因果。对缺口给最小补全范围与前文依据，不靠突加设定或摘要跳结局补齐。",
+          "sourcePromptIds": [
+            "P20"
+          ],
+          "inputKinds": [
+            "EndingAuditScope",
+            "PromiseLedger",
+            "AcceptedProseReferences",
+            "CharacterAndRelationshipStates",
+            "AuthorEndingContract"
+          ],
+          "outputKind": "ending-audit-report",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "memory.query.scoped",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "audit.scope",
+            "source.valid-refs",
+            "review.evidence-required",
+            "promises.evidence-status",
+            "author.locked-constraints"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v3_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "market-evidence",
+      "title": "平台与题材证据研究",
+      "description": "用于明确的题材、平台规则或公开题面研究；正常创作不会因为该技能存在而自动联网。",
+      "coreInstructions": "只研究当前策划或包装确实需要的问题，并使用宿主授予的范围和来源能力。区分平台规则、官方创作经验、公开作品题面和真实读者反馈，保留来源、发布日期、获取时间及适用范围。编辑推论单独呈现，搜索排序不冒充榜单，成功个案不代表普遍规律。样本用于理解承诺与表达，不复制专名、标志性台词、正文或独创情节。无联网能力时仅使用已注明日期的离线证据；冲突来源按时间与适用范围核对，不能凭主观选择宣告最新政策。",
+      "sourcePromptIds": [
+        "P18",
+        "P49"
+      ],
+      "operations": [
+        {
+          "id": "research",
+          "title": "收集并分析相关证据",
+          "instructions": "只使用宿主提供或授权取得的一手证据，分别处理书库目录、榜单目录、作者标签规则、官方书页与真实读者反馈。目录完整性只适用于已核验的表面、频道和返回范围。书名研究按同频道、主分类和作品阶段比较，保留榜单类型、位次、统计截止、观察时间与样本覆盖；搜索命中不称热榜，近邻补充明确标记。提炼可观察的题面形态，不把样本频率解释为成功因果。数据缺失保持未知，离线与旧快照显式降级；不重复发起宿主已完成的取样。",
+          "sourcePromptIds": [
+            "P18",
+            "P49",
+            "V5P11"
+          ],
+          "inputKinds": [
+            "ResearchQuestion",
+            "AllowedSourceScope",
+            "ExistingMarketEvidence",
+            "GenreAndProjectContext",
+            "ResearchFreshnessPolicy",
+            "PlatformTaxonomySnapshotV5",
+            "TitleEvidenceSnapshotV5",
+            "EvidenceFreshnessPolicyV5"
+          ],
+          "outputKind": "market-evidence-report",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "evidence.search.public",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "research.source-scope",
+            "research.provenance-time",
+            "research.primary-evidence",
+            "evidence.not-fabricated",
+            "research.inference-label",
+            "taxonomy.surface-coverage",
+            "research.observed-source-times",
+            "research.rank-provenance",
+            "research.no-synthetic-market-data"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        }
+      ]
+    },
+    {
+      "id": "packaging",
+      "title": "名称与读者题面",
+      "description": "用于实体命名、书名、简介及指定包装产物的审阅；每次按 operation 和宿主 targetKind 选择唯一实际合同。",
+      "coreInstructions": "用准确、可辨识且符合本书气质的名称与题面传达真实阅读承诺。来源限于作者要求、已确认故事内容和标注清楚的参考资料，不为吸引点击发明能力、关系或剧情。实体新命名和已接受改名分开，保护旧名、别名、历史身份与人物知情，已接受改名通过有版本变更处理。字数、候选数量、推荐规则和审核字段服从本轮合同，不把某次实验约束写成平台通则。标题、实体名与简介有不同输出结构，宿主必须解析唯一 schema；本技能只交候选或审核，不发布。",
+      "sourcePromptIds": [
+        "P30",
+        "P31",
+        "P50",
+        "P51"
+      ],
+      "operations": [
+        {
+          "id": "entity-name",
+          "title": "实体命名与改名候选",
+          "instructions": "依据实体类型、时代文化、命名者、当前名称表和禁区给出合适候选，减少本书内音形混淆。名称不能顺带补造组织、能力或制度，首次称谓须符合人物所知。已接受改名时列实体、旧新名、有效时段、保留别名与影响候选，不全书替换。未进行相应检索不能宣称全网唯一。",
+          "sourcePromptIds": [
+            "P50"
+          ],
+          "inputKinds": [
+            "EntityNamingScope",
+            "NameMap",
+            "WorldNamingRules",
+            "CharacterKnowledgeScope",
+            "AuthorNamingRequest"
+          ],
+          "outputKind": "entity-name-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "naming.accepted-protection",
+            "naming.alias-scope",
+            "naming.knowledge-boundaries",
+            "revision.allowed-scope",
+            "evidence.not-fabricated"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v4_adapter_required"
+        },
+        {
+          "id": "title",
+          "title": "书名候选",
+          "instructions": "依据当前已确认故事、可用世界与开篇资料、作者偏好和有范围的题材样本，生成本轮合同规定数量的原创书名。世界或提纲尚未建立时按已有依据提案，不补造版本。可比较直给冲突、概念悬念、人物态度或氛围短题，只选适合本书的形态，不强制长标题、开局句或感叹号。每个实质卖点对应已确认内容和预计兑现位置，新增承诺单列候选。标题须有具体阅读欲望，避免关键词堆砌、虚假身份和近似照搬。保留冻结候选与作者保留词；长度服从实际合同，显示名与文件目录分开。沿用样本不足、近邻、过期、失败或停用状态，不假称实时热榜。推荐理由基于本书和可核验证据。",
+          "sourcePromptIds": [
+            "P30",
+            "V5P12"
+          ],
+          "inputKinds": [
+            "ConfirmedStoryContract",
+            "TitlePreferences",
+            "MarketEvidence",
+            "TitleGenerationScope",
+            "TitleOutputContract",
+            "TitleEvidenceSnapshotV5",
+            "PackagingStoryContextV5",
+            "PublicationPromiseV5"
+          ],
+          "outputKind": "title-candidates",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "title.candidate-count",
+            "title.contract-length",
+            "title.story-claim-support",
+            "title.regeneration-scope",
+            "title.recommendation-range",
+            "title.evidence-snapshot-bound",
+            "title.promise-version-bound",
+            "title.display-storage-separation",
+            "title.similarity-scope",
+            "title.evidence-degradation-preserved"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        },
+        {
+          "id": "blurb",
+          "title": "简介与题面文案",
+          "instructions": "结合本书声音、可用标题和已确认故事，写出人物处境、特有矛盾与读者可获得的回报。已有同题材样本可参考表达形态，保留作者语气和揭示范围，不借包装增加能力、身份或情节。实质承诺绑定已有设计、计划或正文依据；未建立世界或提纲时不补造版本，没有正文时不能假称已兑现。长度和候选数量服从当前合同。只提交候选文案和允许的独立承诺数据，不发布、不改正式名称。",
+          "sourcePromptIds": [
+            "P51",
+            "V5P20"
+          ],
+          "inputKinds": [
+            "ConfirmedStoryContract",
+            "PackagingBrief",
+            "VoiceProfile",
+            "RevealScope",
+            "AuthorContract",
+            "PublicationPromiseV5",
+            "PackagingStoryContextV5"
+          ],
+          "outputKind": "packaging-copy-proposal",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "packaging.claim-support",
+            "packaging.reveal-scope",
+            "author.locked-constraints",
+            "packaging.length",
+            "output.no-write-claim",
+            "title.promise-version-bound",
+            "promise.plan-observation-separation"
+          ],
+          "contextView": "author_design",
+          "outputBinding": "v5_adapter_required"
+        },
+        {
+          "id": "review",
+          "title": "核验指定题面",
+          "instructions": "宿主先按 targetKind 解析实体名、书名或简介的唯一合同。审核指定候选版本、作者要求、名称保护、实际长度与揭示边界；书名和简介同时核对承诺已有的设计、计划或正文依据及其版本，不要求补造尚不存在的世界或开篇。实体名审核不要求榜单资料。搜索位置不能作为热度依据，样本风格是参考。吸引力判断给具体原因，不伪造点击率或爆款概率。事实错误与审美建议分别标记；只交当前审核结果，不改写候选、不再启动审阅。",
+          "sourcePromptIds": [
+            "P31",
+            "P50",
+            "P51",
+            "V5P13"
+          ],
+          "inputKinds": [
+            "PackagingTargetKind",
+            "ResolvedReviewContract",
+            "PackagingCandidate",
+            "CandidateVersion",
+            "ConfirmedStoryContract",
+            "AuthorContract"
+          ],
+          "outputKind": "target-resolved-packaging-review",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "packaging.single-resolved-contract",
+            "review.candidate-version",
+            "review.evidence-required",
+            "packaging.claim-support",
+            "packaging.reveal-scope",
+            "review.inference-labeled"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v5_adapter_required",
+          "targetBindings": [
+            {
+              "targetKind": "entity_name",
+              "additionalInputKinds": [],
+              "additionalValidators": []
+            },
+            {
+              "targetKind": "book_title",
+              "additionalInputKinds": [
+                "TitleEvidenceSnapshotV5",
+                "PublicationPromiseV5",
+                "PackagingStoryContextV5"
+              ],
+              "additionalValidators": [
+                "title.promise-version-bound",
+                "research.rank-provenance"
+              ]
+            },
+            {
+              "targetKind": "blurb",
+              "additionalInputKinds": [
+                "PublicationPromiseV5",
+                "PackagingStoryContextV5"
+              ],
+              "additionalValidators": [
+                "title.promise-version-bound"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reader-feedback",
+      "title": "读者反馈与创作实验",
+      "description": "用于真实评论或阅读指标的限定分析；没有真实数据时只提出待验证假设，不伪造市场效果。",
+      "coreInstructions": "使用有来源、时间、正文版本、统计口径与样本量的真实材料；模拟读者意见必须独立标识。把入口、开篇兑现、局部理解、人物关系、长线重复、更新和曝光变化分开分析。单条评论不代表总体，指标变化可能受人群和曝光影响，保留替代解释。优先定位可操作的问题与少量单变量实验，不追逐少数意见推翻已确认方向。统计计算由宿主完成，模型解释证据和取舍。反馈可以支持作者偏好或编辑经验候选，不能自动写入正史、全局文风或平台发布操作。",
+      "sourcePromptIds": [
+        "P19",
+        "P52",
+        "P53"
+      ],
+      "operations": [
+        {
+          "id": "analyze",
+          "title": "诊断并提出下一轮实验",
+          "instructions": "给出不超过三个优先诊断，每项包含证据、可能解释、替代解释、涉及章段、建议改变的变量与观察方式。比较实验需对应版本和相近窗口，允许平局、噪声及未定结果。缺乏样本时明确提出假设，不补造留存、收入或人数。返回分析与可选改进，不执行发布、联系读者或自动改写作品。",
+          "sourcePromptIds": [
+            "P19",
+            "P52",
+            "P53"
+          ],
+          "inputKinds": [
+            "ReaderFeedbackEvidence",
+            "HostComputedMetrics",
+            "ChapterVersionBindings",
+            "ExperimentHistory",
+            "AuthorPriorities"
+          ],
+          "outputKind": "reader-feedback-analysis",
+          "capabilitiesRequested": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "validators": [
+            "output.schema",
+            "feedback.provenance",
+            "feedback.sample-denominators",
+            "feedback.version-comparability",
+            "feedback.simulation-label",
+            "feedback.max-three-priorities",
+            "output.no-write-claim"
+          ],
+          "contextView": "author_review",
+          "outputBinding": "v3_adapter_required"
+        }
+      ]
+    }
+  ]
+}

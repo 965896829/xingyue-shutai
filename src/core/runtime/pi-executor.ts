@@ -5,6 +5,7 @@ import { ApplicationError } from '../../shared/errors';
 import { RecordedExecutorAdapter, type ExecutorCheckpoint, type ExecutorDescription } from './executor';
 import { recoveryActions } from './run-state';
 import { piExecutorVersion } from './task-loop';
+import { assertWorkflow } from './workflow-contract';
 
 export class PiExecutorAdapter extends RecordedExecutorAdapter {
   constructor(store: FileStore, runner: AgentRunner, chat: ConversationRunner) { super(store, runner, chat); }
@@ -15,6 +16,8 @@ export class PiExecutorAdapter extends RecordedExecutorAdapter {
   override restore(checkpoint: ExecutorCheckpoint) {
     if (checkpoint.executorId !== 'pi' || checkpoint.executorVersion !== piExecutorVersion || checkpoint.checkpointVersion !== 1)
       throw new ApplicationError('PROJECT_VERSION_UNSUPPORTED', '此 Pi 检查点不受支持，原记录保留，未重新发送请求');
-    return recoveryActions(this.store.db.run(checkpoint.runId));
+    const run = this.store.db.run(checkpoint.runId);
+    assertWorkflow(run);
+    return recoveryActions(run);
   }
 }

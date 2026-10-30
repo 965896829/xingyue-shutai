@@ -1,0 +1,3765 @@
+{
+  "designVersion": "V6",
+  "state": "design_only",
+  "adapterState": "unavailable",
+  "serializationPolicy": "explicit_adapter_projection_required",
+  "contractRoleMeaning": "inputKinds and outputKind are logical adapter roles; matching an exported TypeScript name does not authorize serialization or supply a runtime JSON schema.",
+  "newOutputBoundary": "Dedicated ModelResult contracts are model-facing. Three author-view candidate contracts require explicit recursive projections and host rebinding; their persisted records are not model tool schemas.",
+  "legacyRoleBoundary": "Legacy roles and unresolved adapter roles are retained by name with no invented TypeScript alias or executable serializer.",
+  "initialWorkPolicy": "The host initializes and versions AuthorContract from original input plus explicit empty/default constraints; initial_work requires no invented accepted prose/world version.",
+  "qualityStatisticsPolicy": "Host computes inclusion, exclusion, denominators, strata and statistics hashes. The model receives a read-only disclosed evidence projection and returns conclusions only; the immutable HostSnapshot is never sent.",
+  "optionalAdjunctPolicy": "Parsed core is independently validated; invalid or absent optional projection payloads do not block a valid core gate. Invalid transport JSON or invalid core still stops core work.",
+  "runtimeValidationImplemented": false,
+  "contractResources": [
+    {
+      "path": "vnext/contracts.ts",
+      "sha256": "7538eadcf729298a6e72749dc221d1b585a231027b803da03a5382f929a79975"
+    },
+    {
+      "path": "vnext/co-creation-contracts.ts",
+      "sha256": "69d71646e3d3b8148b25efdcfb5f9719f1dca65b27683479bac96a6be23131d5"
+    },
+    {
+      "path": "vnext/memory-contracts-v3.ts",
+      "sha256": "fe86966dd0d87c21ae8d9360f54821b5d2d1b707e4d6ad9e6176b88a04ccd8c2"
+    },
+    {
+      "path": "vnext/character-mind-v3.ts",
+      "sha256": "6bb6b0841b3ae938ace6015b497ee447547a7c292ccd3ad5c4b400decfc8c46f"
+    },
+    {
+      "path": "vnext/skill-runtime-v4.ts",
+      "sha256": "9a752888c2f7ee6c6cb09da7fbe47d1b42cf0581d4b13e0eaf655fa76b957c56"
+    },
+    {
+      "path": "vnext/skill-runtime-v5.ts",
+      "sha256": "b1d09411604923772edb8748080ce1bc3af197fd575d181feaf5f5a92d943c07"
+    },
+    {
+      "path": "vnext/world-contracts-v5.ts",
+      "sha256": "57ae1da8c875b4906a382f5d4f208c98665b4f8d842c38fbc56897c93a93fd01"
+    },
+    {
+      "path": "vnext/skill-runtime-v6.ts",
+      "sha256": "8620456a7a34f50fc3ac9b820911b8d7111814decc0bbfb6f43adaeba2523599"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "sha256": "0914c8ff82ab449357a75dc888eb90c36e4f917a87351425140160ee38357553"
+    },
+    {
+      "path": "vnext/skill-catalog-v6.json",
+      "sha256": "6c7de0eda8f06b27a095d2a4f11e4a0f11b06ef39c2c6fba609abcf2b179d824"
+    },
+    {
+      "path": "vnext/skills-v6/registry.design.json",
+      "sha256": "627acbbbc75003438b20a4bec4794579404af5c7da4ed2fed30e26e947b999d5"
+    },
+    {
+      "path": "vnext/skills-v6/assembly-policy.json",
+      "sha256": "0f7c9a0736b550d8bff9141e4749882e0909e038feed57dcbfd3c77838709453"
+    },
+    {
+      "path": "evaluation/check-skill-catalog-v6.mjs",
+      "sha256": "9ad58dd894a4df8e9fa22ae72e220c38eb88c0265340967b7deac13945c45599"
+    }
+  ],
+  "hostPrivateTypes": [
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "WorkBaseV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "ExplorationBranchV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "CandidatePromotionRequestV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "CandidatePromotionReceiptV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "PrivateContextSurfaceAuditV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "PrivateScopedContextProofV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "PrivateBlindPresentationBindingV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "QualityRunRecordV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "QualityComparisonHostSnapshotV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "QualityComparisonAssemblyReceiptV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "NarrativeSubmissionValidationReceiptV6"
+    },
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "PreferenceActivationV6"
+    },
+    {
+      "path": "vnext/memory-contracts-v3.ts",
+      "exportName": "ReadSetV3"
+    }
+  ],
+  "forbiddenWholeWrappers": [
+    {
+      "path": "vnext/quality-creative-contracts-v6.ts",
+      "exportName": "CompiledScopedPacketV6",
+      "allowedModelProperty": "modelPayload",
+      "forbiddenModelProperty": "hostPrivateProof"
+    }
+  ],
+  "roles": [
+    {
+      "role": "AcceptedProseReferences",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AffectedCanonReferences",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AffectedObjectSnapshots",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AllowedSourceScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AllowedTextRanges",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ApprovedChapterPlan",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorAuthorization",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/contracts.ts",
+        "exportName": "AuthorContract"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorCriteria",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorEndingContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorFieldLocksV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorIntentRecords",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorMemoryQuestion",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorNamingRequest",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorPreferences",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorPriorities",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorQuestion",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorRevisionRequest",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorSelections",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorStylePreferences",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "AuthorWorldSources",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "BlindComparisonEvidenceV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "BlindComparisonEvidenceV6"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "BookMilestones",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CandidateHash",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CandidateVersion",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CandidateVoiceProfiles",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ChapterMemoryDelta",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ChapterProseCandidate",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ChapterRoadmap",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ChapterVersionBindings",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CharacterAndRelationshipStates",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CharacterCores",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CharacterEntryStates",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CharacterKnowledgeScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CharacterRosterScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CharacterTurnPacketV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "CharacterTurnPacketV6"
+      },
+      "serialization": "scoped_payload_after_host_validation",
+      "directObjectSerializationAllowed": true,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CharacterTurnTaskPolicyV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "CharacterTurnTaskPolicyV6"
+      },
+      "serialization": "scoped_payload_after_host_validation",
+      "directObjectSerializationAllowed": true,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CoCreationAuthorization",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/co-creation-contracts.ts",
+        "exportName": "CoCreationAuthorization"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ComparisonCandidates",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ConfigOutputContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ConfirmedFindings",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ConfirmedStoryContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ConfirmedWorldRules",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ContinuityAuditScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CreationContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CreationContractCandidate",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CreationContractSchema",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CreativeGenreProfileV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/world-contracts-v5.ts",
+        "exportName": "CreativeGenreProfileV5"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CreativeObjectSnapshot",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CreativeTaskPolicyV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "CreativeTaskPolicyV6"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CurrentCharacterStates",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CurrentProjectConfig",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CurrentSceneCandidate",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CurrentVoiceProfile",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "CurrentVolumeState",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "DependencyCompleteness",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "DependencySummary",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "DirectionOutputContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "EndingAuditScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "EntityNamingScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "EntityRoster",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "EvidenceFreshnessPolicyV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ExistingCharacterCores",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ExistingDirectionReport",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ExistingMarketEvidence",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ExistingWorldModelV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ExistingWorldSources",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ExperimentHistory",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ExplorationBranchV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "ExplorationBranchV6"
+      },
+      "serialization": "host_private_never_send",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ExplorationTaskV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "ExplorationTaskV6"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "FirstReadTaskV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "FirstReadTaskV6"
+      },
+      "serialization": "scoped_payload_after_host_validation",
+      "directObjectSerializationAllowed": true,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "FrozenDirectionWorldBindingsV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "GenreAndProjectContext",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "GenreEvidence",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "HostComputedMetrics",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "HostDependencyImpactSet",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "HostImpactScanV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "LocalDiagnosticHints",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "MarketEvidence",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "MemoryEvidence",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "MemoryExtractionScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "MemoryQueryScopeV3",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/memory-contracts-v3.ts",
+        "exportName": "MemoryQueryScopeV3"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "NameMap",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ObjectConversationBinding",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/co-creation-contracts.ts",
+        "exportName": "ObjectConversationBinding"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ObjectLens",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "OptionalNarrativeProjectionPolicyV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "OriginalIdea",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PackagingBrief",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PackagingCandidate",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PackagingStoryContextV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/world-contracts-v5.ts",
+        "exportName": "PackagingStoryContextV5"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PackagingTargetKind",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PilotLengthRange",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PlanningDependencies",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PlanningWindow",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/contracts.ts",
+        "exportName": "PlanningWindow"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PlatformTaxonomySnapshotV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/world-contracts-v5.ts",
+        "exportName": "PlatformTaxonomySnapshotV5"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PlotPatternProjectionV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "PlotPatternProjectionV6"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PreferenceEvidence",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PreferenceEvidenceV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "PreferenceEvidenceV6"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PreferenceHypothesisV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "PreferenceHypothesisV6"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PreservationConstraints",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PreviousCharacterStates",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ProjectionPreviewContractV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ProjectionQueryScopeV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PromiseAuditScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PromiseLedger",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PromiseQueryCoverageV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ProposedChangeSet",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "PublicationPromiseV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/world-contracts-v5.ts",
+        "exportName": "PublicationPromiseV5"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "QueryCompleteness",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ReadSetV3",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/memory-contracts-v3.ts",
+        "exportName": "ReadSetV3"
+      },
+      "serialization": "host_private_never_send",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ReaderFeedbackEvidence",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ReaderImpactFindings",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ReaderPrefixPacketV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "ReaderPrefixPacketV6"
+      },
+      "serialization": "scoped_payload_after_host_validation",
+      "directObjectSerializationAllowed": true,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ReaderPromises",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ReadingExperienceProjectionV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "ReadingExperienceProjectionV6"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ReadingTargetBriefV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "ReadingTargetBriefV6"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ReadingTargetCardV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "ReadingTargetCardV6"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ReflectionRoster",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ReflectionTrigger",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "RegenerationScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "RequestedVariantCount",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ResearchFreshnessPolicy",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ResearchQuestion",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ResolvedAssumptions",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ResolvedReviewContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "RevealScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "RhythmPlan",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ScenarioSeeds",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "SceneContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/contracts.ts",
+        "exportName": "SceneContract"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "SceneExpressionEvidenceV6",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "SceneExpressionEvidenceV6"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ScopedCanonStates",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ScopedCharacterExperiences",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ScopedMemoryPacket",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ScopedQueryResults",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ScopedReferences",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ScopedReviewMemory",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "SelectedDirection",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "SharedFactConstraints",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "SourceCoordinateContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "SourceEvidence",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "StyleSamples",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "StyleSourceMetadata",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "TitleEvidenceSnapshotV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/world-contracts-v5.ts",
+        "exportName": "TitleEvidenceSnapshotV5"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "TitleGenerationScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "TitleOutputContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "TitlePreferences",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "VoiceProfile",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/contracts.ts",
+        "exportName": "VoiceProfile"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "VoiceSlice",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/contracts.ts",
+        "exportName": "VoiceSlice"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "VoiceUpdateScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "VolumeOutline",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldDesignScope",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldImportScopeV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldModelV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "declared_contract",
+      "declaredType": {
+        "path": "vnext/world-contracts-v5.ts",
+        "exportName": "WorldModelV5"
+      },
+      "serialization": "explicit_projection_required",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldModelVersion",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldModulePolicyV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldNamingRules",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldOutputContract",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldOutputContractV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldProfileCandidateV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldRuleSliceV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "WorldStressScopeV5",
+      "uses": [
+        "input"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "batch-outline-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "book-outline-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "change-impact-analysis",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "chapter-memory-delta",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "chapter-prose",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "chapter-review-report",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "chapter-roadmap-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "character-design-candidate",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "character-interpretation-candidates",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "co-creation-chat",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "continuity-audit-report",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "creation-contract",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "creation-contract-review",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "creative-change-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "direction-report",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "ending-audit-report",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "entity-name-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "exploration-draft-report",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "first-read-report",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "market-evidence-report",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "memory-review-report",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "packaging-copy-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "pilot-batch",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "plot-pattern-review",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "preference-learning-candidates",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "project-config-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "promise-audit-report",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "prose-patch-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "quality-comparison-model-result",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "reader-feedback-analysis",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "rehearsal-turn-candidate",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "rhythm-plan-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "scene-contract",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "sourced-memory-answer",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "target-resolved-packaging-review",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "title-candidates",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "voice-calibration-batch",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "voice-profile-change-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "voice-profile-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "volume-outline-proposal",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "world-design-candidate",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "world-inheritance-candidate",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "world-profile-candidate",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    },
+    {
+      "role": "world-stress-report",
+      "uses": [
+        "output"
+      ],
+      "bindingKind": "adapter_logical_role",
+      "declaredType": null,
+      "serialization": "unavailable_until_adapter_defined",
+      "directObjectSerializationAllowed": false,
+      "runtimeSchemaState": "unavailable"
+    }
+  ],
+  "bindings": [
+    {
+      "bindingId": "concept-forge.create:",
+      "operation": "concept-forge.create",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorContract",
+        "OriginalIdea",
+        "GenreEvidence",
+        "DirectionOutputContract",
+        "CreativeGenreProfileV5",
+        "WorldModulePolicyV5",
+        "AuthorWorldSources",
+        "CreativeTaskPolicyV6"
+      ],
+      "outputRole": "direction-report",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "concept-forge.regenerate:",
+      "operation": "concept-forge.regenerate",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorContract",
+        "ExistingDirectionReport",
+        "RegenerationScope",
+        "AuthorRevisionRequest",
+        "WorldModulePolicyV5",
+        "FrozenDirectionWorldBindingsV5",
+        "CreativeTaskPolicyV6"
+      ],
+      "outputRole": "direction-report",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "story-contract.build:",
+      "operation": "story-contract.build",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorContract",
+        "SelectedDirection",
+        "ResolvedAssumptions",
+        "CreationContractSchema",
+        "CreativeGenreProfileV5",
+        "WorldModelV5",
+        "WorldModulePolicyV5",
+        "CreativeTaskPolicyV6",
+        "ReadingTargetBriefV6"
+      ],
+      "outputRole": "creation-contract",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "story-contract.review:",
+      "operation": "story-contract.review",
+      "targetKind": null,
+      "inputRoles": [
+        "CreationContractCandidate",
+        "AuthorContract",
+        "SelectedDirection",
+        "ResolvedAssumptions",
+        "CandidateVersion"
+      ],
+      "outputRole": "creation-contract-review",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "story-contract.configure:",
+      "operation": "story-contract.configure",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorPreferences",
+        "CurrentProjectConfig",
+        "PlanningDependencies",
+        "ConfigOutputContract"
+      ],
+      "outputRole": "project-config-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "co-creation.discuss:",
+      "operation": "co-creation.discuss",
+      "targetKind": null,
+      "inputRoles": [
+        "ObjectConversationBinding",
+        "CreativeObjectSnapshot",
+        "AuthorQuestion",
+        "ScopedReferences",
+        "ObjectLens"
+      ],
+      "outputRole": "co-creation-chat",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "co-creation.compare:",
+      "operation": "co-creation.compare",
+      "targetKind": null,
+      "inputRoles": [
+        "CreativeObjectSnapshot",
+        "ComparisonCandidates",
+        "AuthorCriteria",
+        "ObjectLens"
+      ],
+      "outputRole": "co-creation-chat",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "co-creation.propose:",
+      "operation": "co-creation.propose",
+      "targetKind": null,
+      "inputRoles": [
+        "CreativeObjectSnapshot",
+        "AuthorRevisionRequest",
+        "CoCreationAuthorization",
+        "DependencySummary",
+        "ObjectLens",
+        "WorldModelV5",
+        "HostImpactScanV5",
+        "AuthorFieldLocksV5",
+        "CreativeTaskPolicyV6",
+        "ExplorationBranchV6"
+      ],
+      "outputRole": "creative-change-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "co-creation.rehearse:",
+      "operation": "co-creation.rehearse",
+      "targetKind": null,
+      "inputRoles": [
+        "CharacterTurnPacketV6",
+        "CharacterTurnTaskPolicyV6"
+      ],
+      "outputRole": "rehearsal-turn-candidate",
+      "runtimeCoreVariant": "character_turn",
+      "adapterState": "unavailable",
+      "modelInputMode": "scoped_payload_only",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": {
+        "declaredBasisType": {
+          "path": "vnext/quality-creative-contracts-v6.ts",
+          "exportName": "CharacterRehearsalModelResultV6"
+        },
+        "shapeMode": "dedicated_model_result",
+        "topLevelIncludedFields": [],
+        "hostOwnedFieldsExcludedOrRebound": [],
+        "runtimeSchemaState": "unavailable"
+      },
+      "hostArtifactType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "CharacterRehearsalTurnV6"
+      },
+      "authority": "candidate_only",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "world-design.create:",
+      "operation": "world-design.create",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorContract",
+        "CreationContract",
+        "ConfirmedWorldRules",
+        "WorldDesignScope",
+        "WorldOutputContract",
+        "WorldProfileCandidateV5",
+        "WorldModulePolicyV5",
+        "AuthorFieldLocksV5",
+        "WorldOutputContractV5"
+      ],
+      "outputRole": "world-design-candidate",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "world-design.profile:",
+      "operation": "world-design.profile",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorContract",
+        "OriginalIdea",
+        "ExistingWorldSources",
+        "PlatformTaxonomySnapshotV5",
+        "WorldModulePolicyV5"
+      ],
+      "outputRole": "world-profile-candidate",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "world-design.inherit:",
+      "operation": "world-design.inherit",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorContract",
+        "AuthorWorldSources",
+        "ExistingWorldModelV5",
+        "WorldImportScopeV5",
+        "SourceCoordinateContract"
+      ],
+      "outputRole": "world-inheritance-candidate",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "world-design.stress-test:",
+      "operation": "world-design.stress-test",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorContract",
+        "WorldModelV5",
+        "ScopedMemoryPacket",
+        "WorldStressScopeV5",
+        "ScenarioSeeds"
+      ],
+      "outputRole": "world-stress-report",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "character-design.create:",
+      "operation": "character-design.create",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorContract",
+        "CreationContract",
+        "ConfirmedWorldRules",
+        "CharacterRosterScope",
+        "ExistingCharacterCores"
+      ],
+      "outputRole": "character-design-candidate",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "rolling-outline.book:",
+      "operation": "rolling-outline.book",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorContract",
+        "CreationContract",
+        "BookMilestones",
+        "PlanningWindow",
+        "PromiseLedger"
+      ],
+      "outputRole": "book-outline-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "rolling-outline.volume:",
+      "operation": "rolling-outline.volume",
+      "targetKind": null,
+      "inputRoles": [
+        "BookMilestones",
+        "CurrentVolumeState",
+        "PlanningWindow",
+        "PromiseLedger",
+        "AuthorContract",
+        "ReadingTargetCardV6",
+        "ReadingExperienceProjectionV6",
+        "PlotPatternProjectionV6"
+      ],
+      "outputRole": "volume-outline-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "rolling-outline.roadmap:",
+      "operation": "rolling-outline.roadmap",
+      "targetKind": null,
+      "inputRoles": [
+        "VolumeOutline",
+        "PlanningWindow",
+        "ChapterRoadmap",
+        "CurrentCharacterStates",
+        "PromiseLedger"
+      ],
+      "outputRole": "chapter-roadmap-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "rolling-outline.rhythm:",
+      "operation": "rolling-outline.rhythm",
+      "targetKind": null,
+      "inputRoles": [
+        "ChapterRoadmap",
+        "PlanningWindow",
+        "ReaderPromises",
+        "AuthorStylePreferences"
+      ],
+      "outputRole": "rhythm-plan-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "rolling-outline.batch:",
+      "operation": "rolling-outline.batch",
+      "targetKind": null,
+      "inputRoles": [
+        "ChapterRoadmap",
+        "RhythmPlan",
+        "PlanningWindow",
+        "ScopedMemoryPacket",
+        "AuthorContract",
+        "CreativeTaskPolicyV6",
+        "ReadingExperienceProjectionV6",
+        "PlotPatternProjectionV6"
+      ],
+      "outputRole": "batch-outline-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "scene-contract.plan:",
+      "operation": "scene-contract.plan",
+      "targetKind": null,
+      "inputRoles": [
+        "ApprovedChapterPlan",
+        "ScopedMemoryPacket",
+        "CharacterEntryStates",
+        "NameMap",
+        "VoiceSlice",
+        "AuthorContract",
+        "WorldRuleSliceV5",
+        "WorldModelVersion",
+        "PublicationPromiseV5",
+        "ReadingTargetCardV6",
+        "SceneExpressionEvidenceV6",
+        "ReadingExperienceProjectionV6"
+      ],
+      "outputRole": "scene-contract",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "voice-calibration.extract:",
+      "operation": "voice-calibration.extract",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorStylePreferences",
+        "StyleSamples",
+        "CurrentVoiceProfile",
+        "StyleSourceMetadata"
+      ],
+      "outputRole": "voice-profile-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "voice-calibration.calibrate:",
+      "operation": "voice-calibration.calibrate",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorStylePreferences",
+        "StyleSamples",
+        "SceneContract",
+        "RequestedVariantCount",
+        "SharedFactConstraints"
+      ],
+      "outputRole": "voice-calibration-batch",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "voice-calibration.update:",
+      "operation": "voice-calibration.update",
+      "targetKind": null,
+      "inputRoles": [
+        "CurrentVoiceProfile",
+        "AuthorSelections",
+        "PreferenceEvidence",
+        "VoiceUpdateScope",
+        "PreferenceEvidenceV6",
+        "PreferenceHypothesisV6"
+      ],
+      "outputRole": "voice-profile-change-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "voice-calibration.pilot:",
+      "operation": "voice-calibration.pilot",
+      "targetKind": null,
+      "inputRoles": [
+        "CandidateVoiceProfiles",
+        "SceneContract",
+        "ScopedMemoryPacket",
+        "PilotLengthRange"
+      ],
+      "outputRole": "pilot-batch",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "voice-calibration.learn-edits:",
+      "operation": "voice-calibration.learn-edits",
+      "targetKind": null,
+      "inputRoles": [
+        "PreferenceEvidenceV6",
+        "CurrentVoiceProfile",
+        "CreativeTaskPolicyV6"
+      ],
+      "outputRole": "preference-learning-candidates",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": {
+        "declaredBasisType": {
+          "path": "vnext/quality-creative-contracts-v6.ts",
+          "exportName": "PreferenceLearningCandidatesV6"
+        },
+        "shapeMode": "explicit_recursive_projection_required",
+        "topLevelIncludedFields": [
+          "hypotheses",
+          "excludedEvidence",
+          "unresolvedQuestions"
+        ],
+        "hostOwnedFieldsExcludedOrRebound": [
+          "taskId",
+          "policyVersion",
+          "evidenceVersions",
+          "activeProfileChanged",
+          "hypotheses[*].basisReadSet",
+          "hypotheses[*].status"
+        ],
+        "runtimeSchemaState": "unavailable"
+      },
+      "hostArtifactType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "PreferenceLearningCandidatesV6"
+      },
+      "authority": "candidate_only",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "chapter-draft.draft:",
+      "operation": "chapter-draft.draft",
+      "targetKind": null,
+      "inputRoles": [
+        "SceneContract",
+        "ScopedMemoryPacket",
+        "AuthorContract",
+        "VoiceSlice",
+        "CharacterEntryStates",
+        "NameMap",
+        "WorldRuleSliceV5",
+        "PublicationPromiseV5",
+        "ProjectionPreviewContractV5",
+        "SceneExpressionEvidenceV6",
+        "ReadingTargetCardV6",
+        "ReadingExperienceProjectionV6",
+        "CreativeTaskPolicyV6"
+      ],
+      "outputRole": "chapter-prose",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "chapter-draft.explore:",
+      "operation": "chapter-draft.explore",
+      "targetKind": null,
+      "inputRoles": [
+        "ExplorationTaskV6",
+        "CreativeTaskPolicyV6",
+        "ScopedMemoryPacket",
+        "VoiceSlice",
+        "SceneExpressionEvidenceV6"
+      ],
+      "outputRole": "exploration-draft-report",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": {
+        "declaredBasisType": {
+          "path": "vnext/quality-creative-contracts-v6.ts",
+          "exportName": "ExplorationDraftV6"
+        },
+        "shapeMode": "explicit_recursive_projection_required",
+        "topLevelIncludedFields": [
+          "prose",
+          "additions",
+          "intentChanges",
+          "unresolved"
+        ],
+        "hostOwnedFieldsExcludedOrRebound": [
+          "id",
+          "taskId",
+          "projectId",
+          "branchId",
+          "base",
+          "candidateVersion",
+          "sourceReadSet",
+          "policyVersion",
+          "status"
+        ],
+        "runtimeSchemaState": "unavailable"
+      },
+      "hostArtifactType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "ExplorationDraftV6"
+      },
+      "authority": "candidate_only",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "chapter-review.review:",
+      "operation": "chapter-review.review",
+      "targetKind": null,
+      "inputRoles": [
+        "ChapterProseCandidate",
+        "CandidateHash",
+        "SceneContract",
+        "AuthorContract",
+        "ScopedReviewMemory",
+        "VoiceProfile",
+        "LocalDiagnosticHints",
+        "ReadingTargetCardV6",
+        "SceneExpressionEvidenceV6",
+        "CreativeTaskPolicyV6"
+      ],
+      "outputRole": "chapter-review-report",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "chapter-review.first-read:",
+      "operation": "chapter-review.first-read",
+      "targetKind": null,
+      "inputRoles": [
+        "ReaderPrefixPacketV6",
+        "FirstReadTaskV6"
+      ],
+      "outputRole": "first-read-report",
+      "runtimeCoreVariant": "reader_prefix",
+      "adapterState": "unavailable",
+      "modelInputMode": "scoped_payload_only",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": {
+        "declaredBasisType": {
+          "path": "vnext/quality-creative-contracts-v6.ts",
+          "exportName": "FirstReadModelResultV6"
+        },
+        "shapeMode": "dedicated_model_result",
+        "topLevelIncludedFields": [],
+        "hostOwnedFieldsExcludedOrRebound": [],
+        "runtimeSchemaState": "unavailable"
+      },
+      "hostArtifactType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "FirstReadReportV6"
+      },
+      "authority": "candidate_only",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "revision.voice:",
+      "operation": "revision.voice",
+      "targetKind": null,
+      "inputRoles": [
+        "ChapterProseCandidate",
+        "CandidateHash",
+        "AllowedTextRanges",
+        "VoiceProfile",
+        "ReaderImpactFindings",
+        "SceneExpressionEvidenceV6",
+        "CreativeTaskPolicyV6",
+        "PreferenceEvidenceV6"
+      ],
+      "outputRole": "prose-patch-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "revision.local:",
+      "operation": "revision.local",
+      "targetKind": null,
+      "inputRoles": [
+        "ChapterProseCandidate",
+        "CandidateHash",
+        "ConfirmedFindings",
+        "AllowedTextRanges",
+        "PreservationConstraints",
+        "SceneExpressionEvidenceV6",
+        "CreativeTaskPolicyV6"
+      ],
+      "outputRole": "prose-patch-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "revision.story:",
+      "operation": "revision.story",
+      "targetKind": null,
+      "inputRoles": [
+        "CreativeObjectSnapshot",
+        "AuthorRevisionRequest",
+        "CoCreationAuthorization",
+        "DependencySummary",
+        "AffectedCanonReferences"
+      ],
+      "outputRole": "creative-change-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "memory-delta.extract:",
+      "operation": "memory-delta.extract",
+      "targetKind": null,
+      "inputRoles": [
+        "ChapterProseCandidate",
+        "CandidateHash",
+        "ReadSetV3",
+        "PreviousCharacterStates",
+        "EntityRoster",
+        "MemoryExtractionScope",
+        "WorldModelV5",
+        "WorldRuleSliceV5",
+        "SourceCoordinateContract",
+        "OptionalNarrativeProjectionPolicyV6"
+      ],
+      "outputRole": "chapter-memory-delta",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "memory-review.review:",
+      "operation": "memory-review.review",
+      "targetKind": null,
+      "inputRoles": [
+        "ChapterProseCandidate",
+        "CandidateHash",
+        "ChapterMemoryDelta",
+        "ReadSetV3",
+        "PreviousCharacterStates",
+        "MemoryEvidence",
+        "WorldModelV5",
+        "SourceCoordinateContract",
+        "OptionalNarrativeProjectionPolicyV6"
+      ],
+      "outputRole": "memory-review-report",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "memory-query.answer:",
+      "operation": "memory-query.answer",
+      "targetKind": null,
+      "inputRoles": [
+        "AuthorMemoryQuestion",
+        "MemoryQueryScopeV3",
+        "ScopedQueryResults",
+        "QueryCompleteness",
+        "SourceEvidence"
+      ],
+      "outputRole": "sourced-memory-answer",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "character-reflection.reflect:",
+      "operation": "character-reflection.reflect",
+      "targetKind": null,
+      "inputRoles": [
+        "ReflectionTrigger",
+        "ScopedCharacterExperiences",
+        "CharacterCores",
+        "CurrentCharacterStates",
+        "ReflectionRoster"
+      ],
+      "outputRole": "character-interpretation-candidates",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "canon-audit.continuity:",
+      "operation": "canon-audit.continuity",
+      "targetKind": null,
+      "inputRoles": [
+        "ContinuityAuditScope",
+        "AcceptedProseReferences",
+        "ScopedCanonStates",
+        "SourceEvidence",
+        "QueryCompleteness",
+        "WorldModelV5",
+        "WorldRuleSliceV5",
+        "ProjectionQueryScopeV5"
+      ],
+      "outputRole": "continuity-audit-report",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "canon-audit.impact:",
+      "operation": "canon-audit.impact",
+      "targetKind": null,
+      "inputRoles": [
+        "ProposedChangeSet",
+        "HostDependencyImpactSet",
+        "DependencyCompleteness",
+        "AffectedObjectSnapshots",
+        "AuthorAuthorization",
+        "HostImpactScanV5",
+        "WorldModelV5",
+        "PublicationPromiseV5"
+      ],
+      "outputRole": "change-impact-analysis",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "canon-audit.promise:",
+      "operation": "canon-audit.promise",
+      "targetKind": null,
+      "inputRoles": [
+        "PromiseLedger",
+        "PromiseAuditScope",
+        "AcceptedProseReferences",
+        "QueryCompleteness",
+        "AuthorIntentRecords",
+        "PublicationPromiseV5",
+        "WorldModelV5",
+        "PromiseQueryCoverageV5"
+      ],
+      "outputRole": "promise-audit-report",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "canon-audit.ending:",
+      "operation": "canon-audit.ending",
+      "targetKind": null,
+      "inputRoles": [
+        "EndingAuditScope",
+        "PromiseLedger",
+        "AcceptedProseReferences",
+        "CharacterAndRelationshipStates",
+        "AuthorEndingContract"
+      ],
+      "outputRole": "ending-audit-report",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "canon-audit.patterns:",
+      "operation": "canon-audit.patterns",
+      "targetKind": null,
+      "inputRoles": [
+        "CurrentSceneCandidate",
+        "PlotPatternProjectionV6",
+        "CreativeTaskPolicyV6"
+      ],
+      "outputRole": "plot-pattern-review",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": {
+        "declaredBasisType": {
+          "path": "vnext/quality-creative-contracts-v6.ts",
+          "exportName": "PatternComparisonV6"
+        },
+        "shapeMode": "explicit_recursive_projection_required",
+        "topLevelIncludedFields": [
+          "similarities",
+          "meaningfulDifferences",
+          "protectedRepetition",
+          "optionalChanges",
+          "result"
+        ],
+        "hostOwnedFieldsExcludedOrRebound": [
+          "id",
+          "projectId",
+          "proposedSceneVersion",
+          "policyVersion",
+          "retrievedPatternVersions",
+          "retrievalCoverage",
+          "scope",
+          "readSet"
+        ],
+        "runtimeSchemaState": "unavailable"
+      },
+      "hostArtifactType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "PatternComparisonV6"
+      },
+      "authority": "candidate_only",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "market-evidence.research:",
+      "operation": "market-evidence.research",
+      "targetKind": null,
+      "inputRoles": [
+        "ResearchQuestion",
+        "AllowedSourceScope",
+        "ExistingMarketEvidence",
+        "GenreAndProjectContext",
+        "ResearchFreshnessPolicy",
+        "PlatformTaxonomySnapshotV5",
+        "TitleEvidenceSnapshotV5",
+        "EvidenceFreshnessPolicyV5"
+      ],
+      "outputRole": "market-evidence-report",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "packaging.entity-name:",
+      "operation": "packaging.entity-name",
+      "targetKind": null,
+      "inputRoles": [
+        "EntityNamingScope",
+        "NameMap",
+        "WorldNamingRules",
+        "CharacterKnowledgeScope",
+        "AuthorNamingRequest"
+      ],
+      "outputRole": "entity-name-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "packaging.title:",
+      "operation": "packaging.title",
+      "targetKind": null,
+      "inputRoles": [
+        "ConfirmedStoryContract",
+        "TitlePreferences",
+        "MarketEvidence",
+        "TitleGenerationScope",
+        "TitleOutputContract",
+        "TitleEvidenceSnapshotV5",
+        "PackagingStoryContextV5",
+        "PublicationPromiseV5"
+      ],
+      "outputRole": "title-candidates",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "packaging.blurb:",
+      "operation": "packaging.blurb",
+      "targetKind": null,
+      "inputRoles": [
+        "ConfirmedStoryContract",
+        "PackagingBrief",
+        "VoiceProfile",
+        "RevealScope",
+        "AuthorContract",
+        "PublicationPromiseV5",
+        "PackagingStoryContextV5"
+      ],
+      "outputRole": "packaging-copy-proposal",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "packaging.review:entity_name",
+      "operation": "packaging.review",
+      "targetKind": "entity_name",
+      "inputRoles": [
+        "PackagingTargetKind",
+        "ResolvedReviewContract",
+        "PackagingCandidate",
+        "CandidateVersion",
+        "ConfirmedStoryContract",
+        "AuthorContract"
+      ],
+      "outputRole": "target-resolved-packaging-review",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "packaging.review:book_title",
+      "operation": "packaging.review",
+      "targetKind": "book_title",
+      "inputRoles": [
+        "PackagingTargetKind",
+        "ResolvedReviewContract",
+        "PackagingCandidate",
+        "CandidateVersion",
+        "ConfirmedStoryContract",
+        "AuthorContract",
+        "TitleEvidenceSnapshotV5",
+        "PublicationPromiseV5",
+        "PackagingStoryContextV5"
+      ],
+      "outputRole": "target-resolved-packaging-review",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "packaging.review:blurb",
+      "operation": "packaging.review",
+      "targetKind": "blurb",
+      "inputRoles": [
+        "PackagingTargetKind",
+        "ResolvedReviewContract",
+        "PackagingCandidate",
+        "CandidateVersion",
+        "ConfirmedStoryContract",
+        "AuthorContract",
+        "PublicationPromiseV5",
+        "PackagingStoryContextV5"
+      ],
+      "outputRole": "target-resolved-packaging-review",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "reader-feedback.analyze:",
+      "operation": "reader-feedback.analyze",
+      "targetKind": null,
+      "inputRoles": [
+        "ReaderFeedbackEvidence",
+        "HostComputedMetrics",
+        "ChapterVersionBindings",
+        "ExperimentHistory",
+        "AuthorPriorities",
+        "ReadingExperienceProjectionV6"
+      ],
+      "outputRole": "reader-feedback-analysis",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": null,
+      "hostArtifactType": null,
+      "authority": "retained_workflow_contract",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    },
+    {
+      "bindingId": "reader-feedback.compare:",
+      "operation": "reader-feedback.compare",
+      "targetKind": null,
+      "inputRoles": [
+        "BlindComparisonEvidenceV6",
+        "AuthorPriorities"
+      ],
+      "outputRole": "quality-comparison-model-result",
+      "runtimeCoreVariant": "author",
+      "adapterState": "unavailable",
+      "modelInputMode": "host_compiled_author_projection",
+      "wholeInputObjectsSerialized": false,
+      "modelOutput": {
+        "declaredBasisType": {
+          "path": "vnext/quality-creative-contracts-v6.ts",
+          "exportName": "QualityComparisonModelResultV6"
+        },
+        "shapeMode": "dedicated_model_result",
+        "topLevelIncludedFields": [],
+        "hostOwnedFieldsExcludedOrRebound": [],
+        "runtimeSchemaState": "unavailable"
+      },
+      "hostArtifactType": {
+        "path": "vnext/quality-creative-contracts-v6.ts",
+        "exportName": "QualityComparisonReportV6"
+      },
+      "authority": "candidate_only",
+      "scopeProofModelVisible": false,
+      "activationAllowed": false
+    }
+  ],
+  "counts": {
+    "skills": 19,
+    "operations": 48,
+    "bindings": 50,
+    "logicalRoles": 205,
+    "newOperationOutputMappings": 6
+  }
+}

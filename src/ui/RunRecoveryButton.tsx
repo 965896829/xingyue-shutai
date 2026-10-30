@@ -16,7 +16,7 @@ export function RunRecoveryButton({ run, disabled, profileId, instruction, act, 
     if (decision.confirmation && !await dialogs.confirm(`上次请求结果与费用未知，请核对任务记录。${decision.detail}`, { title: '恢复当前任务？', confirmLabel: '确认恢复', cancelLabel: '暂不恢复' })) return;
     const result = await act(() => invokeCommand('run.recover', {
       id: run.id, ...(profileId ? { profileId } : {}), retryUnknown: decision.confirmation,
-      ...(!run.planning && instruction?.trim() ? { instruction: instruction.trim() } : {})
+      ...(!run.planning && !run.creative && instruction?.trim() ? { instruction: instruction.trim() } : {})
     }));
     if (typeof result === 'string') onRecovered?.(result);
   }}>{decision.label}</button>;

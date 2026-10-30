@@ -4,11 +4,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { createServer } from 'vite';
 import { Service } from '../../src/core/service';
-import { profileSchema, type Command, type ModelResult } from '../../src/shared/types';
-import { paths, stageOutputs, activeBatch, batchPath, rhythmPath, taskPath, detailPath, prosePath } from '../../src/core/domain';
+import { profileSchema, factSchema, type Command, type ModelResult } from '../../src/shared/types';
+import { paths, stageOutputs, activeBatch, batchPath, rhythmPath, taskPath, detailPath, prosePath, qualityPath, hash } from '../../src/core/domain';
+import { encodeFacts } from '../../src/core/memory-records';
 import { proposalHash } from '../../src/core/storage';
 import { fakeResult } from './refactor';
 import { fixture } from './workflow';
+import { fixtureAuditEvidence, fixtureCoverage } from './chapter-coverage';
 import { normalize, RequestError } from '../../src/core/provider';
 import { nativeResponse, nativeText, nativeCall } from './native-search';
 import { AssistantSettings } from '../../src/core/assistant-settings';
@@ -17,14 +19,26 @@ import { titleSource } from '../../src/core/title-naming';
 import { chapterTableFixture, volumeTableFixture, tableEdgeFixture } from './readable-tables';
 import { createPlaybackFixture } from './streaming-playback';
 import { createManuscriptFixture } from './manuscript-studio';
+import { createVisualWorkbenchFixture } from './workbench-visual';
 import { createChapterRetryFixture } from './chapter-retry';
 import { concisePlanningReportSchema } from '../../src/shared/tags';
+import { mutateQuality, readQuality } from '../../src/core/quality';
+import { FileStore } from '../../src/core/storage';
+import { writingStyleReportFixture } from './writing-style';
 
 const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-tag-ui-'));
 const clients = new Set<import('node:http').ServerResponse>();
 // Reusable opening-flow scenarios, isolated from installed data and real models.
 const creationScenario = process.env.CREATION_UI_SCENARIO;
 const failedOnce = new Set<string>();
+let advanceChatProgress: (() => void) | undefined;
+const waitForChatProgress = (signal: AbortSignal) => new Promise<void>((resolve, reject) => {
+  const finish = () => { signal.removeEventListener('abort', abort); advanceChatProgress = undefined; resolve(); };
+  const abort = () => { signal.removeEventListener('abort', abort); advanceChatProgress = undefined; reject(new Error('已停止')); };
+  if (signal.aborted) { abort(); return; }
+  advanceChatProgress = finish;
+  signal.addEventListener('abort', abort, { once: true });
+});
 let modelRequests = 0;
 const localRequests: Record<string, number> = {};
 const service: Service = new Service(
@@ -34,11 +48,35 @@ const service: Service = new Service(
   },
   async (_profile, _system, messages, tools, _signal, delta, options): Promise<ModelResult> => {
     modelRequests++;
+    if (creationScenario === 'writing_style') {
+      await waitForChatProgress(_signal);
+      return fakeResult(JSON.stringify(writingStyleReportFixture));
+    }
+    if (creationScenario === 'chat_progress') {
+      await waitForChatProgress(_signal);
+      options?.onActivity?.('thinking');
+      await waitForChatProgress(_signal);
+      const hasRead = messages.some(message => message.role === 'tool');
+      const text = hasRead ? '资料与规则已经核对。开场可以从维修员发现停电异常写起，让人物的行动带出疑问。'
+        : '我会先读取作品资料，核对当前创作规则，再整理故事开场的建议。';
+      delta?.(text);
+      await waitForChatProgress(_signal);
+      return hasRead ? fakeResult(text) : { ...fakeResult(text), stop: 'tools', calls: [
+        { id: 'progress-read-book', name: 'read_book', arguments: JSON.stringify({ path: paths.style, reason: '核对作品风格', lines: 2 }) },
+        { id: 'progress-read-rule', name: 'read_rule', arguments: JSON.stringify({ name: 'workflow', lines: 2 }) }
+      ] };
+    }
+    if (process.env.SCALE_UI_DELAY === '1') await new Promise<void>((resolve, reject) => {
+      if (_signal.aborted) { reject(_signal.reason); return; }
+      const abort = () => { clearTimeout(timer); reject(_signal.reason); };
+      const timer = setTimeout(() => { _signal.removeEventListener('abort', abort); resolve(); }, 30000);
+      _signal.addEventListener('abort', abort, { once: true });
+    });
     if (creationScenario === 'task_retry') {
       await new Promise(resolve => setTimeout(resolve, 800));
       throw new RequestError('离线验收在新正文请求入口暂停，未连接真实模型。', false);
     }
-    if (['readable_tables', 'streaming_playback', 'manuscript_studio'].includes(creationScenario ?? '')) throw new Error('显示验收不允许调用模型');
+    if (['readable_tables', 'streaming_playback', 'manuscript_studio', 'workbench_visual'].includes(creationScenario ?? '')) throw new Error('显示验收不允许调用模型');
     if (process.env.NATIVE_SEARCH_UI === '1') {
       if (!options?.webSearch) return fakeResult('本轮没有联网，沿用当前已确认资料。');
       options.onWebSearch?.({ id: nativeCall.id, status: 'searching', sources: [] });
@@ -47,6 +85,26 @@ const service: Service = new Service(
       return normalize(_profile, nativeResponse);
     }
     const run = service.store!.db.runs().find((r) => r.status === 'running')!;
+    if (run?.creative) {
+      const input = JSON.parse(messages[0].content);
+      if (run.creative.input.operation === 'learn-edits') return fakeResult(JSON.stringify({ preferences: input.evidence.filter((e: any) => e.domain === 'expression').map((e: any) => ({ statement: '在对话中用具体动作表现犹豫', scope: e.scope, evidenceIds: [e.id], alternatives: ['此处的停顿可能仅适用于当前场景'], exceptions: ['人物直接坦白时'] })) }));
+      if (run.creative.input.operation === 'patterns') return fakeResult(JSON.stringify({ summary: '当前场景以试探回应解决信息不对称。', patterns: input.documents.map((d: any) => ({ chapter: Number(d.source.split('-')[1]), scene: '门前试探', sources: [{ path: d.path, hash: d.hash, start: 0, end: 12, quote: Array.from(d.text).slice(0, 12).join('') }], conflict: '门后信息未知', strategy: '轻声询问', response: '等待动静', solution: '获得回应', change: '从猜测转为观察', reward: '疑问推进', protectedRepetition: 'none' })) }));
+      if (run.creative.input.operation === 'compare-feedback') return fakeResult(JSON.stringify({ conclusions: [], nextExperiment: '继续收集独立读者反馈。' }));
+      return fakeResult(JSON.stringify(run.creative.input.operation === 'first-read'
+        ? { summary: '模拟首读：阿宁推门后的情形尚未揭晓。', observations: [{ source: input.documents[0].source, quote: '阿宁', comment: '已建立观察人物。' }] }
+        : run.creative.input.operation === 'rehearse' ? { speech: '谁在外面？', action: '阿宁停在门旁，听了一会儿。', uncertainty: '尚不知道来人的身份。' }
+        : { prose: creationScenario === 'creative_v7_chapter' ? fixture(service.store!.db.project(), prosePath(1), service) : '阿宁蹲下来，听见墙里传来三下敲击。她把工具箱推到身后，轻轻叩了回去。', assumptions: ['墙后有人回应'] }));
+    }
+    if (creationScenario === 'creative_v7_chapter' && run.pipeline) {
+      const input = JSON.parse(messages[0].content), project = service.store!.db.project();
+      if (input.items) {
+        const memory = { decisions: input.items.map((item: any) => ({ id: item.id, verdict: 'supported', reason: '离线夹具核对。', evidence: fixtureAuditEvidence(item, input.sources) })) };
+        const plans = { decisions: (input.plans ?? []).map((plan: any) => ({ path: plan.path, verdict: 'consistent', reason: '离线计划与本章原文一致。', planQuote: input.sources.find((s: any) => s.path === plan.path).content.slice(0, 30), proseQuote: input.sources.find((s: any) => s.path === input.prose.path).content.slice(0, 30) })) };
+        return fakeResult(JSON.stringify(input.plans ? { memory, plans } : memory));
+      }
+      const memory = run.pipeline.phase === 'memory';
+      return { ...fakeResult(''), stop: 'tools', calls: [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes: (memory ? stageOutputs('S11', project) : [qualityPath(1)]).map(file => service.change(file, fixture(project, file, service))), ...(memory ? { facts: [], complete: true, coverage: fixtureCoverage(service, run) } : {}) }) }] };
+    }
     if (!run && creationScenario === 'context_meter') {
       await new Promise(resolve => setTimeout(resolve, 300));
       delta?.('可以直接讨论或提出修改意见。原设定保留，生成内容满意后再保存。');
@@ -122,6 +180,7 @@ const service: Service = new Service(
           const revision = regeneration ? `第${t.history.filter(item => item.kind === 'reroll_request').length}轮新构思` : '';
           return {
           id: 'd' + i,
+          ...(t.directionFormatVersion === 2 ? { worldSuggestions: [{ moduleId: 'technology-profession', state: 'enabled', reason: '维修工作需要明确职业能力与流程', assumptionIds: [] }] } : {}),
           title: title + revision,
           logline: '维修师用有限工具应对资源与合作难题。',
           storyEngine: ['公共设备维护与分配冲突', '沿途故障与不同社区的交换', '跨区域标准与互信建设'][i] + revision,
@@ -199,8 +258,46 @@ service.profiles = [
   }
 ];
 const assistantSettings = new AssistantSettings(parent);
+if (creationScenario === 'writing_style') {
+  fs.mkdirSync(path.join(parent, 'request-journal'), { recursive: true });
+  service.requestJournal = new FileStore(path.join(parent, 'request-journal'));
+  await service.invoke('project.create', { parent, title: '风格选择验收', premise: '维修员阿宁在一次停电中发现异常。', config: { defaultProfileId: 'fixture', genre: '都市悬疑', expressionRules: { enabled: false } } });
+}
+if (creationScenario === 'chat_progress') {
+  await service.invoke('project.create', { parent, title: '对话进度展示', premise: '维修员阿宁追查停电原因。', config: { defaultProfileId: 'fixture', expressionRules: { enabled: false } } });
+  const run = service.makeRun('stage', '整理故事开场', 'fixture');
+  run.responseText = '开场从维修员发现停电异常写起。可以继续讨论人物的下一步行动。';
+  run.status = 'awaiting_review';
+  service.store!.db.saveRun(run);
+}
+if (creationScenario === 'creative_v7_chapter') {
+  await service.invoke('project.create', { parent, title: '探索草稿转章验收', premise: '阿宁调查停电原因。', config: { defaultProfileId: 'fixture', preview: { enabled: false } } });
+  let p = service.store!.db.project();
+  for (const stage of ['S01', 'S02', 'S03', 'S04', 'S05', 'S06', 'S07', 'S08', 'S09'] as const) {
+    service.store!.commit(stageOutputs(stage, p).map(file => service.change(file, fixture(p, file, service))), p);
+    p = service.store!.db.project();
+  }
+  p.stage = 'S10'; service.store!.db.set('project', p);
+}
+if (creationScenario === 'creative_v7' || creationScenario === 'quality_v7') {
+  await service.invoke('project.create', { parent, title: '独立创作工具验收', premise: '阿宁调查墙内的敲击声。', config: { defaultProfileId: 'fixture' } });
+  const store = service.store!;
+  store.commit([{ path: prosePath(1), content: '# 第一章\n\n阿宁推开门，屋里静得只剩时钟的声音。', baseHash: store.db.document(prosePath(1))?.hash ?? null }], store.db.project());
+  const prose = store.readAccepted(prosePath(1));
+  const fact = factSchema.parse({ id: 'fixture-door', subject: '阿宁', entityIds: ['aning'], predicate: '观察', value: '屋里只有时钟声', category: 'character', kind: 'belief', fromChapter: 1, revealedAt: 1, reviewStatus: 'accepted', knowledge: [{ who: 'aning', mode: 'seen', fromChapter: 1 }], evidence: [{ path: prosePath(1), hash: hash(prose.content), quote: '屋里静得只剩时钟的声音。' }] });
+  store.commit([service.change(paths.roles, encodeFacts(store.readAccepted(paths.roles).content, [fact]))], store.db.project());
+}
 const playback = creationScenario === 'streaming_playback' ? await createPlaybackFixture(service, parent) : undefined;
+if (creationScenario === 'quality_v7') {
+  const store = service.store!, file = prosePath(1), after = store.readAccepted(file).content;
+  const before = '# 第一章\n\n阿宁觉得屋里很安静，她心想也许没有人。';
+  store.commit([service.change(file, before)], store.db.project());
+  store.commit([service.change(file, after)], store.db.project());
+  const span = (content: string) => ({ path: file, hash: hash(content), start: 0, end: Array.from(content).length, quote: content });
+  mutateQuality(store, readQuality(store).revision, { kind: 'evidence', evidence: { before: span(before), after: span(after), scope: { kind: 'scene', target: '门前', sceneFunction: '对话' }, domain: 'expression', reason: '保留观察动作，删去重复心理说明', editor: 'author' } });
+}
 if (creationScenario === 'manuscript_studio') await createManuscriptFixture(service, parent, process.env.MANUSCRIPT_FIXTURE_PATH);
+if (creationScenario === 'workbench_visual') await createVisualWorkbenchFixture(service, parent);
 if (creationScenario === 'task_retry') await createChapterRetryFixture(service, parent, 'fixture');
 if (creationScenario === 'readable_tables') {
   await service.invoke('project.create', { parent, title: '横向表格显示验收', premise: '仅用于本地界面验收的合成数据。', config: { defaultProfileId: 'fixture', expressionRules: { enabled: false } } });
@@ -289,6 +386,12 @@ const server = await createServer({
         ` }];
       },
       configureServer(vite) {
+        vite.middlewares.use('/__test/chat-progress', (_req, res) => {
+          const pending = !!advanceChatProgress;
+          advanceChatProgress?.();
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ pending }));
+        });
         vite.middlewares.use('/__test/metrics', (_req, res) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ modelRequests, localRequests, playback: playback?.metrics() })); });
         vite.middlewares.use('/__test/playback', (req, res) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(req.url?.includes('stop') ? playback?.stop() ?? {} : playback?.start() ?? {})); });
         vite.middlewares.use('/__test/events', (req, res) => {

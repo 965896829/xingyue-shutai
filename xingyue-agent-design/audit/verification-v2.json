@@ -1,0 +1,110 @@
+{
+  "designVersion": "V2",
+  "baselineVersion": "0.4.82",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "verificationDate": "2026-10-28",
+  "completed": [
+    {
+      "check": "compat-skill-source-digests",
+      "result": "passed",
+      "count": 26,
+      "method": "V2 交付文件 SHA-256 与原兼容 manifest 逐项一致，保留 V1 已完成的原加载器验证。"
+    },
+    {
+      "check": "creation-resource-envelope",
+      "result": "passed",
+      "count": 5,
+      "method": "UTF-8、非空、无 NUL、单资源不超过 24000 字节。"
+    },
+    {
+      "check": "baseline-prompt-footprint-reproduction",
+      "result": "passed",
+      "count": 12,
+      "method": "从固定源码重新执行无注释的计数脚本，outputs 与既有审计结果完全一致。"
+    },
+    {
+      "check": "vnext-contracts-typescript",
+      "result": "passed",
+      "count": 2,
+      "method": "contracts.ts 与 co-creation-contracts.ts 同时通过 tsc --noEmit --strict --skipLibCheck --target es2022；仅验证设计类型。"
+    },
+    {
+      "check": "code-comments",
+      "result": "passed",
+      "count": 3,
+      "method": "使用 TypeScript scanner 检查包内全部 TS/MJS 文件，没有单行或多行代码注释。"
+    },
+    {
+      "check": "cross-review",
+      "result": "passed",
+      "method": "复核对象授权、锁定约束修订、依赖组、部分采纳、方向专项合并验证、计划与事实、历史状态、旧协议兼容和原创示例因果。"
+    },
+    {
+      "check": "interactive-prototype",
+      "result": "passed",
+      "method": "独立交互原型使用真实无头浏览器验证；原型未接入客户端或模型，未纳入本 ZIP。",
+      "details": {
+        "passed": true,
+        "views": 6,
+        "checks": [
+          "selection binds discussion",
+          "field-level plan apply",
+          "accepted state unchanged",
+          "undo",
+          "chapter-bounded relations",
+          "chapter-specific source",
+          "all object sections",
+          "state timeline",
+          "discussion collapse",
+          "responsive layout",
+          "no runtime errors"
+        ],
+        "layouts": [
+          {
+            "width": 1024,
+            "scrollWidth": 1024,
+            "clientWidth": 1024
+          },
+          {
+            "width": 736,
+            "scrollWidth": 736,
+            "clientWidth": 736
+          },
+          {
+            "width": 320,
+            "scrollWidth": 320,
+            "clientWidth": 320
+          }
+        ]
+      }
+    },
+    {
+      "check": "report-visual-qa",
+      "result": "passed",
+      "count": 17,
+      "method": "Word 经 LibreOffice 渲染，每页原尺寸图片检查；封面边框修复后重新检查，第 2—17 页像素与已通过版本一致，无截断、重叠或缺字。"
+    },
+    {
+      "check": "report-package-integrity",
+      "result": "passed",
+      "method": "DOCX ZIP 校验通过，无批注附件；报告 SHA-256 记录于本文件。"
+    }
+  ],
+  "report": {
+    "file": "xingyue-agent-optimization.docx",
+    "pages": 17,
+    "sha256": "a8d1f01f2ff95202a15d2b5270041a98e3e6db917c2129143c786ca57216ceeb"
+  },
+  "sourceCount": 49,
+  "notExecuted": [
+    "新工程协议接入客户端",
+    "真实付费模型请求",
+    "真实小说样本盲评",
+    "真实读者指标验证",
+    "Windows 安装包构建与完整 GUI 验证",
+    "远端仓库写入或部署"
+  ],
+  "scopeNote": "检查支持资源完整、类型草案可检查、独立原型交互可用和报告可阅读；不代表客户端已实现这些能力，也不构成文学质量或商业成绩实测。",
+  "recordStatus": "historical",
+  "supersededReportNote": "本记录保留前序版本当时的验证结果；V4 本轮交付与验证见 verification-v4.json。未改变原测试执行范围。"
+}

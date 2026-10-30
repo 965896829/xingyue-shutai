@@ -1,10 +1,13 @@
+import { Modal } from './Modal';
 import { useDialogs } from './AppDialogs';
 import { RunRecoveryButton } from './RunRecoveryButton';
 import { handleMarkdownLink } from './markdown-links';
 import { ModelControl } from './ModelControl';
 import { ContextMeter, ContextCompactions } from './ContextMeter';
 import { latestContext, type ContextUsage } from '../shared/context-meter';
-import { GenerationStatus } from './GenerationStatus';
+import { GenerationStatus, GenerationStep } from './GenerationStatus';
+import { WritingStyleField } from './WritingStyleField';
+import { defaultWritingStyle, normalizeWritingStyle } from '../shared/writing-style';
 import { useStreamSession, proseBinding, proseFile } from './useLiveStream';
 import { LiveMarkdown } from './LiveMarkdown';
 import { LiveProseEditor, LiveProseCount } from './LiveProseEditor';
@@ -21,6 +24,7 @@ import { jumpToChatTarget } from './chat-navigation';
 import { ProjectFiles } from './ProjectFiles';
 import { currentStageDocument } from '../shared/project-progress';
 import { manuscriptDraft } from '../shared/manuscript-target';
+import { ObjectWorkbench } from './ObjectWorkbench';
 import {
   BookOpen,
   Plus,
@@ -78,9 +82,12 @@ import { MemoryStudio, SourceDialog } from './MemoryStudio';
 import { CharacterInspector, StoryInspector, ManuscriptCoverage } from './ManuscriptInspector';
 import { NarrativePanel } from './NarrativePanel';
 import { SkillLauncher } from './SkillLauncher';
+import { QualityWorkbench } from './QualityWorkbench';
 import { ExpressionSettings } from './ExpressionSettings';
 import { TagForm, TagWorkspace, cleanTagInput } from './TagWorkspace';
 import { emptyTagInput } from '../shared/tags';
+import { emptyBookProfile } from '../shared/publishing';
+import { PublishingSettings } from './PublishingSettings';
 import { requestErrorText, retryNeedsConfirmation, taskReplyText, documentPreviewText, visibleRunIssues } from '../shared/run-presentation';
 import { renderNativeCitations } from '../shared/web-search';
 import { WebSearchEvidence } from './WebSearchEvidence';
@@ -135,53 +142,18 @@ const invoke: Invoke = (command, args) => {
   if (!window.wenxu) throw new Error('请使用桌面客户端，浏览器预览不具备本地文件权限');
   return invokeCommand(command, args);
 };
-function Modal({
-  title,
-  subtitle,
-  children,
-  onClose,
-  wide = false
-}: {
-  title: string;
-  subtitle?: string;
-  children: ReactNode;
-  onClose: () => void;
-  wide?: boolean;
-}) {
-  return (
-    <div
-      className="scrim"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <section className={`modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
-        <header>
-          <div>
-            <h2>{title}</h2>
-            {subtitle && <p>{subtitle}</p>}
-          </div>
-          <button className="icon" onClick={onClose} aria-label="关闭">
-            <X size={19} />
-          </button>
-        </header>
-        {children}
-      </section>
-    </div>
-  );
-}
 export function App({ management = false, managementView = 'workspace' }: { management?: boolean; managementView?: ManagementView } = {}) {
   const [inspector, setInspector] = useState<'manuscript' | 'characters' | 'story' | 'details'>('manuscript');
   const [source, setSource] = useState<SourceRef | null>(null);
   const [focus, setFocus] = useState(false);
   const refreshSeq = useRef(0),
     eventCursor = useRef<EventCursor>({ seq: 0, waiting: false });
-  const [workView, setWorkView] = useState<'chat' | 'tasks' | 'tags'>('chat');
+  const [workView, setWorkView] = useState<'chat' | 'tasks' | 'tags' | 'objects'>('chat');
   const [agentSettings, setAgentSettings] = useState(false);
   const [titleConfirmation, setTitleConfirmation] = useState<{ projectId: string; candidate: Run; startNext: boolean; warningReason: string } | null>(null);
   const [snapshot, setSnapshot] = useState(empty),
     [page, setPage] = useState<'work' | 'memory' | 'cover'>('work'),
-    [modal, setModal] = useState<'new' | 'settings' | 'project' | 'transfer' | 'legacy' | 'trash' | null>(
+    [modal, setModal] = useState<'new' | 'settings' | 'project' | 'publishing' | 'transfer' | 'legacy' | 'trash' | null>(
       null
     ),
     [error, setError] = useState(''),
@@ -516,6 +488,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         }
       }
       if (activeProjectKey.current !== projectKey) return;
+      if (workView === 'objects') setWorkView('chat');
       setDoc({
         projectId,
         projectKey,
@@ -893,6 +866,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           </select>
           <button onClick={() => setEditorOpen(!editorOpen)} aria-pressed={editorOpen}>文稿面板</button>
           <button onClick={() => setModal('project')}>作品配置</button>
+          <button onClick={() => setModal('publishing')}>题材与发布分类</button>
         </div>}
         {error && (
           <div role="alert" className="banner error">
@@ -947,7 +921,10 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           <div className={`workspace ${focus ? 'studio-focus' : ''}`}>
             <div className="work-area">
               <div className="work-tabs">
+                <button className={workView === 'objects' ? 'active' : ''} onClick={() => setWorkView('objects')}>共创画布</button>
+                <QualityWorkbench key={`quality:${p.id}`} profileId={profileId} onRun={(id) => void openStartedRun(id)} />
                 <SkillLauncher
+                  key={`skills:${p.id}`}
                   profileId={profileId}
                   onRun={(id) => void openStartedRun(id)}
                 />
@@ -961,7 +938,9 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                   作品方案与书名
                 </button>
               </div>
-              {workView === 'tags' ? (
+              {workView === 'objects' ? (
+                <ObjectWorkbench key={p.id} snapshot={snapshot} profileId={profileId} setProfileId={setProfileId} refresh={refresh} onRun={id => void openStartedRun(id)} onSource={setSource} onDocument={relative => void openDoc(relative)} onSettings={() => setAgentSettings(true)} />
+              ) : workView === 'tags' ? (
                 <TagWorkspace
                   key={p.id}
                   snapshot={snapshot}
@@ -1038,7 +1017,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                   </div>
                   {p.stale.length > 0 && (
                     <div className="inline-warning">
-                      故事有了变化，需要同步 {p.stale.length} 项关联内容。生成后查看结果，满意再继续。
+                      待核对关联内容 {p.stale.length} 项
                       <button disabled={taskBusy || !profileId} onClick={() => void act(async () => {
                         const result = await invoke('memory.rebuild', { profileId });
                         if (result.runId) setSelectedRun(result.runId);
@@ -1061,7 +1040,6 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             <Sparkles size={20} />
                           </div>
                           <h2>下一步：{names[p.stage]}</h2>
-                          <p>已有想法和确认过的内容会自动带入，有补充要求可以写在下方。</p>
                           <button className="primary" disabled={busy || !!running || snapshot.chatBusy || !profileId} onClick={() => void start('stage')}>
                             开始{names[p.stage]}
                           </button>
@@ -1079,7 +1057,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             >
                               {visibleRuns.map((r) => (
                                 <option key={r.id} value={r.id}>
-                                  {r.stage} · 第 {r.chapter} 章 · {status[r.status]} ·{' '}
+                                  {r.creative ? r.request : `${r.stage} · 第 ${r.chapter} 章`} · {r.creative && r.status === 'complete' ? '已完成' : status[r.status]} ·{' '}
                                   {new Date(r.createdAt).toLocaleTimeString()}
                                 </option>
                               ))}
@@ -1103,7 +1081,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                   <Sparkles size={16} />
                                 </div>
                                 <b>{brand.name}</b>
-                                <GenerationStatus activity={run.activity} running={run.status === 'running'} label={status[run.status]} fallbackStart={run.createdAt} />
+                                <GenerationStatus variant="elapsed" activity={run.activity} running={run.status === 'running'} label={run.creative && run.status === 'complete' ? '已完成' : status[run.status]} fallbackStart={run.createdAt} />
                               </div>
                               {run.manifest && (
                                 <details>
@@ -1127,12 +1105,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                               <LiveMarkdown id="chat-response" label="任务回答" format="task" citations={run.webSearch?.citations}
                                 binding={{ session: snapshot.projectSessionId, kind: 'runs', id: run.id, text: run.responseText, running: run.status === 'running' }} />
                             )}
+                            <GenerationStep activity={run.activity} running={run.status === 'running'} />
                             <WebSearchEvidence state={run.webSearch} running={run.status === 'running'} />
                             <VolumeMarketEvidence research={run.volumeNaming?.research} />
                             <ContextCompactions items={run.contextCompactions} activity={run.activity} running={run.status === 'running'} />
                             {run.documentDrafts?.map(draft => <details key={draft.path} className="saved-document-draft">
                               <summary>已保存草稿 · {draft.path} · {draft.chunks} 段 / {draft.content.length} 字符</summary>
-                              <p className="muted">尚未生成完整；恢复任务会从已保存位置继续，完成后再统一审阅。</p>
                               <MarkdownContent content={draft.content} label={draft.path.split('/').at(-1)?.replace(/\.md$/, '')} />
                             </details>)}
                             {run.error && <p className="inline-warning" role="alert" id={taskErrorId(run)}>{requestErrorText(run.error)}{' '}<a href={taskHelpLink(run).href} onClick={event => { event.preventDefault(); navigateTask(event.currentTarget.getAttribute('href')!); }}>{taskHelpLink(run).label}</a></p>}
@@ -1287,8 +1265,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             {!run.accepted && ['awaiting_review', 'needs_repair'].includes(run.status) && (
                               <div className="approval-box" id="chat-decision">
                                 <h3>{run.issues.some(issue => issue.severity === 'error') ? '本阶段还有问题需要处理' : run.memoryRepair ? '关联修订已准备好' : run.pipeline ? '本章正文与记忆已准备好' : '本阶段结果已准备好'}</h3>
-                                {feedbackRun && <p>满意就继续；不满意，在下方写修改意见。自动检查由客户端完成。</p>}
                                 <div className="button-row">
+                                  {!run.pipeline && (!run.revisionCore || run.issues.some(i => i.severity === 'error')) && run.changes.some(c => c.path.startsWith('07_')) && <button disabled={taskBusy} onClick={() => void act(async () => { const id = await invokeCommand('run.reviewProse', { id: run.id, proposalHash: run.proposalHash!, profileId }); await openStartedRun(id); })}>核对正文与记忆</button>}
                                   <button
                                     className="primary"
                                     disabled={taskBusy || run.issues.some((i) => i.severity === 'error')}
@@ -1435,9 +1413,9 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                   </div>
                 </section>
               )}
-              <NarrativePanel snapshot={snapshot} run={run} onSource={setSource} />
+              {workView !== 'objects' && <NarrativePanel snapshot={snapshot} run={run} onSource={setSource} />}
             </div>
-            {editorOpen && (
+            {editorOpen && workView !== 'objects' && (
               <aside className="editor-panel">
                 <nav className="inspector-tabs" aria-label="作品面板">
                   {(
@@ -1468,7 +1446,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                   <div className="diagnostics-inspector">
                     <ManuscriptCoverage snapshot={snapshot} run={run} />
                     <h3>当前任务</h3>
-                    <p>{run ? status[run.status] : '暂无任务'}</p>
+                    <p>{run ? run.creative && run.status === 'complete' ? '已完成' : status[run.status] : '暂无任务'}</p>
                     {run && <p>本任务推理强度：{reasoningLabel(run.reasoningEfforts?.[run.profileId])}</p>}
                     {run?.manifest && (
                       <>
@@ -1592,7 +1570,6 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             {histories.map((h) => (
                               <div key={h.hash}>
                                 <time>{new Date(h.createdAt).toLocaleString()}</time>
-                                <small>{h.hash.slice(0, 12)}</small>
                                 <button
                                   onClick={() =>
                                     void act(async () => {
@@ -1727,11 +1704,18 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       {modal === 'project' && p && (
         <ProjectSettings
           config={p.config}
+          projectSessionId={snapshot.projectSessionId}
+          initialProfileId={profileId}
           profiles={snapshot.profiles}
           onClose={() => setModal(null)}
+          onPublishing={() => setModal('publishing')}
+          profileManaged={snapshot.documents.some(document => document.path === '02_项目配置/创作与发布.md')}
           act={act}
         />
       )}
+      {modal === 'publishing' && p && <PublishingSettings snapshot={snapshot} onClose={() => setModal(null)} onProposed={id => {
+        setModal(null); setSelectedRun(id); setPage('work'); setWorkView('tasks'); void refresh();
+      }} />}
       {modal === 'trash' && <RecycleBin onClose={() => setModal(null)} act={act} />}
       {modal === 'transfer' && (
         <Transfer
@@ -1763,7 +1747,6 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                 <summary>
                   <span className={`tag ${s.required ? 'green' : ''}`}>{s.required ? '必读' : '按需'}</span>
                   {s.path}
-                  <small> · {s.hash.slice(0, 8)}</small>
                 </summary>
                 <p>
                   {s.reason} · {s.mode === 'full' ? '全文' : '原文摘录'}
@@ -1791,7 +1774,7 @@ function ConfirmBookTitle({ busy, error, startNext, onClose, onConfirm }: {
 }) {
   const [title, setTitle] = useState('');
   return (
-    <Modal title="确认书名" subtitle="故事方向已选好，现在为这部作品确定书名。" onClose={onClose}>
+    <Modal title="确认书名" onClose={onClose}>
       <form className="modal-body form" onSubmit={event => { event.preventDefault(); if (!busy && title.trim()) onConfirm(title.trim()); }}>
         <label>
           书名
@@ -1814,11 +1797,12 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
   initialProfileId: string;
   act: Act;
 }) {
-  const [tagged, setTagged] = useState(false),
-    [tagInput, setTagInput] = useState(emptyTagInput);
+  const [tagInput, setTagInput] = useState(() => ({ ...emptyTagInput(), bookProfile: emptyBookProfile() }));
   const [openingMode, setOpeningMode] = useState<OpeningMode>('planning'),
     [title, setTitle] = useState(''),
     [previewEnabled, setPreviewEnabled] = useState(false),
+    [style, setStyle] = useState(defaultWritingStyle),
+    [styleBusy, setStyleBusy] = useState(false),
     [capacity, setCapacity] = useState({ targetWords: 3_000_000, chapterWords: 2500, minWords: 2300, maxWords: 2700 });
   const [parent, setParent] = useState(''),
     [premise, setPremise] = useState(''),
@@ -1828,21 +1812,24 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
     [profileId, setProfileId] = useState(initialProfileId || profiles.find(p => p.protocol !== 'images')?.id || ''),
     [previewList, setPreviewList] = useState<string[]>([]);
   const locationError = newProjectLocationError(parent);
+  const tagged = !!tagInput.selection.reading.main || !!tagInput.bookProfile?.publishing?.reading.main;
+  const hasIdea = !!premise.trim() || tagged || !!tagInput.bookProfile?.creativeGenres.length;
+  const incompletePublishing = !!tagInput.bookProfile?.publishing && !tagInput.bookProfile.publishing.reading.main;
   return (
-    <Modal title="新建作品" subtitle={openingMode === 'existing' ? '沿用已有设定，直接整理故事核，再逐步完成规划与正文。' : '先写下想法，确认故事方向后再确定书名。'} onClose={() => { if (!submitting) onClose(); }} wide={tagged && openingMode === 'planning'}>
+    <Modal title="新建作品" onClose={() => { if (!submitting) onClose(); }} wide>
       <form
         className="modal-body form"
         onSubmit={(e) => {
           e.preventDefault();
-          if (submitting || reasoningPending || locationError) return;
+          if (submitting || reasoningPending || styleBusy || locationError || incompletePublishing) return;
           setCreateError('');
           setSubmitting(true);
           void act(async () => {
             let created: Snapshot;
             try {
               created = await invoke('project.create', newProjectRequest({
-                mode: openingMode, parent, premise, title, profileId, capacity, previewEnabled,
-                creationInput: cleanTagInput({ ...tagInput, premise, selection: tagged ? tagInput.selection : emptyTagInput().selection })
+                mode: openingMode, parent, premise, title, profileId, capacity, previewEnabled, style,
+                creationInput: cleanTagInput({ ...tagInput, premise })
               }));
             } catch (error) {
               setCreateError((error as Error).message);
@@ -1893,35 +1880,27 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
         <label>
             {openingMode === 'existing' ? '完整设定与必须保留的内容' : '创作想法'}
             <textarea
-              required={openingMode === 'existing' || !tagged}
+              required={openingMode === 'existing' || (!tagged && !tagInput.bookProfile?.creativeGenres.length)}
               value={premise}
               onChange={(e) => setPremise(e.target.value)}
               rows={openingMode === 'existing' ? 8 : 4}
               placeholder={openingMode === 'existing' ? '粘贴已有的故事核、规则、人物、分卷和开篇安排。' : '一句话也可以。例如：夜班检修员在电梯故障中发现异常规则。'}
             />
         </label>
+        <TagForm value={{ ...tagInput, premise }} onChange={value => { setTagInput({ ...value, bookProfile: value.bookProfile ?? emptyBookProfile() }); setPremise(value.premise); }} disabled={submitting} showPremise={false} optionalTags />
         <div className="new-project-model"><span>创作模型</span><ModelControl profiles={profiles} profileId={profileId} onProfileChange={setProfileId} disabled={submitting} onPendingChange={setReasoningPending} label="创作模型与推理强度" /></div>
+        <WritingStyleField value={style} onChange={setStyle} profileId={profileId} disabled={submitting || reasoningPending} onBusyChange={setStyleBusy}
+          context={{ premise, genre: tagInput.bookProfile?.creativeGenres.join('、') ?? '', pov: '第三人称',
+            bookProfile: tagInput.bookProfile, readingMain: tagInput.selection.reading.main,
+            constraints: [...tagInput.mustKeep.map(text => `必须保留：${text}`), ...tagInput.mustAvoid.map(text => `不能出现：${text}`)].join('\n') }} />
         <div className="form-grid">
           {([['targetWords', '目标总字数'], ['chapterWords', '单章目标字数'], ['minWords', '每章最少字数'], ['maxWords', '每章最多字数']] as const).map(([key, label]) => (
             <label key={key}>{label}<input type="number" min={1} step={1} required disabled={submitting} value={capacity[key]} onChange={e => setCapacity(value => ({ ...value, [key]: Number(e.target.value) }))} /></label>
           ))}
         </div>
-        <p className="muted">字数用于分卷与章节规划，请与设定中的体量保持一致。</p>
         <label className="check"><input type="checkbox" checked={previewEnabled} disabled={submitting} onChange={e => setPreviewEnabled(e.target.checked)} />实时节奏预览（增加模型调用）</label>
-        <p className="muted">生成中预览节奏评分。每章完成后照常进行质量审阅和记忆核对。</p>
         <details>
-          <summary>{openingMode === 'planning' ? '更多开书选项：题材标签与初始文件' : '查看初始文件'}</summary>
-          {openingMode === 'planning' && <>
-          <label className="check">
-            <input type="checkbox" checked={tagged} disabled={submitting} onChange={e => setTagged(e.target.checked)} />
-            添加平台题材标签（也可只按创意策划）
-          </label>
-          {tagged && <TagForm value={{ ...tagInput, premise }} onChange={value => { setTagInput(value); setPremise(value.premise); }} disabled={submitting} showPremise={false} />}
-          {!tagged && <>
-            <label>必须保留（每行一项，选填）<textarea rows={2} value={tagInput.mustKeep.join('\n')} onChange={e => setTagInput({ ...tagInput, mustKeep: e.target.value.split('\n') })} /></label>
-            <label>不能出现（每行一项，选填）<textarea rows={2} value={tagInput.mustAvoid.join('\n')} onChange={e => setTagInput({ ...tagInput, mustAvoid: e.target.value.split('\n') })} /></label>
-          </>}
-          </>}
+          <summary>初始文件</summary>
 
         <button
           type="button"
@@ -1938,13 +1917,12 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
           </details>
         )}
         </details>
-        <p className="muted">{profileId ? `使用 ${modelLabel(profiles.find(p => p.id === profileId)!, profiles)} ${openingMode === 'existing' ? '整理故事核' : '生成方案'}；你确认后才会保存为正式设定。` : '先保存作品，设置模型连接后即可开始。'}</p>
         {createError && <p className="project-location-feedback error-text" role="alert">{createError}</p>}
         <div className="modal-footer">
           <button type="button" disabled={submitting} onClick={onClose}>
             取消
           </button>
-          <button className="primary" disabled={submitting || reasoningPending || !!locationError || !parent || (openingMode === 'planning' && tagged ? !tagInput.selection.reading.main : !premise.trim())}>
+          <button className="primary" disabled={submitting || reasoningPending || styleBusy || !!locationError || !parent || incompletePublishing || !style.trim() || (openingMode === 'planning' ? !hasIdea : !premise.trim())}>
             {submitting ? '正在创建…' : profileId ? '创建并开始' : '创建作品'}
           </button>
         </div>
@@ -1954,16 +1932,25 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
 }
 function ProjectSettings({
   config,
+  projectSessionId,
+  initialProfileId,
   profiles,
   onClose,
+  onPublishing,
+  profileManaged,
   act
 }: {
   config: ProjectConfig;
+  projectSessionId?: string;
+  initialProfileId: string;
   profiles: Profile[];
   onClose: () => void;
+  onPublishing: () => void;
+  profileManaged: boolean;
   act: Act;
 }) {
   const [c, setC] = useState(config),
+    [styleBusy, setStyleBusy] = useState(false),
     [advanced, setAdvanced] = useState(JSON.stringify(config.stageProfiles, null, 2));
   const field = (key: keyof ProjectConfig, value: unknown) => setC((s) => ({ ...s, [key]: value }));
   return (
@@ -1972,8 +1959,9 @@ function ProjectSettings({
         className="modal-body form"
         onSubmit={(e) => {
           e.preventDefault();
+          if (styleBusy) return;
           void act(async () => {
-            await invoke('project.configure', { config: { ...c, stageProfiles: JSON.parse(advanced) } });
+            await invoke('project.configure', { config: { ...c, style: normalizeWritingStyle(c.style), stageProfiles: JSON.parse(advanced) } });
             onClose();
           }, '作品设置已保存');
         }}
@@ -2049,7 +2037,6 @@ function ProjectSettings({
                 id={`project-setting-${key}`}
                 onChange={(e) => field(key as any, Number(e.target.value))}
               />
-              {key === 'maxRounds' && <small className="muted">每个任务累计调用模型的上限，1～100 轮。调高后可继续原任务，已有候选仍可审阅。</small>}
             </label>
           ))}
           <label>
@@ -2058,13 +2045,13 @@ function ProjectSettings({
           </label>
           <label>
             题材
-            <input value={c.genre} onChange={(e) => field('genre', e.target.value)} />
+            <input value={c.genre} readOnly={profileManaged} onChange={(e) => field('genre', e.target.value)} />
           </label>
         </div>
-        <label>
-          文风
-          <input value={c.style} onChange={(e) => field('style', e.target.value)} />
-        </label>
+        <button type="button" onClick={onPublishing}>题材与发布分类</button>
+        <WritingStyleField value={c.style} onChange={style => field('style', style)} projectSessionId={projectSessionId}
+          profileId={projectSessionId ? c.modelRouting.writing || c.defaultProfileId || initialProfileId : ''} onBusyChange={setStyleBusy}
+          context={{ premise: '', genre: c.genre, pov: c.pov, constraints: c.constraints }} />
         <ExpressionSettings value={c.expressionRules} onChange={(value) => field('expressionRules', value)} />
         <label>
           作者硬约束
@@ -2147,7 +2134,7 @@ function ProjectSettings({
           <button type="button" onClick={onClose}>
             取消
           </button>
-          <button className="primary">保存设置</button>
+          <button className="primary" disabled={styleBusy || !c.style.trim()}>保存设置</button>
         </div>
       </form>
     </Modal>
@@ -2174,7 +2161,6 @@ function Transfer({
   return (
     <Modal
       title="导入、导出与备份"
-      subtitle="导入先预览，导出使用已接受版本，备份恢复创建新目录。"
       onClose={onClose}
       wide
     >
@@ -2424,7 +2410,6 @@ function Cover({ profiles, title, act }: { profiles: Profile[]; title: string; a
     <div className="page-content">
       <div className="eyebrow">COVER STUDIO</div>
       <h1>先有画面，再写书名。</h1>
-      <p className="muted">AI 生成背景，中文文字在本机叠加。每次保存使用独立文件名。</p>
       <div className="cover-layout">
         <div className="form">
           <button

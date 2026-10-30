@@ -1,0 +1,393 @@
+{
+  "designVersion": "V5",
+  "verifiedAt": "2026-10-29T04:38:26.766493+00:00",
+  "status": "passed",
+  "scope": "公开证据文件与候选案例的只读数据完整性核验，不是模型或产品行为案例执行",
+  "checks": [
+    {
+      "name": "surface-counts",
+      "passed": true
+    },
+    {
+      "name": "unique-namespaced-identity",
+      "passed": true
+    },
+    {
+      "name": "main-channel-and-distinct-counts",
+      "passed": true
+    },
+    {
+      "name": "male-source-response",
+      "passed": true
+    },
+    {
+      "name": "male-group-counts",
+      "passed": true
+    },
+    {
+      "name": "male-exact-public-response-match",
+      "passed": true
+    },
+    {
+      "name": "male-source-digest",
+      "passed": true,
+      "detail": {
+        "digestRepresentation": "保存的已解析并格式化JSON表示；不是原始HTTP响应字节"
+      }
+    },
+    {
+      "name": "male-source-url-routing",
+      "passed": true
+    },
+    {
+      "name": "male-observation-time-parseable",
+      "passed": true
+    },
+    {
+      "name": "male-scope-limits-preserved",
+      "passed": true
+    },
+    {
+      "name": "female-source-response",
+      "passed": true
+    },
+    {
+      "name": "female-group-counts",
+      "passed": true
+    },
+    {
+      "name": "female-exact-public-response-match",
+      "passed": true
+    },
+    {
+      "name": "female-source-digest",
+      "passed": true,
+      "detail": {
+        "digestRepresentation": "保存的已解析并格式化JSON表示；不是原始HTTP响应字节"
+      }
+    },
+    {
+      "name": "female-source-url-routing",
+      "passed": true
+    },
+    {
+      "name": "female-observation-time-parseable",
+      "passed": true
+    },
+    {
+      "name": "female-scope-limits-preserved",
+      "passed": true
+    },
+    {
+      "name": "rank-embedded-source-match",
+      "passed": true
+    },
+    {
+      "name": "rank-source-html-digest",
+      "passed": true
+    },
+    {
+      "name": "female-extra-library-categories",
+      "passed": true
+    },
+    {
+      "name": "legacy-mapping-count-uniqueness",
+      "passed": true
+    },
+    {
+      "name": "legacy-id-concept-label-preserved",
+      "passed": true
+    },
+    {
+      "name": "legacy-platform-mapping-exact",
+      "passed": true
+    },
+    {
+      "name": "content-pool-still-unverified",
+      "passed": true
+    },
+    {
+      "name": "title-sample-count-and-unique-books",
+      "passed": true
+    },
+    {
+      "name": "board-identity-1-1-257",
+      "passed": true
+    },
+    {
+      "name": "board-time-1-1-257",
+      "passed": true,
+      "detail": {
+        "statsCutoffRaw": "10-28 24:00",
+        "normalizedYearBasis": "observation_year_and_rankVersion_context"
+      }
+    },
+    {
+      "name": "board-source-digest-1-1-257",
+      "passed": true
+    },
+    {
+      "name": "board-coverage-1-1-257",
+      "passed": true
+    },
+    {
+      "name": "board-identity-1-1-1140",
+      "passed": true
+    },
+    {
+      "name": "board-time-1-1-1140",
+      "passed": true,
+      "detail": {
+        "statsCutoffRaw": "10-28 24:00",
+        "normalizedYearBasis": "observation_year_and_rankVersion_context"
+      }
+    },
+    {
+      "name": "board-source-digest-1-1-1140",
+      "passed": true
+    },
+    {
+      "name": "board-coverage-1-1-1140",
+      "passed": true
+    },
+    {
+      "name": "board-identity-1-2-261",
+      "passed": true
+    },
+    {
+      "name": "board-time-1-2-261",
+      "passed": true,
+      "detail": {
+        "statsCutoffRaw": "10-28 24:00",
+        "normalizedYearBasis": "observation_year_and_rankVersion_context"
+      }
+    },
+    {
+      "name": "board-source-digest-1-2-261",
+      "passed": true
+    },
+    {
+      "name": "board-coverage-1-2-261",
+      "passed": true
+    },
+    {
+      "name": "board-identity-1-2-539",
+      "passed": true
+    },
+    {
+      "name": "board-time-1-2-539",
+      "passed": true,
+      "detail": {
+        "statsCutoffRaw": "10-28 24:00",
+        "normalizedYearBasis": "observation_year_and_rankVersion_context"
+      }
+    },
+    {
+      "name": "board-source-digest-1-2-539",
+      "passed": true
+    },
+    {
+      "name": "board-coverage-1-2-539",
+      "passed": true
+    },
+    {
+      "name": "board-identity-0-2-748",
+      "passed": true
+    },
+    {
+      "name": "board-time-0-2-748",
+      "passed": true,
+      "detail": {
+        "statsCutoffRaw": "10-28 24:00",
+        "normalizedYearBasis": "observation_year_and_rankVersion_context"
+      }
+    },
+    {
+      "name": "board-source-digest-0-2-748",
+      "passed": true
+    },
+    {
+      "name": "board-coverage-0-2-748",
+      "passed": true
+    },
+    {
+      "name": "book-title-source-7693170346114944062",
+      "passed": true
+    },
+    {
+      "name": "book-rank-join-7693170346114944062",
+      "passed": true
+    },
+    {
+      "name": "book-title-no-unresolved-private-use-7693170346114944062",
+      "passed": true
+    },
+    {
+      "name": "book-title-source-7689506725073783833",
+      "passed": true
+    },
+    {
+      "name": "book-rank-join-7689506725073783833",
+      "passed": true
+    },
+    {
+      "name": "book-title-no-unresolved-private-use-7689506725073783833",
+      "passed": true
+    },
+    {
+      "name": "book-title-source-7687124176171174974",
+      "passed": true
+    },
+    {
+      "name": "book-rank-join-7687124176171174974",
+      "passed": true
+    },
+    {
+      "name": "book-title-no-unresolved-private-use-7687124176171174974",
+      "passed": true
+    },
+    {
+      "name": "book-title-source-7686053177874975768",
+      "passed": true
+    },
+    {
+      "name": "book-rank-join-7686053177874975768",
+      "passed": true
+    },
+    {
+      "name": "book-title-no-unresolved-private-use-7686053177874975768",
+      "passed": true
+    },
+    {
+      "name": "book-title-source-7630067790849788953",
+      "passed": true
+    },
+    {
+      "name": "book-rank-join-7630067790849788953",
+      "passed": true
+    },
+    {
+      "name": "book-title-no-unresolved-private-use-7630067790849788953",
+      "passed": true
+    },
+    {
+      "name": "book-title-source-7646327973087300670",
+      "passed": true
+    },
+    {
+      "name": "book-rank-join-7646327973087300670",
+      "passed": true
+    },
+    {
+      "name": "book-title-no-unresolved-private-use-7646327973087300670",
+      "passed": true
+    },
+    {
+      "name": "book-title-source-7617740782291651646",
+      "passed": true
+    },
+    {
+      "name": "book-rank-join-7617740782291651646",
+      "passed": true
+    },
+    {
+      "name": "book-title-no-unresolved-private-use-7617740782291651646",
+      "passed": true
+    },
+    {
+      "name": "book-title-source-7143038691944959011",
+      "passed": true
+    },
+    {
+      "name": "book-rank-join-7143038691944959011",
+      "passed": true
+    },
+    {
+      "name": "book-title-no-unresolved-private-use-7143038691944959011",
+      "passed": true
+    },
+    {
+      "name": "book-title-source-7654742513151921177",
+      "passed": true
+    },
+    {
+      "name": "book-rank-join-7654742513151921177",
+      "passed": true
+    },
+    {
+      "name": "book-title-no-unresolved-private-use-7654742513151921177",
+      "passed": true
+    },
+    {
+      "name": "book-title-source-7661066068244302873",
+      "passed": true
+    },
+    {
+      "name": "book-rank-join-7661066068244302873",
+      "passed": true
+    },
+    {
+      "name": "book-title-no-unresolved-private-use-7661066068244302873",
+      "passed": true
+    },
+    {
+      "name": "suite-32-cases",
+      "passed": true
+    },
+    {
+      "name": "suite-v4-case-shape",
+      "passed": true
+    },
+    {
+      "name": "suite-operations-registered-or-v5-added",
+      "passed": true
+    },
+    {
+      "name": "suite-status-not-executed",
+      "passed": true
+    }
+  ],
+  "checkCount": 79,
+  "summary": {
+    "publicLibraryOptions": 336,
+    "rankCatalogChannelEntries": 37,
+    "mainLibraryChannelEntries": 40,
+    "mainLibraryDistinctPlatformIds": 36,
+    "legacyMappings": 154,
+    "titleBoards": 5,
+    "titleSamples": 10,
+    "candidateCasesDefined": 32,
+    "candidateBehaviorCasesExecuted": 0
+  },
+  "verifiedFiles": [
+    {
+      "path": "v5-fanqie-taxonomy-snapshot.json",
+      "sha256": "6a4007d7a15e0639040b4ba6bb3f45f383513a8e057206b23b9f4cfb40e5ef10"
+    },
+    {
+      "path": "v5-fanqie-male-reading-crosswalk.json",
+      "sha256": "01046d9be1c1ff62e72132ad6f2725aabe4af0dbdb10a10080d9148f87418a32"
+    },
+    {
+      "path": "v5-fanqie-title-evidence.json",
+      "sha256": "1597d17fc801bc82d0b2806387742cba09024b1a4b95d2b43c82410fd28e643c"
+    },
+    {
+      "path": "v5-platform-world-cases.json",
+      "sha256": "9e735f1dc70365f14804c0a7115877eef63c1e6f47cc7137313db11ac508d33c"
+    }
+  ],
+  "notes": [
+    "分类sourceSha256是保存的已解析并格式化JSON表示的摘要；榜单和作品sourceSha256是HTML文件摘要。",
+    "榜单原始截止字符串不包含年份；规范化年份保留observation_year_and_rankVersion_context来源说明。",
+    "作者后台完整内容标签未核验；旧328项内容标签未被本次阅读目录核验升级状态。"
+  ],
+  "notExecuted": [
+    "32个候选案例的宿主回归或模型行为执行",
+    "真人盲评",
+    "作者后台登录或发布",
+    "目录刷新产品实现",
+    "真实订阅与图谱UI回归",
+    "任何项目仓库修改"
+  ]
+}

@@ -1,7 +1,9 @@
 import type { TitleMarketResearch } from '../shared/title-style';
+import { MarketEvidenceView } from './MarketEvidenceView';
 
 export function TitleMarketEvidence({ research }: { research?: TitleMarketResearch }) {
   if (!research) return null;
+  if (research.publicEvidence) return <details className="title-style-reference"><summary>本批番茄榜单证据</summary><MarketEvidenceView evidence={research.publicEvidence} /></details>;
   if (research.status === 'searching') return <p role="status">正在检索番茄同题材书名，完成后继续生成候选…</p>;
   if (research.status !== 'ready') return <p className="muted" role="status">番茄实时参考未取得：{research.message}</p>;
   return <details className="title-style-reference">

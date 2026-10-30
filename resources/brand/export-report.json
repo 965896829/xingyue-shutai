@@ -67,16 +67,16 @@
       "width": 512,
       "height": 512,
       "alphaBounds": {
-        "x": 25,
-        "y": 82,
-        "width": 461,
-        "height": 398
+        "x": 6,
+        "y": 48,
+        "width": 500,
+        "height": 415
       },
-      "transparent": 158906,
-      "translucent": 100536,
-      "opaque": 2702,
+      "transparent": 140655,
+      "translucent": 118643,
+      "opaque": 2846,
       "edgePixels": 0,
-      "sha256": "f7634481f20245b822ccc2e5c442b1974245ee87eea762c1671cece90f500442"
+      "sha256": "bbe94598aa776a0cd6e52e8f05ea5dad6b9e40a7b0fb70c71dd2b8c8431701e2"
     },
     {
       "file": "public/brand/night-symbol.png",
@@ -134,13 +134,13 @@
         "x": 1,
         "y": 1,
         "width": 14,
-        "height": 14
+        "height": 13
       },
-      "transparent": 123,
-      "translucent": 118,
-      "opaque": 15,
+      "transparent": 113,
+      "translucent": 125,
+      "opaque": 18,
       "edgePixels": 0,
-      "sha256": "6b772eb82e835b14df8d76fba4e8333c6f6e8a4c8764de5a4fef7028e981dd5c"
+      "sha256": "1e78deaf68be29341d808d2ce89e7ad74c81d609901c75ae1be8d8edfe58c871"
     },
     {
       "file": "resources/brand/icons/app-icon-24.png",
@@ -148,15 +148,15 @@
       "height": 24,
       "alphaBounds": {
         "x": 1,
-        "y": 3,
+        "y": 2,
         "width": 22,
-        "height": 19
+        "height": 20
       },
-      "transparent": 299,
-      "translucent": 247,
-      "opaque": 30,
+      "transparent": 266,
+      "translucent": 277,
+      "opaque": 33,
       "edgePixels": 0,
-      "sha256": "0b0b64338608d93053f01a43ee19bef13596a52a8a91eb2d1caeffdd30208e7f"
+      "sha256": "fbf3a49b4a7b92bb243ad194de2762bc5327caa0ed89208be3692af4dd1b6c27"
     },
     {
       "file": "resources/brand/icons/app-icon-32.png",
@@ -164,15 +164,15 @@
       "height": 32,
       "alphaBounds": {
         "x": 1,
-        "y": 4,
+        "y": 2,
         "width": 30,
-        "height": 25
+        "height": 27
       },
-      "transparent": 549,
-      "translucent": 412,
-      "opaque": 63,
+      "transparent": 466,
+      "translucent": 485,
+      "opaque": 73,
       "edgePixels": 0,
-      "sha256": "29200a827bf508735976cd725048a7aeda03b3411f380be9035ffebc3d3429bb"
+      "sha256": "930561ac241e85a3a9e2c4101b312115d715137f6835d8d27940f47bf353fc90"
     },
     {
       "file": "resources/brand/icons/app-icon-48.png",
@@ -180,63 +180,63 @@
       "height": 48,
       "alphaBounds": {
         "x": 1,
-        "y": 8,
+        "y": 4,
         "width": 46,
-        "height": 36
+        "height": 40
       },
-      "transparent": 1289,
-      "translucent": 899,
-      "opaque": 116,
+      "transparent": 1082,
+      "translucent": 1081,
+      "opaque": 141,
       "edgePixels": 0,
-      "sha256": "0e9d4a91192c4060a1f4af7e41c9c8184eaaddf126a040d74ab0ba2bcac59b21"
+      "sha256": "30456308c5e8d6966714ab3ce1b7d424d8980e63b942d9dc907cc43c960cde36"
     },
     {
       "file": "resources/brand/icons/app-icon-64.png",
       "width": 64,
       "height": 64,
       "alphaBounds": {
-        "x": 2,
-        "y": 11,
-        "width": 60,
-        "height": 48
+        "x": 1,
+        "y": 5,
+        "width": 62,
+        "height": 54
       },
-      "transparent": 2330,
-      "translucent": 1602,
-      "opaque": 164,
+      "transparent": 1974,
+      "translucent": 1910,
+      "opaque": 212,
       "edgePixels": 0,
-      "sha256": "ab0a7240b4be70b20156f27356b0cdcba7c85ae90fb89ed25f9909bea193edcc"
+      "sha256": "877231343710d44d0be9295bbfe8fe92c0ebfc50d922643cfdb407755861a026"
     },
     {
       "file": "resources/brand/icons/app-icon-128.png",
       "width": 128,
       "height": 128,
       "alphaBounds": {
-        "x": 5,
-        "y": 23,
-        "width": 116,
-        "height": 96
+        "x": 1,
+        "y": 11,
+        "width": 125,
+        "height": 105
       },
-      "transparent": 9630,
-      "translucent": 6343,
-      "opaque": 411,
+      "transparent": 8303,
+      "translucent": 7529,
+      "opaque": 552,
       "edgePixels": 0,
-      "sha256": "31ca46ed1574abbb6cd2f42464129e143c6d228cba7d583f4651deebaa3f91d1"
+      "sha256": "d055684a5d41be23180384d97a5b4012d4182775184d5d866eb64775abea5465"
     },
     {
       "file": "resources/brand/icons/app-icon-256.png",
       "width": 256,
       "height": 256,
       "alphaBounds": {
-        "x": 12,
-        "y": 48,
-        "width": 232,
-        "height": 191
+        "x": 2,
+        "y": 24,
+        "width": 251,
+        "height": 208
       },
-      "transparent": 39459,
-      "translucent": 24887,
-      "opaque": 1190,
+      "transparent": 34506,
+      "translucent": 29456,
+      "opaque": 1574,
       "edgePixels": 0,
-      "sha256": "77c7c5f32cddb1892629ec1bc5a70ab2a1f706047508b9f468cc359d5d4c85fa"
+      "sha256": "30e522dfaae6e851eb02efe1a8fd7316c0315ad8ca30e11215cbb00aeb45985c"
     }
   ],
   "ico": {
@@ -250,6 +250,6 @@
       128,
       256
     ],
-    "sha256": "840fbc2de26d66568a18585c1a56fc27ccace623a8cc2e2e54ae0c9d8b29f50e"
+    "sha256": "b60f65917f3af0ee0f2d4e7e5fd6480328d2b9eb6e1907f6da37227c7c74aca5"
   }
 }

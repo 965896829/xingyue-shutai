@@ -1,0 +1,245 @@
+[
+  {
+    "id": "V5V01",
+    "title": "星月书台 package.json：Electron/React/Pi 栈",
+    "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/package.json",
+    "note": "2026-10-29 本地固定提交读取；Electron 44.6.0，React 19.3.0，TypeScript 5.9.3，Vite 8.3.3，React Query 5.103.1，Pi 1.4.0；未安装图谱库。"
+  },
+  {
+    "id": "V5V02",
+    "title": "React Flow 12.12.0 发布",
+    "url": "https://github.com/xyflow/xyflow/releases/tag/%40xyflow/react%4012.12.0",
+    "note": "官方 GitHub releases API 核验：2026-09-24T12:39:56Z；monorepo latest 指向 Svelte，已单独过滤 React 包发布。"
+  },
+  {
+    "id": "V5V03",
+    "title": "React Flow 12.12.0 包与 React peerDependencies",
+    "url": "https://github.com/xyflow/xyflow/blob/%40xyflow/react%4012.12.0/packages/react/package.json",
+    "note": "MIT；React/ReactDOM peerDependencies >=17，声明范围覆盖项目 React 19；尚未做安装后集成测试。"
+  },
+  {
+    "id": "V5V04",
+    "title": "React Flow 性能指引",
+    "url": "https://reactflow.dev/learn/advanced-use/performance",
+    "note": "memoization、独立选择状态、折叠大树、简化节点边；2026-10-29 读取。",
+    "webRef": "turn94view0"
+  },
+  {
+    "id": "V5V05",
+    "title": "React Flow 无障碍交互",
+    "url": "https://reactflow.dev/learn/advanced-use/accessibility",
+    "note": "键盘导航、节点移动、可本地化 ariaLabelConfig；2026-10-29 读取。",
+    "webRef": "turn91search1"
+  },
+  {
+    "id": "V5V06",
+    "title": "React Flow 禁止特定连接形成环的示例",
+    "url": "https://reactflow.dev/examples/interaction/prevent-cycles",
+    "note": "连接验证示例；仅依赖/先决关系需要 DAG，普通人物关系不能统一禁环。",
+    "webRef": "turn95view1"
+  },
+  {
+    "id": "V5V07",
+    "title": "Apache ECharts 6.1.0 发布",
+    "url": "https://github.com/apache/echarts/releases/tag/6.1.0",
+    "note": "官方 GitHub releases API 核验：2026-05-19T17:38:29Z。"
+  },
+  {
+    "id": "V5V08",
+    "title": "Apache ECharts LICENSE",
+    "url": "https://github.com/apache/echarts/blob/master/LICENSE",
+    "note": "2026-10-29 读取实际 LICENSE：Apache License 2.0。"
+  },
+  {
+    "id": "V5V09",
+    "title": "Apache ECharts 动态数据",
+    "url": "https://echarts.apache.org/handbook/en/how-to/data/dynamic-data/",
+    "note": "setOption 驱动动态更新；图表更新不代表应用事务与数据来源已实现。",
+    "webRef": "turn94view2"
+  },
+  {
+    "id": "V5V10",
+    "title": "Apache ECharts 事件与交互",
+    "url": "https://echarts.apache.org/handbook/en/concepts/event/",
+    "note": "click、datazoom、legendselectchanged 等事件；用于联动选章、聚焦与过滤。",
+    "webRef": "turn91search33"
+  },
+  {
+    "id": "V5V11",
+    "title": "Apache ECharts 数据集分离",
+    "url": "https://echarts.apache.org/handbook/en/concepts/dataset/",
+    "note": "数据与展示配置分离；不是所有特殊图类型都使用同一种表格 dataset。",
+    "webRef": "turn91search13"
+  },
+  {
+    "id": "V5V12",
+    "title": "Cytoscape.js v3.34.4 发布",
+    "url": "https://github.com/cytoscape/cytoscape.js/releases/tag/v3.34.4",
+    "note": "官方 GitHub releases API 核验：2026-10-15T19:12:35Z。"
+  },
+  {
+    "id": "V5V13",
+    "title": "Cytoscape.js 图查询与性能",
+    "url": "https://js.cytoscape.org/",
+    "note": "MIT 核心；JSON 序列化、图算法、headless 与视图分离；批量更新、样式与标签成本需控制。",
+    "webRef": "turn94view1"
+  },
+  {
+    "id": "V5V14",
+    "title": "Cytoscape.js LICENSE",
+    "url": "https://github.com/cytoscape/cytoscape.js/blob/master/LICENSE",
+    "note": "2026-10-29 读取实际 MIT 许可文本。"
+  },
+  {
+    "id": "V5V15",
+    "title": "AntV G6 5.1.1 发布",
+    "url": "https://github.com/antvis/G6/releases/tag/5.1.1",
+    "note": "官方 GitHub releases API 核验：2026-04-17T03:19:19Z。"
+  },
+  {
+    "id": "V5V16",
+    "title": "AntV G6 5.x 渲染器",
+    "url": "https://g6.antv.antgroup.com/en/manual/further-reading/renderer",
+    "note": "默认 Canvas，可采用 SVG/WebGL；渲染器支持不等于已验证百万字作品性能。",
+    "webRef": "turn87search6"
+  },
+  {
+    "id": "V5V17",
+    "title": "AntV G6 5.0 迁移说明",
+    "url": "https://g6.antv.antgroup.com/en/manual/whats-new/upgrade",
+    "note": "数据操作接口变化，5.x 移除内置 undo/redo；项目不能依靠图库撤销处理正文与正史。",
+    "webRef": "turn87search4"
+  },
+  {
+    "id": "V5V18",
+    "title": "AntV G6 LICENSE",
+    "url": "https://github.com/antvis/G6/blob/v5/LICENSE",
+    "note": "2026-10-29 读取实际 MIT 许可文本。"
+  },
+  {
+    "id": "V5V19",
+    "title": "vis-timeline v8.5.6 发布",
+    "url": "https://github.com/visjs/vis-timeline/releases/tag/v8.5.6",
+    "note": "官方 GitHub releases API 核验：2026-10-26T17:20:12Z。"
+  },
+  {
+    "id": "V5V20",
+    "title": "vis-timeline 文档",
+    "url": "https://visjs.github.io/vis-timeline/docs/timeline/",
+    "note": "点/区间、分组、缩放、编辑；自定义虚构历法仍需宿主时间模型与映射。",
+    "webRef": "turn94view3"
+  },
+  {
+    "id": "V5V21",
+    "title": "vis-timeline 实际双许可",
+    "url": "https://github.com/visjs/vis-timeline/blob/v8.5.6/LICENSE.md",
+    "note": "Apache-2.0 OR MIT；已读取 LICENSE.md 与 LICENSE.MIT.txt。"
+  },
+  {
+    "id": "V5V22",
+    "title": "Yjs v13.6.33 发布",
+    "url": "https://github.com/yjs/yjs/releases/tag/v13.6.33",
+    "note": "官方 GitHub releases API 核验：2026-09-23T16:37:33Z。"
+  },
+  {
+    "id": "V5V23",
+    "title": "Yjs 协作编辑基础",
+    "url": "https://docs.yjs.dev/getting-started/a-collaborative-editor",
+    "note": "共享数据、editor binding、provider；适用于多人同步，不自动实现小说语义冲突与采纳。",
+    "webRef": "turn94view4"
+  },
+  {
+    "id": "V5V24",
+    "title": "Yjs LICENSE",
+    "url": "https://github.com/yjs/yjs/blob/main/LICENSE",
+    "note": "2026-10-29 读取实际 MIT 许可文本。"
+  },
+  {
+    "id": "V5V25",
+    "title": "Novalist 固定提交 README",
+    "url": "https://github.com/Drommedhar/novalist-official/blob/176673f36923db488b444e2ef2552d5611cb88fb/README.md",
+    "note": "2026-10-29核验；Electron/React前端与.NET 10 core；世界资料、场景、多个视图与扩展。",
+    "webRef": "turn91search2"
+  },
+  {
+    "id": "V5V26",
+    "title": "Novalist 自定义实体类型模型",
+    "url": "https://github.com/Drommedhar/novalist-official/blob/176673f36923db488b444e2ef2552d5611cb88fb/Novalist.Core/Models/CustomEntityTypeDefinition.cs",
+    "note": "实际源码：自定义 typeKey、typed fields、default、enum、required、关系/分节开关。"
+  },
+  {
+    "id": "V5V27",
+    "title": "Novalist 实体在故事位置上的状态覆盖",
+    "url": "https://github.com/Drommedhar/novalist-official/blob/176673f36923db488b444e2ef2552d5611cb88fb/Novalist.Core/Models/EntityStateOverride.cs",
+    "note": "实际源码：act/chapter/scene、名称描述字段、gone；可借鉴场景时态实体展示，但不能代替 V3 的来源、编辑分支与获知时钟。"
+  },
+  {
+    "id": "V5V28",
+    "title": "Novalist 状态解析器",
+    "url": "https://github.com/Drommedhar/novalist-official/blob/176673f36923db488b444e2ef2552d5611cb88fb/Novalist.Core/Services/EntityStateResolver.cs",
+    "note": "实际源码：优先场景、章节、act的覆盖匹配；应用内重用应沿自身事件投影合同实现。"
+  },
+  {
+    "id": "V5V29",
+    "title": "Novalist PlotLanes React 组件",
+    "url": "https://github.com/Drommedhar/novalist-official/blob/176673f36923db488b444e2ef2552d5611cb88fb/app/src/renderer/src/views/plotgrid/PlotLanes.tsx",
+    "note": "实际源码：SVG情节线、共享场景节点和打开场景回调；适合参考表现逻辑。"
+  },
+  {
+    "id": "V5V30",
+    "title": "Novalist PromisesPanel React 组件",
+    "url": "https://github.com/Drommedhar/novalist-official/blob/176673f36923db488b444e2ef2552d5611cb88fb/app/src/renderer/src/views/plotgrid/PromisesPanel.tsx",
+    "note": "实际源码：promise与payoff场景、未兑现/兑现/断裂/顺序状态，绑定其RPC与store；需适配 V3 证据与承诺状态。"
+  },
+  {
+    "id": "V5V31",
+    "title": "Novalist LICENSE",
+    "url": "https://github.com/Drommedhar/novalist-official/blob/176673f36923db488b444e2ef2552d5611cb88fb/LICENSE",
+    "note": "2026-10-29 读取实际 LICENSE：MIT，Copyright 2026 Dominik。"
+  },
+  {
+    "id": "V5V32",
+    "title": "StoryLine 固定提交 README",
+    "url": "https://github.com/PixeroJan/obsidian-storyline/blob/6aa9800fddd7800d8af3e1fea0ce3023b58fff14/README.md",
+    "note": "2026-10-29核验；Obsidian插件，地铁式情节线、场景矩阵、关系图、来源反向引用等。",
+    "webRef": "turn91search26"
+  },
+  {
+    "id": "V5V33",
+    "title": "StoryLine 地铁情节线实现",
+    "url": "https://github.com/PixeroJan/obsidian-storyline/blob/6aa9800fddd7800d8af3e1fea0ce3023b58fff14/views/StorylineView.ts",
+    "note": "实际源码：共享过滤、场景排序、SVG多情节线；依赖Obsidian ItemView，不是直接可安装到本应用的组件。"
+  },
+  {
+    "id": "V5V34",
+    "title": "StoryLine 关系图实现与规模边界",
+    "url": "https://github.com/PixeroJan/obsidian-storyline/blob/6aa9800fddd7800d8af3e1fea0ce3023b58fff14/components/RelationshipMap.ts",
+    "note": "实际源码：两两斥力 O(V²)、每帧重新生成SVG；注释针对少于100节点。适合交互灵感，不应照搬作为全书大图引擎。"
+  },
+  {
+    "id": "V5V35",
+    "title": "StoryLine 实体-场景图实现",
+    "url": "https://github.com/PixeroJan/obsidian-storyline/blob/6aa9800fddd7800d8af3e1fea0ce3023b58fff14/components/StoryGraph.ts",
+    "note": "实际源码：scene/entity/prop/character连边与类型过滤；通过wikilink和名字拼接身份，需替换为本应用稳定entityId及来源关系。"
+  },
+  {
+    "id": "V5V36",
+    "title": "StoryLine LICENSE",
+    "url": "https://github.com/PixeroJan/obsidian-storyline/blob/6aa9800fddd7800d8af3e1fea0ce3023b58fff14/LICENSE",
+    "note": "2026-10-29 读取实际 LICENSE：MIT，Copyright 2026 PixeroJan。"
+  },
+  {
+    "id": "V5V37",
+    "title": "React Flow 布局概览",
+    "url": "https://reactflow.dev/learn/layouting/layouting",
+    "note": "官方明确未实现自有完整布局解法，列出独立布局依赖；2026-10-29读取。",
+    "webRef": "turn99view0"
+  },
+  {
+    "id": "V5V38",
+    "title": "React Flow Pro 范围",
+    "url": "https://reactflow.dev/pro",
+    "note": "MIT 核心与 Pro 示例、模板及服务分开；本轮不采购服务或复制受限示例。",
+    "webRef": "turn98view1"
+  }
+]

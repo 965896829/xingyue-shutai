@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { fixtureCoverage } from './fixtures/chapter-coverage';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -396,7 +397,7 @@ test('关闭实时预览后不请求自动评分，本地正文线索并入既�
     if (system.includes('你独立检查')) {
       evidenceCalls++;
       const input = JSON.parse(messages[0].content);
-      return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => ({ id: item.id, verdict: 'supported', reason: '原文明确递出记录本', evidence: item.fact.evidence.map((e: any) => ({ path: e.path, quote: e.quote })) })) }));
+      return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => ({ id: item.id, verdict: 'supported', reason: '原文明确递出记录本', evidence: item.fact ? item.fact.evidence.map((e: any) => ({ path: e.path, quote: e.quote })) : [{ path: item.path, quote: input.sources.find((source: any) => source.path === item.path).content.slice(0, 30) }] })) }));
     }
     const p = service.store!.db.project();
     if (!tools.length) {
@@ -422,8 +423,12 @@ test('关闭实时预览后不请求自动评分，本地正文线索并入既�
     const prose = current.changes.find(change => change.path === prosePath(p.chapter))!;
     const fact = factSchema.parse({ id: 'record-book', subject: '阿宁', predicate: '递出记录本', value: '向医生递出记录本', kind: 'event', category: 'item', fromChapter: 1, revealedAt: 1,
       evidence: [{ path: prose.path, hash: hash(prose.content), quote: '阿宁推开诊室的门，把记录本递到灯下。' }] });
+    const coverage = fixtureCoverage(service, current);
+    for (const character of coverage.characters) if (character.name === fact.subject) {
+      character.outcome = 'changed'; character.factIds = [fact.id]; character.reason = '本章递出记录本的行动有同版本证据。';
+    }
     return proposal(stageOutputs('S11', p).map(file => service.change(file, fixture(p, file, service))), [
-      { id: 'memory-fact', name: 'propose_memory', arguments: JSON.stringify({ facts: [fact] }) }
+      { id: 'memory-fact', name: 'propose_memory', arguments: JSON.stringify({ facts: [fact], coverage }) }
     ]);
   }, false);
   service = created.service;

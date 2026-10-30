@@ -1,0 +1,140 @@
+{
+  "status": "passed",
+  "verified_at_utc": "2026-10-28T12:47:27.182372+00:00",
+  "package_prototype": "/workspace/scratch/e4e31f994d90/deliverables/xingyue-agent-design/evaluation/memory-prototype/prototype.py",
+  "reproduction_results": "/workspace/scratch/e4e31f994d90/report_build/prototype-v3-reproduction/results.json",
+  "source_copy_matches": true,
+  "source_sha256": "e08df7b537c5ee45b19e3582be7ce72719fe63c1e231b576d0c29a3c7bc95169",
+  "original_results_unchanged": true,
+  "original_results_sha256": "ecabad10d2113e0ad711cb58146e826d3b3b750fcf69379302392efda2e9ecd5",
+  "code_comment_count": 0,
+  "dataset": {
+    "chapters": 400,
+    "codepoints_per_chapter": 2500,
+    "body_codepoints": 1000000,
+    "assertions": 12000,
+    "entities": 80,
+    "main_assertions": 11400,
+    "alternative_assertions": 600,
+    "token_count": null,
+    "token_count_note": "本原型未调用tokenizer，中文码点数量不是模型token数量。"
+  },
+  "query_equality_passed": 120,
+  "functional_check_count": 7,
+  "all_functional_checks_passed": true,
+  "original_timing_for_report": {
+    "full_json_scan": {
+      "samples": 120,
+      "median_ms": 63.0420145,
+      "p95_ms": 79.297626,
+      "min_ms": 56.908593,
+      "max_ms": 101.675332
+    },
+    "composite_index_query": {
+      "samples": 120,
+      "median_ms": 0.419406,
+      "p95_ms": 0.73141,
+      "min_ms": 0.200242,
+      "max_ms": 1.167396
+    },
+    "median_ratio": 150.3126195142654
+  },
+  "reproduction_timing": {
+    "full_json_scan": {
+      "samples": 120,
+      "median_ms": 63.8240055,
+      "p95_ms": 83.651251,
+      "min_ms": 54.893917,
+      "max_ms": 108.186597
+    },
+    "composite_index_query": {
+      "samples": 120,
+      "median_ms": 0.4039925,
+      "p95_ms": 0.764059,
+      "min_ms": 0.19303,
+      "max_ms": 2.50691
+    },
+    "median_ratio": 157.98314448906848
+  },
+  "readme_review": {
+    "status": "passed",
+    "sha256": "ef8bc3597ec04495ded818ff715596d0c61fe528004e108445f28dddd98a6bd8",
+    "terminology": "已明确正文Unicode码点包含标点、数字等；原始结果JSON未改。",
+    "scope": "明确局部合成Python/SQLite暖缓存查询实验，不是客户端端到端性能、LLM提取或真实文学质量验证。"
+  },
+  "report_review": {
+    "section_2": "通过：现有能力、全台账输入、事实全扫与重写、来源校验、向量扫描、信念/历史状态缺口均有固定源码依据；superseded结果明确标为代码推导。",
+    "section_17": "通过：已实际检查 report_build/report.v3.compiled.md 第17节。400章×2500码点=1000000码点、80角色、12000条记录、120次查询及7组功能检查，与原run-002相符。63.042/79.298 ms和0.419/0.731 ms是原始中位/P95的正确四舍五入；环境、5次预热、交替顺序、7—62条结果、13.7 MB与27.53 MiB均准确。明确包含标点和数字、原型局部查询范围、不包含正文读取/LLM/embedding/FTS/引文校验/冷缓存，不宣称客户端端到端提速；完整V3的场景时间、分支继承与修订依赖仍待实现的限定正确。",
+    "section_16_note": "root已采纳正文Unicode码点含标点数字等的术语修订。",
+    "section_17_checked_at_utc": "2026-10-28T12:51:11.140165+00:00"
+  },
+  "limitations": [
+    "此复跑不覆盖当前客户端端到端、模型或embedding",
+    "计时是暖缓存，波动正常；报告仍引用原run-002数字",
+    "本次未测完整V3的章内事件、时间偏序、分支继承、依赖重放"
+  ],
+  "files_modified": [
+    "交付包evaluation/memory-prototype/README.md",
+    "交付包evaluation/memory-prototype/verification.json",
+    "research/v3-prototype-reproduction.json"
+  ],
+  "repo_modified": false,
+  "docx_visual_review": {
+    "render_directory": "/workspace/scratch/e4e31f994d90/report_build/render_v3",
+    "method": "实际逐页调用view_image，detail=original；检查第17至24页，未改DOCX。",
+    "layout_status": "passed",
+    "pages": [
+      {
+        "page": 17,
+        "status": "passed",
+        "notes": "章后更新与角色反思提示词完整，标题后有正文，无孤立标题、剪裁或页脚碰撞。"
+      },
+      {
+        "page": 18,
+        "status": "passed",
+        "notes": "反思续文、记忆审计提示词及中英文字段清晰，无溢出或重叠。"
+      },
+      {
+        "page": 19,
+        "status": "passed",
+        "notes": "章节正文与文件修改表完整，表格在整行之后分页，页脚独立。"
+      },
+      {
+        "page": 20,
+        "status": "passed",
+        "notes": "续表重复表头、保留完整UI行；实施顺序段落正常，无断裂或碰撞。"
+      },
+      {
+        "page": 21,
+        "status": "passed",
+        "notes": "交付说明和引用书目正常，长英文标题在页宽内换行，与页脚保持间距。"
+      },
+      {
+        "page": 22,
+        "status": "passed",
+        "notes": "英文标题与GitHub链接换行正常，中文无乱码，底部书目与页脚分开。"
+      },
+      {
+        "page": 23,
+        "status": "passed_with_minor_text_issue",
+        "notes": "书目排版正常，无溢出和页脚碰撞。MC14、MC15缺少行号但模板仍保留“行；”，建议为空行号时省略该词。"
+      },
+      {
+        "page": 24,
+        "status": "passed",
+        "notes": "四项最终书目完整，长英文标题正常，无溢出、乱码或页脚碰撞；余白为末页自然余量。"
+      }
+    ],
+    "minor_text_issues": [
+      {
+        "page": 23,
+        "source_ids": [
+          "MC14",
+          "MC15"
+        ],
+        "issue": "书目来源没有行号时仍出现“行；”",
+        "blocking": false
+      }
+    ]
+  }
+}

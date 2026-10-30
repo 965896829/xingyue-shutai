@@ -4,6 +4,7 @@ import type { FileStore } from '../storage';
 import { ApplicationError } from '../../shared/errors';
 import { recoveryActions } from './run-state';
 import { ExecutionRecords, type ExecutionState } from './execution-records';
+import { assertWorkflow, bindWorkflow } from './workflow-contract';
 
 export interface ExecutorDescription {
   id: 'legacy' | 'pi'; version: string; checkpointVersion: number; admitted: boolean;
@@ -30,6 +31,8 @@ export abstract class RecordedExecutorAdapter implements ExecutorAdapter {
   async execute(context: ExecutionContext) {
     if (context.kind === 'conversation') { await this.chat.drive(context.id, context.referenceChats); return; }
     const run = this.store.db.run(context.id);
+    bindWorkflow(run);
+    if (run.workflowBinding) this.store.db.saveRun(run);
     this.restore({ runId: run.id, executorId: run.executorId ?? 'legacy', executorVersion: run.executorVersion ?? '1', checkpointVersion: run.checkpointVersion ?? 1 });
     const records = new ExecutionRecords(this.store.db);
     const record = run.executionId ? records.get(run.executionId) : undefined;
@@ -53,6 +56,8 @@ export class LegacyExecutorAdapter extends RecordedExecutorAdapter {
   restore(checkpoint: ExecutorCheckpoint) {
     if (checkpoint.executorId !== 'legacy' || checkpoint.executorVersion !== '1' || checkpoint.checkpointVersion !== 1)
       throw new ApplicationError('PROJECT_VERSION_UNSUPPORTED', '执行器检查点版本不受支持，记录保留为只读，未重新执行');
-    return recoveryActions(this.store.db.run(checkpoint.runId));
+    const run = this.store.db.run(checkpoint.runId);
+    assertWorkflow(run);
+    return recoveryActions(run);
   }
 }

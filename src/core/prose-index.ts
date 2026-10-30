@@ -37,7 +37,7 @@ export class ProseIndexer {
   }
 }
 
-export function proseCandidates(store: FileStore, snapshot: CanonicalSnapshot, chapter: number, terms: string[], query: string, limit: number) {
+export function proseCandidates(store: FileStore, snapshot: Pick<CanonicalSnapshot, 'documents' | 'project'>, chapter: number, terms: string[], query: string, limit: number) {
   const eligible = Object.entries(snapshot.documents).filter(([file]) => {
     if (!file.startsWith('07_') || pendingSource(snapshot.project, file)) return false;
     const n = Number(file.match(/第(\d+)章/)?.[1]);

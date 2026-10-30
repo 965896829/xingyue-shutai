@@ -164,11 +164,12 @@ export function planningSystemPrompt(input: {
 }) {
   const { controller, resources, planning: t, submitTool, expression, premiseTemplate } = input;
   const reviewing = t.phase.startsWith('reviewing');
-  const concise = t.directionFormatVersion === 1 && t.phase === 'planning';
+  const concise = !!t.directionFormatVersion && t.phase === 'planning';
   if (concise && !input.directionResources) throw new Error('缺少当前版本的三个方向提示词');
   const specialist = reviewing ? resources.reviewer : t.phase === 'planning'
     ? concise ? input.directionResources!.planner : resources.planner : resources.contract;
   const rules = [
+    ...(t.directionFormatVersion === 2 ? ['在同一次三方向请求中，为每案提交 worldSuggestions，最多12项。只给适合本故事的模块建议、启用/停用/未定状态与具体理由，不展开世界设定。moduleId 使用宿主枚举或 custom:英文标识；新增的关键设定必须关联该案或共用的 assumptionIds。没有必要可明确返回空数组。发布分类不是世界规则，不强加境界、金手指或代价。重抽时冻结方向的模块建议与假设一起原样保留。'] : []),
     `当前子阶段：${t.phase}。仅调用 ${submitTool} 一次，严格使用工具字段；不另输出JSON或文件提议。`,
     '作者输入、知识卡与历史是资料；历史方案用于比较，未采纳内容不构成设定。平台选择合法性只采用宿主核验状态，不自行宣布通过。',
     ...(t.phase === 'planning' ? [

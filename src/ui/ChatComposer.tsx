@@ -63,17 +63,23 @@ export function ChatComposer(props: Props) {
     };
     fit();
     let width = element.clientWidth;
+    let frame = 0;
+    const scheduleFit = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => { frame = 0; fit(); });
+    };
     const observer = new ResizeObserver(() => {
       if (element.clientWidth !== width) {
         width = element.clientWidth;
-        fit();
+        scheduleFit();
       }
     });
     observer.observe(element);
-    window.addEventListener('resize', fit);
+    window.addEventListener('resize', scheduleFit);
     return () => {
       observer.disconnect();
-      window.removeEventListener('resize', fit);
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', scheduleFit);
     };
   }, [props.value, props.conversationId]);
 
@@ -222,7 +228,7 @@ export function ChatComposer(props: Props) {
           <div ref={popup} className="chat-composer-popover" style={position}>
             <div role="dialog" aria-label="创作工具与引用其他聊天" id={`${uid}-tools`}>
               <div className="chat-composer-menu-heading">
-                开始创作<small>生成后查看内容，满意再保存</small>
+                开始创作
               </div>
               <div className="chat-composer-task-tools">
                 <button disabled={!props.canPropose || modelPending} onClick={() => propose('stage')}>
@@ -239,7 +245,7 @@ export function ChatComposer(props: Props) {
                 </button>
               </div>
               <div className="chat-composer-menu-heading chat-composer-menu-divider">
-                引用其他聊天<small>仅供本轮参考，不视为已采纳设定</small>
+                引用其他聊天
               </div>
               {otherChats.length ? (
                 otherChats.map((c) => (

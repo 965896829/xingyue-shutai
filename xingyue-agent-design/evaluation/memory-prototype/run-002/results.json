@@ -1,0 +1,186 @@
+{
+  "prototype": "V3 memory scoped-query feasibility",
+  "at_utc": "2026-10-28T12:35:07.558101+00:00",
+  "scope": "合成 SQLite 可行性原型，不是当前客户端端到端压测。",
+  "environment": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "logical_cpus_reported": 9,
+    "pid": 2,
+    "peak_rss_kib_linux": 28188,
+    "cache_condition": "同一进程先生成语料并预热5次，计时为暖缓存；交替执行顺序。"
+  },
+  "dataset": {
+    "chapters": 400,
+    "codepoints_per_chapter": 2500,
+    "body_codepoints": 1000000,
+    "assertions": 12000,
+    "entities": 80,
+    "main_assertions": 11400,
+    "alternative_assertions": 600,
+    "token_count": null,
+    "token_count_note": "本原型未调用tokenizer，中文码点数量不是模型token数量。"
+  },
+  "seed_ms": 185.3416739977547,
+  "database_bytes": 13713408,
+  "queries": {
+    "seed": 20261028,
+    "count": 120,
+    "characters_per_query": 4,
+    "chapter_min": 30,
+    "chapter_max": 400,
+    "branches": [
+      "main",
+      "alternative"
+    ],
+    "scope": "同一编辑版本下，截至指定章号有效且来源版本匹配的实体事实；正文不参与计时查询。",
+    "minimum_result_count": 7,
+    "maximum_result_count": 62,
+    "equality_passed": 120
+  },
+  "timing": {
+    "full_json_scan": {
+      "samples": 120,
+      "median_ms": 63.0420145,
+      "p95_ms": 79.297626,
+      "min_ms": 56.908593,
+      "max_ms": 101.675332
+    },
+    "composite_index_query": {
+      "samples": 120,
+      "median_ms": 0.419406,
+      "p95_ms": 0.73141,
+      "min_ms": 0.200242,
+      "max_ms": 1.167396
+    },
+    "median_ratio": 150.3126195142654
+  },
+  "query_plan": [
+    [
+      5,
+      0,
+      89,
+      "SEARCH f USING INDEX fact_scope (branch=? AND entity_id=? AND review_status=? AND valid_from<?)"
+    ],
+    [
+      48,
+      0,
+      37,
+      "SEARCH s USING COVERING INDEX source_scope (branch=? AND path=? AND recorded_from<?)"
+    ],
+    [
+      72,
+      0,
+      0,
+      "USE TEMP B-TREE FOR ORDER BY"
+    ]
+  ],
+  "functional_checks": [
+    {
+      "check": "current_edition_as_of_chapter",
+      "passed": true
+    },
+    {
+      "check": "branch_isolation",
+      "passed": true
+    },
+    {
+      "check": "belief_proposition_without_unknown_truth",
+      "passed": true,
+      "before": [
+        {
+          "id": "belief-wrong",
+          "field": "belief",
+          "value": "甲是凶手",
+          "kind": "belief",
+          "source_hash": "h2"
+        },
+        {
+          "id": "injury-old",
+          "field": "condition",
+          "value": "右臂骨折",
+          "kind": "state",
+          "source_hash": "h1"
+        },
+        {
+          "id": "motivation-A",
+          "field": "motivation",
+          "value": "查清旧案并保住失物招领处",
+          "kind": "state",
+          "source_hash": "h1"
+        }
+      ],
+      "after": [
+        {
+          "id": "belief-corrected",
+          "field": "belief",
+          "value": "乙是凶手",
+          "kind": "belief",
+          "source_hash": "h6"
+        },
+        {
+          "id": "injury-healed",
+          "field": "condition",
+          "value": "右臂已愈合",
+          "kind": "state",
+          "source_hash": "h5"
+        },
+        {
+          "id": "motivation-A",
+          "field": "motivation",
+          "value": "查清旧案并保住失物招领处",
+          "kind": "state",
+          "source_hash": "h1"
+        }
+      ]
+    },
+    {
+      "check": "source_revision_invalidation_and_historical_edition",
+      "passed": true
+    },
+    {
+      "check": "idempotent_commit_and_payload_conflict",
+      "passed": true
+    },
+    {
+      "check": "character_coverage_no_change_no_evidence",
+      "passed": true,
+      "coverage": [
+        {
+          "entity_id": "A",
+          "dimensions": {
+            "emotion": "updated",
+            "motivation": "no_change",
+            "belief": "no_change"
+          }
+        },
+        {
+          "entity_id": "B",
+          "dimensions": {
+            "emotion": "no_evidence",
+            "motivation": "no_change",
+            "belief": "no_evidence"
+          }
+        }
+      ]
+    },
+    {
+      "check": "functional_query_semantics_equivalence",
+      "passed": true,
+      "queries": 16
+    }
+  ],
+  "passed": true,
+  "not_measured": [
+    "真实客户端端到端耗时",
+    "模型调用与记忆提取质量",
+    "embedding、向量索引、FTS与语义召回",
+    "原文文件I/O与引文位置校验",
+    "真实百万字小说的长期人物与因果一致性",
+    "冷启动、冷缓存、多用户并发",
+    "当前JavaScript实现与Python实现的跨语言性能比较"
+  ],
+  "interpretation": "两个路径使用相同合成数据和相同查询语义。全扫路径反序列化所有12000条JSON再筛选；索引路径先按分支、角色、有效章节与版本筛选再反序列化。结果只能证明此数据与机器上的局部查询方案可行，不能外推为客户端提速比例。"
+}

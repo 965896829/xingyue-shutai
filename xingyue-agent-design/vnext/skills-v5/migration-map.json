@@ -1,0 +1,124 @@
+{
+  "from": "V4",
+  "to": "V5",
+  "skillCount": 19,
+  "operationCount": 42,
+  "bindingCount": 44,
+  "changes": [
+    {
+      "skillId": "concept-forge",
+      "operationId": "create",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P02"
+    },
+    {
+      "skillId": "concept-forge",
+      "operationId": "regenerate",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P03"
+    },
+    {
+      "skillId": "world-design",
+      "operationId": "profile",
+      "change": "new_optional_operation",
+      "sourcePromptId": "V5P05"
+    },
+    {
+      "skillId": "world-design",
+      "operationId": "inherit",
+      "change": "new_optional_operation",
+      "sourcePromptId": "V5P06"
+    },
+    {
+      "skillId": "world-design",
+      "operationId": "stress-test",
+      "change": "new_optional_operation",
+      "sourcePromptId": "V5P08"
+    },
+    {
+      "skillId": "world-design",
+      "operationId": "create",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P07"
+    },
+    {
+      "skillId": "co-creation",
+      "operationId": "propose",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P09"
+    },
+    {
+      "skillId": "story-contract",
+      "operationId": "build",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P10"
+    },
+    {
+      "skillId": "market-evidence",
+      "operationId": "research",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P11"
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "title",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P12"
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "review",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P13"
+    },
+    {
+      "skillId": "scene-contract",
+      "operationId": "plan",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P14"
+    },
+    {
+      "skillId": "chapter-draft",
+      "operationId": "draft",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P15"
+    },
+    {
+      "skillId": "memory-delta",
+      "operationId": "extract",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P16"
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "continuity",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P17"
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "impact",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P18"
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "promise",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P19"
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "blurb",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P20"
+    },
+    {
+      "skillId": "memory-review",
+      "operationId": "review",
+      "change": "instructions_and_contract_extension",
+      "sourcePromptId": "V5P21"
+    }
+  ],
+  "rule": "按工作流版本启用，不热替换旧任务；sourcePromptIds 仅追溯。"
+}

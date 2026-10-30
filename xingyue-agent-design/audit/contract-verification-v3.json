@@ -1,0 +1,390 @@
+{
+  "scope": "design-contracts-only-not-integrated-with-client",
+  "passed": true,
+  "sqliteVersion": "3.53.1",
+  "newTableCount": 19,
+  "triggerCount": 2,
+  "databaseUnderWorkDir": "v3-contract-siusnl82/contract-check.sqlite",
+  "checks": [
+    {
+      "check": "schema-repeat-preserves-object-definitions",
+      "passed": true
+    },
+    {
+      "check": "foreign-keys-enabled",
+      "passed": true
+    },
+    {
+      "check": "reject-null-text-primary-key",
+      "passed": true
+    },
+    {
+      "check": "reject-fractional-revision-sequence",
+      "passed": true
+    },
+    {
+      "check": "reject-cross-project-overlay",
+      "passed": true
+    },
+    {
+      "check": "reject-fork-revision-from-wrong-parent",
+      "passed": true
+    },
+    {
+      "check": "valid-fork-pins-parent-revision",
+      "passed": true
+    },
+    {
+      "check": "reject-ledger-as-original-source",
+      "passed": true
+    },
+    {
+      "check": "reject-cross-project-source",
+      "passed": true
+    },
+    {
+      "check": "reject-non-codepoint-unit",
+      "passed": true
+    },
+    {
+      "check": "reject-reversed-span",
+      "passed": true
+    },
+    {
+      "check": "reject-fractional-codepoint",
+      "passed": true
+    },
+    {
+      "check": "reject-missing-evidence-source",
+      "passed": true
+    },
+    {
+      "check": "astral-character-evidence-uses-codepoints",
+      "passed": true
+    },
+    {
+      "check": "building-projection-permits-null-output-hash",
+      "passed": true
+    },
+    {
+      "check": "reject-ready-projection-without-output-hash",
+      "passed": true
+    },
+    {
+      "check": "reject-unknown-artifact-kind",
+      "passed": true
+    },
+    {
+      "check": "accepted-claim-permits-null-legacy-ledger",
+      "passed": true
+    },
+    {
+      "check": "claim-evidence-reverse-index-created",
+      "passed": true
+    },
+    {
+      "check": "reject-accepted-without-changeset",
+      "passed": true
+    },
+    {
+      "check": "reject-candidate-without-candidate-binding",
+      "passed": true
+    },
+    {
+      "check": "reject-derived-without-artifact",
+      "passed": true
+    },
+    {
+      "check": "reject-fabricated-candidate-adoption",
+      "passed": true
+    },
+    {
+      "check": "reject-missing-derivation-artifact",
+      "passed": true
+    },
+    {
+      "check": "reject-belief-without-holder",
+      "passed": true
+    },
+    {
+      "check": "reject-utterance-without-speaker",
+      "passed": true
+    },
+    {
+      "check": "reject-epistemic-kind-mismatch",
+      "passed": true
+    },
+    {
+      "check": "reject-missing-evidence-link",
+      "passed": true
+    },
+    {
+      "check": "reject-scalar-evidence-array",
+      "passed": true
+    },
+    {
+      "check": "reject-duplicate-evidence-link",
+      "passed": true
+    },
+    {
+      "check": "reject-non-array-related-claims",
+      "passed": true
+    },
+    {
+      "check": "three-publication-lanes-have-distinct-bindings",
+      "passed": true
+    },
+    {
+      "check": "five-proposition-kinds-stored-distinctly",
+      "passed": true
+    },
+    {
+      "check": "claim-evidence-update-replaces-reverse-links",
+      "passed": true
+    },
+    {
+      "check": "reject-invalid-evidence-update-atomically",
+      "passed": true
+    },
+    {
+      "check": "failed-evidence-update-preserves-old-index",
+      "passed": true
+    },
+    {
+      "check": "original-source-to-claim-retrieval-without-ledger",
+      "passed": true
+    },
+    {
+      "check": "reject-absence-with-null-completeness",
+      "passed": true
+    },
+    {
+      "check": "reject-truncated-query-as-absence",
+      "passed": true
+    },
+    {
+      "check": "reject-absence-without-query-epochs",
+      "passed": true
+    },
+    {
+      "check": "reject-predicate-without-result-binding",
+      "passed": true
+    },
+    {
+      "check": "reject-predicate-without-completeness-marker",
+      "passed": true
+    },
+    {
+      "check": "predicate-result-and-partition-epochs-persist-together",
+      "passed": true
+    },
+    {
+      "check": "reject-fractional-partition-epoch",
+      "passed": true
+    },
+    {
+      "check": "reject-duplicate-job-key",
+      "passed": true
+    },
+    {
+      "check": "reject-fractional-job-attempt",
+      "passed": true
+    },
+    {
+      "check": "reject-unknown-outcome-local-retry",
+      "passed": true
+    },
+    {
+      "check": "reject-unknown-outcome-without-gateway-attempt",
+      "passed": true
+    },
+    {
+      "check": "unknown-outcomes-remain-gateway-bound",
+      "passed": true
+    },
+    {
+      "check": "reject-chapter-commit-without-authority",
+      "passed": true
+    },
+    {
+      "check": "reject-changed-coverage-without-delta",
+      "passed": true
+    },
+    {
+      "check": "reject-obsolete-coverage-status",
+      "passed": true
+    },
+    {
+      "check": "reject-invalid-appearance",
+      "passed": true
+    },
+    {
+      "check": "five-coverage-statuses-and-appearances-persist",
+      "passed": true
+    },
+    {
+      "check": "chapter-commit-preserves-existing-changeset-reference",
+      "passed": true
+    },
+    {
+      "check": "reject-state-end-without-story-anchor",
+      "passed": true
+    },
+    {
+      "check": "reject-correction-without-reason",
+      "passed": true
+    },
+    {
+      "check": "reject-branch-hide-without-reason",
+      "passed": true
+    },
+    {
+      "check": "reject-restore-without-reversed-event",
+      "passed": true
+    },
+    {
+      "check": "state-end-correction-hide-restore-remain-distinct",
+      "passed": true
+    },
+    {
+      "check": "schema-repeat-preserves-populated-projections",
+      "passed": true
+    },
+    {
+      "check": "schema-repeat-preserves-original-authority-table",
+      "passed": true
+    },
+    {
+      "check": "sqlite-integrity",
+      "passed": true
+    },
+    {
+      "check": "sqlite-foreign-key-integrity",
+      "passed": true
+    },
+    {
+      "check": "typescript-and-sql-coverage-enums-match",
+      "passed": true
+    },
+    {
+      "check": "typescript-and-sql-proposition-kinds-match",
+      "passed": true
+    },
+    {
+      "check": "shared-character-belief-stances",
+      "passed": true
+    },
+    {
+      "check": "all-four-typescript-contracts-and-one-module-scanned",
+      "passed": true
+    },
+    {
+      "check": "verification-script-has-no-comments",
+      "passed": true
+    },
+    {
+      "check": "sql-schema-has-no-comments",
+      "passed": true
+    }
+  ],
+  "typescript": {
+    "passed": true,
+    "version": "5.9.3",
+    "options": [
+      "--noEmit",
+      "--strict",
+      "--noUncheckedIndexedAccess",
+      "--skipLibCheck",
+      "--target",
+      "es2022",
+      "--module",
+      "esnext",
+      "--moduleResolution",
+      "bundler"
+    ],
+    "files": [
+      "vnext/character-mind-v3.ts",
+      "vnext/co-creation-contracts.ts",
+      "vnext/contracts.ts",
+      "vnext/memory-contracts-v3.ts"
+    ],
+    "diagnostics": ""
+  },
+  "sourceComments": [
+    {
+      "file": "vnext/character-mind-v3.ts",
+      "comments": 0
+    },
+    {
+      "file": "vnext/co-creation-contracts.ts",
+      "comments": 0
+    },
+    {
+      "file": "vnext/contracts.ts",
+      "comments": 0
+    },
+    {
+      "file": "vnext/memory-contracts-v3.ts",
+      "comments": 0
+    },
+    {
+      "file": "audit/prompt-footprint.mjs",
+      "comments": 0
+    }
+  ],
+  "unicodeAdapterChecks": [
+    {
+      "check": "codepoint-to-utf16-astral-span",
+      "passed": true
+    },
+    {
+      "check": "utf16-to-codepoint-astral-span",
+      "passed": true
+    },
+    {
+      "check": "reject-middle-of-first-surrogate",
+      "passed": true
+    },
+    {
+      "check": "reject-middle-of-second-surrogate",
+      "passed": true
+    },
+    {
+      "check": "reject-codepoint-out-of-bounds",
+      "passed": true
+    },
+    {
+      "check": "reject-fractional-adapter-offset",
+      "passed": true
+    },
+    {
+      "check": "combining-mark-is-separate-codepoint",
+      "passed": true
+    },
+    {
+      "check": "empty-span-roundtrip",
+      "passed": true
+    }
+  ],
+  "fileHashes": {
+    "vnext/character-mind-v3.ts": "6bb6b0841b3ae938ace6015b497ee447547a7c292ccd3ad5c4b400decfc8c46f",
+    "vnext/co-creation-contracts.ts": "69d71646e3d3b8148b25efdcfb5f9719f1dca65b27683479bac96a6be23131d5",
+    "vnext/contracts.ts": "7538eadcf729298a6e72749dc221d1b585a231027b803da03a5382f929a79975",
+    "vnext/memory-contracts-v3.ts": "fe86966dd0d87c21ae8d9360f54821b5d2d1b707e4d6ad9e6176b88a04ccd8c2",
+    "audit/prompt-footprint.mjs": "97e1b668a3c45426e4e94995d420dff08897e20168d69e31e50276342b0216b0",
+    "vnext/memory-schema-v3.sql": "750a967e51fc9a738ee39fbe0b4bcbdb193a81f06903a3c3fa368505eef75d4a",
+    "design/data-contracts-v3.md": "b3c4db8dcda94451558b0cb1655f44d568df1ed994c2f49cd8512d4aee0ed7be",
+    "evaluation/contract-checks-v3.py": "531cf04081fe7940b12c72f3359ccfd9f9decfee5bd6bf02aa4ba3b4617893eb"
+  },
+  "notValidated": [
+    "production migration adapters",
+    "novel quality",
+    "model extraction fidelity",
+    "cross-record semantic scope and branch ancestry",
+    "story partial-order acyclicity",
+    "evidence truth beyond fixtures",
+    "coverage set completeness and facet semantics",
+    "continuous watermark advancement",
+    "production concurrency and crash recovery"
+  ]
+}

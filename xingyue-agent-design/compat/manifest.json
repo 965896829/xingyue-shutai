@@ -1,0 +1,1054 @@
+{
+  "package": "xingyue-compatible-specialists-A",
+  "baselineVersion": "0.4.82",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "status": "design-not-installed",
+  "contractPolicy": "原工具、路径、模板、审批/版本边界保留；不把新结构/滚动细纲当已实现。",
+  "sharedContract": "resources/skill/runtime/references/shared-contract.md",
+  "skills": [
+    {
+      "id": "webnovel-project-bootstrap",
+      "title": "新建与导入项目",
+      "baselineStage": "bootstrap",
+      "stage": null,
+      "hostOnly": true,
+      "runtimeMode": "host",
+      "file": "skills/webnovel-project-bootstrap/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-project-bootstrap/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-project-bootstrap/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "项目manifest候选",
+        "中文档案目录候选及阶段索引",
+        "导入/迁移差异报告"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/templates/项目根目录.md"
+      ],
+      "characters": 707,
+      "sha256": "0e007442cb5797702888d6331417c34afbd86497040c6fc6fcc35a8635df9315",
+      "installed": false
+    },
+    {
+      "id": "webnovel-market-research",
+      "title": "市场与题材证据研究",
+      "baselineStage": "optional",
+      "stage": null,
+      "hostOnly": false,
+      "runtimeMode": "analysis",
+      "file": "skills/webnovel-market-research/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-market-research/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-market-research/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author",
+        "public_search",
+        "extract_pages"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author",
+        "public_search",
+        "extract_pages"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "11_创作研究/市场证据.md",
+        "11_创作研究/题材机会假设.md"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md"
+      ],
+      "characters": 733,
+      "sha256": "166fb8bf0b3fc3d8f5cdcd575d0f314fb7e76ce0921f888b792e3365faa87f88",
+      "installed": false
+    },
+    {
+      "id": "webnovel-premise-lab",
+      "title": "设定拆解与读者承诺",
+      "baselineStage": "S1",
+      "stage": "S01",
+      "hostOnly": false,
+      "runtimeMode": "stage",
+      "file": "skills/webnovel-premise-lab/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-premise-lab/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-premise-lab/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "01_设定拆解/设定拆解.md"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/templates/设定拆解模板.md",
+        "../../references/naming/common.md"
+      ],
+      "characters": 890,
+      "sha256": "7b367e2eb40008fae2bca70b913e46d9fed309c77e4a976e9725083b8911ed98",
+      "installed": false,
+      "routingNote": "新创意workflowVersion=2的S01由creation专用策划生成premiseDocument；统一采纳后进S02，不重复调用本专项。"
+    },
+    {
+      "id": "webnovel-project-config",
+      "title": "项目配置与授权模式",
+      "baselineStage": "S2",
+      "stage": "S02",
+      "hostOnly": false,
+      "runtimeMode": "stage",
+      "file": "skills/webnovel-project-config/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-project-config/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-project-config/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "02_项目配置/项目配置.md",
+        "02_项目配置/文风样本与规则.md"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/templates/项目配置模板.md",
+        "../../references/templates/文风样本与规则模板.md"
+      ],
+      "characters": 844,
+      "sha256": "8b1944d3ac81ba535e70ffc79219c7582ba0764036066bc33277b5fdfc3d8559",
+      "installed": false
+    },
+    {
+      "id": "webnovel-world-engine",
+      "title": "世界规则与长篇动力",
+      "baselineStage": "S3",
+      "stage": "S03",
+      "hostOnly": false,
+      "runtimeMode": "stage",
+      "file": "skills/webnovel-world-engine/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-world-engine/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-world-engine/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "03_世界规则与卖点/世界规则与卖点.md",
+        "规则/揭示预算候选"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/naming/common.md"
+      ],
+      "characters": 782,
+      "sha256": "cffee46c0f7e30d7142cc2e45c9a33d6de8428d012f69ee41a0167386df7fa0d",
+      "installed": false
+    },
+    {
+      "id": "webnovel-character-engine",
+      "title": "人物能动性与关系动力",
+      "baselineStage": "S4",
+      "stage": "S04",
+      "hostOnly": false,
+      "runtimeMode": "stage",
+      "file": "skills/webnovel-character-engine/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-character-engine/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-character-engine/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "04_人物记忆库/角色卡.md",
+        "04_人物记忆库/人物关系.md",
+        "人物行为与连续性台账初始化候选"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/memory-system.md",
+        "../../references/naming/common.md",
+        "../../references/templates/连续性台账模板.md"
+      ],
+      "characters": 1068,
+      "sha256": "ca3347d01ab8ee47d2bd38844c61c9517c19da8a95b409497ee6ece421510cb7",
+      "installed": false
+    },
+    {
+      "id": "webnovel-name-governance",
+      "title": "全题材命名与改名保护",
+      "baselineStage": "guard",
+      "stage": null,
+      "hostOnly": false,
+      "runtimeMode": "revision",
+      "file": "skills/webnovel-name-governance/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-name-governance/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-name-governance/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "名称候选或审阅报告",
+        "实体别名台账差异",
+        "必要的改名changeset提案"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/naming/common.md",
+        "../../references/naming/governance.md"
+      ],
+      "characters": 756,
+      "sha256": "545e71e0c039ba573a34054e606b20bc0d7207ba0616d44a546ef742b6455b37",
+      "installed": false
+    },
+    {
+      "id": "webnovel-voice-profile",
+      "title": "项目级文风分析与启用",
+      "baselineStage": "S2/guard",
+      "stage": null,
+      "hostOnly": false,
+      "runtimeMode": "revision",
+      "file": "skills/webnovel-voice-profile/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-voice-profile/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-voice-profile/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "02_项目配置/文风样本与规则.md",
+        "文风版本与样本来源映射"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/style-system.md",
+        "../../references/templates/文风样本与规则模板.md"
+      ],
+      "characters": 812,
+      "sha256": "4fe180fb59cbd7bf2bd0faba9f17a7ff1e4467cc38988a7d4b1b1fd6f1ebaf46",
+      "installed": false
+    },
+    {
+      "id": "webnovel-volume-architect",
+      "title": "分卷架构与终局承诺",
+      "baselineStage": "S5",
+      "stage": "S05",
+      "hostOnly": false,
+      "runtimeMode": "stage",
+      "file": "skills/webnovel-volume-architect/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-volume-architect/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-volume-architect/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "05_长篇大纲/分卷大纲.md"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/templates/分卷大纲模板.md",
+        "../../references/volume-naming.md"
+      ],
+      "characters": 809,
+      "sha256": "410266c578508353c51525695e528a9dd29f63eece03260594d8c71f4c4cb52c",
+      "installed": false
+    },
+    {
+      "id": "webnovel-chapter-roadmap",
+      "title": "章节总纲与章序权威",
+      "baselineStage": "S6",
+      "stage": "S06",
+      "hostOnly": false,
+      "runtimeMode": "stage",
+      "file": "skills/webnovel-chapter-roadmap/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-chapter-roadmap/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-chapter-roadmap/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "05_长篇大纲/章节总纲.md"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/templates/章节总纲模板.md"
+      ],
+      "characters": 878,
+      "sha256": "b8aab22ee5c90838daa6fcbc3f88329c535f915642bd3139321533ee618ce5fd",
+      "installed": false
+    },
+    {
+      "id": "webnovel-rhythm-designer",
+      "title": "批次节奏与回报调度",
+      "baselineStage": "S7",
+      "stage": "S07",
+      "hostOnly": false,
+      "runtimeMode": "stage",
+      "file": "skills/webnovel-rhythm-designer/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-rhythm-designer/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-rhythm-designer/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "05_长篇大纲/第{start}-{end}章节奏.md",
+        "重复结构与承诺调度检查"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/templates/三十章节奏模板.md",
+        "../../references/style-system.md"
+      ],
+      "characters": 794,
+      "sha256": "10ad78e13908d357c58cd9ac90a673e17d3eeafbfd71b61676847c42c584b515",
+      "installed": false
+    },
+    {
+      "id": "webnovel-batch-outline",
+      "title": "完整批次细纲",
+      "baselineStage": "S8",
+      "stage": "S08",
+      "hostOnly": false,
+      "runtimeMode": "stage",
+      "file": "skills/webnovel-batch-outline/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-batch-outline/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-batch-outline/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "06_章节设计/第{start}-{end}章细纲.md"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/templates/三十章批量细纲模板.md",
+        "../../references/memory-system.md"
+      ],
+      "characters": 940,
+      "sha256": "db66b91a86bc5b0c67fae81157d517107936e9e1383f409a5522bf2d12bc6294",
+      "installed": false
+    },
+    {
+      "id": "webnovel-chapter-planner",
+      "title": "单章任务与场面细纲",
+      "baselineStage": "S9",
+      "stage": "S09",
+      "hostOnly": false,
+      "runtimeMode": "stage",
+      "file": "skills/webnovel-chapter-planner/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-chapter-planner/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-chapter-planner/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "06_章节设计/第{chapter}章任务清单.md",
+        "06_章节设计/第{chapter}章细纲.md"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/templates/章节任务清单模板.md",
+        "../../references/templates/章节细纲模板.md",
+        "../../references/style-system.md"
+      ],
+      "characters": 978,
+      "sha256": "09c99ed1c1582f91eacaa47e77787428a7d9f474389bbea419db712422742e43",
+      "installed": false
+    },
+    {
+      "id": "webnovel-chapter-drafter",
+      "title": "正文候选写作",
+      "baselineStage": "S10",
+      "stage": "S10",
+      "hostOnly": false,
+      "runtimeMode": "prose",
+      "file": "skills/webnovel-chapter-drafter/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-chapter-drafter/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-chapter-drafter/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "07_正文章节/第{chapter}章.md"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/style-system.md",
+        "../../references/naming/common.md"
+      ],
+      "characters": 1045,
+      "sha256": "a1e88d5c7027e574560074f690fd37e4a4b5393f6dac0d0e6542783e13a27897",
+      "installed": false
+    },
+    {
+      "id": "webnovel-chapter-reviewer",
+      "title": "证据式章节审阅",
+      "baselineStage": "S10/guard",
+      "stage": null,
+      "hostOnly": false,
+      "runtimeMode": "review",
+      "file": "skills/webnovel-chapter-reviewer/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-chapter-reviewer/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-chapter-reviewer/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "08_章后更新/第{chapter}章质量评分.md",
+        "限定范围修复提案"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/templates/章节质量评分模板.md",
+        "../../references/style-system.md"
+      ],
+      "characters": 1092,
+      "sha256": "f1b9032e845ce1517a0a9e7ab89f35bb3a70a6d7035e4a1232b53dca3ac03e5b",
+      "installed": false
+    },
+    {
+      "id": "webnovel-prose-polisher",
+      "title": "事实不变的定点润色",
+      "baselineStage": "S10/revision",
+      "stage": null,
+      "hostOnly": false,
+      "runtimeMode": "revision",
+      "file": "skills/webnovel-prose-polisher/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-prose-polisher/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-prose-polisher/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "润色候选版本",
+        "事实保持检查与字数差异"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/style-system.md"
+      ],
+      "characters": 721,
+      "sha256": "063ea08455cca89e02f7e8aebe82462720137d9145bea9d557cf0eecd8a4c6f8",
+      "installed": false
+    },
+    {
+      "id": "webnovel-continuity-audit",
+      "title": "连续性与知情边界审阅",
+      "baselineStage": "guard",
+      "stage": null,
+      "hostOnly": false,
+      "runtimeMode": "analysis",
+      "file": "skills/webnovel-continuity-audit/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-continuity-audit/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-continuity-audit/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "连续性问题清单",
+        "待回查来源与受影响依赖"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/memory-system.md",
+        "../../references/templates/连续性台账模板.md"
+      ],
+      "characters": 739,
+      "sha256": "ecd40e1cde265d91c5c701e4f5224d5b743d347b31fd01fbce0c51862cec45fe",
+      "installed": false
+    },
+    {
+      "id": "webnovel-memory-extractor",
+      "title": "章后候选记忆差异",
+      "baselineStage": "S11",
+      "stage": "S11",
+      "hostOnly": false,
+      "runtimeMode": "memory",
+      "file": "skills/webnovel-memory-extractor/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-memory-extractor/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-memory-extractor/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "08_章后更新/第{chapter}章记忆更新.md",
+        "memory delta"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/memory-system.md",
+        "../../references/templates/章后更新模板.md",
+        "../../references/templates/连续性台账模板.md"
+      ],
+      "characters": 1214,
+      "sha256": "6aecb6e4b1a2b37fa20a4b27c99c510253e1fe6fb36ee873681010e7abf16e33",
+      "installed": false,
+      "routingNote": "默认S10 pipeline内已执行memory阶段；采纳覆盖逻辑S10/S11，旧/独立S11路径仍支持。"
+    },
+    {
+      "id": "webnovel-batch-close",
+      "title": "批次闭环与归档",
+      "baselineStage": "S11/boundary",
+      "stage": null,
+      "hostOnly": true,
+      "runtimeMode": "host",
+      "file": "skills/webnovel-batch-close/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-batch-close/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-batch-close/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "04_人物记忆库/历史归档/第{start}-{end}章情绪与行为.md",
+        "04_人物记忆库/批次人物摘要.md",
+        "下一批承接与归档changeset"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/memory-system.md",
+        "../../references/templates/批次人物摘要模板.md"
+      ],
+      "characters": 696,
+      "sha256": "426ec007deb74247b76ced88d53bf4fd65b4c763baf787e64d8f3b78fadde122",
+      "installed": false
+    },
+    {
+      "id": "webnovel-revision-cascade",
+      "title": "修订、改名与依赖级联",
+      "baselineStage": "revision",
+      "stage": null,
+      "hostOnly": false,
+      "runtimeMode": "revision",
+      "file": "skills/webnovel-revision-cascade/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-revision-cascade/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-revision-cascade/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "09_续写状态/改动影响记录.md",
+        "影响图与changeset",
+        "必要的正文/计划/记忆候选"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/templates/改动影响记录模板.md",
+        "../../references/memory-system.md",
+        "../../references/naming/governance.md"
+      ],
+      "characters": 867,
+      "sha256": "160bb1fd8ab3ba4accd4582c6b20e4f9247fbe5fbce1a0cabdffb8e74e45058f",
+      "installed": false
+    },
+    {
+      "id": "webnovel-context-retriever",
+      "title": "按证据构建章节上下文",
+      "baselineStage": "guard",
+      "stage": null,
+      "hostOnly": true,
+      "runtimeMode": "host",
+      "file": "skills/webnovel-context-retriever/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-context-retriever/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-context-retriever/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "ContextPacket",
+        "context_manifest",
+        "缺失/冲突查询清单"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/memory-system.md"
+      ],
+      "characters": 779,
+      "sha256": "0ba2534f277fd60429539b1c3194f76d611882eccc8ca57b8e2e9b2f3823e668",
+      "installed": false
+    },
+    {
+      "id": "webnovel-packaging",
+      "title": "书名简介与入口承诺",
+      "baselineStage": "optional",
+      "stage": null,
+      "hostOnly": false,
+      "runtimeMode": "analysis",
+      "file": "skills/webnovel-packaging/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-packaging/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-packaging/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "11_创作研究/书名简介候选.md",
+        "入口承诺匹配检查"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/naming/common.md"
+      ],
+      "characters": 682,
+      "sha256": "81be17ffc14159b64a1407d8879e3dbeaf8650042f6811d29b5b36bf039a8c6b",
+      "installed": false
+    },
+    {
+      "id": "webnovel-reader-feedback",
+      "title": "真实反馈与迭代实验",
+      "baselineStage": "optional",
+      "stage": null,
+      "hostOnly": false,
+      "runtimeMode": "analysis",
+      "file": "skills/webnovel-reader-feedback/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-reader-feedback/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-reader-feedback/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "11_创作研究/反馈诊断.md",
+        "实验计划与指标定义",
+        "限定范围修订建议"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md"
+      ],
+      "characters": 699,
+      "sha256": "60d928717d4b9b5e0ac09ed83416716cc8981eea2abcc2ffd69b006a4afb5f7f",
+      "installed": false
+    },
+    {
+      "id": "webnovel-project-validator",
+      "title": "项目结构与硬门槛验证",
+      "baselineStage": "guard",
+      "stage": null,
+      "hostOnly": true,
+      "runtimeMode": "host",
+      "file": "skills/webnovel-project-validator/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-project-validator/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-project-validator/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "ValidationReport",
+        "阶段或章节硬门槛结果"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md"
+      ],
+      "characters": 737,
+      "sha256": "8e676ba09217f3be3e9a7e2ce1cab8af1d68a0ce65baa90948f1c160a0bff8aa",
+      "installed": false
+    },
+    {
+      "id": "webnovel-narrative-telemetry",
+      "title": "叙事节奏证据标注",
+      "baselineStage": "optional",
+      "stage": null,
+      "hostOnly": false,
+      "runtimeMode": "analysis",
+      "file": "skills/webnovel-narrative-telemetry/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-narrative-telemetry/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-narrative-telemetry/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "narrative_assessment",
+        "evidence_refs",
+        "plan_deviation_findings"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/memory-studio-v3.1.md"
+      ],
+      "characters": 788,
+      "sha256": "10c079bdb0e5c24f6f080b37805a3c8e51bc1a23598237daa4346908dc0c5110",
+      "installed": false
+    },
+    {
+      "id": "webnovel-memory-audit",
+      "title": "作品记忆覆盖与修订审计",
+      "baselineStage": "optional",
+      "stage": null,
+      "hostOnly": true,
+      "runtimeMode": "host",
+      "file": "skills/webnovel-memory-audit/SKILL.md",
+      "targetFile": "resources/skill/runtime/skills/webnovel-memory-audit/SKILL.md",
+      "contract": "resources/skill/runtime/skills/webnovel-memory-audit/contract.json",
+      "registeredTools": [
+        "read_naming_rules",
+        "read_document",
+        "search_memory",
+        "propose_changes",
+        "propose_memory",
+        "validate",
+        "ask_author"
+      ],
+      "effectiveTools": [],
+      "toolNote": "实际工具还受本轮权限、供应商搜索模式与宿主过滤；不可用工具不能由提示词启用。",
+      "outputDescription": [
+        "memory_audit_report",
+        "missing_dependencies",
+        "candidate_repairs"
+      ],
+      "templateReferences": [
+        "../../references/shared-contract.md",
+        "../../references/memory-studio-v3.1.md"
+      ],
+      "characters": 715,
+      "sha256": "1155f4fb7c372b175640293def48c5613d9b5f539c47d5ff2062223f4f31ea45",
+      "installed": false
+    }
+  ],
+  "originalSpecialistCharacters": 28088,
+  "candidateSpecialistCharacters": 21765,
+  "specialistCharacterReductionPercent": 22.5
+}

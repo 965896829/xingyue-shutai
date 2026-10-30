@@ -58,7 +58,7 @@ export const creationPlanSchema = z
 export type CreationPlan = z.infer<typeof creationPlanSchema>;
 
 export const titleRules = {
-  local: { label: '本地作品名', maxCharacters: 80, source: '本地显示与保存限制', checkedAt: '2026-10-16' },
+  local: { label: '本地作品名', maxCharacters: 80, source: '本地显示长度限制', checkedAt: '2026-10-30' },
   fanqie_experiment: {
     label: '番茄多书名实验',
     maxCharacters: 15,
@@ -122,7 +122,7 @@ export interface TitlePlanning {
   /** Opt in on new batches; existing reviewed names keep their original rule fingerprint. */
   editorialVersion?: 1 | 2;
   /** Absent on older tasks, whose already-reviewed candidates stay usable. */
-  marketResearchVersion?: 1;
+  marketResearchVersion?: 1 | 2;
   marketResearch?: import('./title-style').TitleMarketResearch;
   sourceRunId?: string;
   planHash: string;

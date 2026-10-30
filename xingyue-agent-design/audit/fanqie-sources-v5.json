@@ -1,0 +1,163 @@
+[
+  {
+    "id": "V5F01",
+    "title": "番茄标签讲解（阅读标签前身）",
+    "url": "https://fanqienovel.com/writer/zone/article/7617805652965982232",
+    "note": "2026-03-16；公开HTML内嵌_ROUTER_DATA正文核验主分类、主题、角色、情节及数量规则。",
+    "webRef": "turn88view0"
+  },
+  {
+    "id": "V5F02",
+    "title": "番茄原创网文标签体系升级公告",
+    "url": "https://fanqienovel.com/writer/zone/article/7677414599091552318",
+    "note": "2026-08-24；公开HTML正文核验阅读标签与独立内容标签、读者可见性、具体选择规则以作品页为准。",
+    "webRef": "turn88view1"
+  },
+  {
+    "id": "V5F03",
+    "title": "番茄公开书库入口",
+    "url": "https://fanqienovel.com/library",
+    "note": "2026-10-29普通HTML读取，SSR没有分类；页面引用Library.0b55a2e7.js及主脚本。",
+    "webRef": "turn85view0"
+  },
+  {
+    "id": "V5F04",
+    "title": "书库公开前端分类调用",
+    "url": "https://lf-fe.fqnovelstatic.com/obj/novel-fanqie-fe/toutiao/muye/Library.0b55a2e7.js",
+    "note": "公开页面引用的静态JS；只读解析看到CATEGORY_LIST与gender参数，不执行脚本。",
+    "webRef": null
+  },
+  {
+    "id": "V5F05",
+    "title": "书库公开前端路径常量",
+    "url": "https://lf-fe.fqnovelstatic.com/obj/novel-fanqie-fe/toutiao/muye/js/muye_dab5cb12.js",
+    "note": "公开脚本将CATEGORY_LIST映射到/api/author/book/category_list/v0/；观察到的前端依赖，非稳定API承诺。",
+    "webRef": null
+  },
+  {
+    "id": "V5F06",
+    "title": "公开书库男频分类返回",
+    "url": "https://fanqienovel.com/api/author/book/category_list/v0/?gender=1",
+    "note": "2026-10-29无登录普通GET，HTTP200 code0，154项；19主分类、33主题、22角色、80情节。",
+    "webRef": null
+  },
+  {
+    "id": "V5F07",
+    "title": "公开书库女频分类返回",
+    "url": "https://fanqienovel.com/api/author/book/category_list/v0/?gender=0",
+    "note": "2026-10-29无登录普通GET，HTTP200 code0，182项；21主分类、25主题、41角色、95情节。",
+    "webRef": null
+  },
+  {
+    "id": "V5F08",
+    "title": "番茄公开排行榜目录与说明",
+    "url": "https://fanqienovel.com/rank",
+    "note": "2026-10-29公开HTML内嵌目录男19女18，37频道入口、34去重ID；不等于作者完整分类。",
+    "webRef": "turn84search1"
+  },
+  {
+    "id": "V5F09",
+    "title": "玄幻脑洞新书榜",
+    "url": "https://fanqienovel.com/rank/1_1_257",
+    "note": "统计截止10-28 24:00；观察前两名并用官方详情页核验书名。",
+    "webRef": "turn86view0"
+  },
+  {
+    "id": "V5F10",
+    "title": "东方仙侠新书榜",
+    "url": "https://fanqienovel.com/rank/1_1_1140",
+    "note": "2026-10-29普通HTML读取，前两名作为标题形态样本。",
+    "webRef": null
+  },
+  {
+    "id": "V5F11",
+    "title": "都市日常阅读榜",
+    "url": "https://fanqienovel.com/rank/1_2_261",
+    "note": "2026-10-29普通HTML读取，前两名作为标题形态样本。",
+    "webRef": null
+  },
+  {
+    "id": "V5F12",
+    "title": "悬疑脑洞阅读榜",
+    "url": "https://fanqienovel.com/rank/1_2_539",
+    "note": "统计截止10-28 24:00；含长卖点标题与短标题，不能统一为长标题规则。",
+    "webRef": "turn96view2"
+  },
+  {
+    "id": "V5F13",
+    "title": "豪门总裁阅读榜",
+    "url": "https://fanqienovel.com/rank/0_2_748",
+    "note": "统计截止10-28 24:00；含氛围短标题与直接情节标题。",
+    "webRef": "turn96view3"
+  },
+  {
+    "id": "V5F14",
+    "title": "全班同学穿越，我开局拜菩提祖师",
+    "url": "https://fanqienovel.com/page/7693170346114944062",
+    "note": "官方作品详情HTML标题核验，榜单身份由title-evidence中的boardId和bookId关联。",
+    "webRef": null
+  },
+  {
+    "id": "V5F15",
+    "title": "天渊镇守百万载，你要挖我族人骨",
+    "url": "https://fanqienovel.com/page/7689506725073783833",
+    "note": "官方作品详情HTML标题核验，榜单身份由title-evidence中的boardId和bookId关联。",
+    "webRef": null
+  },
+  {
+    "id": "V5F16",
+    "title": "西游：开局找黄狮精买功法",
+    "url": "https://fanqienovel.com/page/7687124176171174974",
+    "note": "官方作品详情HTML标题核验，榜单身份由title-evidence中的boardId和bookId关联。",
+    "webRef": null
+  },
+  {
+    "id": "V5F17",
+    "title": "洪荒：开局带着白莲绿茶拜师三清",
+    "url": "https://fanqienovel.com/page/7686053177874975768",
+    "note": "官方作品详情HTML标题核验，榜单身份由title-evidence中的boardId和bookId关联。",
+    "webRef": null
+  },
+  {
+    "id": "V5F18",
+    "title": "都重生了，谁还装富二代啊",
+    "url": "https://fanqienovel.com/page/7630067790849788953",
+    "note": "官方作品详情HTML标题核验，榜单身份由title-evidence中的boardId和bookId关联。",
+    "webRef": null
+  },
+  {
+    "id": "V5F19",
+    "title": "公安局长之扫黑风暴",
+    "url": "https://fanqienovel.com/page/7646327973087300670",
+    "note": "官方作品详情HTML标题核验，榜单身份由title-evidence中的boardId和bookId关联。",
+    "webRef": null
+  },
+  {
+    "id": "V5F20",
+    "title": "骇夜：我在恐怖游戏里暴富",
+    "url": "https://fanqienovel.com/page/7617740782291651646",
+    "note": "官方作品详情HTML标题核验，榜单身份由title-evidence中的boardId和bookId关联。",
+    "webRef": null
+  },
+  {
+    "id": "V5F21",
+    "title": "十日终焉",
+    "url": "https://fanqienovel.com/page/7143038691944959011",
+    "note": "官方作品详情HTML标题核验，榜单身份由title-evidence中的boardId和bookId关联。",
+    "webRef": null
+  },
+  {
+    "id": "V5F22",
+    "title": "温夜潮湿",
+    "url": "https://fanqienovel.com/page/7654742513151921177",
+    "note": "官方作品详情HTML标题核验，榜单身份由title-evidence中的boardId和bookId关联。",
+    "webRef": null
+  },
+  {
+    "id": "V5F23",
+    "title": "惊！阴鸷太子爷的炮灰老婆重生了",
+    "url": "https://fanqienovel.com/page/7661066068244302873",
+    "note": "官方作品详情HTML标题核验，榜单身份由title-evidence中的boardId和bookId关联。",
+    "webRef": null
+  }
+]

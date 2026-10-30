@@ -1,0 +1,78 @@
+{
+  "designVersion": "V4",
+  "baselineVersion": "0.4.82",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "verificationDate": "2026-10-29",
+  "completed": [
+    {
+      "check": "repository-main-recheck",
+      "result": "passed",
+      "method": "本轮读取 GitHub main 与 package.json，固定版本与提交；19 项本轮代码证据保存在 repo-skills-sources-v4.json。"
+    },
+    {
+      "check": "previous-resources-preserved",
+      "result": "passed",
+      "promptResources": 57,
+      "compatSkills": 26,
+      "creationResources": 5,
+      "method": "与 V3 原 ZIP 逐字节比较，同时验证原资源 SHA-256；未将旧提示词重复注入新技能。"
+    },
+    {
+      "check": "skill-catalog-static",
+      "result": "passed",
+      "checks": 426,
+      "skills": 19,
+      "operations": 39,
+      "bindings": 41,
+      "detailsFile": "skill-catalog-verification-v4.json"
+    },
+    {
+      "check": "typescript-strict",
+      "result": "passed",
+      "method": "严格 TypeScript 加 noUncheckedIndexedAccess，验证五份合同与真实目录、注册表和案例 JSON 的类型；不只检查接口声明。"
+    },
+    {
+      "check": "semantic-cross-review",
+      "result": "passed",
+      "method": "核对 V3 时间、信念、人物覆盖、冻结方向、实际工具版本、targetKind 唯一绑定、逐角色证据包、来源与查询依赖、原审核位置及未知结果恢复。"
+    },
+    {
+      "check": "code-comments",
+      "result": "passed",
+      "method": "TS/MJS scanner、Python tokenizer 与 SQL 检查；交付代码无注释。"
+    },
+    {
+      "check": "report-visual-qa",
+      "result": "passed",
+      "pages": 22,
+      "method": "Word 渲染为 22 页 PNG，逐页视觉检查字号、换行、截断、重叠、标题孤立、表格续页与来源可读性。最终微调仅影响第 10 页，重新查看通过，其余 21 页 PNG 摘要未变。"
+    },
+    {
+      "check": "report-package-integrity",
+      "result": "passed",
+      "method": "DOCX ZIP 完整且无批注附件，报告摘要与最终视觉 QA 对应。"
+    }
+  ],
+  "report": {
+    "file": "xingyue-agent-optimization.docx",
+    "pages": 22,
+    "sha256": "7a644d3e41f86f870acd6d433b026e92262cafe8d27aff25622e79463ebb2076"
+  },
+  "sourceCount": 157,
+  "evaluationCases": {
+    "defined": 36,
+    "behaviorallyExecuted": 0,
+    "status": "not_executed"
+  },
+  "notExecuted": [
+    "新技能接入客户端",
+    "真实模型与 embedding 调用",
+    "36 个候选案例的行为评测",
+    "真实网文连续创作和读者盲评",
+    "V4 应用端到端回归",
+    "Windows 安装包验证",
+    "远端仓库修改或部署",
+    "个人 ChatGPT Skill 安装"
+  ],
+  "scopeNote": "本轮完成方案、技能全文、类型与目录合同、来源追溯、迁移与评测设计。静态检查不代表小说质量或商业效果已验证；V3 局部合成实验保留原执行范围。"
+}

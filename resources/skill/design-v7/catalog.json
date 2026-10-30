@@ -1,0 +1,207 @@
+[
+  {
+    "id": "concept-forge.create",
+    "title": "首次生成三个方向",
+    "group": "创意与故事方向"
+  },
+  {
+    "id": "concept-forge.regenerate",
+    "title": "按范围重做方向",
+    "group": "创意与故事方向"
+  },
+  {
+    "id": "story-contract.build",
+    "title": "建立完整作品方案",
+    "group": "作品方案与项目约定"
+  },
+  {
+    "id": "story-contract.review",
+    "title": "独立核验作品方案",
+    "group": "作品方案与项目约定"
+  },
+  {
+    "id": "story-contract.configure",
+    "title": "配置项目参数",
+    "group": "作品方案与项目约定"
+  },
+  {
+    "id": "co-creation.discuss",
+    "title": "讨论当前对象",
+    "group": "对象共创与讨论"
+  },
+  {
+    "id": "co-creation.compare",
+    "title": "比较候选与取舍",
+    "group": "对象共创与讨论"
+  },
+  {
+    "id": "co-creation.propose",
+    "title": "提出局部变更",
+    "group": "对象共创与讨论"
+  },
+  {
+    "id": "world-design.create",
+    "title": "建立世界规则候选",
+    "group": "世界规则与制度设计"
+  },
+  {
+    "id": "world-design.profile",
+    "title": "识别所需世界模块",
+    "group": "世界规则与制度设计"
+  },
+  {
+    "id": "world-design.inherit",
+    "title": "沿用与整理作者已有体系",
+    "group": "世界规则与制度设计"
+  },
+  {
+    "id": "world-design.stress-test",
+    "title": "推演世界规则与故事后果",
+    "group": "世界规则与制度设计"
+  },
+  {
+    "id": "character-design.create",
+    "title": "建立角色候选",
+    "group": "角色内核与群像设计"
+  },
+  {
+    "id": "rolling-outline.book",
+    "title": "全书主线与里程碑",
+    "group": "长篇分层规划"
+  },
+  {
+    "id": "rolling-outline.volume",
+    "title": "当前卷设计",
+    "group": "长篇分层规划"
+  },
+  {
+    "id": "rolling-outline.roadmap",
+    "title": "章节路线",
+    "group": "长篇分层规划"
+  },
+  {
+    "id": "rolling-outline.rhythm",
+    "title": "章段节奏",
+    "group": "长篇分层规划"
+  },
+  {
+    "id": "rolling-outline.batch",
+    "title": "近期批次细纲",
+    "group": "长篇分层规划"
+  },
+  {
+    "id": "scene-contract.plan",
+    "title": "规划当前章场景",
+    "group": "单章与场景合同"
+  },
+  {
+    "id": "voice-calibration.extract",
+    "title": "提炼声音档案",
+    "group": "作品声音与试写"
+  },
+  {
+    "id": "voice-calibration.calibrate",
+    "title": "提炼并试写",
+    "group": "作品声音与试写"
+  },
+  {
+    "id": "voice-calibration.update",
+    "title": "按选择更新声音",
+    "group": "作品声音与试写"
+  },
+  {
+    "id": "chapter-draft.draft",
+    "title": "生成当前章正文",
+    "group": "章节正文创作"
+  },
+  {
+    "id": "chapter-review.review",
+    "title": "审核指定正文",
+    "group": "章节证据审阅"
+  },
+  {
+    "id": "revision.voice",
+    "title": "改善局部表达",
+    "group": "有界修订与剧情变更"
+  },
+  {
+    "id": "revision.local",
+    "title": "修复已确认问题",
+    "group": "有界修订与剧情变更"
+  },
+  {
+    "id": "revision.story",
+    "title": "提出剧情修订",
+    "group": "有界修订与剧情变更"
+  },
+  {
+    "id": "memory-delta.extract",
+    "title": "批量提取本章增量",
+    "group": "章后事实与人物状态"
+  },
+  {
+    "id": "memory-review.review",
+    "title": "核验本章记忆候选",
+    "group": "记忆与角色状态核验"
+  },
+  {
+    "id": "memory-query.answer",
+    "title": "回答记忆查询",
+    "group": "有来源的故事记忆问答"
+  },
+  {
+    "id": "character-reflection.reflect",
+    "title": "生成反思候选",
+    "group": "重大事件后的角色反思"
+  },
+  {
+    "id": "canon-audit.continuity",
+    "title": "检查跨章连续性",
+    "group": "跨章连续性与承诺审阅"
+  },
+  {
+    "id": "canon-audit.impact",
+    "title": "解释变更影响",
+    "group": "跨章连续性与承诺审阅"
+  },
+  {
+    "id": "canon-audit.promise",
+    "title": "核验阅读承诺",
+    "group": "跨章连续性与承诺审阅"
+  },
+  {
+    "id": "canon-audit.ending",
+    "title": "卷末与完结审阅",
+    "group": "跨章连续性与承诺审阅"
+  },
+  {
+    "id": "market-evidence.research",
+    "title": "收集并分析相关证据",
+    "group": "平台与题材证据研究"
+  },
+  {
+    "id": "packaging.entity-name",
+    "title": "实体命名与改名候选",
+    "group": "名称与读者题面"
+  },
+  {
+    "id": "packaging.title",
+    "title": "书名候选",
+    "group": "名称与读者题面"
+  },
+  {
+    "id": "packaging.blurb",
+    "title": "简介与题面文案",
+    "group": "名称与读者题面"
+  },
+  {
+    "id": "packaging.review",
+    "title": "核验指定题面",
+    "group": "名称与读者题面"
+  },
+  {
+    "id": "reader-feedback.analyze",
+    "title": "诊断并提出下一轮实验",
+    "group": "读者反馈与创作实验"
+  }
+]

@@ -1,12 +1,13 @@
 import type { Run, ProjectState } from './types';
 import { planningPhaseNames } from './tags';
 import { recoveryDecision } from './recovery';
+import { worldModelSchema, voicePreferenceSchema } from './quality';
 
 export function runHasCurrentBasis(run: Run, project: ProjectState) {
   return (run.basisRevision === undefined ? run.baseRevision : run.basisRevision) === project.revision;
 }
 
-export const pendingOutputCodes = ['missing_output', 'required_output', 'document_draft_pending', 'pipeline_pending'];
+export const pendingOutputCodes = ['missing_output', 'required_output', 'document_draft_pending', 'pipeline_pending', 'behavior_update'];
 export function visibleRunIssues(run: Run) {
   return run.issues.filter(issue => !(run.status === 'running' && pendingOutputCodes.includes(issue.code)));
 }
@@ -109,6 +110,13 @@ export function creationTaskState(run: Run) {
       recovery: 'resume'
     } as const;
   }
+  if (planning?.phase === 'ready' && run.issues.some(issue => issue.severity === 'error'))
+    return {
+      title: '作品方案需要核对',
+      detail: '请先处理下方内容检查中的问题，再继续下一步。',
+      tone: 'attention',
+      recovery: null
+    } as const;
   return {
     title:
       planning?.phase === 'awaiting_direction'
@@ -125,12 +133,27 @@ export function creationTaskState(run: Run) {
 }
 
 export function documentPreviewText(content: string) {
+  const structured = content.match(/^# (世界模块|声音偏好)\s+```json\s*([\s\S]*?)```/);
+  if (structured) {
+    try {
+      const value = JSON.parse(structured[2]);
+      if (structured[1] === '世界模块') {
+        const model = worldModelSchema.parse(value);
+        const active = model.modules.filter(module => module.state === 'enabled');
+        const systems = (model.systems ?? []).filter(s => s.state === 'enabled').map(s => `## ${s.title}\n\n适用：${s.subjects.join('、') || '未限定'}\n\n${s.steps.map(step => `- ${step.title}：${step.ability || '能力未定'}；${step.boundary || '边界未定'}`).join('\n')}`).join('\n\n');
+        return '# 世界模块\n\n' + ([active.map(module => `## ${module.title}\n\n${module.content}`).join('\n\n'), systems].filter(Boolean).join('\n\n') || '尚未启用模块');
+      }
+      const preferences = voicePreferenceSchema.array().parse(value.preferences);
+      return '# 声音偏好\n\n' + preferences.map(preference => `## ${preference.scope.target || '本书叙述'} · ${preference.scope.sceneFunction}\n\n${preference.statement}${preference.exceptions.length ? `\n\n${preference.exceptions.join('；')}` : ''}`).join('\n\n');
+    } catch { return `# ${structured[1]}\n\n资料暂不可读`; }
+  }
   return content
     .replace(
       /^(?:## 客户端设置[\t ]*\r?\n(?:[\t ]*\r?\n)*)?```json wenxu-config[\t ]*\r?\n[\s\S]*?^```[\t ]*\r?$(?:\n)?/gm,
       ''
     )
     .replace(/^```json wenxu-review[\t ]*\r?\n[\s\S]*?^```[\t ]*\r?$(?:\n)?/gm, '')
+    .replace(/^```json wenxu-book-profile[\t ]*\r?\n[\s\S]*?^```[\t ]*\r?$(?:\n)?/gm, '')
     .replace(/^(?:## 可追溯事实记录[\t ]*\r?\n(?:[\t ]*\r?\n)*)?<!-- wenxu-facts:v1 -->[\t ]*\r?\n(?:[\t ]*\r?\n)*```json[\t ]*\r?\n[\s\S]*?^```[\t ]*\r?$(?:\n)?/gm, '')
     .trim();
 }

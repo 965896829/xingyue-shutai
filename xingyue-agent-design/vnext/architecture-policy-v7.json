@@ -1,0 +1,732 @@
+{
+  "schemaVersion": 7,
+  "designVersion": "V7",
+  "activationState": "design_only",
+  "baselineVersion": "0.4.82",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "purpose": "host_architecture_integration_without_prompt_or_runtime_activation",
+  "retainedCatalog": {
+    "designVersion": "V6",
+    "registry": "vnext/skills-v6/registry.design.json",
+    "skillPackages": 19,
+    "operations": 48,
+    "registrationBindings": 50,
+    "promptSourceResources": 112,
+    "contentPreservation": "unchanged"
+  },
+  "deployment": {
+    "shape": "local_modular_monolith",
+    "desktop": "existing_electron",
+    "kernel": "existing_utility_process",
+    "language": "typescript",
+    "executionLoop": "existing_pi_adapter",
+    "canonicalStore": "existing_sqlite_and_immutable_objects",
+    "externalWorkflowServiceRequired": false,
+    "externalGraphDatabaseRequired": false
+  },
+  "authority": {
+    "commandReceipts": "existing_operations",
+    "capabilityDirectory": "versioned_skill_registry",
+    "taskExecution": "existing_run_conversation_and_execution_records",
+    "modelRequests": "existing_model_gateway",
+    "toolReceipts": "existing_tool_executions",
+    "formalAdoption": "existing_commit_kernel",
+    "filesystemMaterialization": "existing_outbox",
+    "storyTruth": "existing_versioned_canonical_store",
+    "visualizations": "rebuildable_versioned_projections"
+  },
+  "preservedInvariants": [
+    "author_scope_and_candidate_fingerprint",
+    "formal_core_same_revision",
+    "request_intent_before_send",
+    "unknown_remote_outcome_preserved",
+    "shared_parent_budget",
+    "tool_receipt_reuse",
+    "state_version_compare_and_swap",
+    "source_hash_and_quote_evidence",
+    "legacy_executor_and_checkpoint_versions",
+    "outbox_replay_and_external_edit_preservation",
+    "project_session_and_worker_generation"
+  ],
+  "workflowRouting": {
+    "strategy": "default_owner_with_dependency_based_dispatch",
+    "stageNavigation": "retain_S01_S11_as_guidance",
+    "defaultOwners": {
+      "creation": [
+        "concept-forge",
+        "story-contract",
+        "world-design",
+        "character-design",
+        "market-evidence",
+        "packaging"
+      ],
+      "chapter": [
+        "rolling-outline",
+        "scene-contract",
+        "chapter-draft",
+        "chapter-review",
+        "memory-delta",
+        "memory-review"
+      ],
+      "discussion": [
+        "co-creation",
+        "voice-calibration",
+        "memory-query",
+        "reader-feedback"
+      ],
+      "revision": [
+        "revision",
+        "character-reflection",
+        "canon-audit"
+      ]
+    },
+    "fixedStageOrderRequiredForDiscussion": false,
+    "ordinaryAuthorizedCandidateEditNeedsRepeatConfirmation": false,
+    "formalCommitRequiresCurrentCandidateAuthorization": true,
+    "unknownRemoteRetryAuthorization": "existing_gateway_policy"
+  },
+  "operationBindings": [
+    {
+      "skillId": "concept-forge",
+      "operationId": "create",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "concept-forge",
+      "operationId": "regenerate",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "story-contract",
+      "operationId": "build",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "story-contract",
+      "operationId": "review",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "story-contract",
+      "operationId": "configure",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "co-creation",
+      "operationId": "discuss",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "co-creation",
+      "operationId": "compare",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "co-creation",
+      "operationId": "propose",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "co-creation",
+      "operationId": "rehearse",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "character_turn",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "world-design",
+      "operationId": "create",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "world-design",
+      "operationId": "profile",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "world-design",
+      "operationId": "inherit",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "world-design",
+      "operationId": "stress-test",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "character-design",
+      "operationId": "create",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "rolling-outline",
+      "operationId": "book",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "rolling-outline",
+      "operationId": "volume",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "rolling-outline",
+      "operationId": "roadmap",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "rolling-outline",
+      "operationId": "rhythm",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "rolling-outline",
+      "operationId": "batch",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "scene-contract",
+      "operationId": "plan",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "voice-calibration",
+      "operationId": "extract",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "voice-calibration",
+      "operationId": "calibrate",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "voice-calibration",
+      "operationId": "update",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "voice-calibration",
+      "operationId": "pilot",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "voice-calibration",
+      "operationId": "learn-edits",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "chapter-draft",
+      "operationId": "draft",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "chapter-draft",
+      "operationId": "explore",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "chapter-review",
+      "operationId": "review",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "chapter-review",
+      "operationId": "first-read",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "reader_prefix",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "revision",
+      "operationId": "voice",
+      "targetKind": null,
+      "defaultWorkflow": "revision",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "revision",
+      "operationId": "local",
+      "targetKind": null,
+      "defaultWorkflow": "revision",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "revision",
+      "operationId": "story",
+      "targetKind": null,
+      "defaultWorkflow": "revision",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "memory-delta",
+      "operationId": "extract",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "memory-review",
+      "operationId": "review",
+      "targetKind": null,
+      "defaultWorkflow": "chapter",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "memory-query",
+      "operationId": "answer",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "character-reflection",
+      "operationId": "reflect",
+      "targetKind": null,
+      "defaultWorkflow": "revision",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "continuity",
+      "targetKind": null,
+      "defaultWorkflow": "revision",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "impact",
+      "targetKind": null,
+      "defaultWorkflow": "revision",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "promise",
+      "targetKind": null,
+      "defaultWorkflow": "revision",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "ending",
+      "targetKind": null,
+      "defaultWorkflow": "revision",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "canon-audit",
+      "operationId": "patterns",
+      "targetKind": null,
+      "defaultWorkflow": "revision",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "market-evidence",
+      "operationId": "research",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "entity-name",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "title",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "blurb",
+      "targetKind": null,
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "review",
+      "targetKind": "entity_name",
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "review",
+      "targetKind": "book_title",
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "packaging",
+      "operationId": "review",
+      "targetKind": "blurb",
+      "defaultWorkflow": "creation",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "reader-feedback",
+      "operationId": "analyze",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    },
+    {
+      "skillId": "reader-feedback",
+      "operationId": "compare",
+      "targetKind": null,
+      "defaultWorkflow": "discussion",
+      "contextVariant": "author",
+      "registrationSource": "vnext/skills-v6/registry.design.json",
+      "active": false,
+      "adapter": "unavailable"
+    }
+  ],
+  "taskContract": {
+    "module": "vnext/architecture-contracts-v7.ts",
+    "type": "TaskSpecV7",
+    "hostOnly": true,
+    "policy": "CreativeTaskPolicyV6",
+    "base": "WorkBaseV6",
+    "readSet": "ReadSetV3",
+    "readDependencyKinds": [
+      "source",
+      "fact",
+      "artifact",
+      "predicate",
+      "absence"
+    ],
+    "modelSerialization": "compiled_model_payload_only",
+    "newCompetingTaskLedgerAllowed": false
+  },
+  "toolEffects": {
+    "classification": "explicit_host_verified_contract",
+    "allowedModelEffects": [
+      "read",
+      "draft_write",
+      "candidate_proposal"
+    ],
+    "namePrefixDefinesEffect": false,
+    "modelCanonicalCommitAllowed": false,
+    "unknownWriteOutcome": "no_automatic_reexecution",
+    "unknownReadOutcome": "host_revalidates_scope_cost_and_retry_before_repeat",
+    "retryOwner": "existing_model_gateway",
+    "frameworkAutomaticRetries": 0
+  },
+  "context": {
+    "variants": [
+      "author",
+      "reader_prefix",
+      "character_turn"
+    ],
+    "retainV6CoreAndMethodSelection": true,
+    "proof": "PrivateScopedContextProofV6",
+    "privateProofModelVisible": false,
+    "isolationSurfaces": [
+      "system_core",
+      "skill_method",
+      "operation",
+      "messages",
+      "tool_names_and_schemas",
+      "attachments_and_titles",
+      "retrieval_results",
+      "memory_and_summaries",
+      "prior_responses",
+      "provider_state",
+      "cache_namespace",
+      "repair_and_error_feedback"
+    ],
+    "finalSerializedRequestInspectionRequired": true,
+    "crossAudienceNativeSessionReuseAllowed": false,
+    "initialWorkUsesExistingDiscriminatedBase": true
+  },
+  "chapterClosure": {
+    "candidateType": "CoreChapterCandidateV7",
+    "coreContract": "ChapterMemoryDeltaV3",
+    "coverageContract": "ChapterMemoryBatchV3",
+    "requiresFinalProseHash": true,
+    "allAppearingActorsReviewed": true,
+    "unchangedAndUnknownCoverageAllowed": true,
+    "coreCommit": "prose_and_required_memory_same_revision",
+    "optionalProjectionFailureBlocksCommit": false
+  },
+  "memoryScale": {
+    "deltaSnapshots": "already_present_preserve",
+    "queryPriority": [
+      "measure_real_facts_and_revisions",
+      "indexed_scope_and_entity_queries",
+      "changeset_level_incremental_fact_updates",
+      "batch_source_version_validation",
+      "bounded_subgraph_and_source_retrieval",
+      "replace_index_only_after_measured_need"
+    ],
+    "shadowReadModelMayCommit": false,
+    "canonicalAuthorityCount": 1,
+    "historicalEvidenceMustRemainResolvable": true
+  },
+  "projections": {
+    "defaultDerivation": "deterministic_local",
+    "semanticAnalysis": "explicit_budgeted_task",
+    "newModelRequestForViewInteractions": false,
+    "coreDataMayBeAsyncSkipped": false,
+    "optionalAdjuncts": "independent_failure_and_rebuild",
+    "retainedVersionContract": "ProjectionEnvelopeV5",
+    "retainedWatermarkContract": "ProjectionWatermarkV5",
+    "semanticsEdit": "candidate_changeset_then_existing_commit",
+    "layoutEdit": "view_only"
+  },
+  "activationEvidenceRequired": [
+    "handler_implemented",
+    "runtime_schema_validated",
+    "whole_request_scope_verified",
+    "existing_gateway_integrated",
+    "candidate_commit_invariants_preserved",
+    "recorded_version_restore_verified"
+  ],
+  "migrationOrder": [
+    "preserve_and_replay_existing_behaviors",
+    "extract_command_handlers_and_four_workflows",
+    "bind_versioned_tasks_and_context_policies",
+    "complete_one_chapter_core_closure",
+    "measure_and_optimize_long_book_updates",
+    "enable_v6_operations_individually_after_evidence"
+  ],
+  "behaviorExecutionStatus": "not_executed_by_this_blueprint",
+  "frameworkReevaluation": {
+    "langgraph": "measured_branch_and_replay_maintenance_pressure_then_isolated_trial",
+    "temporal": "explicit_cross_machine_or_cloud_continuation_requirement",
+    "externalGraphStore": "measured_query_limits_or_multiuser_shared_graph_requirement",
+    "decisionOwner": "author_and_implementation_review"
+  },
+  "migrationPhases": [
+    {
+      "id": "R0",
+      "action": "preserve_and_replay_existing_behaviors"
+    },
+    {
+      "id": "R1",
+      "action": "extract_command_handlers_and_four_workflows"
+    },
+    {
+      "id": "R2",
+      "action": "bind_versioned_tasks_and_context_policies"
+    },
+    {
+      "id": "R3",
+      "action": "complete_one_chapter_core_closure"
+    },
+    {
+      "id": "R4",
+      "action": "measure_and_optimize_long_book_updates"
+    },
+    {
+      "id": "R5",
+      "action": "enable_v6_operations_individually_after_evidence"
+    }
+  ]
+}

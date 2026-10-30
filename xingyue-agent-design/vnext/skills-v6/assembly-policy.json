@@ -1,0 +1,755 @@
+{
+  "id": "v6-single-core-method-operation",
+  "designVersion": "V6",
+  "state": "design_only",
+  "sourcePromptIdsUse": "trace_only_not_injected",
+  "composition": [
+    "selected_runtime_core",
+    "selected_method_replaces_default",
+    "one_operation",
+    "host_filtered_task_context",
+    "actual_output_contract"
+  ],
+  "scopedIsolationSurfaces": [
+    "system",
+    "method",
+    "operation",
+    "messages",
+    "tool_schema",
+    "attachment_names",
+    "history",
+    "retrieval",
+    "cache",
+    "provider_session",
+    "error_feedback"
+  ],
+  "hostPrivateProofSentToModel": false,
+  "newOperations": [
+    "co-creation.rehearse",
+    "voice-calibration.learn-edits",
+    "chapter-draft.explore",
+    "chapter-review.first-read",
+    "canon-audit.patterns",
+    "reader-feedback.compare"
+  ],
+  "operations": [
+    {
+      "operation": "concept-forge.create",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/concept-forge/references/_method.md",
+        "vnext/skills-v6/blueprints/concept-forge/references/create.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "concept-forge.regenerate",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/concept-forge/references/_method.md",
+        "vnext/skills-v6/blueprints/concept-forge/references/regenerate.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "story-contract.build",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/story-contract/references/_method.md",
+        "vnext/skills-v6/blueprints/story-contract/references/build.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "story-contract.review",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/story-contract/references/_method.md",
+        "vnext/skills-v6/blueprints/story-contract/references/review.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "story-contract.configure",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/story-contract/references/_method.md",
+        "vnext/skills-v6/blueprints/story-contract/references/configure.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "co-creation.discuss",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/co-creation/references/_method.md",
+        "vnext/skills-v6/blueprints/co-creation/references/discuss.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "conversation.respond",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "co-creation.compare",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/co-creation/references/_method.md",
+        "vnext/skills-v6/blueprints/co-creation/references/compare.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "conversation.respond",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "co-creation.propose",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/co-creation/references/_method.md",
+        "vnext/skills-v6/blueprints/co-creation/references/propose.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "co-creation.rehearse",
+      "runtimeCoreVariant": "character_turn",
+      "methodSelection": "operation_replacement",
+      "selectedResources": [
+        "runtime/agent.character-turn.v6.md",
+        "vnext/skills-v6/blueprints/co-creation/references/rehearse.method.md",
+        "vnext/skills-v6/blueprints/co-creation/references/rehearse.md"
+      ],
+      "contextView": "scoped_pov",
+      "requestedCapabilities": [
+        "candidate.submit"
+      ]
+    },
+    {
+      "operation": "world-design.create",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/world-design/references/_method.md",
+        "vnext/skills-v6/blueprints/world-design/references/create.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "world-design.profile",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/world-design/references/_method.md",
+        "vnext/skills-v6/blueprints/world-design/references/profile.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "world-design.inherit",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/world-design/references/_method.md",
+        "vnext/skills-v6/blueprints/world-design/references/inherit.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "world-design.stress-test",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/world-design/references/_method.md",
+        "vnext/skills-v6/blueprints/world-design/references/stress-test.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "character-design.create",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/character-design/references/_method.md",
+        "vnext/skills-v6/blueprints/character-design/references/create.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "rolling-outline.book",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/_method.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/book.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "rolling-outline.volume",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/_method.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/volume.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "rolling-outline.roadmap",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/_method.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/roadmap.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "rolling-outline.rhythm",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/_method.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/rhythm.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "rolling-outline.batch",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/_method.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/batch.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "scene-contract.plan",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/scene-contract/references/_method.md",
+        "vnext/skills-v6/blueprints/scene-contract/references/plan.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "voice-calibration.extract",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/_method.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/extract.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "voice-calibration.calibrate",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/_method.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/calibrate.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "voice-calibration.update",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/_method.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/update.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "voice-calibration.pilot",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/_method.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/pilot.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "voice-calibration.learn-edits",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/_method.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/learn-edits.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit"
+      ]
+    },
+    {
+      "operation": "chapter-draft.draft",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/chapter-draft/references/_method.md",
+        "vnext/skills-v6/blueprints/chapter-draft/references/draft.md"
+      ],
+      "contextView": "scoped_pov",
+      "requestedCapabilities": [
+        "prose.return"
+      ]
+    },
+    {
+      "operation": "chapter-draft.explore",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/chapter-draft/references/_method.md",
+        "vnext/skills-v6/blueprints/chapter-draft/references/explore.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit"
+      ]
+    },
+    {
+      "operation": "chapter-review.review",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/chapter-review/references/_method.md",
+        "vnext/skills-v6/blueprints/chapter-review/references/review.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "chapter-review.first-read",
+      "runtimeCoreVariant": "reader_prefix",
+      "methodSelection": "operation_replacement",
+      "selectedResources": [
+        "runtime/agent.reader-prefix.v6.md",
+        "vnext/skills-v6/blueprints/chapter-review/references/first-read.method.md",
+        "vnext/skills-v6/blueprints/chapter-review/references/first-read.md"
+      ],
+      "contextView": "reader_prefix",
+      "requestedCapabilities": [
+        "candidate.submit"
+      ]
+    },
+    {
+      "operation": "revision.voice",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/revision/references/_method.md",
+        "vnext/skills-v6/blueprints/revision/references/voice.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "revision.local",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/revision/references/_method.md",
+        "vnext/skills-v6/blueprints/revision/references/local.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "revision.story",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/revision/references/_method.md",
+        "vnext/skills-v6/blueprints/revision/references/story.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "memory-delta.extract",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/memory-delta/references/_method.md",
+        "vnext/skills-v6/blueprints/memory-delta/references/extract.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "memory-review.review",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/memory-review/references/_method.md",
+        "vnext/skills-v6/blueprints/memory-review/references/review.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "memory-query.answer",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/memory-query/references/_method.md",
+        "vnext/skills-v6/blueprints/memory-query/references/answer.md"
+      ],
+      "contextView": "scoped_query",
+      "requestedCapabilities": [
+        "conversation.respond",
+        "memory.query.scoped",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "character-reflection.reflect",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/character-reflection/references/_method.md",
+        "vnext/skills-v6/blueprints/character-reflection/references/reflect.md"
+      ],
+      "contextView": "scoped_pov",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "canon-audit.continuity",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/_method.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/continuity.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "memory.query.scoped",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "canon-audit.impact",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/_method.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/impact.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "canon-audit.promise",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/_method.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/promise.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "memory.query.scoped",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "canon-audit.ending",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/_method.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/ending.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "memory.query.scoped",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "canon-audit.patterns",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/_method.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/patterns.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit"
+      ]
+    },
+    {
+      "operation": "market-evidence.research",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/market-evidence/references/_method.md",
+        "vnext/skills-v6/blueprints/market-evidence/references/research.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "evidence.search.public",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "packaging.entity-name",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/packaging/references/_method.md",
+        "vnext/skills-v6/blueprints/packaging/references/entity-name.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "packaging.title",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/packaging/references/_method.md",
+        "vnext/skills-v6/blueprints/packaging/references/title.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "packaging.blurb",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/packaging/references/_method.md",
+        "vnext/skills-v6/blueprints/packaging/references/blurb.md"
+      ],
+      "contextView": "author_design",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "packaging.review",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/packaging/references/_method.md",
+        "vnext/skills-v6/blueprints/packaging/references/review.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "reader-feedback.analyze",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/reader-feedback/references/_method.md",
+        "vnext/skills-v6/blueprints/reader-feedback/references/analyze.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit",
+        "reference.read.scoped"
+      ]
+    },
+    {
+      "operation": "reader-feedback.compare",
+      "runtimeCoreVariant": "author",
+      "methodSelection": "skill_default",
+      "selectedResources": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/reader-feedback/references/_method.md",
+        "vnext/skills-v6/blueprints/reader-feedback/references/compare.md"
+      ],
+      "contextView": "author_review",
+      "requestedCapabilities": [
+        "candidate.submit"
+      ]
+    }
+  ]
+}

@@ -72,6 +72,22 @@ function symbol(image) {
   return place(fitted, 512, 512, Math.floor((512 - size.width) / 2), 480 - size.height);
 }
 
+function applicationIcon(image, size) {
+  // Render each Windows size from the cropped original, without carrying the
+  // sidebar symbol's padding and lower anchor into the taskbar icon.
+  const inset = Math.max(1, Math.round(size / 128));
+  const source = image.getSize();
+  const scale = Math.min((size - inset * 2) / source.width, (size - inset * 2) / source.height);
+  const resized = image.resize({
+    width: Math.round(source.width * scale),
+    height: Math.round(source.height * scale),
+    quality: 'best'
+  });
+  const fitted = resized.crop(alphaReport(resized).alphaBounds);
+  const bounds = fitted.getSize();
+  return place(fitted, size, size, Math.floor((size - bounds.width) / 2), Math.floor((size - bounds.height) / 2));
+}
+
 function wordmark(image) {
   const { width, height } = image.getSize();
   const resized = image.resize({ width: 1024, height: Math.round(height * 1024 / width), quality: 'best' });
@@ -114,20 +130,20 @@ function writeICO(images) {
 
 app.whenReady().then(() => {
   const report = { sources: {}, outputs: [], ico: null };
-  let appIcon;
+  let appArtwork;
   for (const name of ['app-icon', 'night-symbol', 'day-symbol']) {
-    const loaded = load(name), image = symbol(loaded.image);
+    const loaded = load(name);
+    const image = name === 'app-icon' ? applicationIcon(loaded.image, 512) : symbol(loaded.image);
     report.sources[name] = loaded.source;
     report.outputs.push(writePNG(path.join(publicDir, `${name}.png`), image));
-    if (name === 'app-icon') appIcon = image;
+    if (name === 'app-icon') appArtwork = loaded.image;
   }
   const loadedWordmark = load('wordmark'), image = wordmark(loadedWordmark.image);
   report.sources.wordmark = loadedWordmark.source;
   // One silhouette serves both themes; CSS controls its ink color.
   report.outputs.push(writePNG(path.join(publicDir, 'wordmark-day.png'), image));
   const icoImages = [16, 24, 32, 48, 64, 128, 256].map((size) => ({
-    // Reserve one explicit transparent pixel so the resampling kernel cannot touch the ICO edge.
-    size, image: place(appIcon.resize({ width: size - 2, height: size - 2, quality: 'best' }), size, size, 1, 1)
+    size, image: applicationIcon(appArtwork, size)
   }));
   for (const { size, image } of icoImages)
     report.outputs.push(writePNG(path.join(iconsDir, `app-icon-${size}.png`), image));

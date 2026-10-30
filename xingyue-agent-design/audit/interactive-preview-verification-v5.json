@@ -1,0 +1,179 @@
+{
+  "status": "passed",
+  "checks": 32,
+  "results": [
+    {
+      "name": "qa-chinese-font-loaded",
+      "passed": true,
+      "detail": {
+        "font": "QAChinese, sans-serif",
+        "loaded": true
+      }
+    },
+    {
+      "name": "initial-world",
+      "passed": true
+    },
+    {
+      "name": "node-details",
+      "passed": true
+    },
+    {
+      "name": "candidate-overlay",
+      "passed": true
+    },
+    {
+      "name": "candidate-not-adopted",
+      "passed": true
+    },
+    {
+      "name": "candidate-withdrawn",
+      "passed": true
+    },
+    {
+      "name": "canon-version-unchanged",
+      "passed": true
+    },
+    {
+      "name": "author-can-see-secret",
+      "passed": true
+    },
+    {
+      "name": "unknown-filtered",
+      "passed": true
+    },
+    {
+      "name": "character-cannot-edit",
+      "passed": true
+    },
+    {
+      "name": "chapter-six-clue-known",
+      "passed": true
+    },
+    {
+      "name": "chapter-twelve-secret-known",
+      "passed": true
+    },
+    {
+      "name": "secret-source",
+      "passed": true
+    },
+    {
+      "name": "selection-does-not-leak-hidden-secret",
+      "passed": true
+    },
+    {
+      "name": "relationship-changes-over-chapters",
+      "passed": true
+    },
+    {
+      "name": "drag-layout-changes",
+      "passed": true
+    },
+    {
+      "name": "drag-preserves-canon",
+      "passed": true
+    },
+    {
+      "name": "drag-status",
+      "passed": true
+    },
+    {
+      "name": "career-no-supernatural",
+      "passed": true
+    },
+    {
+      "name": "career-world-no-realms",
+      "passed": true
+    },
+    {
+      "name": "mystery-limited-ability",
+      "passed": true
+    },
+    {
+      "name": "width-1024-no-overflow",
+      "passed": true,
+      "detail": {
+        "width": 1024,
+        "body": 1024,
+        "root": 1024
+      }
+    },
+    {
+      "name": "width-1024-nodes-fit",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "width-1024-edge-labels-fit",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "width-736-no-overflow",
+      "passed": true,
+      "detail": {
+        "width": 736,
+        "body": 736,
+        "root": 736
+      }
+    },
+    {
+      "name": "width-736-nodes-fit",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "width-736-edge-labels-fit",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "width-320-no-overflow",
+      "passed": true,
+      "detail": {
+        "width": 320,
+        "body": 320,
+        "root": 320
+      }
+    },
+    {
+      "name": "width-320-nodes-fit",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "width-320-edge-labels-fit",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "dark-theme",
+      "passed": true,
+      "detail": "rgb(20, 23, 29)"
+    },
+    {
+      "name": "no-page-errors",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "sizes": [
+    {
+      "width": 1024,
+      "height": 858
+    },
+    {
+      "width": 736,
+      "height": 1043
+    },
+    {
+      "width": 320,
+      "height": 1613
+    }
+  ],
+  "fragmentBytes": 28500,
+  "scope": "Local HTML preview only; original data, no backend connection or production integration",
+  "fragmentSha256": "19bbb220712839aa4265b8fe9d529cfe36f71bf8015acea61d747c5f52eb663d",
+  "scopeNote": "本轮对话的原创交互示意；没有连接客户端或调用模型。片段与内部截图不纳入设计 ZIP。"
+}

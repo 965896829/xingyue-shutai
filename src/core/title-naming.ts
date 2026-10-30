@@ -14,7 +14,8 @@ import {
 import type { Run, ProjectState, SecretProfile, ToolDefinition } from '../shared/types';
 import type { FileStore } from './storage';
 import type { Caller } from './runner';
-import { tagHash, planningBinding, assertPlanApproval } from './tags';
+import { tagHash, planningBinding, assertPlanApproval, modelBookSpec } from './tags';
+import { publishingResearchSpec } from './publishing';
 import { controllerRules, assertControllerRules, taskEnvelope } from './agent-control';
 import { expressionPack, bindExpressionRules, expressionFingerprint } from './expression-rules';
 import { SkillRegistry } from './skill-registry';
@@ -44,12 +45,7 @@ export function validateBookTitle(title: string, rule: keyof typeof titleRules =
   const clean = title.trim();
   if (!clean || Array.from(clean).length > titleRules[rule].maxCharacters)
     throw new Error(`书名须为1至${titleRules[rule].maxCharacters}字符（${titleRules[rule].label}）`);
-  if (
-    /[<>:"/\\|?*\x00-\x1f]/.test(clean) ||
-    /[. ]$/.test(clean) ||
-    /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(clean)
-  )
-    throw new Error('书名包含本地保存不支持的字符或 Windows 保留名称');
+  if (/[\x00-\x1f]/.test(clean)) throw new Error('书名不能包含换行或控制字符');
   return clean;
 }
 export const normalizedTitle = normalizedCandidateTitle;
@@ -260,7 +256,7 @@ export async function driveTitleNaming(args: {
     if (profiles().find((v) => v.id === profile.id)?.version !== profile.version)
       throw new Error('模型配置已改变');
     if (!reviewing) {
-      await prepareTitleMarketResearch({ store, root, run: r, project: p, profile, spec: source.spec,
+      await prepareTitleMarketResearch({ store, root, run: r, project: p, profile, spec: t.sourceRunId ? source.spec : publishingResearchSpec(store, source.spec),
         genre: source.currentPreferences.genre, plan: source.plan, settings: args.searchSettings ?? searchSettingsSchema.parse({}),
         search: args.search, caller, signal, save, event, onActivity: args.onActivity });
       namingBinding(store, r);
@@ -305,7 +301,7 @@ export async function driveTitleNaming(args: {
           role: 'user',
           content: JSON.stringify({
             ...taskEnvelope(store, root, r, 'planning'),
-            confirmedPlan: source,
+            confirmedPlan: { ...source, spec: modelBookSpec(source.spec) },
             planHash: t.planHash,
             rule: titleRules[t.rule],
             ...(marketEdition ? { marketTarget: { platform: 'fanqie', genre: t.marketResearch?.genre ?? source.currentPreferences.genre,

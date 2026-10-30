@@ -30,6 +30,20 @@ export function scopeSnapshot(store: FileStore, scope: MemoryScope) {
     throw new Error('旧快照只能在历史回看中读取，不能作为当前事实');
   return snapshot;
 }
+export function scopeSnapshotInfo(store: FileStore, scope: MemoryScope) {
+  if (scope.projectId && scope.projectId !== store.db.project().id) throw new Error('读取范围不属于当前作品');
+  const head = store.db.headRef();
+  if (scope.mode === 'historical' && !scope.snapshotId) throw new Error('请选择可用的历史快照');
+  const key = scope.snapshotId ?? head?.id;
+  if (!key) throw new Error('作品尚无正式快照');
+  const snapshot = store.db.snapshotInfo(key);
+  if (scope.mode !== 'historical' && scope.snapshotId && scope.snapshotId !== head?.id)
+    throw new Error('旧快照只能在历史回看中读取，不能作为当前事实');
+  return snapshot;
+}
+function scopeFacts(store: FileStore, scope: MemoryScope) {
+  return scope.mode === 'current' && !scope.snapshotId ? store.db.facts(scope) : store.db.snapshot(scope.snapshotId!).facts;
+}
 export function applicableFact(f: Fact, scope: MemoryScope) {
   if (
     f.worldId !== scope.worldId ||
@@ -56,20 +70,30 @@ export function sourceValid(
   e: SourceRef,
   documents: Record<string, string>,
   chapter: number,
-  project?: ProjectState
+  project?: ProjectState,
+  cache?: Map<string, string | null>
 ) {
   if (pendingSource(project ?? store.db.project(), e.path)) return false;
   if (documents[e.path] !== e.hash) return false;
   const n = e.path.match(/^07_.*第(\d+)章/);
   if (n && Number(n[1]) > chapter) return false;
   try {
-    const text = store.object(e.hash).toString('utf8');
+    if (cache && !cache.has(e.hash)) {
+      try { cache.set(e.hash, store.object(e.hash).toString('utf8')); }
+      catch { cache.set(e.hash, null); }
+    }
+    const text = cache ? cache.get(e.hash) : store.object(e.hash).toString('utf8');
+    if (text == null) return false;
     return e.start !== undefined && e.end !== undefined
       ? Array.from(text).slice(e.start, e.end).join('') === e.quote
       : text.includes(e.quote);
   } catch {
     return false;
   }
+}
+export function sourceValidator(store: FileStore, documents: Record<string, string>, chapter: number, project: ProjectState) {
+  const cache = new Map<string, string | null>();
+  return (source: SourceRef) => sourceValid(store, source, documents, chapter, project, cache);
 }
 export function conflictingFacts(facts: Fact[]) {
   const conflicts = new Set<string>();
@@ -106,12 +130,13 @@ export function retrieveMemory(
   browse?: { category: string; offset: number; pageSize: number }
 ) {
   const scope = memoryScopeSchema.parse(input),
-    snapshot = scopeSnapshot(store, scope);
+    snapshot = scopeSnapshotInfo(store, scope);
   if (!snapshot) throw new Error('作品尚无正式快照');
-  const all = scope.mode === 'current' && !scope.snapshotId ? store.db.facts() : snapshot.facts;
+  const all = scopeFacts(store, scope);
+  const validSource = sourceValidator(store, snapshot.documents, scope.chapter, snapshot.project);
   const visible = all.filter((f) => visibleFact(f, scope));
   const conflicts = conflictingFacts(visible);
-  const invalidSources = new Set(visible.filter(f => conflicts.has(f.id) || f.evidence.some(e => !sourceValid(store, e, snapshot.documents, scope.chapter, snapshot.project))).map(f => f.id));
+  const invalidSources = new Set(visible.filter(f => conflicts.has(f.id) || f.evidence.some(e => !validSource(e))).map(f => f.id));
   const eligible = visible.filter(f => !invalidSources.has(f.id));
   const names = [...new Set(eligible.filter(f => [f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))).flatMap(f => [f.subject, ...f.aliases]))];
   const terms = [...new Set([...names, ...tokensOf(query)])];
@@ -253,9 +278,10 @@ export function scopedRead(store: FileStore, file: string, scope: MemoryScope) {
     return { ...store.readAccepted(file, snapshot.id), kind: 'author-instruction' };
   if (scope.viewpoint === 'reader' && n) return store.readAccepted(file, snapshot.id);
   const facts = snapshot.facts.filter((f) => visibleFact(f, scope));
+  const validSource = sourceValidator(store, snapshot.documents, scope.chapter, snapshot.project);
   const evidence = facts
     .flatMap((f) => f.evidence)
-    .filter((e) => e.path === file && sourceValid(store, e, snapshot.documents, scope.chapter, snapshot.project));
+    .filter((e) => e.path === file && validSource(e));
   if (!evidence.length) throw new Error('当前视角没有可读取的证据');
   const text = store.object(snapshot.documents[file]).toString('utf8');
   const unique = [...new Map(evidence.map(e => [JSON.stringify([e.start, e.end, e.quote]), e])).values()];
@@ -313,10 +339,9 @@ export function syncEntities(store: FileStore) {
 }
 export function characterState(store: FileStore, entity: string, input: unknown): EntityState {
   const scope = memoryScopeSchema.parse(input),
-    snapshot = scopeSnapshot(store, scope);
-  const candidates = (
-    scope.mode === 'current' && !scope.snapshotId ? store.db.facts() : snapshot.facts
-  ).filter(
+    snapshot = scopeSnapshotInfo(store, scope);
+  const validSource = sourceValidator(store, snapshot.documents, scope.chapter, snapshot.project);
+  const candidates = scopeFacts(store, scope).filter(
     (f) =>
       f.entityIds.includes(entity) ||
       f.subject === entity ||
@@ -328,7 +353,7 @@ export function characterState(store: FileStore, entity: string, input: unknown)
     (f) =>
       visibleFact(f, scope) &&
       !conflicts.has(f.id) &&
-      f.evidence.every((e) => sourceValid(store, e, snapshot.documents, scope.chapter, snapshot.project))
+      f.evidence.every(validSource)
   );
   return {
     id: entity,

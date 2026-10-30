@@ -1,4 +1,5 @@
 import type { PlanningReport } from '../shared/tags';
+import { worldModuleIds, worldModuleNames } from '../shared/quality';
 
 export function DirectionCards({ report, selectedId, disabled, onSelect, format }: {
   report: PlanningReport;
@@ -22,10 +23,14 @@ export function DirectionCards({ report, selectedId, disabled, onSelect, format 
           <dt>与另外两案的区别</dt><dd>{format(direction.differenceFromOtherDirections)}</dd>
           <dt>长期风险与应对</dt><dd>{format(direction.longRunRisk)}</dd>
         </dl>
+        {!!direction.worldSuggestions?.length && <details><summary>世界模块建议</summary><ul>
+          {direction.worldSuggestions.map(item => <li key={item.moduleId}>
+            {worldModuleNames[worldModuleIds.indexOf(item.moduleId as typeof worldModuleIds[number])] ?? item.moduleId.replace(/^custom:/, '')} · {({ enabled: '建议启用', disabled: '不需要', undecided: '暂不确定' })[item.state]}：{format(item.reason)}
+          </li>)}
+        </ul></details>}
         <section className="direction-settings" aria-label={`${format(direction.title)}的新增设定`}>
           <h4>模型新增设定</h4>
           {additions.length ? <>
-            <p className="muted">模型提出的补充设定，以你最终确认的方案为准。</p>
             <ul>{additions.map(item => <li key={item.id}>{format(item.text)}</li>)}</ul>
           </> : <p className="muted">本案未单列新增设定。</p>}
           {!!direction.intentChanges.length && <>

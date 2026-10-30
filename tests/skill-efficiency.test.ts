@@ -15,6 +15,8 @@ import { fakeProfile, fakeResult, isolatedRoot } from './fixtures/refactor';
 import { fixture } from './fixtures/workflow';
 import type { Caller } from '../src/core/runner';
 import { controllerRules } from '../src/core/agent-control';
+import { fixtureCoverage, fixtureAuditEvidence } from './fixtures/chapter-coverage';
+import type { ChapterCoverage } from '../src/shared/chapter-memory';
 
 const skill = path.resolve('resources/skill');
 const profile = { ...fakeProfile, contextLimit: 1000000, outputLimit: 32768, stream: false };
@@ -69,10 +71,10 @@ test('目标模板本地预载到首个请求，外部变更仍使上下文失�
   } finally { await service.drain(); }
 });
 
-function proposal(changes: unknown[], facts?: unknown[]) {
+function proposal(changes: unknown[], facts?: unknown[], coverage?: ChapterCoverage) {
   return { ...fakeResult(''), native: null, stop: 'tools' as const, calls: [
     ...(changes.length ? [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes }) }] : []),
-    ...(facts ? [{ id: crypto.randomUUID(), name: 'propose_memory', arguments: JSON.stringify({ facts, complete: true }) }] : [])
+    ...(facts ? [{ id: crypto.randomUUID(), name: 'propose_memory', arguments: JSON.stringify({ facts, complete: true, coverage }) }] : [])
   ] };
 }
 
@@ -120,24 +122,28 @@ async function setup(caller: Caller) {
   return { service, run };
 }
 
-test('事实提交完毕若本地报告计数错误，直接发送定向修复再审查，没有空结束请求', async () => {
+for (const scenario of [
+  { name: '报告计数错误', missing: false, reads: [] },
+  { name: '报告缺失后读取资料', missing: true, reads: ['read_document'] },
+  { name: '报告计数错误后读取和检查', missing: false, reads: ['read_document', 'validate'] }
+]) test(`章后定向修复：${scenario.name}，只在实际提交后验收`, async () => {
   let service: Service, requests = 0, memories = 0, audits = 0;
   const created = await setup(async (_p, system, messages, tools) => {
     requests++;
     const p = service.store!.db.project(), input = JSON.parse(messages[0].content);
     if (system.includes('本次独立章后核对包含两个检查')) {
       audits++;
-      assert.equal(memories, 2, '本地错误修复前不能审查旧候选');
-      return fakeResult(JSON.stringify({ memory: { decisions: input.items.map((i: any) => ({ id: i.id, verdict: 'supported', reason: '原文写明递出动作。', evidenceRefs: [0] })) },
+      assert.equal(memories, 2 + scenario.reads.length, '本地错误修复前不能审查旧候选');
+      return fakeResult(JSON.stringify({ memory: { decisions: input.items.map((i: any) => ({ id: i.id, verdict: 'supported', reason: '原文写明递出动作。', ...(i.fact ? { evidenceRefs: [0] } : { evidence: fixtureAuditEvidence(i, input.sources) }) })) },
         plans: { decisions: input.plans.map((plan: any) => ({ path: plan.path, verdict: 'consistent', reason: '当前动作与求医计划相容。',
           planQuote: input.sources.find((s: any) => s.path === plan.path).content.slice(0, 30), proseQuote: input.sources.find((s: any) => s.path === input.prose.path).content.slice(0, 30) })) } }));
     }
     if (!tools.length) return fakeResult(fixture(p, prosePath(1), service));
     if (system.includes('本阶段为 review')) return proposal([service.change(qualityPath(1), fixture(p, qualityPath(1), service))]);
     memories++;
-    if (memories > 1) {
-      assert.equal(memories, 2);
-      assert.match(messages.at(-1)!.content, /aftermath_words/);
+    if (memories === 2) {
+      assert.match(messages.at(-1)!.content, scenario.missing ? /missing_output/ : /aftermath_words/);
+      if (scenario.missing) assert.doesNotMatch(messages.at(-1)!.content, /aftermath_words|报告填写.*未知/);
       const repair = JSON.parse(messages.at(-1)!.content).repairScope;
       assert.deepEqual(repair.paths, [updatePath(1)]);
       assert.deepEqual(repair.factIds, []);
@@ -145,19 +151,29 @@ test('事实提交完毕若本地报告计数错误，直接发送定向修复�
       assert.equal(repair.allowNewFacts, false);
     }
     const run = service.store!.db.runs().find(r => r.status === 'running')!, prose = run.changes.find(c => c.path === prosePath(1))!;
+    if (memories > 1) {
+      assert.equal(run.repairAttempts?.memory, 1, '只读工具不能消耗自动修复次数');
+      assert.equal(audits, 0, '读取或检查不能触发独立验收');
+      assert.equal(hash(prose.content), run.pipeline!.proseHash);
+    }
+    const read = scenario.reads[memories - 2];
+    if (read) return { ...fakeResult(''), native: null, stop: 'tools', calls: [{
+      id: crypto.randomUUID(), name: read,
+      arguments: JSON.stringify(read === 'read_document' ? { path: updatePath(1), candidate: true } : {})
+    }] };
     const fact = factSchema.parse({ id: 'action', subject: '阿宁', predicate: '递出记录', value: '向医生递出记录本', kind: 'event', category: 'item', fromChapter: 1, revealedAt: 1,
       evidence: [{ path: prose.path, hash: hash(prose.content), quote: '阿宁推开诊室的门，把记录本递到灯下。' }] });
-    const changes = (memories === 1 ? stageOutputs('S11', p) : [updatePath(1)]).map(file => service.change(file,
+    const changes = (memories === 1 ? stageOutputs('S11', p).filter(file => !scenario.missing || file !== updatePath(1)) : [updatePath(1)]).map(file => service.change(file,
       memories === 1 && file === updatePath(1) ? fixture(p, file, service).replace(/正文实际字数：\d+/, '正文实际字数：1') : fixture(p, file, service)));
-    return proposal(changes, [fact]);
+    return proposal(changes, [fact], fixtureCoverage(service, run, [fact]));
   });
   service = created.service;
   try {
     await service.runner!.drive(created.run.id);
     const done = service.store!.db.run(created.run.id);
     assert.equal(done.status, 'awaiting_review', done.error ?? JSON.stringify(done.issues));
-    assert.equal(requests, 5); assert.equal(memories, 2); assert.equal(audits, 1);
-    assert.equal(done.repairAttempts?.memory, 1); assert.equal(done.rounds, 5);
+    assert.equal(requests, 5 + scenario.reads.length); assert.equal(memories, 2 + scenario.reads.length); assert.equal(audits, 1);
+    assert.equal(done.repairAttempts?.memory, 1); assert.equal(done.rounds, 5 + scenario.reads.length);
   } finally { await service.drain(); }
 });
 
@@ -181,8 +197,8 @@ for (const mode of ['valid', 'contradicted', 'invalid-quote']) test(`独立章�
         assert.match(messages[2].content, /不把否定或不明确结论改成默认通过/);
       } else assert.equal(messages.length, 1);
       return fakeResult(JSON.stringify({ memory: { decisions: input.items.map((item: any) => ({ id: item.id,
-        verdict: rejected && audits === 1 ? 'contradicted' : 'supported', reason: rejected && audits === 1 ? '原文医生没有接，不能记成已经交付。' : '原文明确写出递出动作，未声称完成交付。', evidenceRefs: [0],
-        evidence: [...item.fact.evidence.map((e: any) => ({ path: e.path, quote: mode === 'invalid-quote' && audits === 1 ? '伪造的证据片段' : e.quote })),
+        verdict: rejected && audits === 1 ? 'contradicted' : 'supported', reason: rejected && audits === 1 ? '原文医生没有接，不能记成已经交付。' : '原文明确写出递出动作，未声称完成交付。', ...(item.fact ? { evidenceRefs: [0] } : {}),
+        evidence: [...fixtureAuditEvidence(item, input.sources).map((e: any) => ({ path: e.path, quote: mode === 'invalid-quote' && audits === 1 ? '伪造的证据片段' : e.quote })),
           { path: input.plans[0].path, quote: input.sources.find((s: any) => s.path === input.plans[0].path).content.slice(0, 30) }] })) },
         plans: { decisions: input.plans.map((plan: any) => ({ path: plan.path, verdict: 'consistent', reason: '后续求医计划与当前递出记录本的行为相容。', planQuote: input.sources.find((s: any) => s.path === plan.path).content.slice(0, 30), proseQuote: input.sources.find((s: any) => s.path === input.prose.path).content.slice(0, 30) })) } }));
     }
@@ -190,7 +206,7 @@ for (const mode of ['valid', 'contradicted', 'invalid-quote']) test(`独立章�
       audits++;
       assert.equal(input.plans, undefined, '仅事实改动不重复核对已有后续计划');
       return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => ({ id: item.id,
-        verdict: 'supported', reason: '原文支持递出动作，不声称完成交付。', evidenceRefs: [0] })) }));
+        verdict: 'supported', reason: '原文支持递出动作，不声称完成交付。', ...(item.fact ? { evidenceRefs: [0] } : { evidence: fixtureAuditEvidence(item, input.sources) }) })) }));
     }
     if (!tools.length) return fakeResult(fixture(p, prosePath(1), service));
     if (system.includes('本阶段为 review')) {
@@ -202,7 +218,7 @@ for (const mode of ['valid', 'contradicted', 'invalid-quote']) test(`独立章�
     const r = service.store!.db.runs().find(r => r.status === 'running')!, prose = r.changes.find(c => c.path === prosePath(1))!;
     const fact = factSchema.parse({ id: 'record-action', subject: '阿宁', predicate: '记录本动作', value: rejected && extractions === 1 ? '已经交给医生' : '向医生递出记录本', kind: 'event', category: 'item', fromChapter: 1, revealedAt: 1,
       evidence: [{ path: prose.path, hash: hash(prose.content), quote: '阿宁推开诊室的门，把记录本递到灯下。' }] });
-    return proposal(extractions === 1 ? stageOutputs('S11', p).map(file => service.change(file, fixture(p, file, service))) : [], [fact]);
+    return proposal(extractions === 1 ? stageOutputs('S11', p).map(file => service.change(file, fixture(p, file, service))) : [], [fact], fixtureCoverage(service, r, [fact]));
   });
   service = created.service;
   try {
@@ -217,7 +233,7 @@ for (const mode of ['valid', 'contradicted', 'invalid-quote']) test(`独立章�
     assert.equal(canCombineChapterAudit(profile, shared, ''), true);
     assert.equal(canCombineChapterAudit({ ...profile, outputLimit: 4096 }, shared, ''), false);
     assert.equal(canCombineChapterAudit({ ...profile, contextLimit: 4096, inputLimit: 1024, outputLimit: 1024 }, shared, ''), false);
-    const good = { memory: { decisions: memory.items.map(item => ({ id: item.id, verdict: 'supported', reason: '原文支持递出动作。', evidence: item.fact!.evidence.map(e => ({ path: e.path, quote: e.quote })) })) }, plans: { decisions: done.futurePlanReview!.decisions } };
+    const good = { memory: { decisions: memory.items.map(item => ({ id: item.id, verdict: 'supported', reason: '原文支持递出动作。', evidence: fixtureAuditEvidence(item, memory.sources) })) }, plans: { decisions: done.futurePlanReview!.decisions } };
     assert.throws(() => parseChapterAudit(JSON.stringify({ ...good, memory: { decisions: [] } }), memory, plans), /逐条覆盖/);
     assert.throws(() => parseChapterAudit(JSON.stringify({ ...good, plans: { decisions: [] } }), memory, plans), /逐份覆盖/);
     const badQuote = structuredClone(good); badQuote.plans.decisions[0].proseQuote = '不存在于原文中的证据句子';

@@ -1,0 +1,1951 @@
+{
+  "manifestSchemaVersion": 2,
+  "designVersion": "V4",
+  "activationState": "design_only",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "skills": [
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "concept-forge",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/concept-forge/SKILL.md.template",
+      "entrySha256": "3c280614035079d6089f4f577ee64dca16b72571ee0f530d3047f432ab7ee6f9",
+      "operations": [
+        {
+          "operationId": "create",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "OriginalIdea",
+            "GenreEvidence",
+            "DirectionOutputContract"
+          ],
+          "outputKind": "direction-report",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "author.locked-constraints",
+            "directions.exact-three",
+            "directions.unique-ids",
+            "assumptions.valid-scope",
+            "requirement.coverage"
+          ],
+          "resources": [
+            {
+              "resourceId": "concept-forge.create",
+              "relativePath": "vnext/skills-v4/blueprints/concept-forge/references/create.md",
+              "sha256": "0fd4b7b99b2d77e67252e78ce3e50c036d4075cc95587b4aae54e803eb09f298",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "regenerate",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "ExistingDirectionReport",
+            "RegenerationScope",
+            "AuthorRevisionRequest"
+          ],
+          "outputKind": "direction-report",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "revision.allowed-scope",
+            "directions.frozen-preserved",
+            "directions.stable-ids",
+            "assumptions.valid-scope"
+          ],
+          "resources": [
+            {
+              "resourceId": "concept-forge.regenerate",
+              "relativePath": "vnext/skills-v4/blueprints/concept-forge/references/regenerate.md",
+              "sha256": "169da23d9293cb4ffb208c26dcd09d2f49905f17c4a46ab677646f7b85848017",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "09122cd7cdbcdd52571385b0abbe009f471d0353f1c7027d00cbb19e9dcb61fe"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "story-contract",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/story-contract/SKILL.md.template",
+      "entrySha256": "0dc4fd7d771016a149cb0788d56cc9f6b3e195b6a21f06c0f5ab06f0cdf336ad",
+      "operations": [
+        {
+          "operationId": "build",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "SelectedDirection",
+            "ResolvedAssumptions",
+            "CreationContractSchema"
+          ],
+          "outputKind": "creation-contract",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "author.locked-constraints",
+            "creation.required-coverage",
+            "source.allowed-refs",
+            "assumptions.resolution"
+          ],
+          "resources": [
+            {
+              "resourceId": "story-contract.build",
+              "relativePath": "vnext/skills-v4/blueprints/story-contract/references/build.md",
+              "sha256": "2b087997e9fde5d93038e735f4855345a784bc37c4bb799b8b5efb39e43672f9",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "compat_adapter"
+        },
+        {
+          "operationId": "review",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "CreationContractCandidate",
+            "AuthorContract",
+            "SelectedDirection",
+            "ResolvedAssumptions",
+            "CandidateVersion"
+          ],
+          "outputKind": "creation-contract-review",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "review.candidate-version",
+            "review.valid-paths",
+            "source.allowed-refs",
+            "review.evidence-required"
+          ],
+          "resources": [
+            {
+              "resourceId": "story-contract.review",
+              "relativePath": "vnext/skills-v4/blueprints/story-contract/references/review.md",
+              "sha256": "523c49387c242ce7ea1b3454a23452aaabf43a9d9e45933996affaade81a571f",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "compat_adapter"
+        },
+        {
+          "operationId": "configure",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "AuthorPreferences",
+            "CurrentProjectConfig",
+            "PlanningDependencies",
+            "ConfigOutputContract"
+          ],
+          "outputKind": "project-config-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "config.ranges",
+            "config.host-calculations",
+            "revision.allowed-scope",
+            "source.style-provenance"
+          ],
+          "resources": [
+            {
+              "resourceId": "story-contract.configure",
+              "relativePath": "vnext/skills-v4/blueprints/story-contract/references/configure.md",
+              "sha256": "533e909dee528f4dcf077b18631241f540c6a786aa953f1d8f875661b96a5ff2",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "compat_adapter"
+        }
+      ],
+      "packageDigest": "d04b776af229a48bb2477c980bedbf25705cece092f72e442ba80d913c79c6b2"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "co-creation",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/co-creation/SKILL.md.template",
+      "entrySha256": "73022e5a2525883a939005900b9029319ea4a4fa6e6a6739b54d44d4fc2f59df",
+      "operations": [
+        {
+          "operationId": "discuss",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ObjectConversationBinding",
+            "CreativeObjectSnapshot",
+            "AuthorQuestion",
+            "ScopedReferences",
+            "ObjectLens"
+          ],
+          "outputKind": "co-creation-chat",
+          "requestedCapabilities": [
+            "conversation.respond",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "object.version-binding",
+            "source.valid-refs",
+            "output.no-write-claim"
+          ],
+          "resources": [
+            {
+              "resourceId": "co-creation.discuss",
+              "relativePath": "vnext/skills-v4/blueprints/co-creation/references/discuss.md",
+              "sha256": "0de5d4bec8c8c0e16fdb04aa16923edd5dcdc265141cf0a757314ce4fb3ce5e9",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "compare",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "CreativeObjectSnapshot",
+            "ComparisonCandidates",
+            "AuthorCriteria",
+            "ObjectLens"
+          ],
+          "outputKind": "co-creation-chat",
+          "requestedCapabilities": [
+            "conversation.respond",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "comparison.shared-baseline",
+            "source.valid-refs",
+            "output.no-write-claim"
+          ],
+          "resources": [
+            {
+              "resourceId": "co-creation.compare",
+              "relativePath": "vnext/skills-v4/blueprints/co-creation/references/compare.md",
+              "sha256": "f760b8dc6fa01d91aa83d4115bb8e4e7f69aef8aeedeccfb85eded0bea6f5064",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "propose",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "CreativeObjectSnapshot",
+            "AuthorRevisionRequest",
+            "CoCreationAuthorization",
+            "DependencySummary",
+            "ObjectLens"
+          ],
+          "outputKind": "creative-change-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "object.version-binding",
+            "revision.allowed-scope",
+            "changes.dependency-groups",
+            "author.constraint-revision",
+            "output.no-write-claim"
+          ],
+          "resources": [
+            {
+              "resourceId": "co-creation.propose",
+              "relativePath": "vnext/skills-v4/blueprints/co-creation/references/propose.md",
+              "sha256": "d378a892df5deb977b84f026bfa5c6baa1f027b04809b142b04adfc7adfadf67",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "06e0321774ca5e4842e14b8996d8c00a033e7bbe22ea70bd0a75c15aceb66918"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "world-design",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/world-design/SKILL.md.template",
+      "entrySha256": "29d4a0d0e515ec8284c2d4ac3335db16dfbe097e5449811a555d2f1a6a3765d7",
+      "operations": [
+        {
+          "operationId": "create",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "CreationContract",
+            "ConfirmedWorldRules",
+            "WorldDesignScope",
+            "WorldOutputContract"
+          ],
+          "outputKind": "world-design-candidate",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "author.locked-constraints",
+            "world.rule-consistency",
+            "source.valid-refs",
+            "revision.allowed-scope"
+          ],
+          "resources": [
+            {
+              "resourceId": "world-design.create",
+              "relativePath": "vnext/skills-v4/blueprints/world-design/references/create.md",
+              "sha256": "8f6a2601456de580cc6c1e83d00aecc1870fb2070a6c4ffc74bc6d8eb5e4fa20",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "compat_adapter"
+        }
+      ],
+      "packageDigest": "d5bfc8218435f34a0308fdd0e5db4ddf82083373694af09785f05270ed65609e"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "character-design",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/character-design/SKILL.md.template",
+      "entrySha256": "c3b8411f4392130f9d13276b37a1b767a1c085ef0c207646fcf4cc92f173810f",
+      "operations": [
+        {
+          "operationId": "create",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "CreationContract",
+            "ConfirmedWorldRules",
+            "CharacterRosterScope",
+            "ExistingCharacterCores"
+          ],
+          "outputKind": "character-design-candidate",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "author.locked-constraints",
+            "characters.identity-uniqueness",
+            "characters.core-state-separation",
+            "belief.world-separation",
+            "revision.allowed-scope"
+          ],
+          "resources": [
+            {
+              "resourceId": "character-design.create",
+              "relativePath": "vnext/skills-v4/blueprints/character-design/references/create.md",
+              "sha256": "d30129a4efbf72123cb77897c3f2e1bef134188a00c6efdf59594ab4d2eca48d",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v4_adapter_required"
+        }
+      ],
+      "packageDigest": "6ee26af55b4299ea11ac474b9b0f10b0b5efeb672c17fd92b05dbaef78015124"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "rolling-outline",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/rolling-outline/SKILL.md.template",
+      "entrySha256": "5fcc2f42b1d49795e5cfd9c7a9f1a206509712c22dcf264a1be5c5d9bc5bb46b",
+      "operations": [
+        {
+          "operationId": "book",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "AuthorContract",
+            "CreationContract",
+            "BookMilestones",
+            "PlanningWindow",
+            "PromiseLedger"
+          ],
+          "outputKind": "book-outline-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "planning.window",
+            "author.locked-constraints",
+            "planning.not-canon",
+            "changes.dependency-groups"
+          ],
+          "resources": [
+            {
+              "resourceId": "rolling-outline.book",
+              "relativePath": "vnext/skills-v4/blueprints/rolling-outline/references/book.md",
+              "sha256": "d26d78514eeff24468af847a96a2ed72f6eb9ddf821e90dc0c8cbc947cf55666",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "volume",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "BookMilestones",
+            "CurrentVolumeState",
+            "PlanningWindow",
+            "PromiseLedger",
+            "AuthorContract"
+          ],
+          "outputKind": "volume-outline-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "planning.window",
+            "author.locked-constraints",
+            "promises.scope",
+            "planning.not-canon"
+          ],
+          "resources": [
+            {
+              "resourceId": "rolling-outline.volume",
+              "relativePath": "vnext/skills-v4/blueprints/rolling-outline/references/volume.md",
+              "sha256": "1992a6cfbd02d05d96e0de39f4c31d27f0df00eaf8266ad30e62a30d4d968ffb",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "roadmap",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "VolumeOutline",
+            "PlanningWindow",
+            "ChapterRoadmap",
+            "CurrentCharacterStates",
+            "PromiseLedger"
+          ],
+          "outputKind": "chapter-roadmap-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "planning.window",
+            "planning.chapter-coverage",
+            "planning.not-canon",
+            "revision.allowed-scope"
+          ],
+          "resources": [
+            {
+              "resourceId": "rolling-outline.roadmap",
+              "relativePath": "vnext/skills-v4/blueprints/rolling-outline/references/roadmap.md",
+              "sha256": "f74b7411c1ccb6fe0f16a494fd894817676a96250f5092a1b76a74235f201643",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "rhythm",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ChapterRoadmap",
+            "PlanningWindow",
+            "ReaderPromises",
+            "AuthorStylePreferences"
+          ],
+          "outputKind": "rhythm-plan-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "planning.window",
+            "planning.locked-outcomes",
+            "evidence.not-fabricated",
+            "planning.not-canon"
+          ],
+          "resources": [
+            {
+              "resourceId": "rolling-outline.rhythm",
+              "relativePath": "vnext/skills-v4/blueprints/rolling-outline/references/rhythm.md",
+              "sha256": "71837c0e6603262c96fa4610c486b10cdeff62574429e8e0700474b040357f0d",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "compat_adapter"
+        },
+        {
+          "operationId": "batch",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ChapterRoadmap",
+            "RhythmPlan",
+            "PlanningWindow",
+            "ScopedMemoryPacket",
+            "AuthorContract"
+          ],
+          "outputKind": "batch-outline-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "planning.window",
+            "workflow.stage-gates",
+            "planning.chapter-coverage",
+            "planning.not-canon"
+          ],
+          "resources": [
+            {
+              "resourceId": "rolling-outline.batch",
+              "relativePath": "vnext/skills-v4/blueprints/rolling-outline/references/batch.md",
+              "sha256": "13ef8772d311b956809302748ce76c0d5ea806204ab8659ae065a610ced8e1d4",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "17d2f212a9391798e76bef5f611394421fab51a7f9a814d98c0c736b0d8e16d9"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "scene-contract",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/scene-contract/SKILL.md.template",
+      "entrySha256": "e60afd8bb2750a7bff9eb308fb973fad3515904d1d456d85cbae7ae51b836441",
+      "operations": [
+        {
+          "operationId": "plan",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ApprovedChapterPlan",
+            "ScopedMemoryPacket",
+            "CharacterEntryStates",
+            "NameMap",
+            "VoiceSlice",
+            "AuthorContract"
+          ],
+          "outputKind": "scene-contract",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "memory.readiness",
+            "scene.knowledge-boundaries",
+            "scene.required-beats",
+            "source.valid-refs",
+            "planning.not-canon"
+          ],
+          "resources": [
+            {
+              "resourceId": "scene-contract.plan",
+              "relativePath": "vnext/skills-v4/blueprints/scene-contract/references/plan.md",
+              "sha256": "a35ea8314580f112d42d2ada7fd6f296a49b9198643319e0f71fe1c95e59be09",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "710bafafdc742a2ce333a2fb80bed7358c736a65b50c848cb7123671f486f48b"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "voice-calibration",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/voice-calibration/SKILL.md.template",
+      "entrySha256": "ce3016af9d82f02f1de45382e5e2ab84a653c4385ea625608be21468fe0ae49b",
+      "operations": [
+        {
+          "operationId": "extract",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "AuthorStylePreferences",
+            "StyleSamples",
+            "CurrentVoiceProfile",
+            "StyleSourceMetadata"
+          ],
+          "outputKind": "voice-profile-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "voice.source-provenance",
+            "voice.no-story-facts",
+            "evidence.not-fabricated"
+          ],
+          "resources": [
+            {
+              "resourceId": "voice-calibration.extract",
+              "relativePath": "vnext/skills-v4/blueprints/voice-calibration/references/extract.md",
+              "sha256": "d9944db0edfad7eb8d9ecd6575d67ee10e93f55c63f43a2110bbd7238ff31ff8",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "calibrate",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "AuthorStylePreferences",
+            "StyleSamples",
+            "SceneContract",
+            "RequestedVariantCount",
+            "SharedFactConstraints"
+          ],
+          "outputKind": "voice-calibration-batch",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "voice.variant-count",
+            "voice.shared-facts",
+            "voice.source-provenance",
+            "voice.prose-clean"
+          ],
+          "resources": [
+            {
+              "resourceId": "voice-calibration.calibrate",
+              "relativePath": "vnext/skills-v4/blueprints/voice-calibration/references/calibrate.md",
+              "sha256": "aa4a4f7cc89a16cf9958fcfb2ccf40b9dc0a69441743b49b9c971845969e7d86",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "update",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "CurrentVoiceProfile",
+            "AuthorSelections",
+            "PreferenceEvidence",
+            "VoiceUpdateScope"
+          ],
+          "outputKind": "voice-profile-change-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "object.version-binding",
+            "voice.preference-evidence",
+            "revision.allowed-scope",
+            "output.no-write-claim"
+          ],
+          "resources": [
+            {
+              "resourceId": "voice-calibration.update",
+              "relativePath": "vnext/skills-v4/blueprints/voice-calibration/references/update.md",
+              "sha256": "6b9334bbbc20009ebf807dd22b9803be63dfc0d2df71994bb18aef6367d9e101",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "pilot",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "CandidateVoiceProfiles",
+            "SceneContract",
+            "ScopedMemoryPacket",
+            "PilotLengthRange"
+          ],
+          "outputKind": "pilot-batch",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "voice.variant-count",
+            "voice.shared-facts",
+            "voice.prose-clean",
+            "voice.no-auto-selection"
+          ],
+          "resources": [
+            {
+              "resourceId": "voice-calibration.pilot",
+              "relativePath": "vnext/skills-v4/blueprints/voice-calibration/references/pilot.md",
+              "sha256": "c453448b510bd381bbc5b57f884e5d3fa07161953d89b2d550870e82b9db624f",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "8869b6b50b78c3f5294735518848114fca550673ad970994aedea3fad4fc7c90"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "chapter-draft",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/chapter-draft/SKILL.md.template",
+      "entrySha256": "faef0819d6a72b607f75a57ab1dbeb55177a7910690c9d70dd12fb665291f8d3",
+      "operations": [
+        {
+          "operationId": "draft",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "SceneContract",
+            "ScopedMemoryPacket",
+            "AuthorContract",
+            "VoiceSlice",
+            "CharacterEntryStates",
+            "NameMap"
+          ],
+          "outputKind": "chapter-prose",
+          "requestedCapabilities": [
+            "prose.return"
+          ],
+          "contextView": "scoped_pov",
+          "validatorIds": [
+            "prose.protocol",
+            "memory.readiness",
+            "source.snapshot-binding",
+            "author.locked-constraints",
+            "scene.knowledge-boundaries",
+            "prose.no-machine-metadata"
+          ],
+          "resources": [
+            {
+              "resourceId": "chapter-draft.draft",
+              "relativePath": "vnext/skills-v4/blueprints/chapter-draft/references/draft.md",
+              "sha256": "73d3e37f2a7b1f632a0112eb0c920015272dbdb74c1bc9408d8fdde31c9fceb1",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "459425cdf6acd884834d0d53b10c9de86b08346faf592bcf8234cb81be0381c5"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "chapter-review",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/chapter-review/SKILL.md.template",
+      "entrySha256": "d86d79c958fe24ac98927f23c3093551d8698bff88ae0dedef1e05030bdd2649",
+      "operations": [
+        {
+          "operationId": "review",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ChapterProseCandidate",
+            "CandidateHash",
+            "SceneContract",
+            "AuthorContract",
+            "ScopedReviewMemory",
+            "VoiceProfile",
+            "LocalDiagnosticHints"
+          ],
+          "outputKind": "chapter-review-report",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "review.candidate-hash",
+            "review.five-checks",
+            "review.evidence-required",
+            "review.severity-consistency",
+            "source.valid-refs"
+          ],
+          "resources": [
+            {
+              "resourceId": "chapter-review.review",
+              "relativePath": "vnext/skills-v4/blueprints/chapter-review/references/review.md",
+              "sha256": "2f5cccb8d31f6bdab5b7575382ec5a56b532df3abfe8541fb280576159581921",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "5917d407b876ee9c39fd9fbad8069cd6a4be8f66b847a1b6bcd85e274e13ae5f"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "revision",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/revision/SKILL.md.template",
+      "entrySha256": "716dc5db2d6e48030edd652fec24c123acbd96afc47194a222b4454146e9a559",
+      "operations": [
+        {
+          "operationId": "voice",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ChapterProseCandidate",
+            "CandidateHash",
+            "AllowedTextRanges",
+            "VoiceProfile",
+            "ReaderImpactFindings"
+          ],
+          "outputKind": "prose-patch-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "patch.base-hash",
+            "patch.allowed-ranges",
+            "patch.non-overlap",
+            "patch.anchor-match",
+            "revision.plot-escalation"
+          ],
+          "resources": [
+            {
+              "resourceId": "revision.voice",
+              "relativePath": "vnext/skills-v4/blueprints/revision/references/voice.md",
+              "sha256": "4c19de927727be2d351814f6dca227b9634284df4a10f56d2fce4267c83b7d57",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "local",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ChapterProseCandidate",
+            "CandidateHash",
+            "ConfirmedFindings",
+            "AllowedTextRanges",
+            "PreservationConstraints"
+          ],
+          "outputKind": "prose-patch-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "patch.base-hash",
+            "patch.allowed-ranges",
+            "patch.non-overlap",
+            "patch.anchor-match",
+            "revision.issue-coverage"
+          ],
+          "resources": [
+            {
+              "resourceId": "revision.local",
+              "relativePath": "vnext/skills-v4/blueprints/revision/references/local.md",
+              "sha256": "08edec8e38f6e7bd0f20dc94c2e7a37438838419cf8e52dfc3e8afc769c5fd55",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        },
+        {
+          "operationId": "story",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "CreativeObjectSnapshot",
+            "AuthorRevisionRequest",
+            "CoCreationAuthorization",
+            "DependencySummary",
+            "AffectedCanonReferences"
+          ],
+          "outputKind": "creative-change-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "object.version-binding",
+            "revision.allowed-scope",
+            "changes.dependency-groups",
+            "author.constraint-revision",
+            "impact.host-scope"
+          ],
+          "resources": [
+            {
+              "resourceId": "revision.story",
+              "relativePath": "vnext/skills-v4/blueprints/revision/references/story.md",
+              "sha256": "8a3b2ba819364f9c15a23d9fb4c297be008aec319221b1c8fc100174314c4bdf",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "d0896cdadae323c09c17022f324d0fb37c5bab2de624ada0bd587b0131121f29"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "memory-delta",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/memory-delta/SKILL.md.template",
+      "entrySha256": "29585dcbb7ff1840dcc6ddf3559e6d1d46ba12f190a7030dfadad69365e3200a",
+      "operations": [
+        {
+          "operationId": "extract",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ChapterProseCandidate",
+            "CandidateHash",
+            "ReadSetV3",
+            "PreviousCharacterStates",
+            "EntityRoster",
+            "MemoryExtractionScope"
+          ],
+          "outputKind": "chapter-memory-delta",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "memory.body-hash",
+            "memory.read-set",
+            "source.codepoint-evidence",
+            "characters.coverage",
+            "memory.sparse-delta",
+            "belief.world-separation",
+            "memory.time-binding"
+          ],
+          "resources": [
+            {
+              "resourceId": "memory-delta.extract",
+              "relativePath": "vnext/skills-v4/blueprints/memory-delta/references/extract.md",
+              "sha256": "d377370d76f973811f04ee675e7f5181aa3964303d214d82477ddcd458e5399e",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "98a6a24e1202e725f340dda3b5421cc45483af4706aebb47de85b7dc27c8d71a"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "memory-review",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/memory-review/SKILL.md.template",
+      "entrySha256": "c1060d2cc769fa04e95ddede9d4cf4891fb2997dcb5d510a7d28449824da0cc5",
+      "operations": [
+        {
+          "operationId": "review",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ChapterProseCandidate",
+            "CandidateHash",
+            "ChapterMemoryDelta",
+            "ReadSetV3",
+            "PreviousCharacterStates",
+            "MemoryEvidence"
+          ],
+          "outputKind": "memory-review-report",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "review.candidate-hash",
+            "memory.read-set",
+            "review.evidence-required",
+            "characters.coverage",
+            "belief.world-separation",
+            "memory.time-binding",
+            "source.valid-refs"
+          ],
+          "resources": [
+            {
+              "resourceId": "memory-review.review",
+              "relativePath": "vnext/skills-v4/blueprints/memory-review/references/review.md",
+              "sha256": "d24265431d55cbf5682fea0013561bc093ba5d1f91d0883507abb60e6a8a7b62",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "0f8168d697192f80244662358ac883a0cb6545abf9826a6ab7ad04f4a141e803"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "memory-query",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/memory-query/SKILL.md.template",
+      "entrySha256": "942150d5f3fdfe5e08a108ab271a5455c8887281ed99bb79bb9fe7e1d2cebaba",
+      "operations": [
+        {
+          "operationId": "answer",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "AuthorMemoryQuestion",
+            "MemoryQueryScopeV3",
+            "ScopedQueryResults",
+            "QueryCompleteness",
+            "SourceEvidence"
+          ],
+          "outputKind": "sourced-memory-answer",
+          "requestedCapabilities": [
+            "conversation.respond",
+            "memory.query.scoped",
+            "reference.read.scoped"
+          ],
+          "contextView": "scoped_query",
+          "validatorIds": [
+            "output.schema",
+            "query.scope",
+            "query.completeness",
+            "source.valid-refs",
+            "query.perspective-filter",
+            "output.no-write-claim"
+          ],
+          "resources": [
+            {
+              "resourceId": "memory-query.answer",
+              "relativePath": "vnext/skills-v4/blueprints/memory-query/references/answer.md",
+              "sha256": "469128a8460766fda9bc56195e75bf84b76d160a5c922bde5ad46ea1ee11bc1e",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "83d7039cba4fff1dce351380492a02264c17b6c36c3a9ed478d9e0b980cd3c46"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "character-reflection",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/character-reflection/SKILL.md.template",
+      "entrySha256": "6a7475bb314671e359b325d35c27cfa20385352eb7c9b0d8ecb5d1b470178735",
+      "operations": [
+        {
+          "operationId": "reflect",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ReflectionTrigger",
+            "ScopedCharacterExperiences",
+            "CharacterCores",
+            "CurrentCharacterStates",
+            "ReflectionRoster"
+          ],
+          "outputKind": "character-interpretation-candidates",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "scoped_pov",
+          "validatorIds": [
+            "output.schema",
+            "reflection.trigger-scope",
+            "source.valid-refs",
+            "query.perspective-filter",
+            "characters.core-state-separation",
+            "reflection.candidate-only"
+          ],
+          "resources": [
+            {
+              "resourceId": "character-reflection.reflect",
+              "relativePath": "vnext/skills-v4/blueprints/character-reflection/references/reflect.md",
+              "sha256": "cf07dd88be30d00eca8d1baf20d5a113b724463b5fb0ea3255841f489d2e00d6",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "9d98469f99302169d66971a20a77108dcbba88b1da53b15a04d3d08cbfd4edeb"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "canon-audit",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/canon-audit/SKILL.md.template",
+      "entrySha256": "bef35974d4b07d749d1135988b1f13443c7c7487da2667edd199766ca17fe01e",
+      "operations": [
+        {
+          "operationId": "continuity",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ContinuityAuditScope",
+            "AcceptedProseReferences",
+            "ScopedCanonStates",
+            "SourceEvidence",
+            "QueryCompleteness"
+          ],
+          "outputKind": "continuity-audit-report",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "memory.query.scoped",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "audit.scope",
+            "query.completeness",
+            "source.valid-refs",
+            "review.evidence-required",
+            "belief.world-separation"
+          ],
+          "resources": [
+            {
+              "resourceId": "canon-audit.continuity",
+              "relativePath": "vnext/skills-v4/blueprints/canon-audit/references/continuity.md",
+              "sha256": "15536801f6941b55668d0b4d6cdae22671a43259507c8cdf147d087152d14dba",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v4_adapter_required"
+        },
+        {
+          "operationId": "impact",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ProposedChangeSet",
+            "HostDependencyImpactSet",
+            "DependencyCompleteness",
+            "AffectedObjectSnapshots",
+            "AuthorAuthorization"
+          ],
+          "outputKind": "change-impact-analysis",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "impact.host-scope",
+            "impact.completeness-label",
+            "source.valid-refs",
+            "revision.allowed-scope",
+            "output.no-write-claim"
+          ],
+          "resources": [
+            {
+              "resourceId": "canon-audit.impact",
+              "relativePath": "vnext/skills-v4/blueprints/canon-audit/references/impact.md",
+              "sha256": "3192f587d7956034cc6d018e19d7d12caf6c6f95dcc0fba92bc78e82939c8f38",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v4_adapter_required"
+        },
+        {
+          "operationId": "promise",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "PromiseLedger",
+            "PromiseAuditScope",
+            "AcceptedProseReferences",
+            "QueryCompleteness",
+            "AuthorIntentRecords"
+          ],
+          "outputKind": "promise-audit-report",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "memory.query.scoped",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "audit.scope",
+            "query.completeness",
+            "source.valid-refs",
+            "promises.evidence-status",
+            "planning.not-canon"
+          ],
+          "resources": [
+            {
+              "resourceId": "canon-audit.promise",
+              "relativePath": "vnext/skills-v4/blueprints/canon-audit/references/promise.md",
+              "sha256": "91504e3d27959a9cb4c9be219f6e2aa41c69e8222ce823a49dae48171d64e13b",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v4_adapter_required"
+        },
+        {
+          "operationId": "ending",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "EndingAuditScope",
+            "PromiseLedger",
+            "AcceptedProseReferences",
+            "CharacterAndRelationshipStates",
+            "AuthorEndingContract"
+          ],
+          "outputKind": "ending-audit-report",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "memory.query.scoped",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "audit.scope",
+            "source.valid-refs",
+            "review.evidence-required",
+            "promises.evidence-status",
+            "author.locked-constraints"
+          ],
+          "resources": [
+            {
+              "resourceId": "canon-audit.ending",
+              "relativePath": "vnext/skills-v4/blueprints/canon-audit/references/ending.md",
+              "sha256": "919c51dab67745d446c937655502a9fa78cee07b9640fdad657c7d0a4d1aff75",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "516a7a8778de5915005c8dd461be77e3f893b47c91cb7d003a513b6993796963"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "market-evidence",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/market-evidence/SKILL.md.template",
+      "entrySha256": "45b5f9aa47a1d4cf70d2420da8c74c8f22b2edef63d1342db2ef74644bc72705",
+      "operations": [
+        {
+          "operationId": "research",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ResearchQuestion",
+            "AllowedSourceScope",
+            "ExistingMarketEvidence",
+            "GenreAndProjectContext",
+            "ResearchFreshnessPolicy"
+          ],
+          "outputKind": "market-evidence-report",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "evidence.search.public",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "research.source-scope",
+            "research.provenance-time",
+            "research.primary-evidence",
+            "evidence.not-fabricated",
+            "research.inference-label"
+          ],
+          "resources": [
+            {
+              "resourceId": "market-evidence.research",
+              "relativePath": "vnext/skills-v4/blueprints/market-evidence/references/research.md",
+              "sha256": "406b241047f46bc66f55e1a70a387180623edfd450db4186a09040e88a74f7f5",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "a642ad03592f8c8cbbebefb2588afa66a6b0f9fad422ec8b32741b13bf38a214"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "packaging",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/packaging/SKILL.md.template",
+      "entrySha256": "a63abea5fd5d584ac95860e23d971c2ca3c2731144ab5323cc95ea6ba9049a3f",
+      "operations": [
+        {
+          "operationId": "entity-name",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "EntityNamingScope",
+            "NameMap",
+            "WorldNamingRules",
+            "CharacterKnowledgeScope",
+            "AuthorNamingRequest"
+          ],
+          "outputKind": "entity-name-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "naming.accepted-protection",
+            "naming.alias-scope",
+            "naming.knowledge-boundaries",
+            "revision.allowed-scope",
+            "evidence.not-fabricated"
+          ],
+          "resources": [
+            {
+              "resourceId": "packaging.entity-name",
+              "relativePath": "vnext/skills-v4/blueprints/packaging/references/entity-name.md",
+              "sha256": "f7bb661fc74a5af93b02b9f25ea2eccbbf9f103cfdbddc00c69353454b3c1c1b",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v4_adapter_required"
+        },
+        {
+          "operationId": "title",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ConfirmedStoryContract",
+            "TitlePreferences",
+            "MarketEvidence",
+            "TitleGenerationScope",
+            "TitleOutputContract"
+          ],
+          "outputKind": "title-candidates",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "title.candidate-count",
+            "title.contract-length",
+            "title.story-claim-support",
+            "title.regeneration-scope",
+            "title.recommendation-range"
+          ],
+          "resources": [
+            {
+              "resourceId": "packaging.title",
+              "relativePath": "vnext/skills-v4/blueprints/packaging/references/title.md",
+              "sha256": "a95b663088f5279d918e217949dfd7b4f865793a8772c880030be0163577e8ab",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "compat_adapter"
+        },
+        {
+          "operationId": "blurb",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ConfirmedStoryContract",
+            "PackagingBrief",
+            "VoiceProfile",
+            "RevealScope",
+            "AuthorContract"
+          ],
+          "outputKind": "packaging-copy-proposal",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_design",
+          "validatorIds": [
+            "output.schema",
+            "packaging.claim-support",
+            "packaging.reveal-scope",
+            "author.locked-constraints",
+            "packaging.length",
+            "output.no-write-claim"
+          ],
+          "resources": [
+            {
+              "resourceId": "packaging.blurb",
+              "relativePath": "vnext/skills-v4/blueprints/packaging/references/blurb.md",
+              "sha256": "3201062100c78eed339a6c730e6c3c42eb51d1f6244a8839f9a5420455e51190",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v4_adapter_required"
+        },
+        {
+          "operationId": "review",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "PackagingTargetKind",
+            "ResolvedReviewContract",
+            "PackagingCandidate",
+            "CandidateVersion",
+            "ConfirmedStoryContract",
+            "AuthorContract"
+          ],
+          "outputKind": "target-resolved-packaging-review",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "packaging.single-resolved-contract",
+            "review.candidate-version",
+            "review.evidence-required",
+            "packaging.claim-support",
+            "packaging.reveal-scope"
+          ],
+          "resources": [
+            {
+              "resourceId": "packaging.review",
+              "relativePath": "vnext/skills-v4/blueprints/packaging/references/review.md",
+              "sha256": "564420cc9d10d18899afd2ef0409427674628689f055c1083ac3f706827cb53a",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v4_adapter_required",
+          "targetKind": "entity_name"
+        },
+        {
+          "operationId": "review",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "PackagingTargetKind",
+            "ResolvedReviewContract",
+            "PackagingCandidate",
+            "CandidateVersion",
+            "ConfirmedStoryContract",
+            "AuthorContract"
+          ],
+          "outputKind": "target-resolved-packaging-review",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "packaging.single-resolved-contract",
+            "review.candidate-version",
+            "review.evidence-required",
+            "packaging.claim-support",
+            "packaging.reveal-scope"
+          ],
+          "resources": [
+            {
+              "resourceId": "packaging.review",
+              "relativePath": "vnext/skills-v4/blueprints/packaging/references/review.md",
+              "sha256": "564420cc9d10d18899afd2ef0409427674628689f055c1083ac3f706827cb53a",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v4_adapter_required",
+          "targetKind": "book_title"
+        },
+        {
+          "operationId": "review",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "PackagingTargetKind",
+            "ResolvedReviewContract",
+            "PackagingCandidate",
+            "CandidateVersion",
+            "ConfirmedStoryContract",
+            "AuthorContract"
+          ],
+          "outputKind": "target-resolved-packaging-review",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "packaging.single-resolved-contract",
+            "review.candidate-version",
+            "review.evidence-required",
+            "packaging.claim-support",
+            "packaging.reveal-scope"
+          ],
+          "resources": [
+            {
+              "resourceId": "packaging.review",
+              "relativePath": "vnext/skills-v4/blueprints/packaging/references/review.md",
+              "sha256": "564420cc9d10d18899afd2ef0409427674628689f055c1083ac3f706827cb53a",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v4_adapter_required",
+          "targetKind": "blurb"
+        }
+      ],
+      "packageDigest": "fe865ca172aeff649a43f01548d5f75fdccadb56b6d24a65ca4d309208e0dd6a"
+    },
+    {
+      "manifestSchemaVersion": 2,
+      "skillId": "reader-feedback",
+      "skillVersion": "4.0.0-design",
+      "provenance": "builtin",
+      "active": false,
+      "entryTemplate": "vnext/skills-v4/blueprints/reader-feedback/SKILL.md.template",
+      "entrySha256": "fe8bc8f2d8dc1353a165af9e9dde7cb3e1492d79eb913083bfe7a34b4519eef5",
+      "operations": [
+        {
+          "operationId": "analyze",
+          "workflowVersions": [
+            "v4-proposed"
+          ],
+          "inputKinds": [
+            "ReaderFeedbackEvidence",
+            "HostComputedMetrics",
+            "ChapterVersionBindings",
+            "ExperimentHistory",
+            "AuthorPriorities"
+          ],
+          "outputKind": "reader-feedback-analysis",
+          "requestedCapabilities": [
+            "candidate.submit",
+            "reference.read.scoped"
+          ],
+          "contextView": "author_review",
+          "validatorIds": [
+            "output.schema",
+            "feedback.provenance",
+            "feedback.sample-denominators",
+            "feedback.version-comparability",
+            "feedback.simulation-label",
+            "feedback.max-three-priorities",
+            "output.no-write-claim"
+          ],
+          "resources": [
+            {
+              "resourceId": "reader-feedback.analyze",
+              "relativePath": "vnext/skills-v4/blueprints/reader-feedback/references/analyze.md",
+              "sha256": "b1b1045f85582880d7c2af3c404bb702ec67886cd0058f46d442a50fd6c9cb5c",
+              "kind": "instructions",
+              "use": "required"
+            }
+          ],
+          "adapter": {
+            "state": "unavailable",
+            "reason": "工程设计候选，必须登记实际输入输出 schema、adapter 与验证器后启用。"
+          },
+          "budgetPolicyId": "host-task-budget",
+          "provenanceBinding": "v3_adapter_required"
+        }
+      ],
+      "packageDigest": "9e5cc9efd7a84781e1e8f6b1ba18ba34ba33894d101a113f6680a57d65c1f2c6"
+    }
+  ]
+}

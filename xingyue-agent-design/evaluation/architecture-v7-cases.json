@@ -1,0 +1,1063 @@
+{
+  "designVersion": "V7",
+  "suiteId": "xingyue-architecture-v7",
+  "createdAt": "2026-10-29",
+  "sourceBaseline": {
+    "version": "0.4.82",
+    "commit": "b505f6f459db74871f39f63acf6106b827c8a353",
+    "repository": "https://github.com/965896829/xingyue-shutai.git"
+  },
+  "status": "not_run",
+  "executionCount": 0,
+  "scope": "24 个待执行架构案例，保留现有恢复语义并验证任务、上下文、同版记忆、投影和规模边界；不替代 V6 模型和真人质量评测。",
+  "executionGuidance": {
+    "implementation": "先对齐当前实际 HEAD。复用已有测试，只为受影响的真实风险补充夹具与断言；新注册项仍停用直至实现完整。",
+    "modelInput": "只向被测模型提供本轮允许的输入，expected、oracle、秘密真值、故障点和评阅标签由宿主或评测器私有保存。",
+    "layers": "local_contract、app_integration、performance 分别报告；mock 不计作实际模型，V6 model_output 和 human_blind 另行执行。",
+    "cost": "每次真实调用需既有授权和预算；结果未知依现有记录处理，不因测试重启自动重发。",
+    "performance": "先定目标设备、语料和可接受阈值再优化。全量参考用于语义等价，不把更快但错误的结果算通过。",
+    "status": "not_run、blocked、skipped、failed、passed 分别记录。只有实际运行并满足 oracle 才能改为 passed。静态文件与类型检查不增加此套案例 executionCount。"
+  },
+  "coverage": {
+    "total": 24,
+    "byTier": {
+      "local_contract": 8,
+      "app_integration": 14,
+      "performance": 2
+    },
+    "executed": 0,
+    "inheritedSuites": [
+      "quality-creative-v6-cases.json",
+      "platform-world-v5-cases.json",
+      "skills-v4-cases.json"
+    ],
+    "notCoveredByThisSuite": [
+      "真实模型的文学质量",
+      "真人盲评偏好",
+      "全部题材表现",
+      "平台留存与商业成绩",
+      "全部操作系统故障"
+    ]
+  },
+  "cases": [
+    {
+      "id": "V7-A-01",
+      "tier": "app_integration",
+      "phase": "R0",
+      "feature": "single_pass_directions",
+      "target": "开书流程与模型网关",
+      "given": "原创意和三个方向输出夹具；恰好一次 submit_planning_report；随后仅重做第二案。",
+      "when": "在实际宿主分别运行首次成功生成和局部重做，捕获请求、工具与候选。",
+      "expected": [
+        "首次正常成功路径只有一次模型请求和一次提交工具调用。",
+        "局部重做是独立新任务，冻结故事字段、假设和适用范围保持原样。",
+        "没有新增隐式总控总结或三案逐案审核调用。"
+      ],
+      "fixtures": [
+        "冻结的原输入与输出夹具",
+        "完整模型与工具回执",
+        "冻结方向的内容 hash"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "按实际 model_attempts、工具回执与冻结项 hash 计数和比较。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "request-trace.json",
+        "direction-diff.json"
+      ],
+      "reuseTests": [
+        "三方向相关已有回归"
+      ],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-02",
+      "tier": "app_integration",
+      "phase": "R0",
+      "feature": "remote_unknown_recovery",
+      "target": "模型网关与执行恢复",
+      "given": "模型已记录发送意图并进入 dispatching，尚无可靠响应；含预算预留的持久任务。",
+      "when": "终止内核，重开项目并恢复原任务；观察未获重新请求授权的路径。",
+      "expected": [
+        "原请求恢复为结果未知，费用与预算状态不被当成零。",
+        "内核重启、工作流恢复和 Pi 均未自动重发该请求。",
+        "界面和命令入口可以查询原操作，重新请求需沿现有明确授权策略处理。"
+      ],
+      "fixtures": [
+        "故障注入点",
+        "持久化请求记录",
+        "受控模拟提供方计数器"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "比较进程退出前后外部发送计数、unknown 状态和费用记录；不能用模型陈述替代。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "restart-trace.json",
+        "attempt-ledger.json"
+      ],
+      "reuseTests": [
+        "tests/refactor-crash.test.ts",
+        "tests/refactor-runtime.test.ts"
+      ],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-03",
+      "tier": "app_integration",
+      "phase": "R0",
+      "feature": "late_response_after_cancel",
+      "target": "停止控制与工具网关",
+      "given": "模型回执在作者停止后到达，内含一个候选写工具；另有旧 workerGeneration 的 UI 增量。",
+      "when": "停止任务后释放延迟响应，并向新内核注入旧代次增量。",
+      "expected": [
+        "已收到的回执与实际用量可以保存，候选写工具不再执行。",
+        "任务不会因迟到响应进入新一轮或自行正式采纳。",
+        "旧代次和旧作品会话的事件不更新当前作品界面。"
+      ],
+      "fixtures": [
+        "可控制响应释放的模拟网关",
+        "旧新代次与会话夹具",
+        "工具执行计数器"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "检查工具执行记录、正式版本和界面事件接收轨迹。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "cancel-trace.json",
+        "ui-generation-log.json"
+      ],
+      "reuseTests": [
+        "tests/refactor-runtime.test.ts"
+      ],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-04",
+      "tier": "app_integration",
+      "phase": "R0",
+      "feature": "command_receipt_idempotency",
+      "target": "用户命令回执",
+      "given": "一个有效 operationId 及其原参数；同编号同参数与同编号不同参数的重复调用。",
+      "when": "依次发起原命令、相同重试及不同载荷重试，再重启查询回执。",
+      "expected": [
+        "同编号同输入复用已保存结果或在途结果，不重复启动实际工作。",
+        "同编号不同输入拒绝，不覆盖原回执。",
+        "新能力注册目录不取代现有命令幂等职责。"
+      ],
+      "fixtures": [
+        "实际命令入口",
+        "隔离作品数据库",
+        "原参数指纹"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "检查实际运行与请求数量、返回结果和回执指纹。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "operation-receipts.json"
+      ],
+      "reuseTests": [
+        "tests/refactor-runtime.test.ts"
+      ],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-05",
+      "tier": "app_integration",
+      "phase": "R0",
+      "feature": "commit_outbox_recovery",
+      "target": "正式提交与文件物化",
+      "given": "有效候选、审批与基准快照；可在事务前后及单文件物化时终止进程。",
+      "when": "分别注入故障后重开作品；另一次在待物化文件加入外部改稿。",
+      "expected": [
+        "正式事务未完成时不出现部分正式版本；已完成时保持同一事务身份。",
+        "Outbox 恢复可以完成文件物化，重复恢复不重复消费审批。",
+        "外部改稿被保留并显式进入冲突处理，不静默覆盖。"
+      ],
+      "fixtures": [
+        "真实临时数据库与内容对象",
+        "进程终止夹具",
+        "带外部改稿的工作区"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "核对正式版本、对象 hash、候选提交次数、Outbox 与磁盘内容；逐故障点记录。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "fault-matrix.json",
+        "materialization-result.json"
+      ],
+      "reuseTests": [
+        "tests/refactor-crash.test.ts"
+      ],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-06",
+      "tier": "app_integration",
+      "phase": "R0",
+      "feature": "stale_candidate_and_cas",
+      "target": "候选与状态竞争",
+      "given": "两个调用者持有相同任务 stateVersion；候选已被作者修改且正式基础版本发生变化。",
+      "when": "尝试用旧 stateVersion 更新任务，并用旧审批采纳旧候选。",
+      "expected": [
+        "状态竞争或非法迁移被拒绝。",
+        "旧候选指纹、旧审批或过期基础不能完成正式采纳。",
+        "原始候选和作者新改稿可追溯，拒绝不会回滚最新版本。"
+      ],
+      "fixtures": [
+        "两个状态版本读者",
+        "旧新候选与审批",
+        "基础快照变化"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "检查 CAS 冲突、候选 fingerprint 与最终正式 headSnapshot。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "conflict-records.json"
+      ],
+      "reuseTests": [
+        "tests/refactor-runtime.test.ts"
+      ],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-07",
+      "tier": "app_integration",
+      "phase": "R0",
+      "feature": "legacy_execution_version",
+      "target": "旧任务恢复",
+      "given": "legacy、现行 Pi、旧提示词与一个不支持检查点版本的在途任务。",
+      "when": "升级宿主后逐个打开并恢复，记录解析版本和实际调用。",
+      "expected": [
+        "支持的旧任务沿保存的 executor、checkpoint、prompt 和合同语义恢复。",
+        "不支持的记录保持可读且给出处理原因，不自动按新语义调用模型。",
+        "规则或模型配置不相容时按原恢复规则重建或等待选择，记录不被抹除。"
+      ],
+      "fixtures": [
+        "保存的多版本任务夹具",
+        "资源 hash 清单",
+        "无真实付费连接的调用计数器"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "对比实际选择的执行与资源版本及外部调用轨迹。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "version-compatibility.json"
+      ],
+      "reuseTests": [
+        "tests/refactor-compatibility.test.ts",
+        "tests/refactor-pi.test.ts"
+      ],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-08",
+      "tier": "local_contract",
+      "phase": "R1",
+      "feature": "explicit_tool_effects",
+      "target": "工具合同",
+      "given": "注册一个没有 propose 或 submit 前缀的候选写工具，以及一个有类似前缀的只读工具；准备结果未知回执。",
+      "when": "经真实工具网关执行和恢复，并尝试伪造效果或越界写范围。",
+      "expected": [
+        "副作用与恢复由宿主登记的实现合同决定，不由名称猜测。",
+        "结果未知的写操作不自动重复，只读重放遵循明确策略。",
+        "未登记实现、效果不一致或越界范围被拒绝。"
+      ],
+      "fixtures": [
+        "真实工具合同解析器",
+        "受控只读和候选写处理器",
+        "started 回执"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "检查执行次数和效果分类；测试名仅标识工具，不承担权限。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "tool-effect-validation.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-09",
+      "tier": "local_contract",
+      "phase": "R2",
+      "feature": "catalog_legacy_and_activation",
+      "target": "能力注册与旧资源",
+      "given": "26 个现行资源与 19 个设计包、48 个操作、50 个绑定的版本映射；设计项均停用。",
+      "when": "验证映射，尝试通过 UI 路由、直接命令和伪造 active 绕过缺失 adapter。",
+      "expected": [
+        "旧资源完整性与在途任务引用仍可解析，不能直接把 26 改成 19。",
+        "停用或缺失真实 handler、schema、授权、验证、恢复的能力不可执行。",
+        "重复 ID、版本不支持和工具范围不符进入明确错误。"
+      ],
+      "fixtures": [
+        "实际注册解析器和执行路由",
+        "完整旧新资源夹具",
+        "缺失 handler 的设计项"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "由宿主检查实际可执行能力，不以配置出现 active=true 作为启用依据。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "catalog-resolution.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-10",
+      "tier": "local_contract",
+      "phase": "R2",
+      "feature": "artifact_eligibility",
+      "target": "任务依赖与作者自由度",
+      "given": "只有创意与作者授权范围的新作品；另一正式续写任务缺少必要核心人物状态。",
+      "when": "分别申请讨论、探索草稿和正式续写，检查每个任务的实际前置条件。",
+      "expected": [
+        "讨论和具备本轮必要资料的探索可运行，不强制先走完 S01—S11。",
+        "缺失核心状态只限制依赖它的正式动作，并准确列出缺失。",
+        "不存在的世界、正文和采纳版本不被伪造为已确认资料。"
+      ],
+      "fixtures": [
+        "空作品及部分资料夹具",
+        "任务依赖解析器",
+        "明确作者探索授权"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "比较每个操作的允许或阻止原因及真实读取集合。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "eligibility-decisions.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-11",
+      "tier": "local_contract",
+      "phase": "R2",
+      "feature": "whole_request_visibility",
+      "target": "读者与角色上下文",
+      "given": "未来真相分别藏在总控、共同方法、历史、工具 schema、附件、引用、摘要、错误文本；设读者截止与人物误信。",
+      "when": "分别装配 reader_prefix 和 character_turn 的实际完整出站请求，不发送真实模型。",
+      "expected": [
+        "总控和共同方法发生替换，未来作者真相及宿主私有答案未进入任何请求表面。",
+        "读者只见实际展示前缀；角色只见其观察、获知与信念，不附真假标签。",
+        "出站来源、可见范围与裁剪记录可追溯。"
+      ],
+      "fixtures": [
+        "每表面不同的秘密 canary",
+        "真实请求装配器与捕获器",
+        "人物信念和阅读版本夹具"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "评测器检查全部请求字段与来源；canary 不出现仅作为直接泄漏断言。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "captured-requests.json",
+        "visibility-manifest.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-12",
+      "tier": "app_integration",
+      "phase": "R2",
+      "feature": "scope_cache_session_recovery",
+      "target": "缓存会话与工具边界",
+      "given": "全知作者请求已经命中缓存；另一分支和另一人物使用相同查询词；任务含一次越界检索和错误修复。",
+      "when": "在实际宿主切换为读者或人物任务，恢复一次会话并请求超范围工具数据。",
+      "expected": [
+        "缓存、原生会话、历史和恢复信息仅在实际范围相容时复用。",
+        "工具输出及错误反馈不会带回超范围原文或隐含的作者真值。",
+        "模型自传 audience、角色或章节不能扩大宿主授权。"
+      ],
+      "fixtures": [
+        "真实缓存与会话适配器",
+        "跨角色和分支任务",
+        "可观测工具查询与错误"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "截获最终发送和每个工具结果，逐项核验来源范围及会话身份。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "session-scope-trace.json",
+        "tool-results.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-13",
+      "tier": "local_contract",
+      "phase": "R2",
+      "feature": "negative_and_predicate_readset",
+      "target": "任务读集",
+      "given": "候选基于某角色无伤势及某区间无未兑现承诺的空结果；随后插入匹配事实，另插入无关人物事实。",
+      "when": "不改原返回文件，分别核验两个更新后的候选依赖。",
+      "expected": [
+        "匹配的新事实使空结果或谓词依赖过期，候选不能沿旧结论采纳。",
+        "正向读取、删除与范围变化同样受核验。",
+        "无关变化按明确依赖策略处理，不凭空扩大允许写范围。"
+      ],
+      "fixtures": [
+        "带空结果和谓词的读集",
+        "相关与无关变更集",
+        "真实依赖验证器"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "用独立查询重算结果，比较宿主的失效判定。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "readset-invalidation.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-14",
+      "tier": "app_integration",
+      "phase": "R3",
+      "feature": "chapter_memory_atomic_version",
+      "target": "一章正式采纳",
+      "given": "正文候选 A 与其记忆、审核和人物变化；作者将正文改成 B；另有可选阅读投影损坏。",
+      "when": "尝试采纳 B 加 A 的增量，随后为 B 完成核心提取与核验并采纳。",
+      "expected": [
+        "旧正文 hash 的核心增量与审核被识别为失效。",
+        "最终正文、必要人物变化、事实和依赖在同一正式版本提交。",
+        "可选附属载体失败被隔离并可重建，不能掩盖核心未就绪。"
+      ],
+      "fixtures": [
+        "最终正文 hash 变化",
+        "真实提取与审核回执夹具",
+        "可独立解析的附属载体"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "核对绑定 hash、提交事务、正式快照和下一章检索结果。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "chapter-commit-proof.json",
+        "next-chapter-context.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-15",
+      "tier": "local_contract",
+      "phase": "R3",
+      "feature": "character_coverage_without_forced_change",
+      "target": "人物变化合同",
+      "given": "出场角色 A 有行为变化，B 无变化，C 仅提及，D 心理依据不足；另有企图强改稳定人格的差异。",
+      "when": "校验批量章后人物覆盖结果与拟提交差异。",
+      "expected": [
+        "每个相关角色有明确覆盖状态，不要求每章改全部字段。",
+        "依据不足的心理不得冒充已发生事实或确定情绪。",
+        "稳定人格变化需要相应来源和作者范围；本轮局部情绪不自动重写人格。"
+      ],
+      "fixtures": [
+        "人物覆盖集合",
+        "变化无变化仅提及依据不足载荷",
+        "带源引用的差异"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "检验 schema、覆盖完整性、来源与变更范围；不声称此夹具证明模型能准确提取。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "character-coverage-validation.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-16",
+      "tier": "local_contract",
+      "phase": "R3",
+      "feature": "belief_truth_time_separation",
+      "target": "人物信念与时域",
+      "given": "作者真相为师父作案，角色在第十章误信另一人；第十五章才获知真相，故事发生时间与叙述顺序不同。",
+      "when": "查询第十章角色视角、第十五章角色视角和作者视角，并编辑旧章来源。",
+      "expected": [
+        "人物误信的内容保留，不能把作者真相包装成角色已知。",
+        "发生、获知、揭示与编辑版本分别生效。",
+        "旧章改稿后相应信念和来源被正确复核，历史回看仍可定位原版本。"
+      ],
+      "fixtures": [
+        "带分离时域的事实与信念",
+        "旧新来源快照",
+        "人物和作者查询策略"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "与评测器私有时序真值对照；这些真值不进入人物模型包。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "belief-timeline-query.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-17",
+      "tier": "app_integration",
+      "phase": "R3",
+      "feature": "authorized_candidate_edit",
+      "target": "作者讨论与采纳边界",
+      "given": "作者明确授权可回退的候选局部修改；同时存在一个未授权改动的世界规则与旧锁。",
+      "when": "通过任务讨论执行局部修改，再由作者明确修改旧锁并检查新版本。",
+      "expected": [
+        "已授权候选修改不要求无意义的第二次确认。",
+        "未授权范围保持不变，新正式内容仍由宿主采纳入口处理。",
+        "作者可明确修改旧锁，授权版本和受影响依赖同步更新。"
+      ],
+      "fixtures": [
+        "真实任务讨论入口",
+        "候选 diff 与作者授权",
+        "版本化约束"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "检查操作轨迹、确认次数、修改范围及正式 headSnapshot。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "author-edit-trace.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-18",
+      "tier": "app_integration",
+      "phase": "R3",
+      "feature": "projection_and_semantic_edits",
+      "target": "人物关系图与工作台",
+      "given": "同一正式快照可生成角色卡、关系图、知情表；另有明确标识的候选分支。",
+      "when": "打开面板、切章、筛选和拖动节点，再修改一条关系的语义。",
+      "expected": [
+        "只读浏览和布局不发送模型请求、不改正式事实。",
+        "各面板标识相同来源版本或其候选分支，不能混用。",
+        "关系语义变化形成 ChangeSet，走既有依赖核验和采纳入口。"
+      ],
+      "fixtures": [
+        "实际界面与命令桥",
+        "模型发送计数器",
+        "正式与候选查询"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "核对出站计数、数据库差异与所有面板的版本标识。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "projection-ui-trace.json",
+        "semantic-edit-diff.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-19",
+      "tier": "app_integration",
+      "phase": "R3",
+      "feature": "optional_analysis_budget_and_dependency",
+      "target": "实时分析调度",
+      "given": "核心正文与记忆已经就绪，可选语义评估延迟或失败；父任务预算接近上限。",
+      "when": "运行可选评估，停止任务并观察正文呈现、预算和核心采纳。",
+      "expected": [
+        "是否等待由实际依赖决定，可选观察不无条件阻塞已就绪正文与核心链路。",
+        "可选调用与修复计入父任务预算，超额不能暗中发送。",
+        "停止与失败保留已有结果，必要检查不会被错误标为可选。"
+      ],
+      "fixtures": [
+        "延迟和失败评估处理器",
+        "真实父子预算",
+        "核心与附属就绪状态"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "检查调度依赖、实际发送时间线、费用与最终采纳状态。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "analysis-schedule.json",
+        "budget-summary.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-20",
+      "tier": "local_contract",
+      "phase": "R3",
+      "feature": "domain_event_provenance",
+      "target": "叙事事件与运行日志",
+      "given": "运行日志写有模型声称角色背叛，但候选正文没有此事件；另一已采纳正文有带证据的背叛事件。",
+      "when": "构建人物关系与叙事时间线投影，并验证事件来源。",
+      "expected": [
+        "运行消息或模型自述不能自动成为叙事事实。",
+        "正式领域事件绑定采用版本、来源与生效位置。",
+        "投影可由这些正式记录重建，不建立可独立覆盖的第二事实源。"
+      ],
+      "fixtures": [
+        "混合运行与叙事事件夹具",
+        "来源与版本校验器",
+        "投影构建器"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "比较投影条目与正式事件集合，检查来源链完整性。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "domain-provenance-validation.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-21",
+      "tier": "app_integration",
+      "phase": "R3",
+      "feature": "legacy_document_and_domain_migration",
+      "target": "旧作品迁移",
+      "given": "包含旧八栏世界文档、嵌入事实 JSON、人物别名、未解析身份、外部改稿及在途任务的旧作品。",
+      "when": "迁移到新领域合同，在中途注入失败并恢复或回退。",
+      "expected": [
+        "原文、内容对象、来源 hash 与作者选择保留，未解析身份不默认合并。",
+        "旧 template、schema、validator、workflow 与界面有一致迁移和兼容方案。",
+        "失败不留下半迁移正式状态；旧任务按其版本处理。"
+      ],
+      "fixtures": [
+        "真实旧作品格式夹具",
+        "迁移故障点",
+        "可恢复基线与兼容读取器"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "逐项比较原始对象和语义映射，检查版本状态、恢复与导出。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "migration-map.json",
+        "rollback-record.json"
+      ],
+      "reuseTests": [
+        "tests/refactor-compatibility.test.ts",
+        "tests/refactor-crash.test.ts"
+      ],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-22",
+      "tier": "performance",
+      "phase": "R4",
+      "feature": "incremental_fact_equivalence",
+      "target": "增量事实更新",
+      "given": "含新增、替代、删除、撤回、改前文和分支合并的事实序列，多个事实共用同一来源；设有独立全量重建参考。",
+      "when": "分别运行增量实现和参考重建，记录每个版本的结果、扫描与校验次数及耗时。",
+      "expected": [
+        "事实、范围、知情、关系、来源有效性和依赖失效与参考一致。",
+        "变更集更新减少不必要全量工作，并报告实际量化结果。",
+        "同源校验复用不会跨错误 hash 或可见范围；中断后可重建。",
+        "来源内容校验缓存命中后仍核验当前版本、可见范围与修订待决状态，不把字节相同视为可用。"
+      ],
+      "fixtures": [
+        "有时域与修订的可复现语料",
+        "独立全量参考器",
+        "预先记录的性能与正确性目标"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "先比语义集合及来源，再比较预定指标；缺少测量或目标时不得标 passed。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "incremental-equivalence.json",
+        "work-and-latency.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-23",
+      "tier": "performance",
+      "phase": "R4",
+      "feature": "long_book_workload",
+      "target": "百万字代表性工作负载",
+      "given": "代表性的 100、500、1000 章测试作品，人物、事实、证据与修订逐级增加；记录实际字符和索引规模。",
+      "when": "在目标设备分别执行冷暖查询、提交、上下文编译、人物查询、重建、取消和首屏加载。",
+      "expected": [
+        "报告设备、样本数、耗时分布、峰值内存、数据库与对象增长以及缓存条件。",
+        "达到优化前确定的目标且保持正确性；不在看到结果后降低阈值。",
+        "重复填字的体积测试单列，不能计作人物因果或长期叙事质量通过。"
+      ],
+      "fixtures": [
+        "带明确语料来源与版本的长篇数据",
+        "测量脚本与目标设备",
+        "预注册性能目标及真值抽查"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "由实际计时和资源测量判定工程指标；质量结论另走 V6/V3 对应评测。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "workload-manifest.json",
+        "performance-results.json"
+      ],
+      "reuseTests": [
+        "tests/scale.ts"
+      ],
+      "status": "not_run",
+      "executionCount": 0
+    },
+    {
+      "id": "V7-A-24",
+      "tier": "app_integration",
+      "phase": "R4",
+      "feature": "stale_projection_job_and_rebuild",
+      "target": "异步投影与回退",
+      "given": "基于版本 A 的投影任务尚未完成；作者已采用版本 B 并回退了部分选择；保留可重建来源。",
+      "when": "释放 A 的迟到结果，再删除派生索引并按当前版本重建。",
+      "expected": [
+        "A 的结果不能覆盖 B 或当前回退修订的投影。",
+        "重建只使用允许版本与有效来源，面板可区分旧、缺失与就绪状态。",
+        "重建和恢复不重发历史付费请求，不改变正式事实或清零费用未知记录。"
+      ],
+      "fixtures": [
+        "可控制完成顺序的投影任务",
+        "版本化 outbox 或投影队列",
+        "当前正式快照"
+      ],
+      "oracle": {
+        "owner": "host_or_test_harness",
+        "method": "检查投影版本比较、正式事实 hash、重建结果及模型发送计数。",
+        "mustNotReachModel": [
+          "expected",
+          "oracle",
+          "secret_canaries",
+          "failure_injection",
+          "performance_thresholds",
+          "private_ground_truth"
+        ]
+      },
+      "requires": [
+        "对应真实实现或明确标记的受控测试适配器",
+        "隔离作品及可复现输入"
+      ],
+      "evidenceOutputs": [
+        "projection-race-trace.json",
+        "rebuild-result.json"
+      ],
+      "reuseTests": [],
+      "status": "not_run",
+      "executionCount": 0
+    }
+  ]
+}

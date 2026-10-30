@@ -1,0 +1,775 @@
+{
+  "measurement": "literal selected core method and operation resources including headings; Unicode codepoints, not tokens or full requests",
+  "operations": [
+    {
+      "operation": "concept-forge.create",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/concept-forge/references/_method.md",
+        "vnext/skills-v6/blueprints/concept-forge/references/create.md"
+      ],
+      "unicodeCodepoints": 1238,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "concept-forge.regenerate",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/concept-forge/references/_method.md",
+        "vnext/skills-v6/blueprints/concept-forge/references/regenerate.md"
+      ],
+      "unicodeCodepoints": 1220,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "story-contract.build",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/story-contract/references/_method.md",
+        "vnext/skills-v6/blueprints/story-contract/references/build.md"
+      ],
+      "unicodeCodepoints": 1233,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "story-contract.review",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/story-contract/references/_method.md",
+        "vnext/skills-v6/blueprints/story-contract/references/review.md"
+      ],
+      "unicodeCodepoints": 1191,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "story-contract.configure",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/story-contract/references/_method.md",
+        "vnext/skills-v6/blueprints/story-contract/references/configure.md"
+      ],
+      "unicodeCodepoints": 1195,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "co-creation.discuss",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/co-creation/references/_method.md",
+        "vnext/skills-v6/blueprints/co-creation/references/discuss.md"
+      ],
+      "unicodeCodepoints": 1165,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "co-creation.compare",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/co-creation/references/_method.md",
+        "vnext/skills-v6/blueprints/co-creation/references/compare.md"
+      ],
+      "unicodeCodepoints": 1164,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "co-creation.propose",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/co-creation/references/_method.md",
+        "vnext/skills-v6/blueprints/co-creation/references/propose.md"
+      ],
+      "unicodeCodepoints": 1212,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "co-creation.rehearse",
+      "runtimeCoreVariant": "character_turn",
+      "sourcePaths": [
+        "runtime/agent.character-turn.v6.md",
+        "vnext/skills-v6/blueprints/co-creation/references/rehearse.method.md",
+        "vnext/skills-v6/blueprints/co-creation/references/rehearse.md"
+      ],
+      "unicodeCodepoints": 718,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "world-design.create",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/world-design/references/_method.md",
+        "vnext/skills-v6/blueprints/world-design/references/create.md"
+      ],
+      "unicodeCodepoints": 1273,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "world-design.profile",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/world-design/references/_method.md",
+        "vnext/skills-v6/blueprints/world-design/references/profile.md"
+      ],
+      "unicodeCodepoints": 1285,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "world-design.inherit",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/world-design/references/_method.md",
+        "vnext/skills-v6/blueprints/world-design/references/inherit.md"
+      ],
+      "unicodeCodepoints": 1261,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "world-design.stress-test",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/world-design/references/_method.md",
+        "vnext/skills-v6/blueprints/world-design/references/stress-test.md"
+      ],
+      "unicodeCodepoints": 1274,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "character-design.create",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/character-design/references/_method.md",
+        "vnext/skills-v6/blueprints/character-design/references/create.md"
+      ],
+      "unicodeCodepoints": 1200,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "rolling-outline.book",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/_method.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/book.md"
+      ],
+      "unicodeCodepoints": 1160,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "rolling-outline.volume",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/_method.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/volume.md"
+      ],
+      "unicodeCodepoints": 1201,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "rolling-outline.roadmap",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/_method.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/roadmap.md"
+      ],
+      "unicodeCodepoints": 1150,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "rolling-outline.rhythm",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/_method.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/rhythm.md"
+      ],
+      "unicodeCodepoints": 1152,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "rolling-outline.batch",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/_method.md",
+        "vnext/skills-v6/blueprints/rolling-outline/references/batch.md"
+      ],
+      "unicodeCodepoints": 1198,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "scene-contract.plan",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/scene-contract/references/_method.md",
+        "vnext/skills-v6/blueprints/scene-contract/references/plan.md"
+      ],
+      "unicodeCodepoints": 1239,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "voice-calibration.extract",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/_method.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/extract.md"
+      ],
+      "unicodeCodepoints": 1173,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "voice-calibration.calibrate",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/_method.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/calibrate.md"
+      ],
+      "unicodeCodepoints": 1175,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "voice-calibration.update",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/_method.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/update.md"
+      ],
+      "unicodeCodepoints": 1217,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "voice-calibration.pilot",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/_method.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/pilot.md"
+      ],
+      "unicodeCodepoints": 1185,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "voice-calibration.learn-edits",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/_method.md",
+        "vnext/skills-v6/blueprints/voice-calibration/references/learn-edits.md"
+      ],
+      "unicodeCodepoints": 1225,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "chapter-draft.draft",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/chapter-draft/references/_method.md",
+        "vnext/skills-v6/blueprints/chapter-draft/references/draft.md"
+      ],
+      "unicodeCodepoints": 1220,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "chapter-draft.explore",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/chapter-draft/references/_method.md",
+        "vnext/skills-v6/blueprints/chapter-draft/references/explore.md"
+      ],
+      "unicodeCodepoints": 1229,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "chapter-review.review",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/chapter-review/references/_method.md",
+        "vnext/skills-v6/blueprints/chapter-review/references/review.md"
+      ],
+      "unicodeCodepoints": 1239,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "chapter-review.first-read",
+      "runtimeCoreVariant": "reader_prefix",
+      "sourcePaths": [
+        "runtime/agent.reader-prefix.v6.md",
+        "vnext/skills-v6/blueprints/chapter-review/references/first-read.method.md",
+        "vnext/skills-v6/blueprints/chapter-review/references/first-read.md"
+      ],
+      "unicodeCodepoints": 736,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "revision.voice",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/revision/references/_method.md",
+        "vnext/skills-v6/blueprints/revision/references/voice.md"
+      ],
+      "unicodeCodepoints": 1221,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "revision.local",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/revision/references/_method.md",
+        "vnext/skills-v6/blueprints/revision/references/local.md"
+      ],
+      "unicodeCodepoints": 1222,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "revision.story",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/revision/references/_method.md",
+        "vnext/skills-v6/blueprints/revision/references/story.md"
+      ],
+      "unicodeCodepoints": 1177,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "memory-delta.extract",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/memory-delta/references/_method.md",
+        "vnext/skills-v6/blueprints/memory-delta/references/extract.md"
+      ],
+      "unicodeCodepoints": 1269,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "memory-review.review",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/memory-review/references/_method.md",
+        "vnext/skills-v6/blueprints/memory-review/references/review.md"
+      ],
+      "unicodeCodepoints": 1261,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "memory-query.answer",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/memory-query/references/_method.md",
+        "vnext/skills-v6/blueprints/memory-query/references/answer.md"
+      ],
+      "unicodeCodepoints": 1212,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "character-reflection.reflect",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/character-reflection/references/_method.md",
+        "vnext/skills-v6/blueprints/character-reflection/references/reflect.md"
+      ],
+      "unicodeCodepoints": 1204,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "canon-audit.continuity",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/_method.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/continuity.md"
+      ],
+      "unicodeCodepoints": 1213,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "canon-audit.impact",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/_method.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/impact.md"
+      ],
+      "unicodeCodepoints": 1212,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "canon-audit.promise",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/_method.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/promise.md"
+      ],
+      "unicodeCodepoints": 1210,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "canon-audit.ending",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/_method.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/ending.md"
+      ],
+      "unicodeCodepoints": 1176,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "canon-audit.patterns",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/_method.md",
+        "vnext/skills-v6/blueprints/canon-audit/references/patterns.md"
+      ],
+      "unicodeCodepoints": 1222,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "market-evidence.research",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/market-evidence/references/_method.md",
+        "vnext/skills-v6/blueprints/market-evidence/references/research.md"
+      ],
+      "unicodeCodepoints": 1271,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "packaging.entity-name",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/packaging/references/_method.md",
+        "vnext/skills-v6/blueprints/packaging/references/entity-name.md"
+      ],
+      "unicodeCodepoints": 1206,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "packaging.title",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/packaging/references/_method.md",
+        "vnext/skills-v6/blueprints/packaging/references/title.md"
+      ],
+      "unicodeCodepoints": 1338,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "packaging.blurb",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/packaging/references/_method.md",
+        "vnext/skills-v6/blueprints/packaging/references/blurb.md"
+      ],
+      "unicodeCodepoints": 1254,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "packaging.review",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/packaging/references/_method.md",
+        "vnext/skills-v6/blueprints/packaging/references/review.md"
+      ],
+      "unicodeCodepoints": 1282,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "reader-feedback.analyze",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/reader-feedback/references/_method.md",
+        "vnext/skills-v6/blueprints/reader-feedback/references/analyze.md"
+      ],
+      "unicodeCodepoints": 1222,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    },
+    {
+      "operation": "reader-feedback.compare",
+      "runtimeCoreVariant": "author",
+      "sourcePaths": [
+        "runtime/agent.v6.md",
+        "vnext/skills-v6/blueprints/reader-feedback/references/_method.md",
+        "vnext/skills-v6/blueprints/reader-feedback/references/compare.md"
+      ],
+      "unicodeCodepoints": 1246,
+      "excludes": [
+        "task inputs",
+        "tool schemas",
+        "provider wrappers",
+        "optional references"
+      ]
+    }
+  ],
+  "minimum": 718,
+  "maximum": 1338
+}

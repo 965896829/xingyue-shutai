@@ -1,0 +1,80 @@
+{
+  "designVersion": "V6",
+  "baselineVersion": "0.4.82",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "verificationDate": "2026-10-29",
+  "completed": [
+    {
+      "check": "prior-v5-resources",
+      "result": "passed",
+      "byteIdenticalFiles": 286,
+      "exceptions": [
+        "README.md",
+        "audit/source-index.md",
+        "manifest.json"
+      ],
+      "method": "与保留的 V5 ZIP 逐字节比较；旧任务资源与前序验证保持原执行范围。"
+    },
+    {
+      "check": "skill-and-contract-static",
+      "result": "passed",
+      "checks": 1752,
+      "skills": 19,
+      "operations": 48,
+      "bindings": 50,
+      "method": "实际 catalog/registry JSON、JSON Schema、严格 TypeScript 与 noUncheckedIndexedAccess、来源哈希、模型可见合同和装配映射；详见 skill-catalog-verification-v6.json。"
+    },
+    {
+      "check": "semantic-cross-review",
+      "result": "passed",
+      "method": "修复统计与模型结论混用、角色与初读来源过宽、空基线授权、可选载体失败、原意调整缺字段、偏好状态、阅读类型命名与初读内部编号。"
+    },
+    {
+      "check": "prompt-preservation-and-assembly",
+      "result": "passed",
+      "retainedSources": 78,
+      "newSources": 34,
+      "allSources": 112,
+      "method": "历史来源不重复注入；选择一个总控、一个共同方法或替换、一个操作。蓝图保持停用。"
+    },
+    {
+      "check": "code-comments",
+      "result": "passed",
+      "method": "TS/MJS scanner 与 Python/SQL 检查；交付代码不含解释性注释。"
+    },
+    {
+      "check": "report-visual-qa",
+      "result": "passed",
+      "pages": 27,
+      "method": "最终稿全部页面逐页以原始尺寸查看 PNG；确认无裁切、重叠、缺字、孤立标题或表格分页缺陷。"
+    }
+  ],
+  "report": {
+    "file": "xingyue-agent-optimization.docx",
+    "pages": 27,
+    "sha256": "a1b78954cd0e939f1e37cf2c60edff757cd5ea6718ec5a8c99ac18b79a302318"
+  },
+  "sourceCount": 276,
+  "evaluationCases": {
+    "v6Defined": 40,
+    "localContractDefinitions": 14,
+    "appIntegrationDefinitions": 9,
+    "modelOutputDefinitions": 11,
+    "humanBlindDefinitions": 6,
+    "v5Retained": 32,
+    "v4Retained": 36,
+    "behaviorallyExecutedThisRun": 0,
+    "status": "not_executed"
+  },
+  "notExecuted": [
+    "V6 功能接入客户端",
+    "真实模型与 embedding 调用",
+    "40 个 V6 产品与质量案例执行",
+    "真人读者盲评",
+    "百万字真实作品性能与质量基准",
+    "完整应用迁移和 Windows 发布",
+    "远端仓库修改或部署",
+    "个人 ChatGPT Skill 安装"
+  ],
+  "scopeNote": "本轮交付优化方案、完整提示词、静态合同与装配蓝图和待执行验收案例；没有把静态一致性表述为产品行为或文学质量通过。源代码审计继承 V5 固定基线，实施时先核对实际 HEAD。"
+}

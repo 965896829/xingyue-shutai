@@ -1,0 +1,55 @@
+{
+  "designVersion": "V6",
+  "previousDesignVersion": "V5",
+  "newOperations": [
+    "co-creation.rehearse",
+    "voice-calibration.learn-edits",
+    "chapter-draft.explore",
+    "chapter-review.first-read",
+    "canon-audit.patterns",
+    "reader-feedback.compare"
+  ],
+  "updatedOperations": [
+    "concept-forge.create",
+    "concept-forge.regenerate",
+    "story-contract.build",
+    "co-creation.propose",
+    "rolling-outline.volume",
+    "rolling-outline.batch",
+    "scene-contract.plan",
+    "voice-calibration.update",
+    "chapter-draft.draft",
+    "chapter-review.review",
+    "revision.voice",
+    "revision.local",
+    "memory-delta.extract",
+    "memory-review.review",
+    "reader-feedback.analyze"
+  ],
+  "updatedSkillMethods": [
+    "co-creation",
+    "rolling-outline",
+    "voice-calibration",
+    "chapter-draft",
+    "chapter-review",
+    "revision",
+    "canon-audit",
+    "reader-feedback"
+  ],
+  "taskPolicy": "frozen_tasks_keep_original_resources_and_contracts",
+  "activation": "adapter_schema_authorization_validation_and_migration_required",
+  "emptyStateAllowed": [
+    "preference_evidence",
+    "reader_experience_projection",
+    "plot_pattern_projection",
+    "initial_work_canonical_prose"
+  ],
+  "inputRoleAliases": {
+    "CreativeBranchBindingV6": "ExplorationBranchV6",
+    "SceneCraftSliceV6": "SceneExpressionEvidenceV6",
+    "ReaderExperienceSliceV6": "ReadingExperienceProjectionV6",
+    "RelevantPlotPatternsV6": "PlotPatternProjectionV6",
+    "VoicePreferenceCandidateV6": "PreferenceHypothesisV6"
+  },
+  "inputRoleNote": "inputKinds 是适配器职责名称。新类型尽量使用实际 V6 类型；旧职责继续由旧合同映射，不能按名字自动把宿主私有对象序列化给模型。"
+}

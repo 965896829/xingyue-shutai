@@ -11,6 +11,7 @@ export interface CandidateRepair {
   factIds?: string[];
   protectedFactHashes?: Record<string, string>;
   allowNewFacts?: boolean;
+  coverage?: boolean;
   unresolvedIssues?: { code: string; message: string }[];
 }
 export interface RecoveryDecision {

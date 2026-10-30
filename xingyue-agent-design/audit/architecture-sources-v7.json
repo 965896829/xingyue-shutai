@@ -1,0 +1,163 @@
+{
+  "designVersion": "V7",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "reviewDate": "2026-10-29",
+  "sources": [
+    {
+      "id": "V7C01",
+      "title": "Electron 写作内核启动与恢复",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/electron/main.ts",
+      "scope": "0.4.82 固定提交源码审计。utilityProcess 独立内核、workerGeneration、projectSessionId 和监督恢复。"
+    },
+    {
+      "id": "V7C02",
+      "title": "独立内核中的应用服务",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/electron/worker.ts",
+      "scope": "0.4.82 固定提交源码审计。Service 实际在 worker 持有；命令、协议与代次校验。"
+    },
+    {
+      "id": "V7C03",
+      "title": "Pi 回合与宿主边界",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/task-loop.ts",
+      "scope": "0.4.82 固定提交源码审计。宿主持有规范请求和回执；顺序工具、maxRetries 为 0，执行器不建立第二套状态。"
+    },
+    {
+      "id": "V7C04",
+      "title": "应用命令与共创入口",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/service.ts",
+      "scope": "0.4.82 固定提交源码审计。作品、任务、讨论、候选修改、采纳及阶段协调；现有讨论并非缺失。"
+    },
+    {
+      "id": "V7C05",
+      "title": "业务执行与实时评估",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runner.ts",
+      "scope": "0.4.82 固定提交源码审计。流程分发、上下文、审稿与记忆转移；正文前后存在模型评估等待。"
+    },
+    {
+      "id": "V7C06",
+      "title": "旧技能注册与装配",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/skill-registry.ts",
+      "scope": "0.4.82 固定提交源码审计。固定 26 技能、阶段映射、资源哈希和候选权限；不能直接改成目标 19 包。"
+    },
+    {
+      "id": "V7C07",
+      "title": "正式事务与事实更新",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/storage.ts",
+      "scope": "0.4.82 固定提交源码审计。SQLite 权威、对象、CAS、outbox；applyJournal 807 至 825 行全量解析台账与 replaceFacts。"
+    },
+    {
+      "id": "V7C08",
+      "title": "记忆检索与人物状态",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/memory-studio.ts",
+      "scope": "0.4.82 固定提交源码审计。视角、时域、来源校验已存在；retrieveMemory 和 characterState 仍有全事实筛选路径。"
+    },
+    {
+      "id": "V7C09",
+      "title": "当前事实与证据合同",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/shared/types.ts",
+      "scope": "0.4.82 固定提交源码审计。事件、规则、计划、信念、推断、知情边界和证据版本。"
+    },
+    {
+      "id": "V7C10",
+      "title": "上下文编译与预算",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/context-compiler.ts",
+      "scope": "0.4.82 固定提交源码审计。当前快照、资料分层、来源、强制约束与预算；未来初读和人物回合需要专用完整请求策略。"
+    },
+    {
+      "id": "V7C11",
+      "title": "已有增量快照",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/snapshot-codec.ts",
+      "scope": "0.4.82 固定提交源码审计。delta-v1 文档与事实差异，深度上限及来源校验；保留现有机制。"
+    },
+    {
+      "id": "V7C12",
+      "title": "工具网关与副作用",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/tool-gateway.ts",
+      "scope": "0.4.82 固定提交源码审计。白名单、schema、工具回执；当前效果按工具命名前缀分类，未来改显式契约。"
+    },
+    {
+      "id": "V7C13",
+      "title": "模型请求预算与恢复",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/model-gateway.ts",
+      "scope": "0.4.82 固定提交源码审计。发送意图、费用预留、结果持久化和 unknown；宿主统一恢复。"
+    },
+    {
+      "id": "V7C14",
+      "title": "阶段输入和产物依赖",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/domain.ts",
+      "scope": "0.4.82 固定提交源码审计。S01 至 S11、stageOutputs、requiredInputs，适合保留为引导并逐步转换为任务依赖。"
+    },
+    {
+      "id": "V7C15",
+      "title": "硬终止恢复测试",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/refactor-crash.test.ts",
+      "scope": "0.4.82 固定提交源码审计。子进程 SIGKILL、提交边界与未知请求恢复；本轮阅读测试设计，没有执行。"
+    },
+    {
+      "id": "V7C16",
+      "title": "现有合成规模测试",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/scale.ts",
+      "scope": "0.4.82 固定提交源码审计。1200 章、300 万字，一次提交、扫描与编号检索；不代表真实连续创作质量。"
+    },
+    {
+      "id": "V7C17",
+      "title": "现有操作幂等回执",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/operations.ts",
+      "scope": "0.4.82 固定提交源码审计。UI 操作编号和输入绑定；与能力操作注册表职责不同。"
+    },
+    {
+      "id": "V7C18",
+      "title": "正式采纳内核",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/commit-kernel.ts",
+      "scope": "0.4.82 固定提交源码审计。审批绑定候选、基础快照和范围，重复采纳复用已有正式事务。"
+    },
+    {
+      "id": "V7C19",
+      "title": "资源调度器",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/scheduler.ts",
+      "scope": "0.4.82 固定提交源码审计。资源互斥与独立工作调度；保留单一正式提交序列。"
+    },
+    {
+      "id": "V7C20",
+      "title": "执行记录及恢复版本",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/execution-records.ts",
+      "scope": "0.4.82 固定提交源码审计。执行生命周期与版本竞争；终结记录不能直接重新运行。"
+    },
+    {
+      "id": "V7R01",
+      "title": "Pi agent core 官方文档",
+      "url": "https://github.com/earendil-works/pi/blob/main/packages/agent/README.md",
+      "scope": "2026-10-29 核验官方上游；工具执行、状态和事件流。上游 main 不等同于项目已安装版本全部行为。"
+    },
+    {
+      "id": "V7R02",
+      "title": "LangGraph TypeScript 持久化",
+      "url": "https://docs.langchain.com/oss/javascript/langgraph/persistence",
+      "scope": "2026-10-29 核验；线程检查点与跨线程 Store 分开，小说领域语义仍由应用定义。"
+    },
+    {
+      "id": "V7R03",
+      "title": "LangGraph TypeScript 中断恢复",
+      "url": "https://docs.langchain.com/oss/javascript/langgraph/interrupts",
+      "scope": "2026-10-29 核验；恢复时重新进入节点，副作用需要幂等与重放治理。"
+    },
+    {
+      "id": "V7R04",
+      "title": "Temporal 生产部署",
+      "url": "https://docs.temporal.io/production-deployment",
+      "scope": "2026-10-29 核验；生产 Service 与 Worker，可云托管或自建，也有本地开发服务器。"
+    },
+    {
+      "id": "V7R05",
+      "title": "Temporal Agent 记忆与状态",
+      "url": "https://docs.temporal.io/ai/featured/memory-state-stripe",
+      "scope": "官方页面标注 2026-10-06 验证故障示例；区分上下文、长期记忆、执行与外部效果状态，不代表本产品测试。"
+    },
+    {
+      "id": "V7R06",
+      "title": "Anthropic 稳定接口与执行解耦",
+      "url": "https://www.anthropic.com/research/managed-agents",
+      "scope": "2026-04-08 工程文章，2026-10-29 核验；持久会话、harness 和工具边界，session 与 context window 分开。"
+    }
+  ]
+}

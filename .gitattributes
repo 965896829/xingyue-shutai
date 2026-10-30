@@ -4,3 +4,10 @@ resources/skill/tags/** -text -whitespace
 resources/skill/direction-planning/** -text -whitespace
 resources/skill/title-editing/** -text -whitespace
 resources/skill/title-market-editing/** -text -whitespace
+resources/skill/creative-v7/** -text -whitespace
+resources/skill/design-v7/** -text -whitespace
+resources/skill/platform/** -text -whitespace
+xingyue-agent-design/** -text -whitespace
+resources/skill/references/volume-naming.md text eol=lf
+tests/fixtures/chapter-056-prose.md text eol=lf
+tests/fixtures/death-right-roadmap-041.md text eol=lf

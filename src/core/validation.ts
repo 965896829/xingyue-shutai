@@ -1,4 +1,6 @@
 import fs from 'node:fs';
+import { bookProfilePath, parseBookProfile } from './publishing';
+import { parseWorldModel, renderWorldModel } from './world-model';
 import path from 'node:path';
 import {
   activeBatch,
@@ -52,6 +54,14 @@ export function checkFields(text: string, labels: string[], file: string, allowS
 
 /** World-design documents allow named sections as well as the legacy list fields. */
 export function checkWorldFields(text: string, file: string) {
+  if (text.startsWith('# 世界模块')) {
+    try {
+      const model = parseWorldModel(text);
+      if (!model) throw new Error('世界模块结构不完整');
+      renderWorldModel(model);
+      return [];
+    } catch (error) { return [{ code: 'world_model', severity: 'error' as const, path: file, message: (error as Error).message }]; }
+  }
   return checkFields(text, [...worldRequiredFields], file, true);
 }
 function markdownSections(text: string) {
@@ -268,6 +278,10 @@ export function validateCandidate(
     [paths.knowledge]: [['角色', '亲眼确认', '被告知', '当前推测或误解', '不知道的关键事实', '最近更新']]
   };
   for (const c of changes) {
+    if (c.path === bookProfilePath) {
+      try { parseBookProfile(c.content); }
+      catch (error) { issues.push({ code: 'publishing_profile', severity: 'error', path: c.path, message: (error as Error).message }); }
+    }
     if (!c.path.endsWith('.md')) {
       issues.push({ code: 'file_type', severity: 'error', path: c.path, message: '写作产物必须是 Markdown' });
       continue;
@@ -317,7 +331,7 @@ export function validateCandidate(
           message: `模板字段 ${m.label} 仍未填写或选择具体状态`,
           line: m.line
         });
-    if (key && fields[key]) {
+    if (key && fields[key] && !(c.path === paths.world && c.content.startsWith('# 世界模块'))) {
       let labels = [...new Set(fields[key])];
       if (c.path === detailPath(p.chapter)) labels = labels.slice(0, labels.indexOf('地点')); // Scene shapes vary with chapter type; enforce the common contract separately.
       if (c.path === paths.style && /状态[：:]\s*未启用/.test(c.content)) labels = [];
@@ -626,7 +640,7 @@ export function validateCandidate(
             code: 'relation_polarity',
             severity: 'error',
             path: c.path,
-            message: `关系极性无效：${cells[3]}`
+            message: `关系极性无效：${cells[3]}。允许 positive、neutral、negative、ambiguous；没有已知关系时只保留表头。`
           });
         const unassessed = /^(?:null(?:（未评估）|\(未评估\))?|未知|未评估)$/i.test(cells[4] ?? '');
         if (cells[4] && cells[4] !== '信任度0-100' && !unassessed && (!/^\d+$/.test(cells[4]) || Number(cells[4]) > 100))
@@ -659,7 +673,7 @@ export function validateCandidate(
               code: 'hook_state',
               severity: 'error',
               path: c.path,
-              message: `伏笔状态无效：${cells[6]}`
+              message: `伏笔状态无效：${cells[6]}。允许已埋、推进中、已回收、已废弃；没有明确伏笔时只保留表头。`
             });
         }
       }

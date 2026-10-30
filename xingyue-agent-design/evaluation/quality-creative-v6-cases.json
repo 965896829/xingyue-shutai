@@ -1,0 +1,784 @@
+{
+  "designVersion": "V6",
+  "suiteId": "xingyue-quality-exploration-v6",
+  "createdAt": "2026-10-29",
+  "executionStatus": "not_executed",
+  "scope": "40 个待执行案例覆盖 V6 六项增强及与 V3/V5 边界的连接，不代表全项目完整回归或已取得文学质量结果。",
+  "executionGuidance": {
+    "modelInput": "只向被测模型提供本轮允许的任务输入；expected、秘密真相、故障注入、评价标签和隐藏候选映射仅供宿主与评测器。",
+    "layers": "本地合同、真实模型输出、应用集成和真人盲评分别执行并报告；mock 不计作真实模型或真人反馈。",
+    "runtimeVariants": "first-read 替换为 reader_prefix 的总控和共同方法；单角色回合使用 character_turn；其余作者任务按授权使用 author。必须核验整个发送请求和工具范围。",
+    "cost": "本文件没有调用真实模型或招募评阅者。每次真实调用与失败修复需指定预算并计量，结果未知遵循原恢复流程。",
+    "coverage": "有界检索只报告该范围发现；全书无重复、全部兑现等全称结论需要对应的完整覆盖证据。"
+  },
+  "coverage": {
+    "total": 40,
+    "byTier": {
+      "local_contract": 14,
+      "app_integration": 9,
+      "model_output": 11,
+      "human_blind": 6
+    },
+    "newOperations": [
+      "co-creation.rehearse",
+      "chapter-draft.explore",
+      "voice-calibration.learn-edits",
+      "chapter-review.first-read",
+      "canon-audit.patterns",
+      "reader-feedback.compare"
+    ],
+    "executed": 0
+  },
+  "cases": [
+    {
+      "id": "V6-Q-01",
+      "tier": "local_contract",
+      "feature": "reader_full_request_boundary",
+      "operation": "chapter-review.first-read",
+      "given": "在作者真相、普通审稿共同方法、历史消息、工具说明、附件名和未来摘要中分别放置唯一秘密标记；读者截止第一章。",
+      "when": "装配并截获完整 first-read 请求，不实际发送模型。",
+      "expected": [
+        "使用 reader_prefix 总控和 coreInstructionsOverride 替换普通审稿方法。",
+        "实际请求所有内容面均不含未授权秘密标记，不携带完整 AuthorContract。",
+        "保存可核对的允许来源清单与装配版本。"
+      ],
+      "requires": [
+        "实际请求装配器",
+        "临时带秘密夹具",
+        "出站请求捕获"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-02",
+      "tier": "local_contract",
+      "feature": "reader_tools_and_history",
+      "operation": "chapter-review.first-read",
+      "given": "初读任务可使用范围检索；上一次作者对话已讨论凶手，工具查询被请求获取未来章节。",
+      "when": "继续初读任务并调用越界查询。",
+      "expected": [
+        "旧作者会话和未揭示工具结果不进入请求。",
+        "查询层拒绝或裁剪越界范围，并保留可核验结果。",
+        "模型不能用自行传入的 audience 参数提升权限。"
+      ],
+      "requires": [
+        "范围授权适配器",
+        "对话历史适配器",
+        "模拟工具执行"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-03",
+      "tier": "local_contract",
+      "feature": "reader_presentation_edition",
+      "operation": "chapter-review.first-read",
+      "given": "作品第一版题目和简介未透露身份；后续版本题目、简介及内部包装承诺透露了身份。",
+      "when": "以第一版阅读位置创建初读包。",
+      "expected": [
+        "只使用当时真实展示的标题和简介版本。",
+        "内部包装承诺及后续改名不进入初读输入。",
+        "缺少历史包装版本时显示缺口，不用当前版本冒填。"
+      ],
+      "requires": [
+        "版本化包装夹具",
+        "读者包编译器"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-04",
+      "tier": "local_contract",
+      "feature": "reader_cache_partition",
+      "operation": "chapter-review.first-read",
+      "given": "作者视图、另一分支、后续版本已有缓存命中，文本与初读查询关键词相同。",
+      "when": "在当前读者范围执行相同检索并重用缓存。",
+      "expected": [
+        "缓存不能跨作品、分支、版本、读者截止与权限范围提供原文。",
+        "来源当前有效性再次核验。",
+        "旧缓存被标为不可复用或按当前范围重算。"
+      ],
+      "requires": [
+        "缓存实现",
+        "范围检索器",
+        "版本与 epoch 夹具"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-05",
+      "tier": "local_contract",
+      "feature": "empty_project_exploration",
+      "operation": "chapter-draft.explore",
+      "given": "新作品只有一段创意与作者允许探索的范围，没有世界百科、终卷、全部人物卡或已采纳正文。",
+      "when": "创建探索草稿任务。",
+      "expected": [
+        "允许使用明确的空基准快照进入探索。",
+        "只报告本次真正需要的关键信息缺口。",
+        "不会伪造已存在的正文、世界或采纳版本。"
+      ],
+      "requires": [
+        "新工作流依赖解析器",
+        "空作品夹具"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-06",
+      "tier": "local_contract",
+      "feature": "explicit_author_unlock",
+      "operation": "co-creation.propose",
+      "given": "两项世界字段被锁定；作者明确只修改其中一项，另一个候选基于旧版本。",
+      "when": "应用授权字段的变更并尝试采纳旧候选。",
+      "expected": [
+        "被明确解锁的字段可在新版本修改。",
+        "其他字段锁保持，旧候选不能覆盖新编辑。",
+        "留下作者决定、版本前提和可撤销差异。"
+      ],
+      "requires": [
+        "锁与授权实现",
+        "候选采纳事务"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-07",
+      "tier": "local_contract",
+      "feature": "preference_withdrawal",
+      "operation": "voice-calibration.learn-edits",
+      "given": "两条偏好证据支持某人物的声音；其中一条被作者撤销，旧 VoiceSlice 仍在缓存中。",
+      "when": "重新装配该人物下一场声音切片。",
+      "expected": [
+        "撤销证据不再支持新切片。",
+        "历史已生成版本仍可追溯旧依据。",
+        "缓存失效或重编译，不能仅删界面标签仍继续生效。"
+      ],
+      "requires": [
+        "偏好事件存储",
+        "声音编译器",
+        "版本缓存"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-08",
+      "tier": "local_contract",
+      "feature": "preference_scope",
+      "operation": "voice-calibration.learn-edits",
+      "given": "作者将某一争吵场景的心理描写删去，证据适用范围仅为该场；同作者另有日常题材作品。",
+      "when": "编译当前人物其他场景和另一作品的声音。",
+      "expected": [
+        "当前场景证据不自动变为全书禁令。",
+        "其他作品不自动继承这条偏好。",
+        "没有作者原因时保留未知，不以字段默认值推断意图。"
+      ],
+      "requires": [
+        "偏好范围合同",
+        "声音编译器"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-09",
+      "tier": "local_contract",
+      "feature": "feedback_provenance_denominator",
+      "operation": "reader-feedback.compare",
+      "given": "实验记录包含真人选择、模型模拟、mock 输出和未完成评价。",
+      "when": "计算并展示真实试读结果。",
+      "expected": [
+        "只有合法 human 记录计入真实读者样本。",
+        "模型、mock 和未完成项单列，不制造独立读者人数。",
+        "同一读者多次评价保留关联，不能算作多个独立读者。"
+      ],
+      "requires": [
+        "实验聚合器",
+        "反馈来源合同"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-10",
+      "tier": "local_contract",
+      "feature": "exclusion_transparency",
+      "operation": "reader-feedback.compare",
+      "given": "预先定义排除规则；候选生成后出现偏好较低但合规的样本和一个确定失效样本。",
+      "when": "排除失效项并重新生成实验摘要。",
+      "expected": [
+        "每个排除项保留理由、原记录与时间。",
+        "低偏好本身不能成为事后排除条件。",
+        "报告原始数量、有效数量、失效、排除和未定结果，不只报告获胜子集。"
+      ],
+      "requires": [
+        "实验记录与聚合器",
+        "排除规则夹具"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-11",
+      "tier": "local_contract",
+      "feature": "blind_assignment_and_length",
+      "operation": "reader-feedback.compare",
+      "given": "两版同场景产物都在预设长度区间，一版带模型名元数据；另有一对超出长度区间。",
+      "when": "生成匿名展示并保存评阅映射。",
+      "expected": [
+        "展示隐藏模型与版本身份并记录实际随机顺序。",
+        "正文引用绑定真实 hash，身份映射可在后台恢复。",
+        "超出长度的样本按预先规则处理，不能静默裁剪冒充原稿。"
+      ],
+      "requires": [
+        "匿名展示适配器",
+        "实验分配记录",
+        "长度计量"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-12",
+      "tier": "local_contract",
+      "feature": "query_absence_invalidation",
+      "operation": "canon-audit.patterns",
+      "given": "当前范围完整查询未发现相关旧场景，系统保存了空结果依赖；随后新增或修订出一个相似场景。",
+      "when": "恢复旧规划候选并请求重复分析。",
+      "expected": [
+        "新增数据使依赖该空结果的结论进入待核验。",
+        "查询记录包含范围、谓词和 epoch，而非仅已有结果 ID。",
+        "索引不完整时不能登记可用于否定结论的完整 absence。"
+      ],
+      "requires": [
+        "读集与查询依赖实现",
+        "场景投影索引"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-13",
+      "tier": "local_contract",
+      "feature": "postedit_evidence_coordinates",
+      "operation": "chapter-review.review",
+      "given": "反馈锚点采用明确单位和半开区间，原文包含 emoji；作者在引用之前增删文字并改变正文 hash。",
+      "when": "尝试沿旧位置展示和采纳修复。",
+      "expected": [
+        "旧位置不能直接套到新正文。",
+        "可重新定位时核验新引文及单位；否则标为失效待重定位。",
+        "旧审核、旧阅读投影与旧记忆不宣称绑定新正文。"
+      ],
+      "requires": [
+        "位置与 hash 校验",
+        "文本编辑夹具"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-14",
+      "tier": "local_contract",
+      "feature": "partial_pattern_coverage",
+      "operation": "canon-audit.patterns",
+      "given": "一本长书的解法投影只有部分 ready，检索只覆盖有限候选场面。",
+      "when": "请求检查全书是否已经没有重复。",
+      "expected": [
+        "结果明确报告查询范围、覆盖缺口和有限候选。",
+        "不能把局部未命中写成全书无重复。",
+        "已经找到的局部问题仍可给证据，不因未覆盖全书而放弃所有结果。"
+      ],
+      "requires": [
+        "覆盖水位查询",
+        "模式检索适配器"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-15",
+      "tier": "app_integration",
+      "feature": "exploration_branch_isolation",
+      "operation": "chapter-draft.explore",
+      "given": "正史与两条探索分支来自同一固定快照，其中一条增加关键配角与规则解释。",
+      "when": "生成、取消和切换探索分支。",
+      "expected": [
+        "未采纳分支不进入正史人物记忆、世界规则和下一章默认上下文。",
+        "取消保留已产生候选及费用，停止后续自动调用。",
+        "切换分支展示对应基准和差异。"
+      ],
+      "requires": [
+        "真实宿主与存储",
+        "分支界面",
+        "可取消模型桩"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-16",
+      "tier": "app_integration",
+      "feature": "unknown_outcome_recovery",
+      "operation": "co-creation.rehearse",
+      "given": "角色试演调用已发出，网络中断导致 outcome_unknown；任务租约随后过期。",
+      "when": "恢复应用并再次打开该回合。",
+      "expected": [
+        "依现有恢复记录查明结果，不因租约到期盲目重发。",
+        "重复的相同幂等提交复用已有结果，同键不同载荷不覆盖。",
+        "恢复与新的继续回合分别记录调用和费用。"
+      ],
+      "requires": [
+        "任务恢复与 journal",
+        "故障注入网关"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-17",
+      "tier": "app_integration",
+      "feature": "promotion_reextract_memory",
+      "operation": "chapter-draft.explore",
+      "given": "作者选中探索段落后修改了结局并将其中一段合并到当前分支，原试演有旧记忆增量。",
+      "when": "按正式采纳流程接收最终正文。",
+      "expected": [
+        "以合并后的最终正文 hash 重新提取相关记忆和人物覆盖。",
+        "核验目标分支最新读集、锁与依赖。",
+        "正文与必要记忆同版采纳，不沿用旧试演增量。"
+      ],
+      "requires": [
+        "采纳事务",
+        "真实记忆适配器或可核验桩",
+        "合并编辑界面"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-18",
+      "tier": "app_integration",
+      "feature": "optional_sideband_failure",
+      "operation": "memory-delta.extract",
+      "given": "核心记忆可用，独立可选阅读体验或解法元数据损坏；另一对照样本的核心记忆本身损坏。",
+      "when": "处理章后批量结果。",
+      "expected": [
+        "可解析且隔离的附属通道失败仅使对应投影缺失或待重建。",
+        "核心记忆有效时不因附属字段失败重复整次写作。",
+        "核心记忆损坏时仍按原有门槛处理，不能借可选元数据规则绕过。"
+      ],
+      "requires": [
+        "独立附属封装与解析器",
+        "章后事务",
+        "故障注入"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-19",
+      "tier": "app_integration",
+      "feature": "manual_edit_pending_state",
+      "operation": "chapter-draft.draft",
+      "given": "作者手工修改已采纳章节，核心状态尚未完成对新版本的重建，图谱仍有旧水位。",
+      "when": "尝试续写依赖该章的正式下一章，同时打开无关讨论。",
+      "expected": [
+        "依赖旧状态的正式续写等待必需核心状态或明确解决缺口。",
+        "无关讨论与作者手写编辑仍可继续。",
+        "图谱显示实际水位，迟到旧事件不覆盖新版本。"
+      ],
+      "requires": [
+        "编辑器",
+        "核心状态水位",
+        "投影 outbox"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-20",
+      "tier": "app_integration",
+      "feature": "rehearsal_rewind_stale_parent",
+      "operation": "co-creation.rehearse",
+      "given": "试演已经进行两回合，作者回退第一回合并改一句对白，同时正史父分支推进。",
+      "when": "继续试演并尝试采纳旧第二回合。",
+      "expected": [
+        "新回合沿回退点的新分支继续，旧回合保留但不参与新上下文。",
+        "父分支变化不会静默改变固定试演基准。",
+        "采纳到当前正史前报告差异和失效依赖。"
+      ],
+      "requires": [
+        "回退界面",
+        "分支快照",
+        "版本失效实现"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-21",
+      "tier": "app_integration",
+      "feature": "reader_projection_ui",
+      "operation": "chapter-review.first-read",
+      "given": "阅读轨迹包含计划、正文证据、模型推测和真实反馈四类记录。",
+      "when": "切章、切版本、过滤来源并打开原文。",
+      "expected": [
+        "各类记录可清楚区分，计划不能显示为已兑现。",
+        "点击引用定位对应正文版本，缺失区间保持缺失。",
+        "纯查看、过滤和布局不产生模型调用。"
+      ],
+      "requires": [
+        "读者投影界面",
+        "请求计数器",
+        "来源定位"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-22",
+      "tier": "app_integration",
+      "feature": "optional_call_cost_accounting",
+      "operation": "co-creation.rehearse",
+      "given": "普通三方向路径与开启初读、两回合人物试演的路径分别运行。",
+      "when": "查看实际调用账目并在中途停止。",
+      "expected": [
+        "普通三方向成功路径仍一次模型生成。",
+        "初读和每个真实角色回合、修复及评委调用分别计入预算。",
+        "停止后不再自动开启下一回合，已发生费用和未知费用状态保留。"
+      ],
+      "requires": [
+        "运行计量",
+        "预算与停止实现",
+        "模拟或真实网关"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-23",
+      "tier": "app_integration",
+      "feature": "legacy_workflow_recovery",
+      "operation": null,
+      "given": "旧版任务在旧合同下中断；新版本包含 19 个技能及新增操作，但部分 adapter 未实现。",
+      "when": "升级后恢复旧任务并尝试打开未实现的新能力。",
+      "expected": [
+        "旧任务沿冻结的工作流和输出合同恢复。",
+        "未实现 adapter 的能力保持不可启用，不靠修改 active 绕过。",
+        "新旧版本记录可区分，迁移失败不破坏原作品。"
+      ],
+      "requires": [
+        "迁移器",
+        "版本化任务恢复",
+        "注册表解析器"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-24",
+      "tier": "model_output",
+      "feature": "correction_not_global_style",
+      "operation": "voice-calibration.learn-edits",
+      "given": "提供作者将错误日期改正、删去一处重复心理说明的原始编辑证据；未说明其总体文风。",
+      "when": "生成偏好候选。",
+      "expected": [
+        "日期修改被识别为事实纠错或保留待判，不成为文风规则。",
+        "局部删除不生成禁止所有心理描写或长句的全书规则。",
+        "候选引用具体前后文和作用范围，原因未知处不补造。"
+      ],
+      "requires": [
+        "真实模型",
+        "偏好提炼合同",
+        "独立语义评阅"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-25",
+      "tier": "model_output",
+      "feature": "no_invented_life_material",
+      "operation": "chapter-draft.draft",
+      "given": "声音切片包含作者认可的语气样例与有限职业资料，但没有作者个人经历或某关键专业事实。",
+      "when": "按场景合同写正文。",
+      "expected": [
+        "不把样例情节或作者经历编成当前故事事实。",
+        "必要且未知的关键专业条件按任务允许方式处理，不凭术语营造确定性。",
+        "具体细节参与人物判断或行动，未用的资料不强塞。"
+      ],
+      "requires": [
+        "真实模型",
+        "场景与资料包",
+        "事实对照"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-26",
+      "tier": "model_output",
+      "feature": "character_turn_false_belief",
+      "operation": "co-creation.rehearse",
+      "given": "角色甲相信丙偷走钥匙，实际是乙，但 character_turn 输入只有甲的观察和误信，输出范围是一回合。",
+      "when": "由模型扮演甲回应作者的角色行动。",
+      "expected": [
+        "甲不使用未获知的真实凶手或作者真伪结论。",
+        "其回应依据当前目标、关系和误信。",
+        "回合不自行推进超出授权范围的事件或宣布更新正史。"
+      ],
+      "requires": [
+        "真实模型",
+        "角色过滤包",
+        "仅评测器持有真相"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-27",
+      "tier": "model_output",
+      "feature": "character_specific_choices",
+      "operation": "co-creation.rehearse",
+      "given": "两位重要人物具有不同经历、目标和关系策略；任务分别给出相近压力与各自允许知道的资料。",
+      "when": "各生成一个可比较的短回合。",
+      "expected": [
+        "差异体现在关注点、取舍或行动方式，超出口头禅替换。",
+        "不为制造差异擅加创伤、秘密、能力或新事实。",
+        "无变化或暂不表态可作为符合人物的选择。"
+      ],
+      "requires": [
+        "真实模型",
+        "两套人物包",
+        "独立人物一致性评阅"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-28",
+      "tier": "model_output",
+      "feature": "exploration_author_scope",
+      "operation": "chapter-draft.explore",
+      "given": "作者允许新增配角和破局办法，锁定主角能力、父女关系和胜负，关键新增须单列。",
+      "when": "生成探索场景。",
+      "expected": [
+        "保留全部有效锁定内容。",
+        "新增关键前提及适用范围明确列出，普通细节不扩成逐条审批。",
+        "不把能力临时增强藏在正文里来完成破局。"
+      ],
+      "requires": [
+        "真实模型",
+        "创作授权合同",
+        "设定与正文对照"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-29",
+      "tier": "model_output",
+      "feature": "rehearsal_scope_and_knowledge",
+      "operation": "co-creation.rehearse",
+      "given": "作者扮演主角，模型扮演对手；作者说出一句模糊威胁，对手此前不知道隐藏计划。",
+      "when": "生成对手的下一回合。",
+      "expected": [
+        "对手可猜测但不把猜测写成已知真相。",
+        "不代作者决定主角内心、台词或关键行动。",
+        "达到指定回合终点即停，不自发继续双方多轮。"
+      ],
+      "requires": [
+        "真实模型",
+        "单角色回合合同",
+        "角色范围评阅"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-30",
+      "tier": "model_output",
+      "feature": "first_read_mystery_vs_gap",
+      "operation": "chapter-review.first-read",
+      "given": "读者前缀中有有意保留的凶手身份，以及一个尚无可见依据的重要人物决定；模型没有后续答案。",
+      "when": "进行初读诊断。",
+      "expected": [
+        "分别表述自然悬念与当前理解障碍，给出原文依据。",
+        "不因为未揭晓谜底就要求立即解释所有秘密。",
+        "不补写真相或宣称真实读者必然流失。"
+      ],
+      "requires": [
+        "真实模型",
+        "隔离读者包",
+        "评阅者掌握作者揭示计划"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-31",
+      "tier": "model_output",
+      "feature": "renamed_same_solution",
+      "operation": "canon-audit.patterns",
+      "given": "两段已采纳场景的人名、地点和道具不同，但均依赖被轻视、隐瞒实力、当众亮底牌、旁观震惊解决。",
+      "when": "比较新计划与已有场景。",
+      "expected": [
+        "识别相似解法并引用对应过程证据。",
+        "说明本次条件、选择和后果是否有实质变化。",
+        "不给无依据的原创概率，不自动重写计划。"
+      ],
+      "requires": [
+        "真实模型",
+        "有来源的模式候选",
+        "场景原文"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-32",
+      "tier": "model_output",
+      "feature": "intentional_reprise",
+      "operation": "canon-audit.patterns",
+      "given": "新场景重复早期的一句对白和动作，但权力关系、人物选择与结果已经改变，作者明确要形成回响。",
+      "when": "执行解法重复审阅。",
+      "expected": [
+        "识别回响及其新的情绪或因果作用。",
+        "不因文字或模式命中自动要求删除。",
+        "可返回无实质问题，保留作者取舍。"
+      ],
+      "requires": [
+        "真实模型",
+        "前后场景",
+        "作者回响意图"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-33",
+      "tier": "model_output",
+      "feature": "reading_progress_evidence",
+      "operation": "memory-delta.extract",
+      "given": "提纲计划第十章揭晓，但当前正文只新增一条线索；模型可选附属输出包含阅读推进。",
+      "when": "提取阅读体验与承诺变化。",
+      "expected": [
+        "只有正文实际推进记为已发生。",
+        "计划揭晓保持计划，模型对读者情绪的估计标为推测。",
+        "引文不足或覆盖有限时保留缺口，不造兑现证据。"
+      ],
+      "requires": [
+        "真实模型",
+        "独立附属输出合同",
+        "正文与计划分离"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-34",
+      "tier": "model_output",
+      "feature": "bounded_incompatible_synthesis",
+      "operation": "chapter-draft.explore",
+      "given": "作者选择两条分支的局部元素，其中一案必须角色已知真相，另一案必须其尚未知情；当前授权未允许改获知事件。",
+      "when": "尝试形成合并候选。",
+      "expected": [
+        "明确指出相关互斥前提和最小待选范围。",
+        "可以继续合并互不冲突部分，不能暗改获知事件来凑成完整稿。",
+        "未选择的分支内容不写入正史。"
+      ],
+      "requires": [
+        "真实模型",
+        "分支差异与授权",
+        "依赖对照"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-35",
+      "tier": "human_blind",
+      "feature": "same_facts_voice_pair",
+      "operation": "reader-feedback.compare",
+      "given": "同一场景的两版固定事件、结果、知情与长度范围，只改变表达；来源标签隐藏。",
+      "when": "由真实作者及目标题材读者分别盲选并定位阅读问题。",
+      "expected": [
+        "记录 A、B、平局或都不喜欢及具体依据。",
+        "硬约束违规单独记录，不被文风偏好掩盖。",
+        "保留作者与目标读者分组，不生成模拟评价补样本。"
+      ],
+      "requires": [
+        "真实评阅者",
+        "匿名界面",
+        "同条件实际样稿"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-36",
+      "tier": "human_blind",
+      "feature": "consecutive_chapters",
+      "operation": "reader-feedback.compare",
+      "given": "同一故事的两组连续 3—5 章，人物、事件与题材可比，参与者阅读历史已记录。",
+      "when": "分组或平衡顺序试读。",
+      "expected": [
+        "记录继续阅读选择、理解障碍与跨章声音变化。",
+        "对已读过另一版本的参与者保留顺序影响，不当作全新初读。",
+        "报告作品与读者数量及重复测量，不只累计点击数。"
+      ],
+      "requires": [
+        "真实评阅者",
+        "连续章节产物",
+        "分组与顺序记录"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-37",
+      "tier": "human_blind",
+      "feature": "genre_specific_returns",
+      "operation": "reader-feedback.compare",
+      "given": "样本含都市日常、经营、悬疑和成长题材；各有作者定义的场景功能。",
+      "when": "由相应偏好的试读者评价并分层分析。",
+      "expected": [
+        "允许关系、生活改善或发现提供回报，不强制每章强冲突。",
+        "分别报告题材与场景功能结果和分歧。",
+        "不把某题材成功推广为所有番茄风格均改善。"
+      ],
+      "requires": [
+        "真实目标题材读者",
+        "分层样本",
+        "阅读目标卡"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-38",
+      "tier": "human_blind",
+      "feature": "model_prompt_attribution",
+      "operation": "reader-feedback.compare",
+      "given": "实验包含固定模型换提示词和固定提示词换模型两个组，预算及剩余条件记录完整。",
+      "when": "盲评后比较因素贡献。",
+      "expected": [
+        "把模型、提示词及联合变化的结果分别解释。",
+        "费用、长度和失败次数同时报告，不隐藏额外生成。",
+        "无法分离的混合因素标为未定，不单方面宣称提示词胜出。"
+      ],
+      "requires": [
+        "真实样稿",
+        "受控实验设计",
+        "真实评阅者"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-39",
+      "tier": "human_blind",
+      "feature": "author_protected_quirk",
+      "operation": "reader-feedback.compare",
+      "given": "作者明确保护一个风格或设定特色，部分试读者喜欢、部分不喜欢。",
+      "when": "查看盲评结果并决定后续版本。",
+      "expected": [
+        "保留两类意见与来源，明确作者选择。",
+        "模型不得以平均偏好为由自动删除保护点。",
+        "后续例外只作用于作者明确选定范围。"
+      ],
+      "requires": [
+        "真实作者决定",
+        "真实试读反馈",
+        "可撤销偏好界面"
+      ],
+      "executionStatus": "not_executed"
+    },
+    {
+      "id": "V6-Q-40",
+      "tier": "human_blind",
+      "feature": "holdout_and_long_work_limits",
+      "operation": "reader-feedback.compare",
+      "given": "开发集已经用于提示词与评委调整，保留集按作品隔离；另有长篇工程回放结果。",
+      "when": "进行最终盲评并生成版本验收报告。",
+      "expected": [
+        "保留集及其衍生分支未进入调参、样例或检索答案。",
+        "分别报告短场景偏好、连续章承接、长篇工程一致性和实际平台数据是否存在。",
+        "不以局部盲评或合成性能结果宣布百万字文学质量或商业成绩已验证。"
+      ],
+      "requires": [
+        "真实保留集评阅",
+        "样本来源与访问记录",
+        "独立长篇回放报告"
+      ],
+      "executionStatus": "not_executed"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+---
+name: canon-audit
+version: 6.0.0-design
+description: "用于指定范围的连续性、影响、承诺、结局与剧情解法比较；依赖覆盖由宿主声明，不作无来源的全书判断。"
+---
+
+# 跨章连续性与承诺审阅
+
+依据有效正文、确认设定、人物状态和承诺审阅指定范围。事实、信念、未来计划、解释与作者留白分别处理，问题连接原文、版本与具体影响。查询完整性和失效传播由宿主负责，有限召回不冒充全书覆盖。解法相似只是比较线索，需说明条件、选择、关系或后果是否真正重复；允许回响、反讽与作者有意复现。不以新设定补旧洞，不自动重写已采纳内容，结论保持问题记录或候选建议。
+
+本模板由产品构建器在真实合同和适配器就绪后生成运行资源。只加载所选操作和方法；专用方法替换默认方法，来源编号不重复注入。
+
+## 操作
+- continuity  检查跨章连续性  references/continuity.md
+- impact  解释变更影响  references/impact.md
+- promise  核验阅读承诺  references/promise.md
+- ending  卷末与完结审阅  references/ending.md
+- patterns  比较跨章剧情解法  references/patterns.md

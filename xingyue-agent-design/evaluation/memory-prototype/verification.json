@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "final_run": "run-002/results.json",
+  "code_comments": 0,
+  "sha256": {
+    "prototype.py": "e08df7b537c5ee45b19e3582be7ce72719fe63c1e231b576d0c29a3c7bc95169",
+    "README.md": "ef8bc3597ec04495ded818ff715596d0c61fe528004e108445f28dddd98a6bd8",
+    "run-002/results.json": "ecabad10d2113e0ad711cb58146e826d3b3b750fcf69379302392efda2e9ecd5"
+  },
+  "repo_modified": false,
+  "live_model_calls": 0,
+  "readmeTerminologyUpdate": "中文正文的 Unicode 码点（含标点、数字等）；原始实测结果未修改。"
+}

@@ -15,11 +15,16 @@ import { setRunStatus } from './runtime/run-state';
 import { nativeSearchOptions, acceptNativeSearch } from './native-web-search';
 import { recordUsage, requestGuard, syncUsage } from './telemetry';
 import { fanqieBookUrl } from './fanqie-catalogue';
+import { publishingOptions } from '../shared/publishing';
+import { verifyPublishingSnapshot } from './publishing';
+import { collectMarketEvidence, marketCacheKey } from './market-evidence';
+import type { MarketEvidence, MarketRequest } from '../shared/market-evidence';
 
 /** Search only public taxonomy labels, never an author's premise or private manuscript. */
 export function titleSearchTopic(root: string, spec: BookSpec, genre: string, plan?: CreationPlan, editorial = false) {
   const options = tagBundle(root).taxonomy.options;
   const selection = spec.selection;
+  const published = spec.bookProfile?.publishing ? publishingOptions(spec.bookProfile, verifyPublishingSnapshot(spec.publishingCatalog)) : [];
   const positivePremise = [spec.premise, ...(plan?.statements ?? [])
     .filter(s => ['fusion_causality', 'reader_promise'].includes(s.kind)).map(s => s.text)]
     .flatMap(text => text.split(/[。；;，,\n]/)).map(clause => clause.trim())
@@ -32,7 +37,7 @@ export function titleSearchTopic(root: string, spec: BookSpec, genre: string, pl
   const narrativeGenre = options.find(o => o.group === 'reading.main' && positivePremise.includes(o.label))?.label;
   const inferredMain = narrativeParts.length === 1 && ['都市', '玄幻', '悬疑'].includes(narrativeParts[0])
     ? options.find(o => o.group === 'reading.main' && o.label === narrativeParts[0] + '脑洞')?.label : undefined;
-  const main = options.find(o => o.id === selection.reading.main)?.label ??
+  const main = published.find(o => o.group === 'reading.main')?.label ?? options.find(o => o.id === selection.reading.main)?.label ??
     narrativeGenre ?? inferredMain ??
     (!narrativeParts.length ? options.find(o => o.group === 'reading.main' && o.label === genre)?.label : undefined) ??
     (inferredGenre.length ? inferredGenre.join('') : '网络小说');
@@ -40,7 +45,7 @@ export function titleSearchTopic(root: string, spec: BookSpec, genre: string, pl
   const publicThemes = ['时间穿越', '时间回溯', '规则怪谈', '无限流', '大逃杀', '末世', '修仙', '宗门', '种田', '经营', '直播', '重生', '穿越', '悬疑'];
   const inferredTags = publicThemes.filter(term => positivePremise.includes(term))
     .filter(term => !publicThemes.some(longer => longer !== term && longer.includes(term) && positivePremise.includes(longer)));
-  const tags = [...new Set([...selected.flatMap(id => options.find(o => o.id === id)?.label ?? []), ...inferredTags])]
+  const tags = [...new Set([...published.filter(o => ['reading.theme', 'reading.plot'].includes(o.group)).map(o => o.label), ...selected.flatMap(id => options.find(o => o.id === id)?.label ?? []), ...inferredTags])]
     .filter(label => label !== main).slice(0, 3);
   // Taxonomy labels are metadata, not necessarily the words used in a synopsis or title.
   const searchGenre = main.replace(/脑洞/g, '') || main;
@@ -90,7 +95,7 @@ export async function prepareTitleMarketResearch(args: {
 }) {
   const { run: r, project: p, store, profile, signal, save, settings } = args;
   const t = r.naming!;
-  if (t.marketResearchVersion !== 1 || t.manualTitle) return;
+  if (![1, 2].includes(t.marketResearchVersion ?? 0) || t.manualTitle) return;
   if (t.marketResearch) {
     if (t.editorialVersion && t.marketResearch.status === 'ready' && !t.marketResearch.styleBrief && t.marketResearch.provider === 'native') {
       // A 0.4.65 single-name reroll can reuse its saved research answer without searching again.
@@ -121,6 +126,17 @@ export async function prepareTitleMarketResearch(args: {
     evidence.status = status; evidence.message = message; evidence.checkedAt = now(); save();
   };
   if (!settings.enabled) return unavailable('联网设置已关闭，本批使用离线参考，未进行实时检索。', 'disabled');
+  if (t.marketResearchVersion === 2 && args.spec.bookProfile?.publishing && args.spec.publishingCatalog) {
+    const choice = args.spec.bookProfile.publishing, main = publishingOptions(args.spec.bookProfile, args.spec.publishingCatalog).find(o => o.group === 'reading.main')!;
+    const request: MarketRequest = { catalogId: choice.snapshotId, channel: choice.channel, categoryId: main.platformId, rankType: 'reading' };
+    const key = `title-market:${marketCacheKey(request)}`;
+    save();
+    const snapshot = await collectMarketEvidence(request, args.spec.publishingCatalog, signal, { cached: store.db.get<MarketEvidence>(key) });
+    if (['ready', 'partial'].includes(snapshot.status) && snapshot.samples.some(s => s.title)) store.db.set(key, snapshot);
+    evidence.publicEvidence = snapshot; evidence.provider = 'public'; evidence.status = snapshot.status;
+    evidence.sources = snapshot.samples.filter(s => s.title).map(s => ({ title: s.title!, url: s.url }));
+    evidence.checkedAt = snapshot.observedAt; evidence.message = snapshot.reason; save(); args.event(snapshot.reason); return;
+  }
   if (p.config.stageBudget != null) return unavailable('当前启用了金额上限，搜索工具费用无法预估；本批未联网，保留原预算。');
   const native = usesNativeSearch(profile, settings);
   if (!native && (settings.provider === 'openai' || !args.search?.key))

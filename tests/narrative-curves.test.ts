@@ -7,7 +7,7 @@ import { FileStore } from '../src/core/storage';
 import { newProject, paths, detailPath, prosePath, updatePath, qualityPath, hash } from '../src/core/domain';
 import { initialFiles } from '../src/core/skill';
 import { readNarrativeData, saveNarrativeRecord } from '../src/core/narrative-curves';
-import { chapterIntensity, tableIntensities, readIntensity, curveSegments } from '../src/shared/narrative-curve';
+import { chapterIntensity, tableIntensities, readIntensity, curveSegments, curveContinuation } from '../src/shared/narrative-curve';
 import { narrativePlan, sceneEstimate, SceneLocator } from '../src/shared/narrative-playback';
 import { commandContracts } from '../src/shared/contracts';
 import { playbackPlan, playbackProse } from './fixtures/streaming-content';
@@ -35,6 +35,21 @@ test('missing observations split smooth curves, and interpolation cannot oversho
   assert.equal(curveSegments([{ x: 0, y: 2 }, { x: 1, y: null }, { x: 2, y: 5 }]).length, 2);
   assert.equal(curveSegments([{ x: 0, y: null }]).length, 0);
   assert.equal(curveSegments([{ x: 0, y: 2 }, { x: 2, y: 5 }])[0], 'M 0 2 C 1 2, 1 5, 2 5');
+});
+
+test('实时单节点向已显示正文延续，后续节点接管；缺失情绪不被补成零或跨缺口连线', () => {
+  const one = [{ x: 140, y: 4 }];
+  assert.equal(curveContinuation(one, 933), 'M 140 4 L 933 4');
+  assert.equal(curveContinuation(one, 1200), 'M 140 4 L 1200 4');
+  const next = [...one, { x: 1300, y: 2 }];
+  assert.match(curveSegments(next)[0], / C .*1300 2$/);
+  assert.equal(curveContinuation(next, 1500), 'M 1300 2 L 1500 2');
+  assert.equal(curveContinuation([], 933), undefined);
+  assert.equal(curveContinuation([{ x: 140, y: 0 }], 933), 'M 140 0 L 933 0');
+  assert.equal(curveContinuation([{ x: 140, y: -2 }, { x: 500, y: null }], 933), undefined);
+  for (const cursor of [0, 140, NaN, Infinity]) assert.equal(curveContinuation(one, cursor), undefined);
+  assert.equal(curveContinuation([{ x: 140, y: NaN }], 933), undefined);
+  assert.equal(curveContinuation([{ x: NaN, y: 2 }], 933), undefined);
 });
 
 test('old plans get labelled local estimates and unknown scene content stays unknown', () => {

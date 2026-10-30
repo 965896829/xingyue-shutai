@@ -25,8 +25,8 @@ function Entry({ entry, onSource }: { entry: ProjectionEntry; onSource: Props['o
 }
 function ScopeHeader({ snapshot, draft, setDraft, available }: { snapshot: Snapshot; draft: boolean; setDraft: (value: boolean) => void; available?: boolean }) {
   return <div className="projection-scope"><div><strong>第 {String(snapshot.project?.chapter ?? 1).padStart(3, '0')} 章</strong><span>作者视图</span></div>
-    <label><input type="checkbox" checked={draft} onChange={event => setDraft(event.target.checked)} />显示本章草稿变化</label>
-    {draft && available && <small>草稿与已保存资料一同展示，尚未写入正式记忆。</small>}</div>;
+    <label><input type="checkbox" checked={draft} disabled={!available} onChange={event => setDraft(event.target.checked)} />显示本章草稿变化</label>
+    </div>;
 }
 
 export function CharacterInspector({ snapshot, run, onSource }: Props) {
@@ -39,7 +39,7 @@ export function CharacterInspector({ snapshot, run, onSource }: Props) {
       <label className="sr-only" htmlFor="inspector-character">人物</label><select id="inspector-character" value={character.id} onChange={event => setSelected(event.target.value)}>
         {data.characters.map(character => <option value={character.id} key={character.id}>{character.name}</option>)}
       </select>
-      <div className="projection-character-heading"><div><h2>{character.name}</h2><small>{character.aliases.join(' · ') || character.id}</small></div>
+      <div className="projection-character-heading"><div><h2>{character.name}</h2>{character.aliases.length > 0 && <small>{character.aliases.join(' · ')}</small>}</div>
         <span className={`projection-track ${character.track}`}>{character.track === 'draft' ? '含草稿变化' : '已保存档案'}</span></div>
       {([1, 2, 0, 3] as const).map(index => { const title = fieldNames[index], fields = character.fields.filter(field => group(field.label) === index); return fields.length > 0 && <details className="projection-group" key={title} open={index === 1 || index === 2}>
         <summary>{title}<span>{fields.length}</span></summary><Fields fields={fields} onSource={onSource} /></details>; })}
@@ -85,10 +85,15 @@ export function StoryInspector({ snapshot, run, onSource }: Props) {
 
 export function ManuscriptCoverage({ snapshot, run }: Omit<Props, 'onSource'>) {
   const result = useManuscriptView(snapshot, run, true), data = result?.data, index = snapshot.studio?.index;
+  const coverage = run && run.chapter === snapshot.project?.chapter && run.chapterCoverage?.proseHash === run.pipeline?.proseHash ? run.chapterCoverage : undefined;
+  const outcomes = { changed: '有变化', reviewed_no_change: '已核对无变化', insufficient_evidence: '依据不足', mentioned_only: '仅提及' };
   return <section className="manuscript-coverage"><h3>资料连接</h3>
     <p>{data ? `${data.characters.length} 位人物 · ${data.entries.length} 条可追溯资料` : '正在读取本地资料…'}</p>
     <dl className="coverage-counts">{(['relation', 'timeline', 'hook', 'item', 'knowledge'] as const).map(category => <div key={category}><dt>{projectionCategoryNames[category]}</dt><dd>{data?.entries.filter(entry => entry.category === category).length ?? '—'}</dd></div>)}</dl>
     <p>正式记忆 {snapshot.facts.length} 条 · 过期资料 {snapshot.project?.stale.length ?? 0} 份</p>
+    {coverage && <details><summary>本章人物覆盖 · {coverage.characters.length} 人{run?.accepted ? ' · 已采纳' : ' · 候选'}</summary>
+      {coverage.characters.map(character => <p key={character.entityId}><strong>{character.name}</strong> · {outcomes[character.outcome]}<br />{character.reason}</p>)}
+    </details>}
     <p>{index ? `检索索引：${index.count} 块 · ${index.watermark === snapshot.studio?.snapshot?.id ? '已同步当前版本' : '尚未同步当前版本'}` : '检索索引尚未建立；档案展示仍可直接读取本地文件。'}</p>
     {!!data?.unavailable.length && <details><summary>未参与当前展示的资料（{data.unavailable.length}）</summary>{data.unavailable.map(path => <p key={path}>{path}</p>)}</details>}
   </section>;

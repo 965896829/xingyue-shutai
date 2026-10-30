@@ -1,4 +1,5 @@
 import { ModelControl } from './ModelControl';
+import { BookProfileFields } from './BookProfileFields';
 import { ContextMeter } from './ContextMeter';
 import { latestContext } from '../shared/context-meter';
 import { invokeCommand } from '../shared/client';
@@ -28,7 +29,8 @@ export const cleanTagInput = (input: TagInput): TagInput => ({
   selection: input.selection,
   premise: input.premise,
   mustKeep: input.mustKeep.map((v) => v.trim()).filter(Boolean),
-  mustAvoid: input.mustAvoid.map((v) => v.trim()).filter(Boolean)
+  mustAvoid: input.mustAvoid.map((v) => v.trim()).filter(Boolean),
+  ...(input.bookProfile ? { bookProfile: input.bookProfile } : {})
 });
 export function TagForm({
   value,
@@ -91,7 +93,16 @@ export function TagForm({
           />
         </label>
       )}
-      <label>
+      {value.bookProfile ? <BookProfileFields value={value.bookProfile} snapshots={catalog.publishingSnapshots ?? []} disabled={disabled}
+        onChange={bookProfile => onChange({ ...value, bookProfile })} /> : <><button type="button" disabled={disabled} onClick={() => {
+          const snapshot = catalog.publishingSnapshots?.[0];
+          const find = (id: string) => snapshot?.options.find(o => o.legacyId === id)?.id;
+          const main = find(value.selection.reading.main);
+          onChange({ ...value, selection: { ...value.selection, reading: emptyTagInput().selection.reading }, bookProfile: { creativeGenres: [], publishing: snapshot && main ? {
+            platform: 'fanqie', form: 'original_long', channel: 'male', snapshotId: snapshot.id, reading: { main,
+              theme: value.selection.reading.theme.flatMap(id => find(id) ?? []), role: value.selection.reading.role.flatMap(id => find(id) ?? []), plot: value.selection.reading.plot.flatMap(id => find(id) ?? []) }
+          } : null } });
+        }}>使用男频／女频分类</button><label>
         主分类
         <select
           required={!optionalTags}
@@ -109,7 +120,7 @@ export function TagForm({
               </option>
             ))}
         </select>
-      </label>
+      </label></>}
       <details>
         <summary>补充标签与创作要求（选填）</summary>
         <label>
@@ -122,7 +133,7 @@ export function TagForm({
           />
         </label>
         {catalog.groups
-          .filter((g) => g.id !== 'reading.main')
+          .filter((g) => g.id !== 'reading.main' && (!value.bookProfile || g.id.startsWith('content.')))
           .map((g) => {
             const [section, field] = g.id.split('.') as ['reading' | 'content', string];
             const selected = (value.selection[section] as Record<string, string[]>)[field];
@@ -151,7 +162,7 @@ export function TagForm({
                           checked={selected.includes(o.id)}
                           disabled={
                             disabled ||
-                            (optionalTags && !value.selection.reading.main) ||
+                            (optionalTags && !value.bookProfile && !value.selection.reading.main) ||
                             (!selected.includes(o.id) && selected.length >= g.max)
                           }
                           onChange={() => choose(section, field, o.id, g.max)}
@@ -184,8 +195,8 @@ export function TagForm({
         </label>
       </details>
       <details className="tag-policy">
-        <summary>标签资料说明 · {policy.mode === 'creative' ? '自由创意' : '查看核对范围'}</summary>
-        <p>{policy.message}</p>
+        <summary>{value.bookProfile ? '内容标签资料' : `标签资料说明 · ${policy.mode === 'creative' ? '自由创意' : '查看核对范围'}`}</summary>
+        {value.bookProfile ? <p>本地内容标签共 328 项，供创作参考，尚未全量核对作家后台。</p> : <><p>{policy.message}</p>
         <p className="muted">
           本地标签快照共 {catalog.options.length} 项。资料范围：{policy.scope}。
           {policy.verifiedAt ? `公开资料核对日期：${policy.verifiedAt}。` : ''}
@@ -195,7 +206,7 @@ export function TagForm({
           <p key={check.id}>
             <strong>{check.label}</strong>：{check.message}
           </p>
-        ))}
+        ))}</>}
         {policy.sources.filter((source) => source.url && /^https?:\/\//.test(source.url)).map((source) => (
           <p key={source.id}>
             <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
@@ -288,7 +299,8 @@ export function TagWorkspace({
         selection: structuredClone(draft.selection),
         premise: draft.premise,
         mustKeep: [...draft.mustKeep],
-        mustAvoid: [...draft.mustAvoid]
+        mustAvoid: [...draft.mustAvoid],
+        ...(draft.bookProfile ? { bookProfile: structuredClone(draft.bookProfile) } : {})
       });
     setCoverage(null);
   }, [draft?.inputHash]);
@@ -441,7 +453,7 @@ export function TagWorkspace({
               只保存输入
             </button>
             <button
-              disabled={busy || !input.selection.reading.main}
+              disabled={busy || (!input.selection.reading.main && !input.bookProfile?.publishing)}
               onClick={() =>
                 void act(async () =>
                   setCoverage(await invoke('tags.validate', { input: cleanTagInput(input) }))

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { MarketEvidence } from './market-evidence';
 
 const note = z.string().trim().min(1).max(1200);
 
@@ -19,7 +20,7 @@ export type TitleStyleProfile = z.infer<typeof titleStyleProfileSchema>;
 
 /** Host-recorded search evidence, separate from the book's confirmed story facts. */
 export interface TitleMarketResearch {
-  status: 'searching' | 'ready' | 'unavailable' | 'disabled';
+  status: 'searching' | 'ready' | 'partial' | 'stale' | 'unavailable' | 'disabled';
   provider: 'native' | 'public' | 'none';
   genre: string;
   tags: string[];
@@ -31,4 +32,5 @@ export interface TitleMarketResearch {
   /** Search model's editorial observations, not official facts or instructions. */
   styleBrief?: string;
   message: string;
+  publicEvidence?: MarketEvidence;
 }

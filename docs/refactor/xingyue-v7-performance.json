@@ -1,0 +1,815 @@
+{
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "comparison": [
+    {
+      "chapters": 100,
+      "facts": 400,
+      "baselineHash": "d51309ba8deb4e9c5436cf2df74679ed9ac0549d7367318e5b37fde214794aca",
+      "currentHash": "27abd7e1f08e3fc0896b2a76c76b3eca13e0786d2c1cd6b20c494a6a91cd4088",
+      "semanticFieldsEqualExceptAddedPositions": true,
+      "fullRebuildParityVerified": true,
+      "metrics": [
+        {
+          "name": "retrieve",
+          "beforeMedianMs": 267.21040000000085,
+          "afterMedianMs": 118.95340000000033,
+          "ratio": 0.44516755335870145,
+          "withinOriginalTimeGate": true,
+          "beforeObjectReads": [
+            400,
+            400,
+            400,
+            400
+          ],
+          "afterObjectReads": [
+            100,
+            100,
+            100,
+            100
+          ]
+        },
+        {
+          "name": "character",
+          "beforeMedianMs": 21.190599999999904,
+          "afterMedianMs": 15.288899999999558,
+          "ratio": 0.7214944362122652,
+          "withinOriginalTimeGate": true,
+          "beforeObjectReads": [
+            16,
+            16,
+            16,
+            16
+          ],
+          "afterObjectReads": [
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        {
+          "name": "commit-unrelated",
+          "beforeMedianMs": 146.174500000001,
+          "afterMedianMs": 103.89180000000124,
+          "ratio": 0.7107381930500911,
+          "withinOriginalTimeGate": true,
+          "beforeObjectReads": [
+            4,
+            5,
+            5,
+            5
+          ],
+          "afterObjectReads": [
+            3,
+            4,
+            4,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "chapters": 500,
+      "facts": 2000,
+      "baselineHash": "ab4cd81dd281ff31e8082ed6ae0bb031a0cb23e3caffb5c3296df872264e8c8d",
+      "currentHash": "a81a606062c271306dac90c4904685bd2796e5c594726fb5e634760e332c8765",
+      "semanticFieldsEqualExceptAddedPositions": true,
+      "fullRebuildParityVerified": true,
+      "metrics": [
+        {
+          "name": "retrieve",
+          "beforeMedianMs": 1297.241399999999,
+          "afterMedianMs": 455.50260000000344,
+          "ratio": 0.35113171688785433,
+          "withinOriginalTimeGate": true,
+          "beforeObjectReads": [
+            2000,
+            2000,
+            2000,
+            2000
+          ],
+          "afterObjectReads": [
+            500,
+            500,
+            500,
+            500
+          ]
+        },
+        {
+          "name": "character",
+          "beforeMedianMs": 96.67160000000149,
+          "afterMedianMs": 47.790499999999156,
+          "ratio": 0.4943592533898106,
+          "withinOriginalTimeGate": true,
+          "beforeObjectReads": [
+            68,
+            68,
+            68,
+            68
+          ],
+          "afterObjectReads": [
+            17,
+            17,
+            17,
+            17
+          ]
+        },
+        {
+          "name": "commit-unrelated",
+          "beforeMedianMs": 343.4874999999993,
+          "afterMedianMs": 135.3719999999994,
+          "ratio": 0.39411041158702914,
+          "withinOriginalTimeGate": true,
+          "beforeObjectReads": [
+            4,
+            5,
+            5,
+            5
+          ],
+          "afterObjectReads": [
+            3,
+            4,
+            4,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "chapters": 1000,
+      "facts": 4000,
+      "baselineHash": "27af19b9a911dce685a2335a84b69b4a264551edbe2fa190f671d5fb3a7af4c2",
+      "currentHash": "53c229f54f448082c53463b47e5372d7536582264a9a5de8f16bf5d349eddf3b",
+      "semanticFieldsEqualExceptAddedPositions": true,
+      "fullRebuildParityVerified": true,
+      "metrics": [
+        {
+          "name": "retrieve",
+          "beforeMedianMs": 2581.5397999999986,
+          "afterMedianMs": 898.4274000000005,
+          "ratio": 0.3480199685474541,
+          "withinOriginalTimeGate": true,
+          "beforeObjectReads": [
+            4000,
+            4000,
+            4000,
+            4000
+          ],
+          "afterObjectReads": [
+            1000,
+            1000,
+            1000,
+            1000
+          ]
+        },
+        {
+          "name": "character",
+          "beforeMedianMs": 199.8735000000015,
+          "afterMedianMs": 116.13759999998729,
+          "ratio": 0.5810555176148234,
+          "withinOriginalTimeGate": true,
+          "beforeObjectReads": [
+            136,
+            136,
+            136,
+            136
+          ],
+          "afterObjectReads": [
+            34,
+            34,
+            34,
+            34
+          ]
+        },
+        {
+          "name": "commit-unrelated",
+          "beforeMedianMs": 685.1729999999952,
+          "afterMedianMs": 179.04850000000442,
+          "ratio": 0.261318674261837,
+          "withinOriginalTimeGate": true,
+          "beforeObjectReads": [
+            4,
+            5,
+            5,
+            5
+          ],
+          "afterObjectReads": [
+            3,
+            4,
+            4,
+            4
+          ]
+        }
+      ]
+    }
+  ],
+  "originalTimeGate": "warm median <= baseline * 1.2",
+  "byteHashCaveat": "Final evidence records add Unicode start/end positions. Old raw hashes therefore differ; all other fact fields are compared exactly. Current incremental projection equals the full rebuild, including positions. Do not claim old/new raw hash equality.",
+  "before": {
+    "label": "before",
+    "createdAt": "2026-10-29T07:30:32.885Z",
+    "node": "v24.11.1",
+    "platform": "win32",
+    "release": "10.0.19045",
+    "cpu": "Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz",
+    "samples": 4,
+    "nature": "synthetic_engineering_load_not_literary_quality",
+    "target": "Warm median must not regress by more than 20%; source objects read at most once per query; fact hashes unchanged.",
+    "results": [
+      {
+        "chapters": 100,
+        "characters": 30,
+        "facts": 400,
+        "evidence": 400,
+        "proseCodePoints": 51145,
+        "factsHash": "d51309ba8deb4e9c5436cf2df74679ed9ac0549d7367318e5b37fde214794aca",
+        "metrics": [
+          {
+            "name": "retrieve",
+            "coldMs": 276.6305000000002,
+            "warmMs": [
+              267.21040000000085,
+              260.6707000000006,
+              278.0007999999998
+            ],
+            "objectReads": [
+              400,
+              400,
+              400,
+              400
+            ]
+          },
+          {
+            "name": "character",
+            "coldMs": 24.399499999999534,
+            "warmMs": [
+              29.712000000001353,
+              21.190599999999904,
+              21.0666999999994
+            ],
+            "objectReads": [
+              16,
+              16,
+              16,
+              16
+            ]
+          },
+          {
+            "name": "commit-unrelated",
+            "coldMs": 150.45679999999993,
+            "warmMs": [
+              146.174500000001,
+              191.60030000000006,
+              143.41719999999987
+            ],
+            "objectReads": [
+              4,
+              5,
+              5,
+              5
+            ]
+          }
+        ],
+        "memory": {
+          "rss": 195596288,
+          "heapTotal": 114348032,
+          "heapUsed": 72139104,
+          "external": 6323985,
+          "arrayBuffers": 3110087
+        },
+        "root": "D:\\AIkehuduan\\.test-output\\xingyue-v7\\memory-before-100-dLtDG7"
+      },
+      {
+        "chapters": 500,
+        "characters": 30,
+        "facts": 2000,
+        "evidence": 2000,
+        "proseCodePoints": 256615,
+        "factsHash": "ab4cd81dd281ff31e8082ed6ae0bb031a0cb23e3caffb5c3296df872264e8c8d",
+        "metrics": [
+          {
+            "name": "retrieve",
+            "coldMs": 1298.9858000000022,
+            "warmMs": [
+              1297.241399999999,
+              1293.4447,
+              1375.940200000001
+            ],
+            "objectReads": [
+              2000,
+              2000,
+              2000,
+              2000
+            ]
+          },
+          {
+            "name": "character",
+            "coldMs": 93.10109999999986,
+            "warmMs": [
+              96.67160000000149,
+              99.18940000000293,
+              90.81039999999848
+            ],
+            "objectReads": [
+              68,
+              68,
+              68,
+              68
+            ]
+          },
+          {
+            "name": "commit-unrelated",
+            "coldMs": 343.8168000000005,
+            "warmMs": [
+              338.7172999999966,
+              369.665100000002,
+              343.4874999999993
+            ],
+            "objectReads": [
+              4,
+              5,
+              5,
+              5
+            ]
+          }
+        ],
+        "memory": {
+          "rss": 296738816,
+          "heapTotal": 208187392,
+          "heapUsed": 106182944,
+          "external": 10236297,
+          "arrayBuffers": 3773269
+        },
+        "root": "D:\\AIkehuduan\\.test-output\\xingyue-v7\\memory-before-500-yG58XO"
+      },
+      {
+        "chapters": 1000,
+        "characters": 30,
+        "facts": 4000,
+        "evidence": 4000,
+        "proseCodePoints": 513447,
+        "factsHash": "27af19b9a911dce685a2335a84b69b4a264551edbe2fa190f671d5fb3a7af4c2",
+        "metrics": [
+          {
+            "name": "retrieve",
+            "coldMs": 2609.589200000002,
+            "warmMs": [
+              2688.5558999999994,
+              2531.8171999999977,
+              2581.5397999999986
+            ],
+            "objectReads": [
+              4000,
+              4000,
+              4000,
+              4000
+            ]
+          },
+          {
+            "name": "character",
+            "coldMs": 211.7109000000055,
+            "warmMs": [
+              197.83529999999882,
+              199.8735000000015,
+              207.17700000000332
+            ],
+            "objectReads": [
+              136,
+              136,
+              136,
+              136
+            ]
+          },
+          {
+            "name": "commit-unrelated",
+            "coldMs": 700.6247000000076,
+            "warmMs": [
+              685.1729999999952,
+              726.0121999999974,
+              666.244200000001
+            ],
+            "objectReads": [
+              4,
+              5,
+              5,
+              5
+            ]
+          }
+        ],
+        "memory": {
+          "rss": 345452544,
+          "heapTotal": 262901760,
+          "heapUsed": 180818672,
+          "external": 8613859,
+          "arrayBuffers": 2148724
+        },
+        "root": "D:\\AIkehuduan\\.test-output\\xingyue-v7\\memory-before-1000-flYaVZ"
+      }
+    ]
+  },
+  "after": {
+    "label": "delivery",
+    "createdAt": "2026-10-29T10:12:38.500Z",
+    "node": "v24.11.1",
+    "platform": "win32",
+    "release": "10.0.19045",
+    "cpu": "Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz",
+    "samples": 4,
+    "cacheConditions": "first sample is process-local first access, not an OS cold cache; following three samples are warm",
+    "extendedMetrics": "new absolute observations; no retroactive before/after performance claim",
+    "nature": "synthetic_engineering_load_not_literary_quality",
+    "target": "Warm median must not regress by more than 20%; source objects read at most once per query; fact hashes unchanged.",
+    "results": [
+      {
+        "chapters": 100,
+        "characters": 30,
+        "facts": 400,
+        "evidence": 400,
+        "proseCodePoints": 51145,
+        "factsHash": "27abd7e1f08e3fc0896b2a76c76b3eca13e0786d2c1cd6b20c494a6a91cd4088",
+        "metrics": [
+          {
+            "name": "retrieve",
+            "coldMs": 123.77629999999954,
+            "warmMs": [
+              127.3739000000005,
+              118.95340000000033,
+              106.3760000000002
+            ],
+            "objectReads": [
+              100,
+              100,
+              100,
+              100
+            ]
+          },
+          {
+            "name": "character",
+            "coldMs": 15.733799999999974,
+            "warmMs": [
+              13.469900000000052,
+              15.288899999999558,
+              15.832000000000335
+            ],
+            "objectReads": [
+              4,
+              4,
+              4,
+              4
+            ]
+          },
+          {
+            "name": "commit-unrelated",
+            "coldMs": 100.84819999999854,
+            "warmMs": [
+              103.89180000000124,
+              95.96379999999954,
+              141.55719999999928
+            ],
+            "objectReads": [
+              3,
+              4,
+              4,
+              4
+            ]
+          },
+          {
+            "name": "context-compile-discussion",
+            "coldMs": 325.6305000000011,
+            "warmMs": [
+              248.6211000000003,
+              257.8132999999998,
+              283.33170000000064
+            ],
+            "objectReads": [
+              200,
+              200,
+              200,
+              200
+            ]
+          },
+          {
+            "name": "snapshot-metadata",
+            "coldMs": 0.35310000000026776,
+            "warmMs": [
+              0.24330000000009022,
+              0.2334000000009837,
+              0.22259999999914726
+            ],
+            "objectReads": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "rebuild",
+            "coldMs": 422.8608000000004,
+            "warmMs": [
+              438.53249999999935,
+              398.6794000000009,
+              372.9806000000008
+            ],
+            "objectReads": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "memory": {
+          "rss": 179400704,
+          "heapTotal": 117465088,
+          "heapUsed": 69600616,
+          "external": 6010821,
+          "arrayBuffers": 2796923
+        },
+        "processPeakRssKiB": 175992,
+        "diskBefore": 8689449,
+        "diskAfter": 8689449,
+        "root": "D:\\AIkehuduan\\.test-output\\xingyue-v7\\memory-delivery-100-sLtJwB"
+      },
+      {
+        "chapters": 500,
+        "characters": 30,
+        "facts": 2000,
+        "evidence": 2000,
+        "proseCodePoints": 256615,
+        "factsHash": "a81a606062c271306dac90c4904685bd2796e5c594726fb5e634760e332c8765",
+        "metrics": [
+          {
+            "name": "retrieve",
+            "coldMs": 490.09860000000117,
+            "warmMs": [
+              455.81600000000253,
+              455.50260000000344,
+              433.02779999999984
+            ],
+            "objectReads": [
+              500,
+              500,
+              500,
+              500
+            ]
+          },
+          {
+            "name": "character",
+            "coldMs": 51.13129999999728,
+            "warmMs": [
+              47.790499999999156,
+              47.05760000000009,
+              57.35319999999774
+            ],
+            "objectReads": [
+              17,
+              17,
+              17,
+              17
+            ]
+          },
+          {
+            "name": "commit-unrelated",
+            "coldMs": 139.34760000000097,
+            "warmMs": [
+              142.0073999999986,
+              130.3051000000014,
+              135.3719999999994
+            ],
+            "objectReads": [
+              3,
+              4,
+              4,
+              4
+            ]
+          },
+          {
+            "name": "context-compile-discussion",
+            "coldMs": 1413.3451000000023,
+            "warmMs": [
+              1342.1519999999982,
+              1321.8654999999999,
+              1345.8361000000004
+            ],
+            "objectReads": [
+              1000,
+              1000,
+              1000,
+              1000
+            ]
+          },
+          {
+            "name": "snapshot-metadata",
+            "coldMs": 0.4945000000006985,
+            "warmMs": [
+              0.30900000000110595,
+              0.30010000000038417,
+              0.3286000000007334
+            ],
+            "objectReads": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "rebuild",
+            "coldMs": 1776.6492999999973,
+            "warmMs": [
+              1809.498599999999,
+              1776.5754000000015,
+              1678.843700000005
+            ],
+            "objectReads": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "memory": {
+          "rss": 277901312,
+          "heapTotal": 212037632,
+          "heapUsed": 80525072,
+          "external": 7526381,
+          "arrayBuffers": 2166139
+        },
+        "processPeakRssKiB": 277940,
+        "diskBefore": 37039085,
+        "diskAfter": 37104621,
+        "root": "D:\\AIkehuduan\\.test-output\\xingyue-v7\\memory-delivery-500-CxOB9e"
+      },
+      {
+        "chapters": 1000,
+        "characters": 30,
+        "facts": 4000,
+        "evidence": 4000,
+        "proseCodePoints": 513447,
+        "factsHash": "53c229f54f448082c53463b47e5372d7536582264a9a5de8f16bf5d349eddf3b",
+        "metrics": [
+          {
+            "name": "retrieve",
+            "coldMs": 867.7007000000012,
+            "warmMs": [
+              954.3248000000021,
+              898.4274000000005,
+              869.585500000001
+            ],
+            "objectReads": [
+              1000,
+              1000,
+              1000,
+              1000
+            ]
+          },
+          {
+            "name": "character",
+            "coldMs": 108.78549999999814,
+            "warmMs": [
+              117.45919999999751,
+              116.13759999998729,
+              110.31389999999374
+            ],
+            "objectReads": [
+              34,
+              34,
+              34,
+              34
+            ]
+          },
+          {
+            "name": "commit-unrelated",
+            "coldMs": 245.28110000000743,
+            "warmMs": [
+              175.00220000000263,
+              188.8966999999975,
+              179.04850000000442
+            ],
+            "objectReads": [
+              3,
+              4,
+              4,
+              4
+            ]
+          },
+          {
+            "name": "context-compile-discussion",
+            "coldMs": 2704.876199999999,
+            "warmMs": [
+              2556.333400000003,
+              2518.323399999994,
+              2413.2353000000003
+            ],
+            "objectReads": [
+              2000,
+              2000,
+              2000,
+              2000
+            ]
+          },
+          {
+            "name": "snapshot-metadata",
+            "coldMs": 0.5670000000100117,
+            "warmMs": [
+              0.4367999999958556,
+              0.39780000000610016,
+              0.42119999999704305
+            ],
+            "objectReads": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "rebuild",
+            "coldMs": 3173.7580000000016,
+            "warmMs": [
+              3352.3329999999987,
+              3203.10070000001,
+              3276.2574000000022
+            ],
+            "objectReads": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        ],
+        "memory": {
+          "rss": 457326592,
+          "heapTotal": 374337536,
+          "heapUsed": 280940552,
+          "external": 11580394,
+          "arrayBuffers": 5441912
+        },
+        "processPeakRssKiB": 451088,
+        "diskBefore": 67288770,
+        "diskAfter": 67419842,
+        "root": "D:\\AIkehuduan\\.test-output\\xingyue-v7\\memory-delivery-1000-Hs9EmP"
+      }
+    ]
+  },
+  "ui": {
+    "recordedAt": "2026-10-29",
+    "transport": "global Playwright MCP / localhost Vite / real Service and storage",
+    "viewport": {
+      "width": 1280,
+      "height": 800
+    },
+    "definition": "Navigation to local app through interactive workspace button and two animation frames; first sample keeps browser session and OS cache, not an OS-cold Electron startup. Stop timing is click through running control disappearing; simulated transport abort preserved unknown and never retried.",
+    "paidCalls": 0,
+    "results": [
+      {
+        "chapters": 100,
+        "firstUsableMs": [
+          942,
+          850,
+          801,
+          816
+        ],
+        "cancelUiMs": 344,
+        "unknownRetained": true
+      },
+      {
+        "chapters": 500,
+        "firstUsableMs": [
+          1556,
+          782,
+          717,
+          733
+        ],
+        "cancelUiMs": 540,
+        "unknownRetained": true
+      },
+      {
+        "chapters": 1000,
+        "firstUsableMs": [
+          2426,
+          989,
+          1011,
+          951
+        ],
+        "cancelUiMs": 692,
+        "unknownRetained": true
+      }
+    ]
+  },
+  "volumeOnly": {
+    "chapters": 1200,
+    "bodyCharacters": 3000000,
+    "commitMs": 43475,
+    "scanMs": 1148,
+    "searchMs": 30,
+    "scopedSearchMs": 16,
+    "node": "24.11.1",
+    "platform": "win32",
+    "at": "2026-10-29T10:19:17.552Z",
+    "meaning": "仅验证本机合成数据容量、编号、检索和计时，不代表真实文学效果"
+  }
+}

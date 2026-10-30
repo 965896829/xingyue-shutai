@@ -1,0 +1,149 @@
+{
+  "checkedAt": "2026-10-29",
+  "sources": [
+    {
+      "id": "SKR01",
+      "title": "Agent Skills Specification",
+      "url": "https://agentskills.io/specification",
+      "ref": "turn66view0",
+      "verified": "SKILL.md format, metadata, experimental allowed-tools, progressive disclosure",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR02",
+      "title": "Adding Skills Support",
+      "url": "https://agentskills.io/client-implementation/adding-skills-support",
+      "ref": "turn66view1",
+      "verified": "catalog/filtering/activation/compaction/dedup/optional subagents",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR03",
+      "title": "Agent Skills repository",
+      "url": "https://github.com/agentskills/agentskills",
+      "ref": "turn66view2",
+      "verified": "Apache-2.0",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR04",
+      "title": "Pi v1.4.0 release",
+      "url": "https://github.com/earendil-works/pi/releases/tag/v1.4.0",
+      "ref": "turn72view0",
+      "verified": "2026-10-21; 4a08025",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR05",
+      "title": "Pi v1.4.0 skills",
+      "url": "https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/docs/skills.md",
+      "ref": "turn73view4",
+      "verified": "instructions and resources vs prompt templates",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR06",
+      "title": "Pi v1.4.0 extensions",
+      "url": "https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/docs/extensions.md",
+      "ref": "turn73view5",
+      "verified": "executable integration and same-process OS permissions",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR07",
+      "title": "Anthropic Skill Creator",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md",
+      "ref": "turn72view1",
+      "verified": "baseline, blind comparisons, trigger tests",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR08",
+      "title": "Anthropic Skills repository",
+      "url": "https://github.com/anthropics/skills",
+      "ref": "turn65search1",
+      "verified": "mixed licenses; demonstrations not production assurance",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR09",
+      "title": "Claude Agent SDK skills",
+      "url": "https://code.claude.com/docs/en/agent-sdk/skills",
+      "ref": "turn75view6",
+      "verified": "skill allowlist not filesystem restriction; allowedTools preapproves not exclusion",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR10",
+      "title": "Claude Agent SDK v0.3.312 release",
+      "url": "https://github.com/anthropics/claude-agent-sdk-typescript/releases/tag/v0.3.312",
+      "ref": "turn73view3",
+      "verified": "2026-10-27; e296380",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR11",
+      "title": "Claude Agent SDK repository",
+      "url": "https://github.com/anthropics/claude-agent-sdk-typescript",
+      "ref": "turn69view2",
+      "verified": "Commercial Terms",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR12",
+      "title": "LangGraph Functional API",
+      "url": "https://docs.langchain.com/oss/javascript/langgraph/functional-api",
+      "ref": "turn72view3",
+      "verified": "checkpoint replay; unfinished task can rerun; idempotency",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR13",
+      "title": "LangGraph JS 1.5.3 release",
+      "url": "https://github.com/langchain-ai/langgraphjs/releases/tag/@langchain%2Flanggraph@1.5.3",
+      "ref": "turn77view3",
+      "verified": "2026-10-26; b09eb06",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR14",
+      "title": "LangGraph JS repository",
+      "url": "https://github.com/langchain-ai/langgraphjs",
+      "ref": "turn69view3",
+      "verified": "MIT",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR15",
+      "title": "SkillsBench 1.1",
+      "url": "https://www.skillsbench.ai/blogs/skillsbench-1-1",
+      "ref": "turn67search0",
+      "verified": "2026-06-16 release article; 87 tasks/8 domains; paired eval; Apache2",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR16",
+      "title": "SkillsBench v1.1 release",
+      "url": "https://github.com/benchflow-ai/skillsbench/releases/tag/v1.1",
+      "ref": "turn69view5",
+      "verified": "2026-06-14; b63b7b2; 87 tasks",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR17",
+      "title": "Skill Creator license",
+      "url": "https://github.com/anthropics/skills/blob/main/skills/skill-creator/LICENSE.txt",
+      "ref": "turn77view0",
+      "verified": "Apache-2.0",
+      "checkedAt": "2026-10-29"
+    },
+    {
+      "id": "SKR18",
+      "title": "Pi repository",
+      "url": "https://github.com/earendil-works/pi",
+      "ref": "turn69view1",
+      "verified": "MIT; upstream rename",
+      "checkedAt": "2026-10-29"
+    }
+  ]
+}

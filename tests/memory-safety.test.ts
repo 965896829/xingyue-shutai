@@ -106,10 +106,11 @@ test('只调整空行和缩进时重定位证据，不把未改变的剧情与�
   } finally { await service.drain(); }
 });
 
-for (const changeBudget of [false, true]) test(`记忆同步逐项修正文稿与事实，独立审核后一次接受并关闭待核对队列${changeBudget ? '（调整预算并交接）' : ''}`, async () => {
+for (const changeBudget of [false, true]) test(`旧合同恢复：记忆同步逐项修正文稿与事实，独立审核后一次接受并关闭待核对队列${changeBudget ? '（调整预算并交接）' : ''}`, async () => {
   const { service, store } = await setup();
   try {
     const edit = await service.invoke('document.save', { path: prosePath(1), baseHash: hash(body), content: body.replace('骨折，尚未治疗', '已经完全痊愈') });
+    const legacy = store.db.run(edit); delete legacy.revisionCoreRequired; store.db.saveRun(legacy);
     await service.invoke('run.accept', { id: edit, proposalHash: proposalHash(store.db.run(edit)) });
     assert.equal(store.db.project().chapters[2], 'stale');
     const run = service.makeRun('revision', '同步记忆');
@@ -195,6 +196,7 @@ test('核对按钮启动持久化同步任务，重复点击复用同一任务�
   const { service, store } = await setup();
   try {
     const id = await service.invoke('document.save', { path: prosePath(1), baseHash: hash(body), content: body + '\n\n窗外下起了雨。' });
+    const legacy = store.db.run(id); delete legacy.revisionCoreRequired; store.db.saveRun(legacy);
     await service.invoke('run.accept', { id, proposalHash: proposalHash(store.db.run(id)) });
     const receipt = await service.invoke('memory.rebuild', { profileId: profile.id }, { operationId: 'memory-repair-command' });
     assert.ok(receipt.runId);

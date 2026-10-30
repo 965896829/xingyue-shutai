@@ -18,6 +18,7 @@ import { FileStore } from '../src/core/storage';
 const root = path.resolve('resources/skill');
 import { fixture } from './fixtures/workflow';
 import { runHasCurrentBasis } from '../src/shared/run-presentation';
+import { fixtureCoverage } from './fixtures/chapter-coverage';
 for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正文记忆一次批准与批次归档${restartWithSettings ? '（每阶段调整预算并重启）' : ''}`, async () => {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-full-'));
   let service: Service;
@@ -26,6 +27,22 @@ for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正
     root,
     () => {},
     async (_p, _s, messages, tools, _signal, onDelta) => {
+      const audit = !tools.length ? JSON.parse(messages[0].content) : undefined;
+      if (audit?.items) {
+        assert.ok(audit.items.some((item: { id: string }) => item.id === 'chapter-character-coverage'));
+        const memory = { decisions: audit.items.map((item: { id: string; path: string }) => ({
+          id: item.id, verdict: 'supported', reason: '离线夹具覆盖与所发送的同版本正文一致。',
+          evidence: [{ path: item.path, quote: audit.sources.find((source: { path: string }) => source.path === item.path).content.slice(0, 30) }]
+        })) };
+        const plans = { decisions: (audit.plans ?? []).map((plan: { path: string }) => ({
+          path: plan.path, verdict: 'consistent', reason: '离线夹具计划与本章保持一致。',
+          planQuote: audit.sources.find((source: { path: string }) => source.path === plan.path).content.slice(0, 30),
+          proseQuote: audit.sources.find((source: { path: string }) => source.path === audit.prose.path).content.slice(0, 30)
+        })) };
+        return {
+          text: JSON.stringify(audit.plans ? { memory, plans } : memory), calls: [], native: {}, usage: { input: 1, output: 1, cost: 0, currency: 'USD' }, stop: 'complete'
+        };
+      }
       const mode = _s.match(/<expression_rules version="3\.1\.0" mode="([a-z]+)">/)?.[1];
       assert.ok(mode, '每次实际模型请求必须包含表达规则');
       expressionModes.add(mode);
@@ -80,7 +97,9 @@ for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正
           {
             id: `${p.stage}-${p.chapter}-${phase ?? ''}`,
             name: 'propose_changes',
-            arguments: JSON.stringify({ changes })
+            arguments: JSON.stringify({ changes, ...(phase === 'memory' ? {
+              facts: [], complete: true, coverage: fixtureCoverage(service, service.store!.db.runs().find(run => run.status === 'running')!)
+            } : {}) })
           }
         ],
         native: { role: 'assistant', content: '生成候选' },
@@ -171,7 +190,7 @@ for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正
       if (p.stage === 'S01') {
         const before = service.store!.db.get('headSnapshot');
         await assert.rejects(service.invoke('run.accept', acceptance), /填写书名/);
-        await assert.rejects(service.invoke('run.accept', { ...acceptance, title: '无效/书名' }), /无效字符/);
+        await assert.rejects(service.invoke('run.accept', { ...acceptance, title: '无效\n书名' }), /换行或控制字符/);
         assert.equal(service.store!.db.get('headSnapshot'), before);
         assert.equal(service.store!.db.run(id).accepted, false);
         await service.invoke('run.accept', { ...acceptance, title: '全流程' });

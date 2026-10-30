@@ -24,7 +24,7 @@ export function NarrativePanel({ snapshot, run, onSource }: { snapshot: Snapshot
   const identity = `${snapshot.projectSessionId}:${playback?.id ?? chapter}`;
   const [choice, setChoice] = useState<{ key: string; open: boolean }>();
   const [view, setView] = useState<'chapter' | 'sequence' | 'dimensions'>('chapter'), [scope, setScope] = useState<'batch' | 'book'>('batch');
-  const open = choice?.key === identity ? choice.open : !!playback;
+  const open = choice?.key === identity ? choice.open : false;
   const [loaded, setLoaded] = useState<{ key: string; foundation: string; data?: NarrativeData; error?: string }>();
   const documents = JSON.stringify(snapshot.documents.filter(d => /^(?:05_长篇大纲|06_章节设计|08_章后更新|07_正文章节)\//.test(d.path))
     .map(d => [d.path, d.acceptedHash]));
@@ -53,7 +53,7 @@ export function NarrativePanel({ snapshot, run, onSource }: { snapshot: Snapshot
       {view === 'dimensions' ? <NarrativeComparison snapshot={snapshot} data={data} onSource={onSource} /> : data ? view === 'chapter' ? <NarrativePlayback snapshot={snapshot} run={playback} data={data} onSource={onSource} /> : <>
         <NarrativeChart axis="章节" smooth={false} series={[{ key: 'plan', label: '计划强度', points: series('plan'), dashed: true }, { key: 'actual', label: '章后记录', points: series('actual') }]}
           labels={chapters.map(n => ({ x: n, label: String(n) }))} cursor={chapter} onPoint={p => { if (p.source) onSource(p.source); }} />
-        <p className="curve-caption">第 {data.range[0]}—{data.range[1]} 章 · 复用已有纲要与章后记录；缺少数据处留空。</p>
+        <p className="curve-caption">第 {data.range[0]}—{data.range[1]} 章</p>
       </> : <div className="narrative-empty">{loaded?.key === key && loaded.error ? '曲线资料暂不可用，正文生成不受影响。' : '正在读取本地曲线资料…'}</div>}
       {!!data?.unavailable && <small className="curve-caption">部分资料暂不可用，已保留有来源的曲线节点。</small>}
     </div>}

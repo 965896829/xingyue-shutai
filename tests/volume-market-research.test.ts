@@ -184,7 +184,9 @@ test('旧候选只有作者新提卷名修改才启用新规则，保留候选�
     await prepareVolumeMarketResearch(f.args);
     assert.equal(f.counts().modelCalls, 1);
     assert.deepEqual(f.run.changes, before);
-    assert.equal(upgradesVolumeNaming(f.run, '再改卷名'), false, '当前批次复用来源，不继续研究');
+    assert.equal(upgradesVolumeNaming(f.run, '再改卷名'), true, '明确反馈刷新命名上下文，资料仍复用');
+    await prepareVolumeMarketResearch(f.args);
+    assert.equal(f.counts().modelCalls, 1, '改名不能重复研究');
   } finally { f.store.close(); }
 });
 
@@ -257,7 +259,8 @@ test('S05集成：一次目录研究后直接生成原结构大纲，来源在�
     assert.deepEqual(done.changes.map(change => change.path), [paths.volumes]);
     assert.equal(done.changes[0].content, submitted);
     assert.doesNotMatch(done.changes[0].content, /目录测试书|来源|命名解释/);
-    assert.match(systems[1], /分卷命名：从真实目录/);
+    assert.match(systems[1], /番茄分卷命名：与商业书名一致/);
+    assert.equal(done.volumeNaming!.version, 2);
     const originalResearch = done.volumeNaming!.research;
     const rebuilt = service.rebuildRun(done, profile.id, '只改卷名');
     assert.deepEqual(rebuilt.volumeNaming!.research, originalResearch);
@@ -268,7 +271,7 @@ test('S05集成：一次目录研究后直接生成原结构大纲，来源在�
     const recovered = service.rebuildRun(old, profile.id, '恢复');
     assert.equal(recovered.volumeNaming, undefined);
     const renamed = service.rebuildRun(recovered, profile.id, '只改卷名，参考番茄风格');
-    assert.deepEqual(renamed.volumeNaming, { version: 1, authorRevision: true });
+    assert.deepEqual(renamed.volumeNaming, { version: 2, authorRevision: true });
     assert.deepEqual(renamed.changes, old.changes);
   } finally { service.close(); }
 });

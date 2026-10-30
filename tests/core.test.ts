@@ -23,6 +23,7 @@ import {
 } from '../src/core/domain';
 import { profileSchema, factSchema } from '../src/shared/types';
 import { templates, initialFiles, systemPrompt } from '../src/core/skill';
+import { parseWorldModel } from '../src/core/world-model';
 import { validateCandidate, checkFields, checkWorldFields, validateCoverage } from '../src/core/validation';
 import {
   rebuildMemory,
@@ -362,18 +363,20 @@ test('世界规则接受编号章节、组合标题和列表字段，仍拦截�
   assert.deepEqual(checkFields('## 普通必需字段\n内容', ['普通必需字段'], 'x').map(i => i.code), ['missing_field']);
 });
 
-test('S03 首次生成前即提供与校验器一致的字段，现实题材无需增设金手指', () => {
+test('S03 新世界以待决模块起步，旧任务保留八栏合同', () => {
   const project = newProject('社区维修铺', 'unused', { genre: '都市日常', constraints: '没有超自然能力' });
   const prompt = systemPrompt(skill, project, 'S03');
   const initial = initialFiles(project, skill, '维修铺经营')[paths.world];
   for (const label of worldRequiredFields) {
     assert.ok(prompt.includes(label));
-    assert.ok(initial.includes(`## ${label}`));
   }
   assert.match(prompt, /无金手指的题材/);
   assert.match(prompt, /不能为填字段增设题材之外的设定/);
-  assert.equal(checkWorldFields(initial, paths.world).filter(issue => issue.code === 'empty_field').length, worldRequiredFields.length);
-  assert.deepEqual(checkWorldFields(initial.replaceAll('待填写', '不适用超自然机制；以真实维修手艺、时间和费用约束推进。'), paths.world), []);
+  assert.ok(parseWorldModel(initial)!.modules.every(module => module.state === 'undecided' && module.content === ''));
+  assert.deepEqual(checkWorldFields(initial, paths.world), []);
+  const modular = systemPrompt(skill, project, 'S03', undefined, undefined, { worldModules: true });
+  assert.match(modular, /不强制能力、等级、金手指/);
+  assert.doesNotMatch(modular, /必须使用以下完整字段名/);
 });
 test('人物档案的来源说明不误作角色，未评估关系保留表格且仍拒绝非法数据', () => {
   const p = newProject('社区维修铺', 'unused', {});

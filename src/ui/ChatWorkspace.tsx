@@ -1,6 +1,6 @@
 import { useDialogs } from './AppDialogs';
 import { invokeCommand } from '../shared/client';
-import { GenerationStatus } from './GenerationStatus';
+import { GenerationStatus, GenerationStep } from './GenerationStatus';
 import { LiveMarkdown } from './LiveMarkdown';
 import { reasoningLabel } from '../shared/reasoning';
 import { mergeRows as merge, readChatUpdates } from '../shared/chat-history';
@@ -38,7 +38,9 @@ export function ChatWorkspace({
   onRun,
   onDocument,
   onSettings,
-  refresh
+  refresh,
+  conversationId,
+  compact = false
 }: {
   snapshot: Snapshot;
   profileId: string;
@@ -47,6 +49,8 @@ export function ChatWorkspace({
   onDocument: (path: string) => void;
   onSettings: () => void;
   refresh: () => Promise<void>;
+  conversationId?: string;
+  compact?: boolean;
 }) {
   const dialogs = useDialogs(snapshot.projectSessionId);
   const [selected, select] = useState(''),
@@ -109,9 +113,10 @@ export function ChatWorkspace({
     } catch {}
   }, [key]);
   useEffect(() => {
+    if (conversationId) { select(conversationId); return; }
     if (!conversations.some((c) => c.id === selected))
       select(conversations.find((c) => !c.archived)?.id ?? conversations[0]?.id ?? '');
-  }, [conversations, selected]);
+  }, [conversations, selected, conversationId]);
   const load = useCallback(async () => {
     if (!selected) return;
     const seq = ++request.current;
@@ -327,7 +332,7 @@ export function ChatWorkspace({
     ));
   return (
     <section
-      className="assistant-workspace"
+      className={`assistant-workspace${compact ? ' object-chat' : ''}`}
       onClick={(e) => {
         const anchor = (e.target as HTMLElement).closest('a');
         if (anchor) {
@@ -377,7 +382,7 @@ export function ChatWorkspace({
           </form>
         </div>
       )}
-      <aside className="topic-list">
+      {!compact && <aside className="topic-list">
         <div className="topic-heading">
           <b>主题聊天</b>
           <button
@@ -423,7 +428,7 @@ export function ChatWorkspace({
           </button>
           <button onClick={onSettings}>智能体角色与联网</button>
         </div>
-      </aside>
+      </aside>}
       <div className="assistant-conversation">
         <header className="assistant-heading">
           <div>
@@ -487,7 +492,7 @@ export function ChatWorkspace({
                 <article key={m.id} id={`message-${m.id}`} className={`conversation-message ${m.role}`}>
                   <small>
                     {m.role === 'user' ? '你' : brand.name} · {new Date(m.createdAt).toLocaleTimeString()}{' '}
-                    {m.role === 'assistant' && <GenerationStatus activity={turn?.activity} running={m.status === 'running'} fallbackStart={m.createdAt}
+                    {m.role === 'assistant' && <GenerationStatus variant="elapsed" activity={turn?.activity} running={m.status === 'running'} fallbackStart={m.createdAt}
                       label={{ running: '', complete: '已完成', stopped: '已停止', unknown: '请求结果未知', failed: '未完成' }[m.status]} />}
                   </small>
                   <LiveMarkdown
@@ -498,6 +503,7 @@ export function ChatWorkspace({
                   />
                   {m.role === 'assistant' && (
                     <>
+                      <GenerationStep activity={turn?.activity} running={m.status === 'running'} />
                       <WebSearchEvidence state={m.webSearch} running={m.status === 'running'} />
                       <ContextCompactions items={turn?.contextCompactions} activity={turn?.activity} running={m.status === 'running'} />
                       {turn?.error && <p className="inline-warning">{requestErrorText(turn.error)}</p>}
@@ -704,10 +710,20 @@ export function ChatWorkspace({
                   </button>
                 ))}
               </details>
-              <button
-                disabled={!profileId || busy || modelBusy}
-                onClick={async () => {
-                  const scope = await ask('要转入哪些正式资料？请说明目标文件、保留内容及修订范围。');
+                {p.stage === 'S10' && !p.finished && <button
+                  disabled={!profileId || busy || modelBusy}
+                  onClick={async () => {
+                    const saved = await call('draft.save', { id: draft.id, title: draft.title, content: draft.content, baseHash: draft.currentHash, conversationId: draft.conversationId, messageId: draft.messageId });
+                    if (!saved) return;
+                    await openDraft(draft.id, false);
+                    const runId = await call('draft.chapter', { id: saved.id, hash: saved.hash, profileId });
+                    if (runId) onRun(runId);
+                  }}
+                >作为第 {p.chapter} 章候选核对</button>}
+                <button
+                  disabled={!profileId || busy || modelBusy}
+                  onClick={async () => {
+                    const scope = await ask('要转入哪些正式资料？请说明目标文件、保留内容及修订范围。');
                   if (!scope) return;
                   const card = await call('draft.promote', {
                     id: draft.id,

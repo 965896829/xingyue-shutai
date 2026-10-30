@@ -1,0 +1,142 @@
+{
+  "verifiedAt": "2026-10-29",
+  "baseline": "0.4.82",
+  "commit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "remoteVerification": "parent verified main via GitHub connector in current turn",
+  "method": "read-only local source inspection",
+  "sources": [
+    {
+      "id": "R01",
+      "title": "技能注册、宿主分类、路径限制、装配、资源锁",
+      "path": "src/core/skill-registry.ts",
+      "lines": "9-127",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/skill-registry.ts"
+    },
+    {
+      "id": "R02",
+      "title": "工具白名单、工具调用和候选范围检查",
+      "path": "src/core/runner.ts",
+      "lines": "184-195;1490-1596",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runner.ts"
+    },
+    {
+      "id": "R03",
+      "title": "阶段和 mode 输出协议，命名与表达规则",
+      "path": "src/core/skill.ts",
+      "lines": "86-144",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/skill.ts"
+    },
+    {
+      "id": "R04",
+      "title": "Pi 调度边界，宿主负责真实请求和回执",
+      "path": "src/core/runtime/task-loop.ts",
+      "lines": "40-125",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/task-loop.ts"
+    },
+    {
+      "id": "R05",
+      "title": "技能目录与五项 host 分派、模型任务 mode",
+      "path": "src/core/service.ts",
+      "lines": "722-726;1328-1367",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/service.ts"
+    },
+    {
+      "id": "R06",
+      "title": "任务实际依赖和模型版本指纹",
+      "path": "src/core/runner.ts",
+      "lines": "277-297;903-905;943-959",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runner.ts"
+    },
+    {
+      "id": "R07",
+      "title": "工具 JSON schema 校验、幂等与未知结果",
+      "path": "src/core/runtime/tool-gateway.ts",
+      "lines": "14-44;59-66",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/tool-gateway.ts"
+    },
+    {
+      "id": "R08",
+      "title": "操作去重和未知结果",
+      "path": "src/core/runtime/operations.ts",
+      "lines": "23-46",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/operations.ts"
+    },
+    {
+      "id": "R08b",
+      "title": "正式提交由宿主完成并绑定批准内容",
+      "path": "src/core/runtime/commit-kernel.ts",
+      "lines": "7-27",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/commit-kernel.ts"
+    },
+    {
+      "id": "R09",
+      "title": "讨论工具、全树 rulesHash、任务卡依赖",
+      "path": "src/core/conversation-runner.ts",
+      "lines": "64-123;142-156;166-240",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/conversation-runner.ts"
+    },
+    {
+      "id": "R10",
+      "title": "旧阶段 Markdown 输出与原模板硬门槛",
+      "path": "src/core/skill-output-contract.ts",
+      "lines": "44-97",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/skill-output-contract.ts"
+    },
+    {
+      "id": "R10b",
+      "title": "阶段输出和累计 requiredInputs",
+      "path": "src/core/domain.ts",
+      "lines": "89-121",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/domain.ts"
+    },
+    {
+      "id": "R11",
+      "title": "共享前缀、来源去重与 user 数据边界",
+      "path": "src/core/runtime/prompt-cache.ts",
+      "lines": "4-62",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runtime/prompt-cache.ts"
+    },
+    {
+      "id": "R12",
+      "title": "创意/命名资源的独立锁与版本分支",
+      "path": "src/core/creation-prompts.ts",
+      "lines": "20-58;144-178",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/creation-prompts.ts"
+    },
+    {
+      "id": "R13",
+      "title": "章后 memory 完整台账 required 注入",
+      "path": "src/core/runner.ts",
+      "lines": "1149-1171",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/core/runner.ts"
+    },
+    {
+      "id": "R14",
+      "title": "现有 prompt 模式与模板兼容测试",
+      "path": "tests/creation-prompts.test.ts",
+      "lines": "240-266",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/tests/creation-prompts.test.ts"
+    },
+    {
+      "id": "R15",
+      "title": "完整的 26 项技能目录",
+      "path": "resources/skill/runtime/skills.registry.json",
+      "lines": "1-529",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/resources/skill/runtime/skills.registry.json"
+    },
+    {
+      "id": "R16",
+      "title": "契约说明字段与实际工具权限",
+      "path": "resources/skill/runtime/skills/webnovel-chapter-drafter/contract.json",
+      "lines": "1-31",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/resources/skill/runtime/skills/webnovel-chapter-drafter/contract.json"
+    },
+    {
+      "id": "R17",
+      "title": "skills.list / skill.run IPC schema",
+      "path": "src/shared/contracts.ts",
+      "lines": "147-149",
+      "url": "https://github.com/965896829/xingyue-shutai/blob/b505f6f459db74871f39f63acf6106b827c8a353/src/shared/contracts.ts"
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 5,
+  "status": "design_only",
+  "resolutionOrder": [
+    "author_explicit",
+    "accepted_world_rules",
+    "current_story_requirements",
+    "genre_suggestions"
+  ],
+  "defaultState": "undecided",
+  "modules": [
+    {
+      "id": "world-foundation",
+      "label": "世界基础",
+      "purpose": "现实基础、时空边界和作者已明确的底层前提",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "geography-mobility",
+      "label": "地理与移动",
+      "purpose": "地点层级、通行路线、距离或时间限制",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "history-calendar",
+      "label": "历史与历法",
+      "purpose": "发生时间、年代和虚构历法",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "society-factions",
+      "label": "社会与势力",
+      "purpose": "组织、制度、利益、权利和义务",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "economy-resources",
+      "label": "经济与资源",
+      "purpose": "获得、消耗、所有权、分配与稀缺",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "ability-rules",
+      "label": "能力规则",
+      "purpose": "适用者、触发、效果、限制、反制和例外",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "progression",
+      "label": "成长与境界",
+      "purpose": "无等级、线性、分支、多轴或自定义成长",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "technology-profession",
+      "label": "科技与职业",
+      "purpose": "知识、流程、资格、组织权责与工具",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "investigation-evidence",
+      "label": "谜案与证据",
+      "purpose": "事实、线索、假说、反证、误导与揭示",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "relationship-norms",
+      "label": "关系与社会规范",
+      "purpose": "亲密、家族、婚姻、礼法和群体期待",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "species-ecology",
+      "label": "物种与生态",
+      "purpose": "生物、族群、栖地、食物与环境约束",
+      "requiredByGenreAlone": false
+    },
+    {
+      "id": "system-interface",
+      "label": "系统与游戏界面",
+      "purpose": "任务、界面、奖励、失败与信息权限",
+      "requiredByGenreAlone": false
+    }
+  ],
+  "customModules": {
+    "allowed": true,
+    "namespace": "custom:",
+    "executableCodeAllowed": false
+  },
+  "rules": [
+    "不适用与未定均为合法状态",
+    "停用模块保留历史来源与影响报告",
+    "作者字段锁必须由明确作者决定解除",
+    "平台分类约束不限制内部创作混搭",
+    "数值、层级、代价与表格仅在本书需要时启用"
+  ]
+}

@@ -108,6 +108,7 @@ export class Conversations {
     baseHash?: string;
     conversationId: string;
     messageId: string;
+    parent?: { id: string; hash: string };
   }) {
     if (!a.content.trim()) throw new Error('草稿不能为空');
     this.get('conversations', a.conversationId);
@@ -133,6 +134,7 @@ export class Conversations {
       });
     if (!versions.some((v) => v.hash === version)) versions.push({ hash: version, at: now() });
     const draft: DraftArtifact = {
+      ...(previous?.parent || a.parent ? { parent: previous?.parent ?? a.parent } : {}),
       id: key,
       title: a.title.slice(0, 80),
       path: relative,

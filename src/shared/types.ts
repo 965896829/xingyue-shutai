@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { reasoningEffortSchema, type ReasoningSnapshot } from './reasoning';
+import { defaultWritingStyle } from './writing-style';
 
 export const stageIds = [
   'S01',
@@ -24,7 +25,7 @@ export const configSchema = z
     batchSize: z.number().int().positive().default(30),
     pov: z.string().min(1).default('第三人称'),
     genre: z.string().default('脑洞玄幻'),
-    style: z.string().default('清晰、快节奏；人物主动选择；强弱节奏交替'),
+    style: z.string().default(defaultWritingStyle),
     constraints: z.string().default(''),
     expressionRules: z
       .object({
@@ -271,6 +272,9 @@ export interface ContextSource {
   mode: 'full' | 'excerpt';
 }
 export interface ContextManifest {
+  qualityReadHash?: string;
+  voicePreferences?: { scope: import('./quality').VoiceScope; statement: string; exceptions: string[] }[];
+  factReadDependency?: import('./workflow').FactReadDependency;
   projectId?: string;
   inputHash?: string;
   selectedBy?: 'legacy-context-v4' | 'context-compiler-v1';
@@ -328,6 +332,14 @@ export type RunStatus =
   | 'awaiting_input'
   | 'awaiting_permission';
 export interface Run {
+  revisionCoreRequired?: 1;
+  revisionCore?: { version: 1; sourceRunId: string; chapters: number[]; proseHashes: Record<string, string>; coverage: Record<string, import('./chapter-memory').ChapterCoverage>; reports: Record<string, string>; phase: 'extract' | 'review' | 'ready' };
+  worldContract?: 1 | 2;
+  workflowVersion?: 1;
+  workflowBinding?: import('./workflow').WorkflowBinding;
+  chapterCoverage?: import('./chapter-memory').ChapterCoverage;
+  creative?: import('./creative').CreativeTask;
+  design?: import('./design').DesignBinding;
   contextUsage?: import('./context-meter').ContextUsage;
   contextCompactions?: import('./context-meter').ContextCompaction[];
   activity?: import('./generation').GenerationActivity;
@@ -343,6 +355,7 @@ export interface Run {
   checkpointVersion?: number;
   cancelRequestedAt?: string;
   parentRunId?: string;
+  workbench?: import('./workbench-visual').WorkbenchCandidate;
   agentRulesHash?: string;
   repairAttempts?: Record<string, number>;
   networkRetries?: number;
@@ -371,6 +384,7 @@ export interface Run {
   naming?: import('./creation').TitlePlanning;
   /** New S05 runs only; absence preserves historic prompt and recovery behavior. */
   volumeNaming?: import('./volume-style').VolumeNaming;
+  chapterNaming?: import('./chapter-naming').ChapterNaming;
   tagBinding?: { inputHash: string; contractRevision: number; knowledgeVersion: string };
   conversationId?: string;
   savedCandidateReview?: { at: string; requestUnknown: boolean; error?: string };
@@ -388,6 +402,7 @@ export interface Run {
   basisRevision?: number | null;
   skillId?: string;
   pipeline?: {
+    coverageVersion?: 1;
     phase: 'prose' | 'review' | 'memory' | 'ready';
     proseHash?: string;
     epoch: string;

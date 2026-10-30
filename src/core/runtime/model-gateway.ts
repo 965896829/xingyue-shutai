@@ -121,6 +121,7 @@ export async function callModel(
   const bound = withTaskReasoning(profile, owner);
   args[0] = bound;
   const delta = args[5];
+  const isolated = 'creative' in owner ? (owner as Run).creative : undefined;
   let partial = false;
   // Persist and send the same cache identity across stages, retries and restarts.
   // Partition projects/providers; prompt matching still checks the actual bytes.
@@ -130,12 +131,13 @@ export async function callModel(
     if (['responding', 'tool_input', 'thinking'].includes(phase)) partial = true;
     options?.onActivity?.(phase);
   }, promptCacheKey: `wenxu-v1-${fingerprint({
-    project: store.db.project().id, profile: bound.id, endpoint: bound.baseUrl,
-    model: bound.model, protocol: bound.protocol, reasoning: bound.reasoningEffort
+    project: store.db.project()?.id ?? 'management', profile: bound.id, endpoint: bound.baseUrl,
+    model: bound.model, protocol: bound.protocol, reasoning: bound.reasoningEffort,
+    ...(isolated ? { audience: isolated.audienceHash, policy: isolated.rulesHash } : {})
   }).slice(0, 48)}` };
   args[6] = requestOptions;
   let body = requestBody(bound, system, messages, tools, requestOptions).body;
-  const session = 'changes' in owner && 'messages' in owner
+  const session = !isolated && 'changes' in owner && 'messages' in owner
     ? prepareCacheSession(store, owner as Run, bound, body, messages, tools.length, purpose, () => options?.onActivity?.('compacting')) : undefined;
   if (session) {
     args[6] = { ...requestOptions, responsesInput: session.input };

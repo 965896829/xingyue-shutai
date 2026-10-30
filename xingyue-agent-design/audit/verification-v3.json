@@ -1,0 +1,83 @@
+{
+  "designVersion": "V3",
+  "baselineVersion": "0.4.82",
+  "baselineCommit": "b505f6f459db74871f39f63acf6106b827c8a353",
+  "verificationDate": "2026-10-28",
+  "completed": [
+    {
+      "check": "baseline-repository-recheck",
+      "result": "passed",
+      "method": "本轮通过 GitHub 读取 main，版本与固定提交未变；围绕记忆、来源、检索、事务、人物、测试源码补充 21 项证据。"
+    },
+    {
+      "check": "compat-resources-preserved",
+      "result": "passed",
+      "skills": 26,
+      "creationResources": 5,
+      "method": "26 份技能与原 manifest 逐项 SHA-256 一致；5 份创意命名资源与 V2 ZIP 逐字节一致。"
+    },
+    {
+      "check": "v3-contracts-and-schema",
+      "result": "passed",
+      "detailsFile": "contract-verification-v3.json",
+      "method": "严格 TypeScript、SQLite 约束与 Unicode 边界的实际执行结果保存在独立记录；没有接入客户端。"
+    },
+    {
+      "check": "million-codepoint-query-prototype",
+      "result": "passed",
+      "dataset": {
+        "chapters": 400,
+        "codepoints_per_chapter": 2500,
+        "body_codepoints": 1000000,
+        "assertions": 12000,
+        "entities": 80,
+        "main_assertions": 11400,
+        "alternative_assertions": 600,
+        "token_count": null,
+        "token_count_note": "本原型未调用tokenizer，中文码点数量不是模型token数量。"
+      },
+      "equalQueries": 120,
+      "functionalGroups": 7,
+      "method": "交付源码与原件一致，独立复跑通过；报告引用原始 run-002 数字，复跑单独留档。"
+    },
+    {
+      "check": "code-comments",
+      "result": "passed",
+      "pythonFiles": 2,
+      "method": "Python tokenizer 检查 0 条代码注释；SQL 无注释；TS/MJS scanner 结果见合同验证记录。"
+    },
+    {
+      "check": "semantic-cross-review",
+      "result": "passed",
+      "method": "核对人物覆盖、知情与误信、闪回与时态、正常演变与纠错、无变化与无依据、推断候选、作者权限、来源与查询依赖、现有审核复用。"
+    },
+    {
+      "check": "report-visual-qa",
+      "result": "passed",
+      "count": 24,
+      "method": "Word 经 LibreOffice 渲染；root 原尺寸检查第 1—8 页，人物审查者原尺寸检查第 9—16 页，仓库审查者原尺寸检查第 17—24 页。补充引文、清理空行号后仅第 4、23 页像素变化；补齐幂等读集说明后仅第 8 页像素变化；root 对三页分别再次原尺寸检查通过，其余页像素与已通过版本完全一致。"
+    },
+    {
+      "check": "report-package-integrity",
+      "result": "passed",
+      "method": "DOCX ZIP 完整且无批注附件。"
+    }
+  ],
+  "report": {
+    "file": "xingyue-agent-optimization.docx",
+    "pages": 24,
+    "sha256": "83e2a7e17968fc2c7bf41e2240da93fe1ed636f02626d1bb5d71420542526e40"
+  },
+  "sourceCount": 112,
+  "notExecuted": [
+    "新协议接入客户端",
+    "真实模型和 embedding 调用",
+    "真实中文小说连续创作与读者盲评",
+    "完整 V3 场景时间、分支继承与依赖重放实现",
+    "Windows 安装包及完整 GUI 回归",
+    "远端仓库写入或部署"
+  ],
+  "scopeNote": "本轮验证支持交付完整、类型与示例 schema 可检查、局部查询方案可复现及报告可读。性能实验没有测量当前客户端端到端，也没有测量文学或商业效果。",
+  "recordStatus": "historical",
+  "supersededReportNote": "本记录保留前序版本当时的验证结果；V4 本轮交付与验证见 verification-v4.json。未改变原测试执行范围。"
+}

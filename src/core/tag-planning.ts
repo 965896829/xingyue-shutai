@@ -6,8 +6,9 @@ import { withTaskReasoning } from '../shared/reasoning';
 import { beginTool, finishTool, stopOnToolFailure, type ToolTicket } from './runtime/tool-gateway';
 import { z } from 'zod';
 import {
-  planningReportSchema,
+  legacyPlanningReportSchema,
   concisePlanningReportSchema,
+  modularPlanningReportSchema,
   contractCandidateSchema,
   planningReviewSchema,
   planningPhaseNames
@@ -23,6 +24,8 @@ import {
   contractPath,
   renderContract
 } from './tags';
+import { creationGenre, modelBookSpec } from './tags';
+import { bookProfilePath, renderBookProfile } from './publishing';
 import { fileHash, safePath, type FileStore } from './storage';
 import { paths, updateConfigDocument } from './domain';
 import { assembleContext } from './memory';
@@ -47,7 +50,7 @@ import { templateFields } from './validation';
 
 export function planningRulesHash(root: string, p: ProjectState, task?: Run['planning']) {
   return tagHash({ skill: new SkillRegistry(root).load('webnovel-premise-lab').hash, prompts: creationPromptResources(root).hash, expression: expressionFingerprint(root, p.config), language: planningLanguageRules, version: 4,
-    ...(task?.directionFormatVersion === 1 ? { directionFormatVersion: 1, directions: directionPromptResources(root).hash } : {}) });
+    ...(task?.directionFormatVersion ? { directionFormatVersion: task.directionFormatVersion, directions: directionPromptResources(root).hash } : {}) });
 }
 
 export function hasSavedDirectionCheckpoint(run: Run) {
@@ -132,7 +135,7 @@ export async function driveTagPlanning(args: {
     const schema = reviewing
       ? planningReviewSchema
       : t.phase === 'planning'
-        ? t.directionFormatVersion === 1 ? concisePlanningReportSchema : planningReportSchema
+        ? t.directionFormatVersion === 2 ? modularPlanningReportSchema : t.directionFormatVersion === 1 ? concisePlanningReportSchema : legacyPlanningReportSchema
         : t.workflowVersion === 2 ? contractCandidateSchema.extend({ plan: creationPlanSchema }) : contractCandidateSchema;
     const name = reviewing
       ? 'submit_planning_review'
@@ -151,7 +154,7 @@ export async function driveTagPlanning(args: {
     const system = planningSystemPrompt({
       controller: rules.content,
       resources: promptResources,
-      ...(t.directionFormatVersion === 1 ? { directionResources: directionPromptResources(root) } : {}),
+      ...(t.directionFormatVersion ? { directionResources: directionPromptResources(root) } : {}),
       planning: t,
       submitTool: name,
       expression: expression.prompt,
@@ -167,14 +170,14 @@ export async function driveTagPlanning(args: {
           role: 'user',
           content: JSON.stringify({
             ...taskEnvelope(store, root, r, 'planning'),
-            input: t.spec,
+            input: modelBookSpec(t.spec),
             knowledge: t.knowledge,
             task: r.request,
-            approved: approvedCreation(p),
+            approved: approvedCreation(p) ? { ...approvedCreation(p)!, spec: modelBookSpec(approvedCreation(p)!.spec) } : undefined,
             context: r.manifest!.sources,
             currentPremise: store.readAccepted(paths.seed).content,
             // The reroll already carries its original report. Do not send it twice.
-            report: t.directionFormatVersion === 1 && t.phase === 'planning' && t.regenerate ? undefined : planningReportContext(t),
+            report: !!t.directionFormatVersion && t.phase === 'planning' && t.regenerate ? undefined : planningReportContext(t),
             selectedDirectionId: t.selectedDirectionId,
             resolutions: t.resolutions,
             candidate: t.candidate,
@@ -208,7 +211,7 @@ export async function driveTagPlanning(args: {
       if (r.toolCount > p.config.maxTools) throw new ApplicationError('TOOL_LIMIT', '已达到工具调用总上限');
       const value = JSON.parse(result.calls[0].arguments);
       let submittedCall = result.calls[0];
-      if (t.phase === 'planning' && t.directionFormatVersion === 1) {
+      if (t.phase === 'planning' && t.directionFormatVersion) {
         // Some providers still emit the known legacy bookkeeping. Preserve it in
         // the stored report, validate core content, and adapt only the tool wire
         // shape locally. The original model response remains in the request log.
@@ -370,7 +373,9 @@ export async function driveTagPlanning(args: {
       }
     ];
     const configured = structuredClone(p);
-    configured.config.genre = t.knowledge.options.find((o) => o.group === 'reading.main')?.label ?? configured.config.genre;
+    configured.config.genre = creationGenre(t.spec, t.knowledge, configured.config.genre);
+    if (t.spec.bookProfile) r.changes.push({ path: bookProfilePath,
+      content: renderBookProfile(t.spec.bookProfile, t.spec.publishingCatalog ?? null), baseHash: store.db.document(bookProfilePath)?.hash ?? null });
     r.changes.push({
       path: paths.config,
       content: updateConfigDocument(store.readAccepted(paths.config).content, configured),
