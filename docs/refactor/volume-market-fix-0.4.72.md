@@ -51,7 +51,7 @@ S05 仍输出 `05_长篇大纲/分卷大纲.md`：容量表和各卷原字段不
 客户端专项 skill、打包根 skill 和 `D:/aiwangwen2/webnovel-seed-to-chapter` 使用同一份卷名规则。直接在 Codex 执行时，没有宿主提供的资料才完成同样有上限的一批目录检索；客户端已提供资料就复用，不重复搜索。步骤和模板一致，不承诺不同模型的具体措辞完全相同。
 
 - [专项规则](D:/AIkehuduan/resources/skill/runtime/skills/webnovel-volume-architect/SKILL.md)
-- [共用卷名参考](D:/AIkehuduan/resources/skill/runtime/references/volume-naming.md)
+- 该版旧卷名参考已退役，当前使用[番茄商业卷名参考](D:/AIkehuduan/resources/skill/runtime/references/volume-naming-commercial.md)。
 - [原路径 skill 的卷名参考](D:/aiwangwen2/webnovel-seed-to-chapter/references/volume-naming.md)
 
 旧专项正文单独保留作恢复兼容，不删除既有项目、模型配置和原始作品。只备份并修改本次涉及的源文件，没有覆盖工作区原本已有的其他修改。

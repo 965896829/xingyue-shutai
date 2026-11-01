@@ -2,6 +2,9 @@ import type { Run } from '../shared/types';
 import type { FileStore } from './storage';
 import { SkillRegistry, stageSkills } from './skill-registry';
 import { stageOutputs, qualityPath } from './domain';
+import { projectForRun } from './task-scope';
+import type { PromptPhase } from './prompt-profile';
+import { prosePath } from './domain';
 
 export const automaticRepairLimit = 2;
 
@@ -17,10 +20,11 @@ export function assertControllerRules(root: string, expected: string) {
 export function taskEnvelope(
   store: FileStore,
   root: string,
-  owner: Pick<Run, 'id'> & Partial<Pick<Run, 'stage' | 'chapter' | 'mode' | 'manifest' | 'baseRevision' | 'skillId' | 'skillHash' | 'parentRunId' | 'continuity' | 'pipeline'>>,
+  owner: Pick<Run, 'id'> & Partial<Pick<Run, 'stage' | 'chapter' | 'mode' | 'manifest' | 'baseRevision' | 'skillId' | 'skillHash' | 'parentRunId' | 'continuity' | 'pipeline' | 'taskScope'>>,
   mode: string = owner.mode ?? 'discussion'
 ) {
-  const p = store.db.project();
+  const saved = store.db.project();
+  const p = projectForRun(saved, { chapter: owner.chapter ?? saved.chapter, stage: owner.stage ?? saved.stage, taskScope: owner.taskScope });
   return {
     project_id: p.id,
     ...(p.titlePending ? {
@@ -28,6 +32,7 @@ export function taskEnvelope(
       title_guidance: '书名尚未确定。先完成故事方向和设定，不追问书名，不把项目显示名当作书名；作者确认方向后由客户端确认书名。'
     } : {}),
     branch_id: 'main',
+    ...(owner.taskScope ? { task_scope: owner.taskScope } : {}),
     run_id: owner.id,
     budget_root_id: owner.parentRunId ?? owner.id,
     stage: owner.stage ?? p.stage,
@@ -64,4 +69,16 @@ export function taskEnvelope(
     } : { snapshot_id: store.db.get<string>('headSnapshot'), sources: [], fact_ids: [] },
     skill_lock: { agent_hash: controllerRules(root).hash, skill_id: owner.skillId ?? stageSkills[owner.stage ?? p.stage], task_hash: owner.skillHash ?? null }
   };
+}
+
+export function modelTaskEnvelope(store: FileStore, root: string, owner: Parameters<typeof taskEnvelope>[2], phase: PromptPhase = 'tools') {
+  const envelope = taskEnvelope(store, root, owner);
+  const { run_id: _run, budget_root_id: _budget, skill_lock: _lock, ...model } = envelope;
+  const { max_rounds: _rounds, max_tools: _tools, cost_limit: _cost, ...authorization } = model.authorization;
+  const { sources: _sources, ...manifest } = model.context_manifest;
+  if (phase === 'tools') return { ...envelope, context_manifest: manifest };
+  const output_versions = model.output_versions?.filter(source => phase === 'prose' ? source.path === prosePath(envelope.chapter_no)
+    : phase === 'review' ? source.path === qualityPath(envelope.chapter_no) : phase === 'memory' ? /^(04_|08_)/.test(source.path) && source.path !== qualityPath(envelope.chapter_no) : true);
+  return { ...model, authorization, context_manifest: manifest, output_versions,
+    ...(phase === 'prose' ? { reading_policy: '本轮无读取工具，依据已提供材料写正文；真实缺口不得用其他章节或自造设定替代。' } : {}) };
 }

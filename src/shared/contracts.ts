@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { skillExecutionSchema } from './skill-contract';
 import { writingStyleRequestSchema, writingStyleReportSchema } from './writing-style';
 import { bookProfileSchema, bookProfileStateSchema, publishingSnapshotSchema } from './publishing';
 import { marketEvidenceSchema, marketRequestSchema } from './market-evidence';
@@ -16,7 +17,7 @@ import { manuscriptViewSchema } from './manuscript-view';
 import { creativeInputSchema } from './creative';
 import { qualityStateSchema, qualityMutationSchema, qualityStatsSchema, worldModelSchema } from './quality';
 import { designInputSchema, designEntrySchema } from './design';
-import { experienceSchema } from './experience';
+import { experienceSchema, maxExperienceChapter } from './experience';
 import { reviewFeedbackSchema } from './blind-review';
 import { workbenchBindingSchema, workbenchViewSchema } from './workbench';
 import { candidateViewSchema, plotMutationSchema, plotViewSchema, reorderDecisionSchema, reorderPreviewSchema, stateHistorySchema, workbenchMediaSchema, workbenchScopeBindingSchema } from './workbench-visual';
@@ -38,6 +39,7 @@ const model = z.object(profileSchema.shape).omit({ id: true, name: true, protoco
 const draftRead = z.intersection(schemas.draftArtifactSchema, z.object({ content: text, currentHash: text }));
 const chatData = z.object({ conversation: schemas.conversationSchema, messages: z.array(schemas.conversationMessageSchema), turns: z.array(schemas.conversationTurnSchema), proposals: z.array(schemas.actionProposalSchema) });
 const retrieval = z.object({
+  disputes: z.array(schemas.factSchema).optional(),
   facts: z.array(z.object({ fact: schemas.factSchema, reason: text, score: z.number().optional(), required: flag })),
   documents: z.array(z.object({ path: text, hash: text, excerpt: text, reason: text })),
   issues: z.array(text), status: text,
@@ -82,7 +84,7 @@ export const commandContracts = {
   'quality.exportReview': define(z.strictObject({ experimentIds: z.array(key).min(1).max(100) }), z.strictObject({ packetId: key, html: text }), 'write'),
   'quality.importReview': define(z.strictObject({ expectedRevision: integer, feedback: reviewFeedbackSchema }), z.strictObject({ state: qualityStateSchema, imported: integer, duplicate: ok }), 'write'),
   'design.list': define(empty, z.array(designEntrySchema)),
-  'experience.read': define(z.object({ throughChapter: integer.min(1).max(1000) }).strict(), experienceSchema),
+  'experience.read': define(z.object({ throughChapter: integer.min(1).max(maxExperienceChapter) }).strict(), experienceSchema),
   'design.run': define(z.object({ input: designInputSchema, profileId: optionalText }).strict(), key, 'write'),
   'quality.mutate': define(z.strictObject({ expectedRevision: integer, mutation: qualityMutationSchema }), qualityStateSchema, 'write'),
   'quality.statistics': define(z.strictObject({ experimentId: key }), qualityStatsSchema),
@@ -188,7 +190,7 @@ export const commandContracts = {
   'embedding.cancel': define(empty, ok, 'write'),
   'assessment.refresh': define(z.strictObject({ id: key, content: optionalText, track: z.enum(['plan', 'candidate']).optional() }), schemas.assessmentSchema.nullable(), 'remote'),
   'draft.checkpoint': define(z.strictObject({ id: key, content: optionalText }), ok, 'write'),
-  'skills.list': define(empty, z.array(z.object({ id: text, title: text, host: ok, description: text, stage: text, optional: ok, path: text, contract: text, sha256: text, tools: z.array(text) })), 'read', 'global'),
+  'skills.list': define(empty, z.array(z.object({ id: text, title: text, host: ok, description: text, stage: text, optional: ok, path: text, contract: text, sha256: text, tools: z.array(text), execution: skillExecutionSchema })), 'read', 'global'),
   'expression.catalog': define(empty, schemas.expressionCatalogSchema, 'read', 'global'),
   'creative.run': define(z.strictObject({ input: creativeInputSchema, profileId: optionalText }), text, 'write'),
   'creative.characters': define(z.strictObject({ chapter: integer.min(1) }), z.array(z.object({ id: key, name: key }))),

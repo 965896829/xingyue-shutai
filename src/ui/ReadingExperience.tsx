@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { invokeCommand } from '../shared/client';
 import type { CommandOutput } from '../shared/contracts';
+import { maxExperienceChapter } from '../shared/experience';
 
 export function ReadingExperience() {
   const [through, setThrough] = useState(1),
@@ -8,7 +9,7 @@ export function ReadingExperience() {
     [error, setError] = useState('');
   useEffect(() => {
     let active = true;
-    if (through < 1 || through > 1000) return;
+    if (!Number.isInteger(through) || through < 1 || through > maxExperienceChapter) return;
     void invokeCommand('experience.read', { throughChapter: through })
       .then((value) => {
         if (active) {
@@ -30,7 +31,7 @@ export function ReadingExperience() {
         <input
           type="number"
           min={1}
-          max={1000}
+          max={maxExperienceChapter}
           value={through}
           onChange={(e) => setThrough(Number(e.target.value))}
         />
@@ -56,11 +57,16 @@ export function ReadingExperience() {
                     {!c.stable.length && <span>未记录</span>}
                   </div>
                   <div>
-                    <h4>当前经历与状态</h4>
+                    <h4>当下状态</h4>
                     {c.current.map((item) => (
                       <p key={item.id}>{item.text}</p>
                     ))}
                     {!c.current.length && <span>未记录</span>}
+                  </div>
+                  <div>
+                    <h4>已发生经历</h4>
+                    {c.experiences.map(item => <p key={item.id}>{item.text}</p>)}
+                    {!c.experiences.length && <span>未记录</span>}
                   </div>
                 </div>
               </article>

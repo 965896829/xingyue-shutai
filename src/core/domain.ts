@@ -170,7 +170,7 @@ export function parseConfig(text: string, existing: ProjectConfig): ProjectConfi
   // Original Skill fields are authoritative too; a hidden client block is not
   // required for a reviewed creative configuration to become effective.
   const visible = text.replace(/^\s*(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\s*\1\s*$/gm, '');
-  const field = (label: string) => visible.match(new RegExp(`^ {0,3}[-*+][ \\t]+(?:\\*\\*)?${label}(?:\\*\\*)?[：:][ \\t]*(?:\\*\\*)?([^\\r\\n]+)`, 'm'))?.[1].trim();
+  const field = (label: string) => visible.match(new RegExp(`^ {0,3}[-*+][ \\t]+(?:\\*\\*)?${label}(?:\\*\\*)?[：:][ \\t]*(?:\\*\\*)?([^\\r\\n]+(?:\\r?\\n(?!\\s*(?:[-*+]\\s|#|$))[^\\r\\n]+)*)`, 'm'))?.[1].trim();
   const words = (s: string | undefined) => {
     const match = s?.match(/^(\d+(?:\.\d+)?)\s*(万)?\s*(?:字|章)?$/);
     return match ? Number(match[1]) * (match[2] ? 10000 : 1) : undefined;
@@ -190,7 +190,7 @@ export function parseConfig(text: string, existing: ProjectConfig): ProjectConfi
   if (range) { value.minWords = Number(range[1]); value.maxWords = Number(range[2]); }
   for (const [label, key] of [['视角', 'pov'], ['题材', 'genre'], ['风格', 'style'], ['用户硬约束', 'constraints']] as const) {
     const content = field(label);
-    if (content) value[key] = content;
+    if (content) value[key] = key === 'constraints' && content === '暂无额外约束' ? '' : content;
   }
   return configSchema.parse(value);
 }

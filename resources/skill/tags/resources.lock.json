@@ -1,17 +1,14 @@
 {
+  "prompts/contract.system.md": "f1a1429bd408afa4690293914b4ea169b97e029fe4bd171eb579755718d0096a",
+  "prompts/planner.system.md": "c5ef311ae6f36fe3cf07de729c25456332fd4feec89c720c1ebb6e78c3d7ebd2",
+  "prompts/reviewer.system.md": "2312cb8a1e513d52caa924aa43c33ee86dcd0fb6c4751865fe613260b3814f38",
   "registry/combination-rules.json": "e889e2e1fdcc656a67e0829b47b8856b760da10d05ca50ba99ffa6f0b27d79fc",
   "registry/coverage.json": "c23a491bd317980a5400a80e37db94146d2b79f762e6c9195041e56b89652c69",
   "registry/genre-profiles.json": "068b96fb26331cf9eba6da8d6ad9d9a96bcf033ee461236d0d7cabfed993cff9",
   "registry/knowledge-cards.json": "e4c460ffed922e769afd47db9edc0499b8b6398ff223e1b1fabad5ad4f66233f",
+  "registry/platform-policy.json": "bea36a620aecf5728a978cb3210f2ddb942a625684a63766c3a58a930c879a74",
   "registry/recipes.json": "6f053c62708de6dcf64b0110d669b3549df7aba8cced64b5e2677f35b9b3efbb",
   "registry/taxonomy.json": "b2bc13947a56934a3f6f4f6a9bd4899be26e3004d6c08f71e33987eed9e8811c",
-  "prompts/planner.system.md": "69853183ac38e963653be21cfd5af0413add52dcb15fa50571f604e3ab515919",
-  "prompts/reviewer.system.md": "2312cb8a1e513d52caa924aa43c33ee86dcd0fb6c4751865fe613260b3814f38",
-  "prompts/writer.system.md": "d6be652a3163d67cca9026df648bf7ec2806c7387cfd091c409e0157293259e5",
-  "sources.json": "37573d1c36c82df06b1122ba63251ba680613b9412f59be480bacf57aa007d44",
-  "registry/platform-policy.json": "bea36a620aecf5728a978cb3210f2ddb942a625684a63766c3a58a930c879a74",
-  "prompts/contract.system.md": "f1a1429bd408afa4690293914b4ea169b97e029fe4bd171eb579755718d0096a",
-  "prompts/title-writer.system.md": "7112ebed16c7faf518ebf53c3a8d6aed51fd75301bab7387bd8da0e89f6eb141",
-  "prompts/title-reviewer.system.md": "8f9fa7d54a67dc150f9de5e7def2cd15ce2221a17284226555b131c316305408",
-  "registry/title-style-profile.json": "968da59f1e9f9f1555282f48699147c8440ab664825f6be77761534cc91882cc"
+  "registry/title-style-profile.json": "968da59f1e9f9f1555282f48699147c8440ab664825f6be77761534cc91882cc",
+  "sources.json": "37573d1c36c82df06b1122ba63251ba680613b9412f59be480bacf57aa007d44"
 }

@@ -6,7 +6,7 @@ import type { ProjectConfig, Run } from '../shared/types';
 import type { ExpressionBinding, ExpressionCatalog, ExpressionMode } from '../shared/expression';
 import { sharedRuleBlock } from './runtime/prompt-cache';
 
-const policyVersion = 'natural-expression-4';
+const policyVersion = 'natural-expression-5';
 const ruleSchema = z.object({
   id: z.string().regex(/^[A-Z]+-\d{3}$/),
   version: z.literal('3.1.0'),
@@ -92,10 +92,9 @@ export function expressionFingerprint(root: string, config: ProjectConfig) {
   );
 }
 
-const commonPolicy = `表达规则只约束当前授权范围内的语言和创作判断，不授予修改正式稿、改变事实、批准任务或执行工具的权限。作者明确的创作取舍、已确认文风及规则例外需要保留。
-这些是编辑启发式，不是AI身份鉴定。只有触发条件成立并影响阅读、且例外不适用时才改。不要把常见词当禁词，不做机械同义替换，不靠错字、粗口、随机断句或捏造生活细节制造人味。
-以具体对象、动作、证据和因果表达意思；删去无信息的赞叹、空泛标签、重复解释和强行升华。避免密集的“不是…而是…”、“真正的…从来不是…”、三连排比和每段金句；有真实对比或人物声线需要时可以保留。
-输出前按当前生效规则复读，直接给修正后的内容。不要复述规则、宣告正在去AI味或附加自检过程；不要声称所有905条均已逐条审查。原文引文、证据位置、人物事实及机器字段必须准确保留。`;
+const commonPolicy = `表达指导优先级：作者当前明确要求 → 已确认作品声音 → 当前人物与叙述方式 → 场景需要 → 默认表达建议。
+规则仅在触发条件成立且例外不适用时使用，不增加权限、不改事实和机器字段，不是AI身份鉴定。不以禁词、心理比例、微动作数量或比喻密度评判作品；保留有功能的直述、冷叙述、长句、日常、幽默和停顿。
+默认仅装入本阶段必要规则，作者显式选择的模块完整加载。引文和证据保持原样，不输出自检或规则报告。`;
 const adapters: Record<ExpressionMode, string> = {
   discussion:
     '当前是与作者讨论。先直接回应问题，把判断落到具体文本或情节；信息不足只问关键问题。减少客套迎合、复述需求、套路标题、反复总结和结尾邀约。篇幅随问题而定，必要的列表、分析、创作术语和解释可以保留。小说专属规则只用于讨论小说或短例子，不能把正常讨论当正文清除。',
@@ -168,24 +167,23 @@ export function expressionPack(
   validateExpressionSelection(root, config);
   const library = expressionLibrary(root);
   const languageOnly = mode === 'discussion' || mode === 'record' || mode === 'planning' || mode === 'title' || mode === 'title_market';
-  const modules = new Set(
-    languageOnly
-      ? ['LEX', 'SYN', 'IMG', 'VOICE']
-      : library.catalog.modules.filter((m) => m.layer === 'core').map((m) => m.id)
-  );
-  if (mode === 'revision' || mode === 'review') modules.add('EDIT');
-  if (mode !== 'record') for (const id of config.expressionRules?.modules ?? []) modules.add(id);
-  const rules = library.rules.filter((r) => modules.has(r.module_id));
+  const defaults = new Set(mode === 'record' ? [] : ['VOICE-001']);
+  if (!languageOnly) for (const id of ['META-001', 'POV-001', 'DIA-001', 'STATE-001']) defaults.add(id);
+  if (mode === 'revision' || mode === 'review') defaults.add('EDIT-001');
+  const selectedModules = new Set(mode === 'record' ? [] : config.expressionRules?.modules ?? []);
+  const rules = library.rules.filter((r) => defaults.has(r.id) || selectedModules.has(r.module_id));
+  const modules = new Set(rules.map(r => r.module_id));
   const baseModules = new Set(['LEX', 'SYN', 'IMG', 'VOICE']);
   const base = rules.filter(r => baseModules.has(r.module_id));
   const additional = rules.filter(r => !baseModules.has(r.module_id) && r.module_id !== 'EDIT');
   const editing = rules.filter(r => r.module_id === 'EDIT');
-  const shared = sharedRuleBlock('expression-base', `${commonPolicy}\n本轮生效基础规则（保留全部触发、处理、例外及共同约束）：\n${formatRules(base)}`);
+  const shared = sharedRuleBlock('expression-base', commonPolicy);
+  const language = base.length ? sharedRuleBlock('expression-language', `本轮表达规则（完整保留触发与例外）：\n${formatRules(base)}`) : '';
   const extra = additional.length ? sharedRuleBlock('expression-additional',
     `本轮生效补充规则（与基础规则一起按当前模式适用，保留全部触发、处理、例外及共同约束）：\n${formatRules(additional)}`) : '';
   const edit = editing.length ? sharedRuleBlock('expression-edit',
     `本轮生效编辑规则（与基础及补充规则一起按当前模式适用，保留全部触发、处理、例外及共同约束）：\n${formatRules(editing)}`) : '';
-  const prompt = `\n\n<expression_rules version="${library.version}" mode="${mode}">\n${adapters[mode]}\n本轮生效规则由基础部分及存在时的补充、编辑部分组成，均按本模式和原适用条件执行。\n${shared}${extra}${edit}\n</expression_rules>`;
+  const prompt = `\n\n<expression_rules version="${library.version}" mode="${mode}">\n${adapters[mode]}\n${shared}${language}${extra}${edit}\n</expression_rules>`;
   return {
     prompt,
     fingerprint: expressionFingerprint(root, config),

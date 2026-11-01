@@ -56,8 +56,17 @@ for (const [file, names] of Object.entries(selected)) {
     roots[name] = encode(checker.getDeclaredTypeOfSymbol(symbol));
   }
 }
-fs.writeFileSync('src/shared/contract-shapes.json', JSON.stringify({ roots, nodes }));
-fs.writeFileSync('src/shared/contract-schemas.ts', [
+function writeGenerated(file, content) {
+  const temporary = `${file}.${process.pid}.tmp`;
+  try {
+    fs.writeFileSync(temporary, content);
+    fs.renameSync(temporary, file);
+  } finally {
+    if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
+  }
+}
+writeGenerated('src/shared/contract-shapes.json', JSON.stringify({ roots, nodes }));
+writeGenerated('src/shared/contract-schemas.ts', [
   "import { z } from 'zod';",
   "import graph from './contract-shapes.json';",
   ...imports,

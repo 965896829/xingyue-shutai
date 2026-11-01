@@ -15,6 +15,48 @@ import { workbenchViewSchema, type WorkbenchBinding } from '../src/shared/workbe
 import { Service } from '../src/core/service';
 import path from 'node:path';
 
+test('选中对象的明确修改自动生成限定候选，提问不获得执行授权', async () => {
+  for (const edit of [true, false]) {
+    let service: Service, discussions = 0, executions = 0;
+    service = new Service(path.resolve('resources/skill'), () => {}, async (_p, system, _messages, tools) => {
+      if (tools.some(tool => tool.name === 'propose_action')) {
+        discussions++;
+        if (discussions > 1) return fakeResult('只讨论修改的可能影响。');
+        if (edit) assert.match(system, /作者已明确要求修改/);
+        return { ...fakeResult(''), stop: 'tools', calls: [{ id: 'edit-object', name: 'propose_action', arguments: JSON.stringify({ kind: 'revision', goal: '调整林川目标', scope: '仅林川当前目标', request: '把林川目标改成修好水泵，保留赵宁和其他字段', outputs: [paths.roles] }) }] };
+      }
+      executions++;
+      const content = roles.replace('当前目标：找回钥匙', '当前目标：修好水泵');
+      return { ...fakeResult(''), stop: 'tools', calls: [{ id: 'object-candidate', name: 'propose_changes', arguments: JSON.stringify({ changes: [service.change(paths.roles, content)] }) }] };
+    });
+    service.profiles = [{ ...fakeProfile, contextLimit: 1000000, outputLimit: 16000 }];
+    try {
+      await service.invoke('project.create', { parent: isolatedRoot('object-autonomy'), title: '对象修改', premise: '维修工找钥匙', config: { defaultProfileId: fakeProfile.id } });
+      const store = service.store!;
+      store.commit([service.change(paths.roles, roles)], store.db.project());
+      const view = readWorkbench(store, { chapter: 1 });
+      const conversation = await service.invoke('workbench.discuss', { binding: { projectId: view.projectId, snapshotId: view.snapshotId, objectId: 'CH001', scope: view.scope } });
+      await service.invoke('chat.send', { conversationId: conversation.id, profileId: fakeProfile.id, text: edit ? '把林川的当前目标改成修好水泵' : '为什么林川要修好水泵？' });
+      const until = Date.now() + 20000;
+      do {
+        await new Promise(resolve => setTimeout(resolve, 20));
+        if (Date.now() > until) throw new Error('对象修改等待超时');
+      } while (service.chat!.controller || service.runner!.controller);
+      const proposal = service.chat!.records.all('action_proposals', conversation.id)[0];
+      assert.equal(executions, edit ? 1 : 0);
+      assert.equal(proposal.executionSource, edit ? 'author_message' : undefined);
+      assert.equal(proposal.status, edit ? 'executed' : 'pending');
+      assert.equal(store.readAccepted(paths.roles).content, roles);
+      if (edit) {
+        const run = store.db.run(proposal.executionId!);
+        assert.equal(run.status, 'awaiting_review', run.error ?? JSON.stringify(run.issues));
+        assert.match(run.changes[0].content, /林川[\s\S]*修好水泵/);
+        assert.match(run.changes[0].content, /赵宁[\s\S]*找回钥匙/);
+      }
+    } finally { await service.drain(); }
+  }
+});
+
 const roles =
   '# 角色卡\n\n## 林川\n- 编号：CH001\n- 身份：维修工\n- 当前目标：找回钥匙\n\n## 赵宁\n- 编号：CH002\n- 身份：医生\n- 当前目标：找回钥匙\n';
 const relation = '# 关系\n\n| 人物A | 人物B | 关系 |\n| --- | --- | --- |\n| 林川 | 赵宁 | 相互试探 |';

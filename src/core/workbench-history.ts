@@ -41,7 +41,7 @@ export function workbenchHistory(store: FileStore, raw: unknown, compareSnapshot
     const at = Math.min(scope.chapter, fact.toChapter ?? scope.chapter);
     if (
       !visibleFact(
-        { ...fact, state: fact.state === 'superseded' ? 'active' : fact.state },
+        fact,
         { ...scope, chapter: at }
       )
     )

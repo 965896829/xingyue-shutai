@@ -6,7 +6,7 @@ import {
 } from '../../shared/narrative-events';
 import { withTaskReasoning } from '../../shared/reasoning';
 import { type ProjectState, type Run, type SecretProfile, type ToolDefinition } from '../../shared/types';
-import { assertControllerRules, automaticRepairLimit, taskEnvelope } from '../agent-control';
+import { assertControllerRules, automaticRepairLimit, modelTaskEnvelope } from '../agent-control';
 import { countInput } from '../context-budget';
 import { contextChanged, contextPayload, fitContext } from '../context-compiler';
 import {
@@ -41,6 +41,8 @@ import { recordUsage, requestGuard, syncUsage } from '../telemetry';
 import { validateCandidate } from '../validation';
 import { chapterCoverageInstruction, requiredCharacterCoverage } from '../chapter-memory';
 import { alignChapterTitle, chapterNamingContext, chapterTitleIssues } from '../chapter-naming';
+import { writeScopedScenes } from './scene-draft';
+import { proseTask } from '../prose-task';
 
 export type ChapterWorkflowHost = Pick<
   AgentRunner,
@@ -97,18 +99,19 @@ export async function driveChapterWorkflow(
     extractor = select('extraction');
   const { resident } = host.contextResident(r, p, naming);
   const reviewReferences = r.pipeline?.phase !== 'prose' ? r.manifest?.referenceSources : undefined;
-  r.manifest = assembleContext(host.store, p, 'S10', r.request, writer, false, { resident });
+  r.manifest = assembleContext(host.store, p, 'S10', r.request, writer, false, { resident, scope: r.taskScope?.memory });
   // Keep a completed review's evidence through memory extraction and approval;
   // only a new prose draft can replace that review and its source versions.
-  r.manifest.referenceSources = reviewReferences;
+  r.manifest.referenceSources = [...new Map([...(r.manifest.referenceSources ?? []), ...(reviewReferences ?? [])].map(source => [source.path, source])).values()];
   await host.enrichContext(r, p, writer);
-  fitContext(r.manifest, writer, resident);
+  fitContext(r.manifest, writer, resident, 0, true, p);
   const context = {
-    ...taskEnvelope(host.store, host.skillRoot, r),
+    ...modelTaskEnvelope(host.store, host.skillRoot, r, 'prose'),
     ...chapterNamingContext(r),
-    task: r.request,
-    authorPremise: host.store.db.get('premise'),
-    ...contextPayload(r.manifest),
+    task: '生成本章正文，审阅与记忆由对应子任务处理。',
+    authorRequest: r.request,
+    authorPremise: r.manifest.scope?.viewpoint === 'character' ? undefined : host.store.db.get('premise'),
+    ...contextPayload(r.manifest, p, 'prose'),
     chapter: p.chapter,
     batch: r.batch
   };
@@ -119,7 +122,8 @@ export async function driveChapterWorkflow(
     system: string,
     messages: Run['messages'],
     tools: ToolDefinition[],
-    delta?: (text: string) => void
+    delta?: (text: string) => void,
+    purpose: string = pipeline.phase
   ) => {
     if (signal.aborted) throw new RequestError('作者已停止执行', false);
     assertControllerRules(host.skillRoot, r.agentRulesHash!);
@@ -147,7 +151,7 @@ export async function driveChapterWorkflow(
     const result = await callModel(
       host.store,
       r,
-      pipeline.phase,
+      purpose,
       host.caller,
       profile,
       system,
@@ -221,9 +225,7 @@ export async function driveChapterWorkflow(
             role: 'user',
             content: JSON.stringify({
               ...context,
-              repair: repair ? r.issues : undefined,
-              reviewFeedback: r.proseReviewFeedback,
-              prior: r.changes.find((c) => c.path === file)?.content
+              ...proseTask(r)
             })
           }
         ];
@@ -269,7 +271,11 @@ export async function driveChapterWorkflow(
               }
             );
             try {
-              const result = await call(writer, system, messages, [], (text) => decoder.push(text));
+              const result = p.config.proseMode === 'scene'
+                ? await writeScopedScenes({ store: host.store, root: host.skillRoot, run: r, project: p, signal,
+                    send: (purpose, rule, input) => call(writer, rule, [{ role: 'user', content: JSON.stringify(input) }], [], undefined, purpose),
+                    onText: text => decoder.push(text) })
+                : await call(writer, system, messages, [], (text) => decoder.push(text));
               decoded = decodeNarrativeResponse(result.text);
               return { ...result, text: decoded.text };
             } finally {
@@ -372,9 +378,12 @@ export async function driveChapterWorkflow(
       }
       preloadOutputTargets(host.store, r, p, r.manifest!);
       const input = {
-        ...context,
-        ...taskEnvelope(host.store, host.skillRoot, r),
-        ...contextPayload(r.manifest!),
+        authorPremise: context.authorPremise, authorRequest: r.request,
+        chapter: p.chapter, batch: r.batch,
+        ...chapterNamingContext(r),
+        ...modelTaskEnvelope(host.store, host.skillRoot, r, phase),
+        ...contextPayload(r.manifest!, p, phase),
+        task: phase === 'review' ? '独立审阅当前正文，只提交质量报告。' : '依据最终正文提取记忆，只提交必要资料变化与事实。',
         prose: { ...prose, hash: pipeline.proseHash },
         ...(phase === 'memory' && pipeline.coverageVersion === 1
           ? {

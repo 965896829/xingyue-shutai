@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { fanqieTitleSources, titleSearchTopic, titleResearchBrief } from '../src/core/title-market-research';
+import { fanqieTitleSources, titleSearchTopic, titleResearchBrief, prepareTitleMarketResearch } from '../src/core/title-market-research';
+import { fakeProfile, fakeResult, refactorFixture } from './fixtures/refactor';
+import { searchSettingsSchema } from '../src/shared/assistant';
 import { makeBookSpec, makeCreationSpec, tagBundle } from '../src/core/tags';
 import { newProject } from '../src/core/domain';
 import { emptyTagInput } from '../src/shared/tags';
@@ -13,6 +15,46 @@ import { recommendedTitleIds, titleReviewSchema, type TitlePlanning } from '../s
 import type { CreationPlan } from '../src/shared/creation';
 
 const root = path.resolve('resources/skill');
+test('新旧命名任务的实际检索请求统一商业规则，并复用原请求与搜索预算', async () => {
+  for (const editorialVersion of [undefined, 1, 2] as const) {
+    const { store, run } = refactorFixture();
+    let calls = 0;
+    try {
+      const project = store.db.project();
+      run.naming = { editorialVersion, marketResearchVersion: 1, phase: 'generating',
+        planHash: 'a'.repeat(64), sourceHash: 'a'.repeat(64), inputHash: 'a'.repeat(64),
+        rule: 'local', instruction: '', history: [], formatRepairs: 0, semanticRevisions: 0 };
+      store.db.saveRun(run);
+      const args: Parameters<typeof prepareTitleMarketResearch>[0] = {
+        store, root, run, project,
+        profile: { ...fakeProfile, protocol: 'responses', contextLimit: 1000000 },
+        spec: makeCreationSpec(project, { ...emptyTagInput(), premise: '都市脑洞，未公开的主角许某' }, 1, tagBundle(root).taxonomy),
+        genre: '都市脑洞', plan: { statements: [], tagRoles: [] },
+        settings: searchSettingsSchema.parse({ enabled: true, provider: 'openai', maxSearches: 2 }),
+        signal: new AbortController().signal, save: () => store.db.saveRun(run), event: () => {},
+        caller: async (_profile, system, messages, _tools, _signal, _delta, options) => {
+          calls++;
+          assert.match(system, /本次研究服务于番茄对应题材的商业命名/);
+          assert.match(system, /不为追求文艺感优先推荐短名/);
+          assert.doesNotMatch(system, /题面只是概念堆砌、任务摘要/);
+          assert.doesNotMatch(JSON.stringify(messages), /许某|未公开/);
+          assert.equal(options?.webSearch?.maxCalls, 2);
+          return { ...fakeResult('只参考真实题面表达，不借用设定。'), webSearch: {
+            calls: [{ id: 'search-one', status: 'completed', sources: [{ title: '检索夹具', url: 'https://fanqienovel.com/page/111' }] }], citations: []
+          } };
+        }
+      };
+      await prepareTitleMarketResearch(args);
+      const usedRounds = run.rounds, usedTools = run.toolCount, usedUsage = { ...run.usage };
+      await prepareTitleMarketResearch(args);
+      assert.equal(calls, 1);
+      assert.equal(run.rounds, usedRounds); assert.equal(run.toolCount, usedTools);
+      assert.deepEqual(run.usage, usedUsage);
+      assert.equal(run.naming.marketResearch?.status, 'ready');
+    } finally { store.close(); }
+  }
+});
+
 test('实时书名检索只使用公开分类与标签，不外送作者设定、角色和私密备注', () => {
   const input = emptyTagInput();
   input.selection.reading.main = 'reading.main.003';
@@ -75,9 +117,9 @@ test('书名专用表达上下文保留语言规则和作者设置，不带全�
   const project = newProject('上下文验收', 'unused', {});
   const title = expressionPack(root, project.config, 'title');
   const review = expressionPack(root, project.config, 'review');
-  assert.deepEqual(title.binding!.modules, ['IMG', 'LEX', 'SYN', 'VOICE']);
-  assert.equal(title.binding!.ruleIds.length, 48);
-  assert.ok(title.prompt.length < review.prompt.length / 2);
+  assert.deepEqual(title.binding!.modules, ['VOICE']);
+  assert.equal(title.binding!.ruleIds.length, 1);
+  assert.ok(title.prompt.length < review.prompt.length);
   project.config.expressionRules.modules = ['URBAN'];
   assert.ok(expressionPack(root, project.config, 'title').binding!.modules.includes('URBAN'));
   const editorial = titleEditorialResources(root);
@@ -85,9 +127,10 @@ test('书名专用表达上下文保留语言规则和作者设置，不带全�
     editorial, naming: { editorialVersion: 1, marketResearchVersion: 1, candidateCount: 6 } as TitlePlanning,
     reviewing: false, submitTool: 'submit_title_candidates', expression: title.prompt });
   assert.match(prompt, /styleBrief/);
-  assert.match(prompt, /符合设定只是底线/);
-  assert.match(prompt, /不能靠机械禁词/);
-  assert.match(editorial.reviewer, /审美弱项是编辑建议，保留可选，不为此增加修复轮/);
+  assert.match(prompt, /不能.*事实正确.*代替推荐依据/);
+  assert.match(prompt, /常见商业句式本身不是AI味/);
+  assert.match(editorial.reviewer, /风格判断不触发额外返工/);
+  assert.match(editorial.reviewer, /旧任务工具没有此字段时/);
 });
 
 test('新策略显式传达平台目标与样本应用方式，作者偏好优先且审核可给空推荐', () => {
@@ -104,8 +147,8 @@ test('新策略显式传达平台目标与样本应用方式，作者偏好优�
   assert.doesNotMatch(build(false), /按短题面适用/);
   assert.match(build(true), /recommendedIds由本轮独立复核/);
   assert.match(build(true), /空数组，不新增审核轮/);
-  assert.deepEqual(expression.binding!.modules, ['IMG', 'LEX', 'SYN', 'VOICE']);
-  assert.equal(expression.binding!.ruleIds.length, 48, '保留规则及适用例外，不删除规则库');
+  assert.deepEqual(expression.binding!.modules, ['VOICE']);
+  assert.equal(expression.binding!.ruleIds.length, 1, '默认按阶段精简，规则库与显式选择模块保持完整');
 });
 
 test('推荐列表只采用新版当前复核，兼容旧数据且不推荐未知或事实冲突候选', () => {
@@ -141,10 +184,10 @@ test('实时样本用于自然表达与多样角度，不新增结构、审核�
   const t = { marketResearchVersion: 1, phase: 'generating', candidateCount: 6 } as TitlePlanning;
   const prompt = titleSystemPrompt({ controller: '', resources: creationPromptResources(root), naming: t,
     reviewing: false, submitTool: 'submit_title_candidates', expression: '' });
-  assert.match(prompt, /不同读者群|读者群/);
-  assert.match(prompt, /不新增审核轮/);
-  assert.match(prompt, /不是关键词禁用表/);
-  assert.match(prompt, /不能代表全站趋势/);
-  assert.match(prompt, /不要求模型重新联网/);
+  assert.match(prompt, /相同读者群/);
+  assert.match(prompt, /不增加搜索或模型请求/);
+  assert.match(prompt, /常见商业句式本身不是AI味/);
+  assert.match(prompt, /不把搜索排序当榜单/);
+  assert.match(prompt, /不再搜索或编造来源/);
   assert.match(prompt, /本批恰好6个候选/);
 });

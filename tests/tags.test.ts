@@ -1180,7 +1180,15 @@ test('统一方案采纳后实际走通保留的十一阶段和逐章正文流�
         if (args[1].includes('rubric narrative-1')) return plainResult({ values: { pressure: 3, payoff: 3, emotion: 3, revelation: null, relationship: null }, quotes: [fixture(p, prosePath(p.chapter), active).slice(-12)], note: '合成流程验证' });
         return { ...plainResult(null), text: fixture(p, prosePath(p.chapter), active) };
       }
-      assert.match(args[1], /approved_creation_plan/);
+      const creation = p.creation!;
+      const match = args[1].match(/## 本书已确认创作约定\r?\n([^\r\n]+)/);
+      assert.ok(match, '每个阶段的实际请求都必须包含已确认作品方案');
+      const contract = JSON.parse(match[1]);
+      assert.deepEqual(contract.plan, creation.contract.plan);
+      assert.equal(contract.inputHash, creation.spec.inputHash);
+      assert.equal(contract.contractRevision, creation.contract.revision);
+      assert.deepEqual(contract.mustKeep, creation.spec.mustKeep);
+      assert.deepEqual(contract.mustAvoid, creation.spec.mustAvoid);
       if (args[2].at(-1)?.role === 'tool') return { ...plainResult(null), text: '候选已完成' };
       const running = active.store!.db.runs().find(r => r.status === 'running')!;
       const outputs = running.pipeline?.phase === 'review' ? [qualityPath(p.chapter)] : stageOutputs(running.pipeline?.phase === 'memory' ? 'S11' : running.stage, p);

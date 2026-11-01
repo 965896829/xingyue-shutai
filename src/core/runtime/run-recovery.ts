@@ -2,10 +2,12 @@ import type { Run } from '../../shared/types';
 import { planCandidateRepair, planningRepairPointers } from './candidate-repair';
 import { legacyErrorCode } from '../../shared/errors';
 import { id, prosePath } from '../domain';
+import { authorProseIntent } from '../prose-task';
 
 /** Author feedback is a new candidate revision, not a replay of a completed pipeline. */
 export function prepareAuthorRevision(run: Run, instruction: string) {
-  if (instruction.trim()) run.request += `\n\n作者本轮修改意见（修改当前候选，保留无关内容）：${instruction}`;
+  if (instruction.trim()) run.request += `\n\n作者本轮修改意见：${instruction}`;
+  if (run.pipeline) run.proseIntent = authorProseIntent(instruction || run.request.split(/作者要求：|作者要求生成新的章节候选：/).at(-1)!);
   run.messages = [];
   run.candidateWrites = {};
   run.repairScope = undefined;

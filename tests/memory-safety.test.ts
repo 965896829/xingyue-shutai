@@ -159,7 +159,7 @@ test('独立语义检查拒绝骨折引文支持已痊愈，候选变化使审�
     await (service.runner as any).auditMemory(run, store.db.project(), profile, new AbortController().signal);
     service.runner!.check(run, store.db.project());
     assert.equal(reviews, 1);
-    assert.ok(run.issues.some(issue => issue.code === 'memory_review' && issue.message.includes('不能宣称痊愈')));
+    assert.ok(run.issues.some(issue => issue.code === 'memory_review' && issue.message.includes('不能宣称痊愈')), JSON.stringify({ issues: run.issues, review: run.memoryReview }));
     run.memoryReview = { fingerprint: memoryReviewInput(store, run).fingerprint, issues: [] };
     run.facts[0].value = '现在改成另一条结论';
     service.runner!.check(run, store.db.project());
@@ -271,7 +271,7 @@ test('正常章后采纳状态变化会先核对未来计划，不使已完成�
     assert.ok(run.futurePlanReview.decisions.every(item => item.verdict === 'needs_review'));
     run.status = 'awaiting_review';
     store.db.saveRun(run);
-    const result = await service.invoke('run.accept', { id: run.id, proposalHash: proposalHash(run), startNext: true, warningReason: '离线流程验收' });
+    const result = await service.invoke('run.accept', { id: run.id, proposalHash: proposalHash(run), startNext: true, warningReason: '离线流程验收' }).catch(error => { throw new Error(`${error.message}: ${JSON.stringify(store.db.run(run.id).issues)}`); });
     assert.ok(result.nextRun);
     const next = store.db.project();
     assert.equal(next.chapter, 4);

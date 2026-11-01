@@ -19,32 +19,43 @@ import { worldContext } from './world-model';
 import { plotPath, plotContext } from './workbench-plot';
 import { fingerprint } from './runtime/canonical';
 import { bookProfilePath, bookProfileContext } from './publishing';
+import { sceneMaterials, writingMaterials } from './scene-material';
+import { modelFact } from './model-memory';
+import { stageSources } from './stage-context';
+import type { PromptPhase } from './prompt-profile';
 
 export interface CompileOptions {
   purpose?: NonNullable<ContextManifest['purpose']>;
   scope?: MemoryScope;
   allowConflicts?: boolean;
+  strictChapterInputs?: boolean;
   resident?: unknown;
   toolCount?: number;
   deferBudgetCheck?: boolean;
   onMemoryDiagnostics?: (result: ReturnType<typeof selectMemoryDiagnostics>) => void;
 }
 
-export function contextPayload(manifest: ContextManifest) {
+export function contextPayload(manifest: ContextManifest, project?: ProjectState, phase: PromptPhase = 'tools') {
+  const restricted = manifest.scope && manifest.scope.viewpoint !== 'author';
+  const canUse = (fact: Fact) => !restricted || fact.kind === 'author_constraint' || visibleFact(fact, manifest.scope!);
   return {
     contextPolicy: '作者规则必须遵守，但不是人物已知事实；事实块仅限当前视角。未揭示内容仅用于避免提前揭密，不能写成已经发生或人物已经知道。计划不是事实。',
     scope: manifest.scope, entities: manifest.entityIds,
-    authorRules: manifest.hardConstraints, revelation: manifest.revelation,
-    facts: manifest.retrievedFacts, coverage: manifest.coverage, conflicts: manifest.conflicts,
-    sources: manifest.sources,
-    ...(manifest.voicePreferences?.length ? { voicePreferences: manifest.voicePreferences } : {})
+    authorRules: manifest.hardConstraints?.filter(canUse).map(f => modelFact(f, manifest.scope)), revelation: restricted && manifest.revelation
+      ? { ...manifest.revelation, withheld: manifest.revelation.withheld.map(({ id, revealedAt }) => ({ id, revealedAt, reason: '本范围不可揭示的事实，内容未装入' })) }
+      : manifest.revelation,
+    facts: manifest.retrievedFacts?.filter(canUse).map(f => modelFact(f, manifest.scope)), coverage: manifest.coverage, conflicts: manifest.conflicts,
+    disputedRecords: manifest.disputedFacts?.map(f => modelFact(f, manifest.scope)),
+    sources: project ? stageSources(manifest, project, phase).sources : manifest.sources,
+    ...(phase !== 'memory' && manifest.voicePreferences?.length ? { voicePreferences: manifest.voicePreferences } : {}),
+    ...(phase !== 'memory' && manifest.writingMaterials ? { writingMaterials: manifest.writingMaterials } : {})
   };
 }
 
-export function fitContext(manifest: ContextManifest, profile: Profile, resident: unknown = '', toolCount = 0, rejectOverflow = true) {
+export function fitContext(manifest: ContextManifest, profile: Profile, resident: unknown = '', toolCount = 0, rejectOverflow = true, project?: ProjectState) {
   const allowance = contextAllowance(profile, toolCount), residentTokens = countInput(profile, resident).tokens;
   manifest.availableTokens = Math.max(0, allowance.availableInput - residentTokens);
-  const measure = () => countInput(profile, contextPayload(manifest));
+  const measure = () => countInput(profile, contextPayload(manifest, project));
   let size = measure();
   while (size.tokens > manifest.availableTokens) {
     const at = manifest.sources.findLastIndex(s => !s.required);
@@ -54,6 +65,11 @@ export function fitContext(manifest: ContextManifest, profile: Profile, resident
     size = measure();
   }
   const required = new Set(manifest.requiredFactIds ?? []);
+  while (size.tokens > manifest.availableTokens && manifest.disputedFacts?.length) {
+    const fact = manifest.disputedFacts.pop()!;
+    manifest.omitted!.push({ path: primaryPath(fact), reason: '可选争议记录超出预算，未作为事实使用' });
+    size = measure();
+  }
   while (size.tokens > manifest.availableTokens) {
     const at = manifest.retrievedFacts?.findLastIndex(f => !required.has(f.id)) ?? -1;
     if (at < 0) break;
@@ -91,8 +107,8 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   };
   const formal = purpose === 'stage' || purpose === 'revision';
   const planned = formal ? requiredInputs(stage, p) : [paths.config, paths.style, ...(stage >= 'S04' ? [paths.world] : []), ...(purpose === 'draft' && stage >= 'S09' ? [paths.volumes, paths.outline, batchPath(activeBatch(p)), rhythmPath(activeBatch(p)), taskPath(p.chapter), detailPath(p.chapter), ...(p.chapter > 1 ? [prosePath(p.chapter - 1)] : [])] : [])];
-  // S09 derives a chapter from the whole accepted batch and current character
-  // records. The first chapter has no prose-derived facts to replace those files.
+  // S09 uses the current chapter's plan and entry/exit neighbors. Character
+  // records still supply the first chapter's baseline before prose facts exist.
   const required = planned.filter(file => !(stage >= 'S10' && file.startsWith('04_') && file !== paths.summary));
   if (stage >= 'S09' && purpose !== 'discussion')
     for (let n = Math.max(1, p.chapter - p.config.recentChapters); n < p.chapter; n++) if (snapshot.documents[updatePath(n)]) required.push(updatePath(n));
@@ -105,6 +121,7 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     const doc = status.get(file);
     const problem = !doc || doc.status === 'missing' ? `缺少本阶段必读资料：${file}` : doc.status !== 'accepted' ? `必读资料存在待确认的外部修改：${file}` : pendingSource(p, file) ? `资料因前文修订待核对：${file}` : '';
     if (problem) {
+      if (options.strictChapterInputs && /^(05_|06_|07_)/.test(file)) throw new Error(problem);
       if (options.allowConflicts || (!formal && !doc)) { m.conflicts.push(problem); m.omitted!.push({ path: file, reason: problem }); continue; }
       throw new Error(problem);
     }
@@ -113,7 +130,11 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     catch (error) { if (!options.allowConflicts) throw error; m.conflicts.push((error as Error).message); continue; }
     let slice = { content: source.content, ranges: source.ranges ?? [{ start: 0, end: Array.from(source.content).length }], omitted: !!source.ranges };
     let reason = authorRule ? '作者必守规则，不代表人物已知' : '当前任务必读';
-    if (stage >= 'S09' && /^(05_|06_)/.test(file) && !(stage === 'S09' && file === batchPath(activeBatch(p)))) { slice = chapterSlice(source.content, p.chapter); if (slice.omitted) reason = '全局说明及本章所属计划'; }
+    if (stage === 'S09' && file === batchPath(activeBatch(p))) {
+      slice = chapterSlice(source.content, Math.max(activeBatch(p).start, p.chapter - 1), Math.min(activeBatch(p).end, p.chapter + 1));
+      if (slice.omitted) reason = '全局说明、本章及相邻承接计划；完整来源仍绑定同一版本';
+    }
+    else if (stage >= 'S09' && /^(05_|06_)/.test(file)) { slice = chapterSlice(source.content, p.chapter); if (slice.omitted) reason = '全局说明及本章所属计划'; }
     else if (stage >= 'S06' && /^(05_|06_)/.test(file)) {
       const batch = activeBatch(p);
       slice = chapterSlice(source.content, batch.start, batch.end);
@@ -124,20 +145,31 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     const layer: ContextSource['layer'] = authorRule ? 'author_rules' : file.startsWith('07_') ? 'prose' : file.startsWith('04_') || file.startsWith('08_') ? 'summary' : 'chapter_plan';
     m.sources.push({ path: file, hash: source.hash, content: slice.content, ranges: slice.ranges, mode: slice.omitted || scope.viewpoint === 'character' && file.startsWith('07_') ? 'excerpt' : 'full', required: true, reason, layer, sourceSnapshotId: snapshot.id,
       category: authorRule ? 'author_instruction' : layer === 'prose' ? 'accepted_prose' : layer === 'summary' ? 'derived_summary' : 'plan' });
+    if (scope.viewpoint === 'character' && file.startsWith('07_')) {
+      m.sources.at(-1)!.category = 'formal_fact';
+      m.sources.at(-1)!.reason = '当前人物可见事实的投影；ranges 定位宿主证据，content 不含原文中的邻接信息';
+    }
     if (file === paths.world && source.content.startsWith('# 世界模块')) m.sources.at(-1)!.content = worldContext(source.content, p.chapter);
     if (file === bookProfilePath) { m.sources.at(-1)!.content = bookProfileContext(source.content); m.sources.at(-1)!.mode = 'excerpt'; m.sources.at(-1)!.reason = '作者当前创作题材与发布归类，仅装入选择结果'; }
     if (file === plotPath) { m.sources.at(-1)!.content = plotContext(source.content, p.chapter); m.sources.at(-1)!.reason = '作者确认的本章场景与因果连接'; }
   }
   const query = [request, scope.characterId ?? '', ...m.sources.filter(s => s.layer === 'chapter_plan' || s.path === prosePath(p.chapter - 1)).map(s => s.content)].join('\n');
-  const all = store.db.facts();
+  const all = store.db.facts(scope);
   m.factReadDependency = factReadDependency(all, scope);
   const validSource = sourceValidator(store, snapshot.documents, scope.chapter, p);
-  const usable = all.filter(f => f.worldId === scope.worldId && f.timelineId === scope.timelineId && f.reviewStatus === 'accepted' && !['disputed','superseded'].includes(f.state) && (applicableFact(f, { ...scope, viewpoint: 'author' }) || f.revealedAt > p.chapter) && f.evidence.every(e => validSource(e) && status.get(e.path)?.status === 'accepted'));
+  const candidates = all.filter(f => f.kind !== 'expression_sample' && f.worldId === scope.worldId && f.timelineId === scope.timelineId && f.reviewStatus === 'accepted' && f.state !== 'disputed' && (applicableFact(f, { ...scope, viewpoint: 'author' }) || f.state !== 'superseded' && f.revealedAt > p.chapter));
   const entities = new Set<string>(scope.characterId ? [scope.characterId] : []);
-  for (const f of usable) if ([f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))) for (const entity of f.entityIds) entities.add(entity);
+  for (const f of candidates) if ([f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))) for (const entity of f.entityIds) entities.add(entity);
+  const usable = candidates.filter(f => (related(f, query, entities) || ['world_rule', 'author_constraint'].includes(f.kind)) && f.evidence.every(e => validSource(e) && status.get(e.path)?.status === 'accepted'));
   m.entityIds = [...entities].sort();
-  if (scope.viewpoint === 'author' && store.db.document(voicePath)?.hash) {
-    m.voicePreferences = taskVoicePreferences(store, query, m.entityIds);
+  if (store.db.document(voicePath)?.hash) {
+    const plans = m.sources.filter(source => source.layer === 'chapter_plan').map(source => source.content).join('\n');
+    const scenes = sceneMaterials(m.sources);
+    const sceneFunctions = [...plans.matchAll(/(?:场景功能|章节类型|场景类型)[：:]\s*([^\r\n]+)/g)].flatMap(match => match[1].split(/[、,，；;\/]/).map(value => value.trim()));
+    m.voicePreferences = taskVoicePreferences(store, { entityIds: scope.characterId ? [scope.characterId] : m.entityIds,
+      sceneFunctions, sceneIds: [`第${p.chapter}章`, ...[...plans.matchAll(/^#{2,4}\s+(.+)$/gm)].map(match => match[1].trim())],
+      addresseeIds: scenes.flatMap(s => s.addressees?.split(/[、,，]/).map(v => v.trim()) ?? []),
+      relationshipIds: scenes.flatMap(s => s.relationship ? [s.relationship] : []), scope });
     m.qualityReadHash = fingerprint({ records: store.db.get('creative-quality-v1'), voice: store.db.document(voicePath)?.hash });
   }
   if (stage === 'S10' && purpose !== 'discussion' && scope.viewpoint === 'author' && !m.sources.some(source => source.path === paths.roles)) {
@@ -150,10 +182,10 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
         reason: '本章人物的说话与做事风格；只指导表达，不表示人物知晓秘密，不包含完整台账或事实块' });
     }
   }
-  const current = all.filter(f => applicableFact(f, { ...scope, viewpoint: 'author' }));
+  const current = all.filter(f => f.kind !== 'expression_sample' && applicableFact(f, { ...scope, viewpoint: 'author' }));
   const usableIds = new Set(usable.map(f => f.id));
   const conflicts = conflictingFacts(current);
-  const obligations = current.filter(f => f.state === 'active' && (['world_rule','author_constraint'].includes(f.kind) || ((f.mandatory || ['injury','promise','hook'].includes(f.category)) && related(f, query, entities))));
+  const obligations = current.filter(f => ['active', 'superseded'].includes(f.state) && (['world_rule','author_constraint'].includes(f.kind) || ((f.mandatory || ['injury','promise','hook'].includes(f.category)) && related(f, query, entities))));
   for (const fact of obligations) {
     if (!usableIds.has(fact.id) || conflicts.has(fact.id)) { m.conflicts.push(`${fact.subject}：${fact.predicate} 的来源或状态需要核对`); continue; }
     m.hardConstraints!.push(fact);
@@ -164,10 +196,11 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     if (fact.revealedAt > p.chapter) m.revelation!.withheld.push({ id: fact.id, subject: fact.subject, predicate: fact.predicate, value: fact.value, revealedAt: fact.revealedAt, reason: '本章尚未允许揭示，只用于防止提前泄露，不是人物已知事实', evidence: fact.evidence });
     else if (fact.revealedAt === p.chapter) m.revelation!.allowed.push(fact.id);
   }
-  const found = retrieveMemory(store, query, scope, 12);
+  const found = retrieveMemory(store, query, scope, 12, undefined, validSource);
   m.coverage = found.coverage;
+  m.disputedFacts = found.disputes;
   const hardIds = new Set(m.hardConstraints!.map(f => f.id));
-  m.retrievedFacts = found.facts.filter(x => !hardIds.has(x.fact.id) && (purpose === 'discussion' || x.fact.revealedAt <= p.chapter)).map(x => x.fact);
+  m.retrievedFacts = found.facts.filter(x => x.fact.kind !== 'expression_sample' && !hardIds.has(x.fact.id) && (purpose === 'discussion' || x.fact.revealedAt <= p.chapter)).map(x => x.fact);
   m.requiredFactIds = found.facts.filter(x => x.required).map(x => x.fact.id);
   const diagnostics = selectMemoryDiagnostics(store, { scope, query, sourcePaths: m.sources.filter(source => !(source.path === paths.roles && source.category === 'author_instruction' && source.mode === 'excerpt')).map(s => s.path), entityIds: m.entityIds });
   options.onMemoryDiagnostics?.(diagnostics);
@@ -181,7 +214,22 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     if (m.sources.some(s => s.path === doc.path) || status.get(doc.path)?.status !== 'accepted') continue;
     m.sources.push({ path: doc.path, hash: doc.hash, content: doc.excerpt, ranges: [{ start: doc.start, end: doc.end }], required: false, mode: 'excerpt', reason: '本章人物或事件相关原文', layer: 'prose', sourceSnapshotId: snapshot.id, category: 'accepted_prose' });
   }
-  return fitContext(m, profile, options.resident, options.toolCount, !options.deferBudgetCheck);
+  if (scope.viewpoint !== 'author') {
+    for (const source of m.sources.filter(source => [paths.seed, paths.world].includes(source.path as typeof paths.world))) {
+      const selected = usable.filter(f => (f.kind === 'author_constraint' || visibleFact(f, scope)) && f.evidence.some(e => e.path === source.path));
+      const quotes = selected.flatMap(f => f.evidence).filter(e => e.path === source.path);
+      source.content = selected.map(f => f.kind === 'author_constraint'
+        ? f.evidence.filter(e => e.path === source.path).map(e => e.quote).join('\n')
+        : `${f.subject} · ${f.kind} · ${f.predicate}：${f.value}`).join('\n\n');
+      source.ranges = quotes.flatMap(e => e.start !== undefined && e.end !== undefined ? [{ start: e.start, end: e.end }] : []);
+      source.mode = 'excerpt'; source.reason = '适用作者约束与当前视角可见记录';
+    }
+  }
+  if (['S09', 'S10'].includes(stage) && purpose !== 'discussion') {
+    m.writingMaterials = writingMaterials(store, m);
+    m.qualityReadHash = fingerprint({ records: store.db.get('creative-quality-v1'), voice: store.db.document(voicePath)?.hash });
+  }
+  return fitContext(m, profile, options.resident, options.toolCount, !options.deferBudgetCheck, p);
 }
 
 export function assembleContext(store: FileStore, p: ProjectState, stage: StageId, request: string, profile: Profile, allowConflicts = false, options: CompileOptions = {}) {

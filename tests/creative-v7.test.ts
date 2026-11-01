@@ -226,7 +226,7 @@ test('V7 空作品探索使用现有命令回执，只保存草稿且重复点�
     const options = { operationId: 'creative-double-click' };
     const key = await service.invoke('creative.run', args, options);
     assert.equal(await service.invoke('creative.run', args, options), key);
-    for (let index = 0; index < 100 && service.store!.db.run(key).status !== 'complete'; index++)
+    for (let index = 0; index < 100 && (service.store!.db.run(key).status !== 'complete' || service.runner!.controller); index++)
       await new Promise((resolve) => setTimeout(resolve, 20));
     const run = service.store!.db.run(key);
     assert.equal(run.status, 'complete', run.error ?? '');
@@ -249,7 +249,7 @@ test('V7 探索草稿进入当前章审稿与记忆链，最终正文及覆盖�
     requests++;
     const project = service.store!.db.project();
     const run = service.store!.db.runs().find(run => run.status === 'running')!;
-    if (run.creative) return fakeResult(JSON.stringify({ prose: fixture(project, prosePath(project.chapter), service), assumptions: [] }));
+    if (run.creative) return fakeResult(JSON.stringify({ prose: fixture(project, prosePath(project.chapter), service).replace('# 本章正文', '# 第001章：具体事件与原因'), assumptions: [] }));
     const input = JSON.parse(messages[0].content);
     if (input.items) {
       const memory = { decisions: input.items.map((item: any) => ({ id: item.id, verdict: 'supported', reason: '合成样稿覆盖与原文一致。', evidence: fixtureAuditEvidence(item, input.sources) })) };
@@ -287,7 +287,7 @@ test('V7 探索草稿进入当前章审稿与记忆链，最终正文及覆盖�
     const id = await service.invoke('draft.chapter', args, { operationId: 'draft-merge-once' });
     assert.equal(await service.invoke('draft.chapter', args, { operationId: 'draft-merge-once' }), id);
     const ready = await wait(id);
-    assert.equal(ready.status, 'awaiting_review', ready.error ?? JSON.stringify(ready.issues));
+    assert.equal(ready.status, 'awaiting_review', `${ready.error ?? ''}: ${JSON.stringify(ready.issues)}`);
     assert.equal(ready.pipeline!.phase, 'ready');
     assert.equal(ready.chapterCoverage!.proseHash, hash(draft.content));
     assert.equal(ready.changes.find(change => change.path === prosePath(1))!.content, draft.content);

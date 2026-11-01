@@ -6,11 +6,14 @@ import type { FileStore } from './storage';
 import { safePath } from './storage';
 import { hash, paths, qualityPath, stageOutputs } from './domain';
 import { pendingSource } from './memory-source';
-import { fingerprint } from './runtime/canonical';
 import { readWorldModel, growthSystemsInstruction } from './world-model';
 import { SkillRegistry } from './skill-registry';
 import { revisedVolumeNaming } from './volume-naming';
 import { chapterNamingStages, makeChapterNaming } from './chapter-naming';
+import { bindTaskScope, projectForRun } from './task-scope';
+import { focusInstruction, creativeConfig } from './prompt-profile';
+import { tagContext } from './tags';
+import { scopedRead } from './memory-studio';
 
 type Spec = {
   skill: string;
@@ -107,12 +110,13 @@ export function bindDesign(store: FileStore, root: string, run: Run, raw: unknow
     run.chapter = input.chapter;
   }
   if (spec.stage) run.stage = spec.stage;
+  bindTaskScope(store, run);
   const targets = spec.report
     ? [`11_创作研究/${input.id}-${run.id}.md`]
     : spec.selected
       ? input.targets
       : (spec.targets ??
-        stageOutputs(spec.stage!, { ...project, chapter: run.chapter }).filter(
+        stageOutputs(spec.stage!, projectForRun(project, run)).filter(
           (file) => file !== qualityPath(run.chapter)
         ));
   if (!targets.length) throw new Error('请选择本次允许修改的文稿');
@@ -175,11 +179,28 @@ export function designPrompt(store: FileStore, root: string, run: Run) {
   const resource = designResource(root, binding.input.id);
   if (resource.hash !== binding.promptHash) throw new Error('操作规则已变化，请创建新任务');
   if (run.worldContract === 2) resource.content += `\n\n${growthSystemsInstruction}`;
-  if (run.volumeNaming?.version === 2) resource.content += `\n\n${new SkillRegistry(root).read('references/volume-naming-commercial.md')}`;
-  if (run.chapterNaming) resource.content += `\n\n${new SkillRegistry(root).read('references/chapter-naming-commercial.md')}`;
-  const documents = binding.sources.map((source) => ({
-    ...source,
-    content: store.read(source.path, source.hash).content
-  }));
-  return `${resource.content}\n\n宿主执行合同\n只完成当前操作。使用提供的工具提交完整候选，所有文稿只允许写入下列路径：${JSON.stringify(binding.targets.map((t) => t.path))}。保持原模板必要字段；报告可无问题，不为凑数量虚构缺陷。正文修改必须另经同版审阅和核心记忆核对才可采纳。禁止直接修改作品、配置或任务状态。\n本次输入：${JSON.stringify(binding.input)}\n作者明确选择的资料：${JSON.stringify(documents)}${run.worldContract ? `\n当前世界模块：${JSON.stringify(readWorldModel(store))}\n世界候选必须保留 source、original、已有模块标识与锁定项；采用 # 世界模块 及单个 json 代码块保存完整 version:1 模型。profile 仅调整模块启用建议，不为未知内容虚构设定，内容未知时保持 undecided。` : ''}\n输入指纹：${fingerprint(binding)}`;
+  const registry = new SkillRegistry(root);
+  resource.content = registry.controller().content + `\n--- 当前专项技能：${binding.input.id} ---\n` + resource.content
+    + '\n' + focusInstruction(binding.input.id, registry.get(designSpec(binding.input.id).skill).description);
+  if (binding.input.id === 'rolling-outline.volume') resource.content += `\n\n${registry.read('references/volume-naming-commercial.md')}`;
+  if (['rolling-outline.batch', 'scene-contract.plan', 'chapter-draft.draft'].includes(binding.input.id) && !run.chapterNaming?.source)
+    resource.content += `\n\n${registry.read('references/chapter-naming-commercial.md')}`;
+  const project = projectForRun(store.db.project(), run);
+  return `${resource.content}\n\n宿主执行合同\n只完成当前操作。使用提供的工具提交完整候选，所有文稿只允许写入下列路径：${JSON.stringify(binding.targets.map((t) => t.path))}。保持原模板必要字段；报告可无问题，不为凑数量虚构缺陷。正文修改必须另经同版审阅和核心记忆核对才可采纳。禁止直接修改作品、配置或任务状态。\n创作配置：${JSON.stringify(creativeConfig(project.config, run.stage))}\n${tagContext(project, run.stage, { focused: true })}${run.worldContract ? '\n世界候选必须保留 source、original、已有模块标识与锁定项；采用 # 世界模块 及单个 json 代码块保存完整 version:1 模型。profile 仅调整模块启用建议，不为未知内容虚构设定，内容未知时保持 undecided。' : ''}`;
+}
+
+export function designContext(store: FileStore, run: Run) {
+  if (!run.design) return {};
+  const documents = run.design.sources.flatMap(source => {
+    const supplied = run.manifest?.sources.find(s => s.path === source.path && s.hash === source.hash);
+    if (supplied?.mode === 'full') return [];
+    const scope = run.manifest?.scope;
+    const content = scope && scope.viewpoint !== 'author'
+      ? supplied?.content ?? scopedRead(store, source.path, scope).content
+      : store.read(source.path, source.hash).content;
+    return [{ ...source, content }];
+  });
+  return { designInput: run.design.input, selectedSources: run.design.sources,
+    selectedDocuments: documents,
+    ...(run.worldContract ? { currentWorldModules: readWorldModel(store) } : {}) };
 }

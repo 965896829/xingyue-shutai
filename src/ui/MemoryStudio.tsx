@@ -10,6 +10,8 @@ import type { CommandOutput } from '../shared/contracts';
 
 const kinds: Record<Fact['kind'], string> = {
   event: '事件',
+  state: '当前状态',
+  expression_sample: '表达样例',
   world_rule: '世界规则',
   author_constraint: '作者约定',
   plan: '计划',
@@ -95,6 +97,8 @@ export function FactCard({
       <div className="memory-fact-title">
         <strong>{compact ? categories[fact.category] : fact.subject}</strong>
         <span>{kinds[fact.kind]}</span>
+        {(fact.state === 'disputed' || fact.reviewStatus === 'disputed') && <span>存在争议</span>}
+        {fact.characterLayer && <span>{{stable:'长期倾向',current:'当下状态',experience:'已发生经历'}[fact.characterLayer]}</span>}
         {fact.mandatory && <i aria-label="持续约束" />}
       </div>
       <p>
@@ -109,6 +113,7 @@ export function FactCard({
       </div>
       <details>
         <summary>证据 · {fact.evidence.length}</summary>
+        {fact.subjectiveResponse && <p>{[fact.subjectiveResponse.trigger, fact.subjectiveResponse.interpretation, fact.subjectiveResponse.emotionOrIntent, fact.subjectiveResponse.actionEffect].filter(Boolean).join(' → ')}</p>}
         {fact.evidence.map((e, i) => (
           <button className="evidence-quote" key={i} onClick={() => onSource(e)}>
             {e.quote}
@@ -363,6 +368,9 @@ export function MemoryStudio({
           加载更多
         </button>
       )}
+      {result?.disputes?.length > 0 && <section><h2>待核验的争议记录</h2><div className="memory-card-grid">
+        {result.disputes.map((f: Fact) => <FactCard key={f.id} fact={f} onSource={onSource} />)}
+      </div></section>}
       {result?.documents?.length > 0 && (
         <section className="memory-passages">
           <h3>相关原文</h3>

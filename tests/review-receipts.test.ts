@@ -45,8 +45,8 @@ test('中断恢复保留上次错误和回执；失败修复预算不因恢复�
     const send = async (messages: Run['messages']) => {
       calls++;
       if (calls === 2) throw new Error('网络中断');
-      if (calls > 2) assert.equal(messages[0].content, '无效回执1');
-      return `无效回执${calls}`;
+      if (calls > 2) assert.equal(messages[0].content, '{"invalid":"无效回执1"}');
+      return JSON.stringify({ invalid: `无效回执${calls}` });
     };
     const audit = () => reviewWithRepair(f.store, '同一输入', 2, send,
       () => { throw new Error('未逐条覆盖'); }, () => {});

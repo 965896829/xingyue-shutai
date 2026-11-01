@@ -13,6 +13,7 @@ import { hash, paths } from './domain';
 import { pendingSource } from './memory-source';
 import { queryTerms as tokensOf } from './text-search';
 import { proseCandidates, repairProse } from './prose-index';
+import { compareStoryPosition } from '../shared/story-position';
 export { tokensOf };
 
 export function writingScope(p: ProjectState): MemoryScope {
@@ -49,21 +50,35 @@ export function applicableFact(f: Fact, scope: MemoryScope) {
     f.worldId !== scope.worldId ||
     f.timelineId !== scope.timelineId ||
     f.reviewStatus !== 'accepted' ||
-    (f.state === 'disputed' || f.state === 'superseded') ||
+    (f.state === 'disputed' || f.state === 'superseded' && f.toChapter === null && !f.untilPosition) ||
     f.fromChapter > scope.chapter ||
     (f.toChapter !== null && f.toChapter < scope.chapter)
   )
     return false;
+  if (scope.position) {
+    const from = compareStoryPosition(f.fromPosition ?? { chapter: f.fromChapter }, scope.position);
+    if (from === undefined || from > 0) return false;
+    if (f.untilPosition) {
+      const until = compareStoryPosition(scope.position, f.untilPosition);
+      if (until === undefined || until >= 0) return false;
+    }
+  } else if (f.untilPosition && f.untilPosition.chapter <= scope.chapter) return false;
   return true;
 }
 export function visibleFact(f: Fact, scope: MemoryScope) {
   if (!applicableFact(f, scope)) return false;
   if (scope.viewpoint === 'author') return true;
-  if (f.revealedAt > scope.chapter || f.kind === 'plan' || f.kind === 'author_constraint') return false;
+  if (f.revealedAt > scope.chapter || ['plan', 'author_constraint', 'expression_sample'].includes(f.kind)) return false;
   if (scope.viewpoint === 'reader') return true;
   return f.knowledge.some(
-    (k) => k.who === scope.characterId && k.fromChapter <= scope.chapter && k.mode !== 'unknown'
+    (k) => k.who === scope.characterId && k.fromChapter <= scope.chapter && k.mode !== 'unknown' &&
+      (f.kind === 'belief' || k.mode !== 'misunderstood') &&
+      (!scope.position || (compareStoryPosition(k.fromPosition ?? { chapter: k.fromChapter }, scope.position) ?? Infinity) <= 0)
   );
+}
+export function disputedFact(f: Fact, scope: MemoryScope) {
+  return (f.state === 'disputed' || f.reviewStatus === 'disputed') && f.reviewStatus !== 'retracted' &&
+    visibleFact({ ...f, state: 'active', reviewStatus: 'accepted' }, scope);
 }
 export function sourceValid(
   store: FileStore,
@@ -101,7 +116,7 @@ export function conflictingFacts(facts: Fact[]) {
   for (const f of facts.filter(
     (f) =>
       f.reviewStatus === 'accepted' &&
-      !['belief', 'plan', 'inference'].includes(f.kind) &&
+      !['belief', 'plan', 'inference', 'expression_sample'].includes(f.kind) &&
       f.state !== 'disputed'
   )) {
     const key = JSON.stringify([f.worldId, f.timelineId, f.entityIds[0] || f.subject, f.predicate, f.kind]);
@@ -127,21 +142,19 @@ export function retrieveMemory(
   query: string,
   input: unknown,
   limit = 20,
-  browse?: { category: string; offset: number; pageSize: number }
+  browse?: { category: string; offset: number; pageSize: number },
+  validateSource?: ReturnType<typeof sourceValidator>
 ) {
   const scope = memoryScopeSchema.parse(input),
     snapshot = scopeSnapshotInfo(store, scope);
   if (!snapshot) throw new Error('作品尚无正式快照');
   const all = scopeFacts(store, scope);
-  const validSource = sourceValidator(store, snapshot.documents, scope.chapter, snapshot.project);
+  const validSource = validateSource ?? sourceValidator(store, snapshot.documents, scope.chapter, snapshot.project);
   const visible = all.filter((f) => visibleFact(f, scope));
-  const conflicts = conflictingFacts(visible);
-  const invalidSources = new Set(visible.filter(f => conflicts.has(f.id) || f.evidence.some(e => !validSource(e))).map(f => f.id));
-  const eligible = visible.filter(f => !invalidSources.has(f.id));
-  const names = [...new Set(eligible.filter(f => [f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))).flatMap(f => [f.subject, ...f.aliases]))];
+  const names = [...new Set(visible.filter(f => [f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))).flatMap(f => [f.subject, ...f.aliases]))];
   const terms = [...new Set([...names, ...tokensOf(query)])];
   const exact = new Set(
-    eligible
+    visible
       .filter((f) => [f.id, f.subject, ...f.aliases, ...f.entityIds].some((n) => n && query.includes(n)))
       .flatMap((f) => [f.id, ...f.entityIds])
   );
@@ -154,7 +167,7 @@ export function retrieveMemory(
         terms.filter((t) => `${fact.subject} ${fact.predicate} ${fact.value}`.toLowerCase().includes(t))
           .length;
       const required =
-        fact.state === 'active' &&
+        ['active', 'superseded'].includes(fact.state) &&
         (fact.mandatory || ['injury', 'promise', 'hook'].includes(fact.category)) &&
         (fact.scope === 'global' || isExact || linked || query === '');
       return {
@@ -165,8 +178,11 @@ export function retrieveMemory(
       };
     };
   const relevant = (x: ReturnType<typeof scoreFact>) => query === '' || x.required || x.score > 0;
-  const invalid = visible.filter(f => invalidSources.has(f.id)).map(scoreFact).filter(relevant);
-  const valid = eligible.map(scoreFact).filter(relevant).sort((a, b) => b.score - a.score || a.fact.id.localeCompare(b.fact.id));
+  const recalled = visible.map(scoreFact).filter(relevant);
+  const conflicts = conflictingFacts(recalled.map(item => item.fact));
+  const invalidSources = new Set(recalled.filter(({ fact }) => conflicts.has(fact.id) || fact.evidence.some(e => !validSource(e))).map(item => item.fact.id));
+  const invalid = recalled.filter(item => invalidSources.has(item.fact.id));
+  const valid = recalled.filter(item => !invalidSources.has(item.fact.id)).sort((a, b) => b.score - a.score || a.fact.id.localeCompare(b.fact.id));
   const listed = browse
     ? valid.filter(
         (x) =>
@@ -181,6 +197,7 @@ export function retrieveMemory(
         ...valid.filter((x) => x.required),
         ...valid.filter((x) => !x.required).slice(0, Math.max(1, Math.min(limit, 100)))
       ];
+  const disputes = all.filter(f => disputedFact(f, scope) && relevant(scoreFact(f)) && f.evidence.every(validSource)).slice(0, 100);
   const documents: {
     path: string;
     hash: string;
@@ -258,6 +275,7 @@ export function retrieveMemory(
     snapshotId: snapshot.id,
     scope,
     facts,
+    disputes,
     documents,
     coverage,
     issues: [...pendingIssues, ...invalid.map((x) => `${x.fact.id}：${conflicts.has(x.fact.id) ? '存在冲突状态' : '来源已变更'}`)],
@@ -288,7 +306,9 @@ export function scopedRead(store: FileStore, file: string, scope: MemoryScope) {
   return {
     path: file,
     hash: snapshot.documents[file],
-    content: unique.map(e => e.quote).join('\n\n'),
+    content: facts.filter(f => f.evidence.some(e => unique.includes(e)))
+      .map(f => `${f.subject} · ${f.kind} · ${f.predicate}：${f.value}`).join('\n\n'),
+    kind: 'visible-fact-projection',
     ranges: unique.map(e => {
       const start = e.start ?? Array.from(text.slice(0, text.indexOf(e.quote))).length;
       return { start, end: e.end ?? start + Array.from(e.quote).length };
@@ -362,6 +382,7 @@ export function characterState(store: FileStore, entity: string, input: unknown)
     chapter: scope.chapter,
     snapshotId: snapshot.id,
     facts,
+    disputes: candidates.filter(f => disputedFact(f, scope) && f.evidence.every(validSource)),
     unknown: ['injury', 'item', 'knowledge', 'relation'].filter((c) => !facts.some((f) => f.category === c))
   };
 }

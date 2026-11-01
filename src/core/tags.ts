@@ -532,12 +532,30 @@ const stageDuties: Record<string, string> = {
   S10: '按契约写正文并检查禁区与能力边界',
   S11: '仅以已采纳正文证据登记实际兑现，计划不当事实'
 };
-export function tagContext(p: ProjectState, stage: string) {
+export function tagContext(p: ProjectState, stage: string, options: { focused?: boolean } = {}) {
   const creation = approvedCreation(p);
+  if (options.focused) return focusedTagContext(p, stage);
   let base = legacyTagContext(p, stage);
   if (!creation?.contract.plan) return base;
   base += `\n<creation_scope>${JSON.stringify({ effectiveFromChapter: creation.contract.effectiveFromChapter ?? 1, title: p.title, titleReviewRequired: !!p.titleReviewRequired })}</creation_scope>\n方案修订按上述章节范围生效；历史正文与旧版事实保留，不把新计划追认成过去已经发生的事件。\n`;
   return base + `\n<approved_creation_plan>\n${JSON.stringify({ inputHash: creation.spec.inputHash, contractRevision: creation.contract.revision, planHash: tagHash(creation.contract.plan), plan: creation.contract.plan, title: p.titleBinding })}\n</approved_creation_plan>\n作品方案条目是作者确认的计划和约定，不代表正文事实或人物已知。按当前阶段落实相关承诺，不要求每章展示全部条目。修改核心方案须先提出修订候选；不能为了标题反向添加设定。${stage === 'S11' ? '登记实际兑现时引用已采纳正文证据，使用 planRefs:{inputHash,contractRevision,planHash,claimIds} 绑定上述版本与条目；尚未发生用 kind=plan，不能登记为事件。' : ''}\n`;
+}
+/** Confirmed semantics stay verbatim; publishing provenance and unconfirmed advice stay in host records. */
+export function focusedTagContext(p: ProjectState, stage: string) {
+  const creation = approvedCreation(p);
+  if (!creation) return '';
+  const { spec, contract } = creation;
+  const recording = stage === 'S11';
+  const identity = { inputHash: spec.inputHash, contractRevision: contract.revision,
+    ...(contract.plan ? { planHash: tagHash(contract.plan) } : {}) };
+  const requirements = { mustKeep: spec.mustKeep, mustAvoid: spec.mustAvoid,
+    constraints: contract.constraints.map(({ id, text, scope, optionIds }) => ({ id, text, scope, optionIds })),
+    resolutions: contract.resolutions, openQuestions: contract.openQuestions,
+    tagCoverage: contract.tagCoverage,
+    ...(contract.plan ? { plan: contract.plan } : {}),
+    ...(p.titleBinding ? { title: p.titleBinding } : {}),
+    effectiveFromChapter: contract.effectiveFromChapter ?? 1 };
+  return `\n## 本书已确认创作约定\n${JSON.stringify({ ...identity, ...requirements })}\n以上为作者约定与计划，按当前阶段和有效章节使用，不代表已发生事件或人物已知。作者本轮明确修改优先；未修改的硬约束、条件、例外与锁定内容保留。篇幅、视角和文风使用当前配置。不要求每章展示全部承诺，不能为标题反向新增设定。${recording ? '\n实际兑现须有最终正文证据；tagRefs 使用 inputHash、contractRevision、optionIds、constraintIds，planRefs 使用 inputHash、contractRevision、planHash、claimIds。未发生的内容仍为 plan，没有兑现不编造。' : ''}\n`;
 }
 function legacyTagContext(p: ProjectState, stage: string) {
   const creation = approvedCreation(p);

@@ -34,6 +34,18 @@ export function estimatedUnits(input: number, output: number, inputPrice: number
 export function attempts(store: FileStore, runId: string): Attempt[] {
   return store.db.sql.prepare("SELECT data FROM model_attempts WHERE run_id=? OR json_extract(data,'$.parentRunId')=? ORDER BY rowid").all(runId, runId).map((row) => JSON.parse(String(row.data)));
 }
+export function unresolvedAttempts(store: FileStore, owner: Pick<AttemptOwner, 'id' | 'parentRunId'>, matches: (row: Attempt) => boolean = () => true) {
+  return attempts(store, owner.parentRunId ?? owner.id).filter(row => matches(row) &&
+    (row.status === 'dispatching' || row.status === 'unknown' && !store.db.get(`unknown-retry-authorized:${row.id}`)));
+}
+/** Only an explicit recovery command can acknowledge the currently unknown requests. */
+export function authorizeUnknownAttempts(store: FileStore, owner: Pick<AttemptOwner, 'id' | 'parentRunId'>) {
+  const unknown = attempts(store, owner.parentRunId ?? owner.id).filter(row => row.status === 'unknown');
+  store.db.transaction(() => {
+    for (const row of unknown) store.db.set(`unknown-retry-authorized:${row.id}`, { runId: owner.id, at: new Date().toISOString() });
+    if (unknown.length) store.db.event(owner.id, 'unknown-retry-authorized', '作者已明确允许继续，原未知请求及费用记录保持不变', { attemptIds: unknown.map(row => row.id) });
+  });
+}
 function save(store: FileStore, attempt: Attempt) {
   store.db.sql.prepare('INSERT INTO model_attempts VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET status=excluded.status,data=excluded.data').run(attempt.id, attempt.runId, attempt.status, JSON.stringify(attempt));
 }
@@ -121,7 +133,9 @@ export async function callModel(
   const bound = withTaskReasoning(profile, owner);
   args[0] = bound;
   const delta = args[5];
-  const isolated = 'creative' in owner ? (owner as Run).creative : undefined;
+  const isolated = ('creative' in owner ? (owner as Run).creative : undefined) ??
+    (purpose.startsWith('scene-prose:') || ('manifest' in owner && (owner as Run).manifest?.scope?.viewpoint === 'character')
+      ? { audienceHash: fingerprint({ purpose, scope: (owner as Run).manifest?.scope, snapshot: (owner as Run).manifest?.snapshotId }), rulesHash: fingerprint(system) } : undefined);
   let partial = false;
   // Persist and send the same cache identity across stages, retries and restarts.
   // Partition projects/providers; prompt matching still checks the actual bytes.

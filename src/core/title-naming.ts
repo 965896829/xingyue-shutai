@@ -200,8 +200,9 @@ export function namingRulesHash(root: string, p: ProjectState, naming?: Run['nam
     styleProfile: tagHash(loadTitleStyleProfile(root)),
     expression: expressionFingerprint(root, p.config),
     titleRules,
-    version: 3,
-    ...(naming?.editorialVersion ? { editorial: titleEditorialResources(root, naming.editorialVersion).hash, editorialVersion: naming.editorialVersion } : {}),
+    version: 4,
+    editorial: titleEditorialResources(root).hash,
+    editorialVersion: naming?.editorialVersion,
     ...(naming?.marketResearchVersion ? { marketResearchVersion: naming.marketResearchVersion } : {})
   });
 }
@@ -283,7 +284,7 @@ export async function driveTitleNaming(args: {
         >
       }
     ];
-    const expression = expressionPack(root, p.config, marketEdition ? 'title_market' : t.editorialVersion === 1 ? 'title' : reviewing ? 'review' : 'planning');
+    const expression = expressionPack(root, p.config, 'title_market');
     bindExpressionRules(r, expression.binding);
     const system = titleSystemPrompt({
       controller: rules.content,
@@ -292,7 +293,7 @@ export async function driveTitleNaming(args: {
       reviewing,
       submitTool: name,
       expression: expression.prompt,
-      ...(t.editorialVersion ? { editorial: titleEditorialResources(root, t.editorialVersion) } : {})
+      editorial: titleEditorialResources(root)
     });
     const history = titleHistoryDigest(r, store.db.runs());
     if (!r.messages.length)
@@ -304,8 +305,8 @@ export async function driveTitleNaming(args: {
             confirmedPlan: { ...source, spec: modelBookSpec(source.spec) },
             planHash: t.planHash,
             rule: titleRules[t.rule],
-            ...(marketEdition ? { marketTarget: { platform: 'fanqie', genre: t.marketResearch?.genre ?? source.currentPreferences.genre,
-              tags: t.marketResearch?.tags ?? [] } } : {}),
+            marketTarget: { platform: 'fanqie', genre: t.marketResearch?.genre ?? source.currentPreferences.genre,
+              tags: t.marketResearch?.tags ?? [] },
             ...(t.marketResearch?.status === 'ready' ? {} : { styleProfile }),
             ...(t.marketResearch ? { marketResearch: t.marketResearch } : {}),
             manualTitle: t.manualTitle,

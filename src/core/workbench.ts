@@ -17,16 +17,7 @@ import { parseWorldModel, readWorldModel, renderWorldModel } from './world-model
 import { paths } from './domain';
 
 export function workbenchFactsAt(facts: Fact[], scope: MemoryScope) {
-  return facts
-    .map((f) =>
-      f.state === 'superseded' &&
-      f.reviewStatus === 'accepted' &&
-      f.toChapter !== null &&
-      scope.chapter <= f.toChapter
-        ? { ...f, state: 'active' as const }
-        : f
-    )
-    .filter((f) => visibleFact(f, scope));
+  return facts.filter((f) => visibleFact(f, scope));
 }
 
 export function readWorkbench(store: FileStore, input: unknown, expandedChapter?: number): WorkbenchView {

@@ -28,10 +28,11 @@ function renamed(text = outline) {
   return text;
 }
 
-test('商业卷名规则分版本装配；旧版完整指纹保留，书名规则不变', () => {
+test('商业卷名规则统一装配，旧语义指纹失效而书名规则保持', () => {
   const registry = new SkillRegistry(root);
-  assert.equal(registry.load('webnovel-volume-architect').hash, 'bfd88ed409edb53fa144239a37b1e3f8f1e3c1087209bd505793f136f1b4df4b');
-  assert.equal(registry.load('webnovel-volume-architect', { legacyVolumeNaming: true }).hash, '001261f3d0af80c6b518b8ad4df53fa837b4b9c080c5ccbaffe7b318d10d53c6');
+  assert.notEqual(registry.load('webnovel-volume-architect').hash, 'f3f0a40f6493e5ec115faa775c2d26c83895737fde8db37003e3e0ce9c802425');
+  assert.notEqual(registry.load('webnovel-volume-architect', { legacyVolumeNaming: true }).hash, '048c0236741fe3bf22402ff1f138ccb3d71c557c7f3850f57cc5b04ab2932059');
+  assert.equal(registry.load('webnovel-volume-architect', { legacyVolumeNaming: true }).hash, registry.load('webnovel-volume-architect').hash);
   const next = registry.load('webnovel-volume-architect', { volumeNamingVersion: 2 }).content;
   assert.match(next, /番茄分卷命名：与商业书名一致/);
   assert.doesNotMatch(next, /从真实目录到本书的叙事口吻|处理角色口吻、意象、留白/);
@@ -86,7 +87,7 @@ test('只改卷名时阻止改剧情、容量、漏改标题、增删卷、空�
   } finally { store.close(); }
 });
 
-test('分卷设计工具共用商业规则，已有大纲只改名；历史工具任务不注入新规则', () => {
+test('分卷设计工具共用当前商业规则，历史合同仍保留只改名范围', () => {
   const { store, run, project } = refactorFixture();
   try {
     store.commit([{ path: paths.volumes, content: outline, baseHash: null }], project);
@@ -100,7 +101,8 @@ test('分卷设计工具共用商业规则，已有大纲只改名；历史工�
     const fingerprint = proposalHash(run);
     delete run.volumeNaming;
     assert.notEqual(proposalHash(run), fingerprint);
-    assert.doesNotMatch(designPrompt(store, root, run), /番茄分卷命名：与商业书名一致/);
+    assert.match(designPrompt(store, root, run), /番茄分卷命名：与商业书名一致/);
+    assert.equal(designPrompt(store, root, run).split('依宿主提供的任务、作者要求、当前版本和实际工具完成本轮工作。').length - 1, 1);
   } finally { store.close(); }
 });
 

@@ -13,6 +13,7 @@ import { RequestError } from '../provider';
 import { Conversations } from '../conversations';
 import { voicePreferenceSchema, patternSchema } from '../../shared/quality';
 import { storeLearnedPreferences, storePatterns, readQuality } from '../quality';
+import { validatedResponse } from '../runtime/validated-response';
 
 const reportSchema = z
   .object({
@@ -108,45 +109,38 @@ export async function driveCreativeWorkflow(
   const { result: _result, ...saved } = task;
   if (fingerprint(saved) !== fingerprint(compiled.binding))
     throw new Error('创作任务的资料或范围已改变，请建立新任务');
-  const prior = attempts(host.store, run.id).findLast(
-    (attempt) => attempt.purpose === `creative:${task.input.operation}` && attempt.status === 'complete'
-  );
-  if (
-    !prior &&
-    attempts(host.store, run.id).some(
-      (attempt) => attempt.status === 'unknown' || attempt.status === 'dispatching'
-    )
-  )
-    throw new RequestError('已有请求结果未知，请先核对原请求，未自动重发', true);
   const messages: Run['messages'] = [{ role: 'user', content: JSON.stringify(compiled.modelPayload) }];
   syncUsage(host.store, run);
   setRunStatus(run, 'running');
   run.error = undefined;
   host.save(run);
-  let raw: string;
-  if (prior?.responseRef) {
-    const receipt = JSON.parse(host.store.object(prior.responseRef).toString('utf8'));
-    if (receipt.result.stop !== 'complete' || receipt.result.calls.length)
-      throw new Error('已保存的创作结果不完整，请创建新任务');
-    raw = receipt.result.text;
-  } else {
+  const parsed = await validatedResponse({ store: host.store, run, phase: `creative:${task.input.operation}`,
+    initialPurpose: `creative:${task.input.operation}`, instruction: compiled.system, input: compiled.modelPayload, signal,
+    assertCurrent: () => {
+      const latest = compileCreative(host.store, host.skillRoot, task.input, task.branchId);
+      if (fingerprint(compiled.binding) !== fingerprint(latest.binding))
+        throw new Error('结果返回时基础资料已改变，旧结果未应用');
+    },
+    validate: value => parseCreativeResult(task, JSON.stringify(value), compiled.modelPayload),
+    send: async (purpose, instruction, input) => {
+    const requestMessages: Run['messages'] = [{ role: 'user', content: JSON.stringify(input) }];
     if (run.rounds >= project.config.maxRounds) throw new Error('已达到本任务请求次数上限');
     if ('protocolId' in task.input && task.input.protocolId) {
       const protocol = readQuality(host.store).protocols.find(p => p.id === ('protocolId' in task.input ? task.input.protocolId : ''))!;
       const used = [...host.store.db.allRuns()].filter(r => r.creative && 'protocolId' in r.creative.input && r.creative.input.protocolId === protocol.id).reduce((total, r) => total + attempts(host.store, r.id).filter(a => a.status !== 'not_sent').length, 0);
       if (used >= protocol.maxCalls) throw new Error('创作实验调用预算已用完');
     }
-    requestGuard(profile, compiled.system, messages, [], run, project.config.stageBudget, 0);
+    requestGuard(profile, instruction, requestMessages, [], run, project.config.stageBudget, 0);
     run.rounds++;
     host.save(run);
     const result = await callModel(
       host.store,
       run,
-      `creative:${task.input.operation}`,
+      purpose,
       host.caller,
       profile,
-      compiled.system,
-      messages,
+      instruction,
+      requestMessages,
       [],
       signal,
       undefined,
@@ -163,13 +157,8 @@ export async function driveCreativeWorkflow(
     host.save(run);
     if (result.stop !== 'complete' || result.calls.length)
       throw new Error('创作结果不完整或包含未授权工具，未应用');
-    raw = result.text;
-  }
-  if (signal.aborted) throw new RequestError('任务已停止，未继续应用结果', false);
-  const latest = compileCreative(host.store, host.skillRoot, task.input, task.branchId);
-  if (fingerprint(compiled.binding) !== fingerprint(latest.binding))
-    throw new Error('结果返回时基础资料已改变，旧结果未应用');
-  const parsed = parseCreativeResult(task, raw, compiled.modelPayload);
+    return result.text;
+  }});
   task.result = { content: parsed.content, hash: hash(parsed.content), createdAt: now(), synthetic: true };
   if ('turn' in parsed) task.result.turn = parsed.turn;
   const title = creativeOperations.find((value) => value.id === task.input.operation)!.title;

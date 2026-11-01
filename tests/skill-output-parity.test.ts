@@ -72,16 +72,17 @@ test('输出去重保留完整批次与可执行场面，不把内部证据搬�
 
 test('S01 读者承诺留在十二字段，真实风险不被结构约束删除', () => {
   const prompt = systemPrompt(root, project(), 'S01');
-  assert.match(prompt, /连续完成原模板十二个顶层字段/);
+  assert.match(prompt, /连续完成原模板十二字段/);
   assert.match(prompt, /读者承诺直接落实在原十二字段/);
   assert.match(prompt, /不另建小节或文件/);
-  assert.match(prompt, /作者原始输入始终随上下文提供并已单独存档/);
+  assert.match(prompt, /本轮完整原始输入已经随上下文提供并单独存档/);
   assert.match(prompt, /不写场面分镜、前三章详案或首批三十章计划/);
-  assert.match(prompt, /八卷表、势力经营细案及后期机器\/机制真相的完整讲解留给S03或S05/);
+  assert.match(prompt, /完整规则、势力细案、后期真相与分卷安排留给S03、S05/);
   for (const issue of ['规则禁则与退出条件冲突', '主角异常与通常退出路径', '转移的生效', '反作用及其结果归属', '强迫与自主选择的责任', '前期公开与后期保密', '分卷边界衔接'])
     assert.ok(prompt.includes(issue), `保留实际存在的逻辑接口：${issue}`);
   assert.match(prompt, /其他关键矛盾也不能省略/);
-  assert.match(prompt, /不是硬性上限，质量、必要因果和作者硬约束优先/);
+  assert.match(prompt, /必要因果和作者硬约束优先，不因篇幅建议删掉实际风险/);
+  assert.match(prompt, /不增加硬性短字数门槛/);
   assert.doesNotMatch(prompt, /已授权的S01[^\n]*；第1章，批次/);
 });
 

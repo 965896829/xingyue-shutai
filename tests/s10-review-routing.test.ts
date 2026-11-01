@@ -48,7 +48,7 @@ async function setup(caller: Caller) {
   p.stage = 'S10'; p.revision++;
   service.store!.commit([service.change(batchPath(activeBatch(p)), fixture(p, batchPath(activeBatch(p)), service))], p);
   const run = service.makeRun('stage', '完成当前章的独立审核及章后核验');
-  const prose = service.change(prosePath(p.chapter), fixture(p, prosePath(p.chapter), service));
+  const prose = service.change(prosePath(p.chapter), fixture(p, prosePath(p.chapter), service).replace('# 本章正文', '# 第001章：求医'));
   run.pipeline!.phase = 'review'; run.pipeline!.proseHash = hash(prose.content); run.sourceProseHash = run.pipeline!.proseHash;
   run.changes = [prose]; service.store!.db.saveRun(run);
   return { service, run, p, prose };

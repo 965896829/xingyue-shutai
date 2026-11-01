@@ -107,7 +107,7 @@ const taxonomy = JSON.parse(fs.readFileSync(path.join(tagRoot, 'registry/taxonom
 assert.equal(taxonomy.options.length, 482);
 assert.equal(new Set(taxonomy.options.map((o) => o.id)).size, 482);
 
-for (const directory of ['direction-planning', 'title-editing', 'title-market-editing']) {
+for (const directory of ['direction-planning', 'title-market-editing']) {
   const titleRoot = path.join(source, directory);
   const titleLock = JSON.parse(fs.readFileSync(path.join(titleRoot, 'resources.lock.json'), 'utf8'));
   assert.deepEqual(filesIn(titleRoot).filter(file => file !== 'resources.lock.json'), Object.keys(titleLock).sort(), 'Independent prompt resource lock coverage differs');

@@ -8,7 +8,11 @@ export const voiceScopeSchema = z
   .object({
     kind: z.enum(['scene', 'character', 'book']),
     target: z.string().max(300).default(''),
-    sceneFunction: key
+    sceneFunction: key,
+    addresseeIds: z.array(key).max(30).optional(),
+    relationshipIds: z.array(key).max(30).optional(),
+    exceptSceneFunctions: z.array(key).max(30).optional(),
+    exceptAddresseeIds: z.array(key).max(30).optional()
   })
   .strict();
 export const sourceSpanSchema = z

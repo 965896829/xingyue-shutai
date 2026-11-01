@@ -156,7 +156,7 @@ test('新格式保留一案换两案不复查，冻结设定保持原样，恢�
   } finally { await f.service.drain(); }
 });
 
-test('新版方向提示词独立绑定，不使旧方案、标签知识或旧恢复规则失效', async () => {
+test('方向语义更新覆盖新旧任务指纹，保留报告和标签知识原版本', async () => {
   const f = await setup();
   const root = path.join(f.root, 'skill-copy'); fs.cpSync(skillRoot, root, { recursive: true });
   try {
@@ -165,11 +165,11 @@ test('新版方向提示词独立绑定，不使旧方案、标签知识或旧�
     const file = path.join(root, 'direction-planning/planner.system.md');
     fs.appendFileSync(file, '\n测试用规则变化。');
     assert.throws(() => directionPromptResources(root), /完整性/);
-    assert.equal(planningRulesHash(root, project), before.legacy, '旧任务不读取新资源');
+    assert.throws(() => planningRulesHash(root, project), /完整性/, '旧任务也校验当前规则');
     fs.writeFileSync(path.join(root, 'direction-planning/resources.lock.json'), JSON.stringify({ 'planner.system.md': hash(fs.readFileSync(file)) }));
     assert.notEqual(planningRulesHash(root, project, task), before.current);
     assert.equal(tagBundle(root).version, before.knowledge);
-    assert.equal(planningRulesHash(root, project), before.legacy);
+    assert.notEqual(planningRulesHash(root, project), before.legacy);
     assert.equal(tagHash(planningReportContext(task)), tagHash(task.report));
   } finally { await f.service.drain(); }
 });

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { storyPositionSchema, compareStoryPosition } from './story-position';
 import { reasoningEffortSchema, type ReasoningSnapshot } from './reasoning';
 import { defaultWritingStyle } from './writing-style';
 
@@ -50,6 +51,7 @@ export const configSchema = z
       .object({ enabled: z.boolean().default(true), maxCalls: z.number().int().min(0).max(30).default(8) })
       .default({ enabled: true, maxCalls: 8 }),
     viewpointCharacterId: z.string().default(''),
+    proseMode: z.enum(['chapter', 'scene']).default('chapter'),
     maxRounds: z.number().int().min(1).max(100).default(12),
     maxTools: z.number().int().min(1).max(500).default(64),
     stageBudget: z.number().nonnegative().nullable().default(null),
@@ -205,7 +207,12 @@ export const factSchema = z
     aliases: z.array(z.string()).default([]),
     predicate: z.string().min(1),
     value: z.string().min(1),
-    kind: z.enum(['event', 'world_rule', 'author_constraint', 'plan', 'belief', 'inference']),
+    kind: z.enum(['event', 'state', 'world_rule', 'author_constraint', 'plan', 'belief', 'inference', 'expression_sample']),
+    characterLayer: z.enum(['stable', 'current', 'experience']).optional(),
+    subjectiveResponse: z.object({
+      trigger: z.string().max(2000).optional(), interpretation: z.string().max(2000).optional(),
+      emotionOrIntent: z.string().max(2000).optional(), actionEffect: z.string().max(2000).optional()
+    }).optional(),
     category: z.enum([
       'character',
       'relation',
@@ -221,6 +228,8 @@ export const factSchema = z
     reviewStatus: z.enum(['candidate', 'accepted', 'disputed', 'retracted']).default('candidate'),
     fromChapter: z.number().int().min(0),
     toChapter: z.number().int().min(0).nullable().default(null),
+    fromPosition: storyPositionSchema.optional(),
+    untilPosition: storyPositionSchema.optional(),
     storyTime: z.string().default('未知'),
     revealedAt: z.number().int().min(0),
     knowledge: z
@@ -228,7 +237,8 @@ export const factSchema = z
         z.object({
           who: z.string(),
           mode: z.enum(['seen', 'told', 'inferred', 'misunderstood', 'unknown']),
-          fromChapter: z.number().int().min(0)
+          fromChapter: z.number().int().min(0),
+          fromPosition: storyPositionSchema.optional()
         })
       )
       .default([]),
@@ -257,7 +267,11 @@ export const factSchema = z
       .strict()
       .optional()
   })
-  .refine((v) => v.toChapter === null || v.toChapter >= v.fromChapter, '记忆有效范围不能倒置');
+  .refine((v) => v.toChapter === null || v.toChapter >= v.fromChapter, '记忆有效范围不能倒置')
+  .refine(v => !v.fromPosition || v.fromPosition.chapter === v.fromChapter, '记忆起点与章节不一致')
+  .refine(v => !v.untilPosition || v.toChapter === null || v.untilPosition.chapter <= v.toChapter, '记忆结束位置超出有效章节')
+  .refine(v => !v.untilPosition || (compareStoryPosition(v.fromPosition ?? { chapter: v.fromChapter }, v.untilPosition) ?? -1) < 0, '记忆结束位置必须晚于起点')
+  .refine(v => v.knowledge.every(k => !k.fromPosition || k.fromPosition.chapter === k.fromChapter), '获知位置与章节不一致');
 export type Fact = z.infer<typeof factSchema>;
 export interface ContextSource {
   layer?: 'author_rules' | 'chapter_plan' | 'character_knowledge' | 'prose' | 'summary';
@@ -272,8 +286,9 @@ export interface ContextSource {
   mode: 'full' | 'excerpt';
 }
 export interface ContextManifest {
+  writingMaterials?: import('./scene-material').WritingMaterials;
   qualityReadHash?: string;
-  voicePreferences?: { scope: import('./quality').VoiceScope; statement: string; exceptions: string[] }[];
+  voicePreferences?: { scope: import('./quality').VoiceScope; statement: string; exceptions: string[]; samples?: { kind: 'expression_sample'; text: string; source: { path: string; hash: string }; instruction: string }[] }[];
   factReadDependency?: import('./workflow').FactReadDependency;
   projectId?: string;
   inputHash?: string;
@@ -303,13 +318,14 @@ export interface ContextManifest {
   snapshotId?: string;
   coverage?: import('./studio').LedgerCoverage[];
   retrievedFacts?: Fact[];
+  disputedFacts?: Fact[];
   id: string;
   projectRevision: number;
   chapter: number;
   stage: StageId;
   sources: ContextSource[];
   /** Source versions used for local comparisons; their full text is not sent. */
-  referenceSources?: { path: string; hash: string; reason: 'editorial-comparison' }[];
+  referenceSources?: { path: string; hash: string; reason: 'editorial-comparison' | 'mechanism-comparison' }[];
   factIds: string[];
   conflicts: string[];
   estimatedTokens: number;
@@ -332,6 +348,7 @@ export type RunStatus =
   | 'awaiting_input'
   | 'awaiting_permission';
 export interface Run {
+  taskScope?: import('./task-scope').TaskScope;
   revisionCoreRequired?: 1;
   revisionCore?: { version: 1; sourceRunId: string; chapters: number[]; proseHashes: Record<string, string>; coverage: Record<string, import('./chapter-memory').ChapterCoverage>; reports: Record<string, string>; phase: 'extract' | 'review' | 'ready' };
   worldContract?: 1 | 2;
@@ -361,6 +378,7 @@ export interface Run {
   networkRetries?: number;
   repairScope?: import('./recovery').CandidateRepair;
   proseReviewFeedback?: { review: Change; proseHash: string };
+  proseIntent?: 'draft' | 'rewrite' | 'revision' | 'continue';
   failure?: import('./errors').ErrorPayload;
   memoryReview?: { fingerprint: string; issues: string[]; targets?: Issue[]; sources?: { path: string; hash: string }[] };
   /** Explicit extractor completion, bound to the complete candidate and fact set. */

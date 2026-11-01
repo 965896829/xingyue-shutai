@@ -3,7 +3,7 @@ import type { Fact, Run, Issue } from '../shared/types';
 import type { FileStore } from './storage';
 import { hash } from './domain';
 import { currentSettingsSourceHash } from './runtime-settings';
-import { memoryPaths, updatePath } from './domain';
+import { memoryPaths, updatePath, prosePath } from './domain';
 
 /** A completed extraction is invalidated by any prose, document or fact edit. */
 export function memoryCompletionHash(run: Run) {
@@ -26,6 +26,10 @@ export const memoryReviewSchema = z.object({
 });
 
 export function memoryReviewInput(store: FileStore, run: Run) {
+  const chapters = run.revisionCore?.chapters ?? [run.chapter];
+  const changedMemory = run.pipeline || run.stage === 'S11' || run.revisionCore
+    ? run.changes.filter(change => (memoryPaths.includes(change.path as typeof memoryPaths[number]) || chapters.some(chapter => change.path === updatePath(chapter))) && hash(change.content) !== change.baseHash)
+    : [];
   const items: { id: string; action: string; fact?: Fact; reason: string; path?: string }[] = [
     ...run.facts.map(fact => ({ id: fact.id, action: 'record', fact, reason: fact.replacementReason })),
     ...(run.factRetractions ?? []).map(retirement => {
@@ -34,13 +38,14 @@ export function memoryReviewInput(store: FileStore, run: Run) {
       return { id: retirement.id, action: 'retract', fact, reason: retirement.reason };
     }),
     ...(run.memoryRepair?.completed ?? []).map(item => ({ id: `document:${item.path}`, action: 'review_document', reason: item.reason, path: item.path })),
-    ...Object.entries(run.revisionCore?.coverage ?? {}).map(([chapter, coverage]) => ({ id: `revision-coverage:${chapter}`, action: 'review_coverage', path: run.changes.find(c => c.path.startsWith('07_') && hash(c.content) === coverage.proseHash)?.path, reason: '核对修订后全部出场人物的覆盖、状态变化及事实是否与完整最终正文一致。' + JSON.stringify({ coverage, facts: run.facts, previousFacts: store.db.facts().filter(f => f.fromChapter <= Number(chapter)) }) })),
-    ...(run.revisionCore ? run.changes.filter(c => memoryPaths.some(path => path === c.path) || run.revisionCore!.chapters.some(chapter => c.path === updatePath(chapter))).map(c => ({ id: `revision-document:${c.path}`, action: 'review_document', path: c.path, reason: '核对本轮台账与最终正文、已有事实一致；未知信息保持未知，不能凭格式补齐而发明人物经历、事件或关系。' })) : []),
+    ...Object.entries(run.revisionCore?.coverage ?? {}).map(([chapter, coverage]) => ({ id: `revision-coverage:${chapter}`, action: 'review_coverage', path: run.changes.find(c => c.path.startsWith('07_') && hash(c.content) === coverage.proseHash)?.path, reason: '核对修订后全部出场人物的覆盖、状态变化及事实是否与完整最终正文一致。' + JSON.stringify({ coverage, facts: run.facts }) })),
+    ...changedMemory.filter(change => !run.memoryRepair?.completed.some(item => item.path === change.path)).map(c => ({ id: `revision-document:${c.path}`, action: 'review_document', path: c.path, reason: '核对本轮实际修改资料与最终正文、事实及人物覆盖一致。区分历史状态、当前状态与人物误信；无变化、仅提及、依据不足均可成立，不为填满字段发明经历。' })),
     ...(run.chapterCoverage ? [{ id: 'chapter-character-coverage', action: 'review_coverage',
       path: run.changes.find(change => change.path.startsWith('07_') && hash(change.content) === run.chapterCoverage!.proseHash)?.path,
       reason: '核对全部出场及提及人物是否遗漏，各人状态、变化或无变化是否有正文依据；不要把一时情绪变为长期人格。' + JSON.stringify({ coverage: run.chapterCoverage, facts: run.facts }) }] : [])
   ];
-  const files = [...new Set([...items.flatMap(item => item.fact ? item.fact.evidence.map(e => e.path) : item.path ? [item.path] : []), ...(run.memoryRepair?.sources ?? [])])];
+  const files = [...new Set([...items.flatMap(item => item.fact ? item.fact.evidence.map(e => e.path) : item.path ? [item.path] : []), ...(run.memoryRepair?.sources ?? []),
+    ...changedMemory.flatMap(() => chapters.map(prosePath).filter(file => run.changes.some(c => c.path === file) || store.db.document(file)?.hash))])];
   const sources = files.map(path => {
     const change = run.changes.find(change => change.path === path);
     let content = change?.content ?? store.readAccepted(path).content;
@@ -49,9 +54,16 @@ export function memoryReviewInput(store: FileStore, run: Run) {
     if (!change && expected && hash(content) !== expected &&
         hash(content) === currentSettingsSourceHash(store, run.baseSnapshotId, { path, hash: expected }))
       content = store.object(expected).toString('utf8');
-    return { path, hash: hash(content), content };
+    const previousHash = change?.baseHash;
+    return { path, hash: hash(content), content,
+      ...(previousHash && changedMemory.some(c => c.path === path) ? { previous: { hash: previousHash, content: store.object(previousHash).toString('utf8') } } : {}) };
   });
+  const entities = new Set([...run.facts.flatMap(f => f.entityIds), ...(run.chapterCoverage?.characters ?? []).map(c => c.entityId),
+    ...Object.values(run.revisionCore?.coverage ?? {}).flatMap(c => c.characters.map(character => character.entityId))]);
+  const replaced = new Set(run.facts.map(f => f.supersedes).filter(Boolean));
+  const relatedFacts = changedMemory.length ? store.db.facts().filter(f => replaced.has(f.id) || f.entityIds.some(id => entities.has(id)) && f.fromChapter <= Math.max(...chapters)) : [];
   const input = { items, sources, ...(run.continuity ? { scope: run.continuity } : {}),
+    ...(relatedFacts.length ? { relatedFacts } : {}),
     ...(run.memoryRepair?.impacts?.length ? { impacts: run.memoryRepair.impacts } : {}) };
   return { ...input, fingerprint: hash(JSON.stringify(input)) };
 }
@@ -65,8 +77,8 @@ export function memoryReviewMatches(store: FileStore, run: Run, input = memoryRe
 }
 
 export function memoryReviewIssues(store: FileStore, run: Run) {
-  if (!run.facts.length && !run.factRetractions?.length && !run.memoryRepair && !run.chapterCoverage && !run.revisionCore) return [];
   const input = memoryReviewInput(store, run);
+  if (!input.items.length) return [];
   if (!memoryReviewMatches(store, run, input)) return ['新增或修订的记忆尚未完成独立证据核对'];
   return run.memoryReview!.issues;
 }

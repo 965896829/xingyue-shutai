@@ -9,6 +9,8 @@ import { prepareAuthorRevision } from '../runtime/run-recovery';
 import type { Service } from '../service';
 import { taskRunHash } from '../task-discussion';
 import { upgradesVolumeNaming } from '../volume-market-research';
+import { explicitlyRequestsEdit } from '../../shared/author-intent';
+import { fingerprint } from '../runtime/canonical';
 const str = (v: unknown) => z.string().min(1).parse(v);
 
 export const discussionCommands = new Set<string>([
@@ -126,6 +128,8 @@ export async function handleDiscussionCommand(
       'discussion',
       undefined,
       (prepared) => {
+        if (objectBinding && explicitlyRequestsEdit(prepared.request))
+          prepared.objectEdit = { bindingHash: fingerprint(objectBinding) };
         prepared.displayedError =
           old?.displayedError ?? (typeof a.displayedError === 'string' ? a.displayedError : undefined);
         if ((command === 'run.discuss' && a.allowCandidateEdits === true) || old?.candidateEdit) {
@@ -155,7 +159,7 @@ export async function handleDiscussionCommand(
         .then(async () => {
           if (host.store !== s || host.projectSessionId !== session || host.draining) return;
           const finished = records.get('conversation_turns', turn.id);
-          if (finished.status !== 'complete' || !finished.candidateEdit) return;
+          if (finished.status !== 'complete' || !(finished.candidateEdit || finished.objectEdit)) return;
           const proposed = records
             .all('action_proposals', turn.conversationId)
             .filter(

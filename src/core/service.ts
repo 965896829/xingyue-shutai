@@ -7,11 +7,12 @@ import { readWorldModel, renderWorldModel } from './world-model';
 import { bindWorkflow } from './runtime/workflow-contract';
 import { compileCreative, rehearsalCharacters } from './creative-context';
 import { creativeOperations } from '../shared/creative';
-import { designCatalog } from './design-operations';
+import { designCatalog, designResource, assertDesign } from './design-operations';
 import { runDesign } from './commands/design';
 import { readExperience } from './experience';
 import path from 'node:path';
 import { z } from 'zod';
+import { bindTaskScope } from './task-scope';
 import { searchSettingsSchema } from '../shared/assistant';
 import { brand } from '../shared/brand';
 import { buildVersion } from '../shared/build';
@@ -98,7 +99,7 @@ import { ProjectCommitService } from './runtime/commit-kernel';
 import { ExecutionRecords } from './runtime/execution-records';
 import { chooseExecutor } from './runtime/executor';
 import { ExecutorRouter } from './runtime/executor-router';
-import { callExternal,callModel,estimatedUnits,recoverAttempts } from './runtime/model-gateway';
+import { authorizeUnknownAttempts,callExternal,callModel,estimatedUnits,recoverAttempts } from './runtime/model-gateway';
 import { Operations } from './runtime/operations';
 import { prepareAuthorRevision,prepareRunRecovery } from './runtime/run-recovery';
 import { setRunStatus } from './runtime/run-state';
@@ -477,6 +478,7 @@ export class Service {
       accepted: false,
       toolResults: {}
     };
+    bindTaskScope(this.store!, run);
     if (mode === 'stage' && chapterNamingStages.includes(run.stage)) run.chapterNaming = makeChapterNaming(this.store!, run, request);
     const creation = approvedCreation(p);
     if (creation)
@@ -556,8 +558,11 @@ export class Service {
     const r = this.makeRun(old.mode, `${old.request}\n\n作者要求：${instruction || '继续当前任务'}\n按当前规则与正式资料重新核对已有候选后继续。候选尚未接受，不能据此跳过确认。之前错误：${old.error ?? '无'}。`, profileId);
     r.skillId = old.skillId;
     if (old.design) {
+      assertDesign(s, old);
       r.design = structuredClone(old.design);
+      r.design.promptHash = designResource(this.skillRoot, old.design.input.id).hash;
       r.stage = old.stage; r.chapter = old.chapter; r.batch = structuredClone(old.batch);
+      bindTaskScope(this.store!, r);
       r.worldContract = old.worldContract; r.revisionCoreRequired = old.revisionCoreRequired;
     }
     r.volumeNaming = upgradesVolumeNaming(old, instruction)
@@ -582,6 +587,7 @@ export class Service {
     r.repairAttempts = structuredClone(old.repairAttempts);
     r.repairScope = structuredClone(old.repairScope);
     r.proseReviewFeedback = structuredClone(old.proseReviewFeedback);
+    r.proseIntent = old.proseIntent;
     r.networkRetries = old.networkRetries;
     r.candidateWrites = structuredClone(old.candidateWrites);
     r.documentDrafts = structuredClone(old.documentDrafts);
@@ -813,11 +819,10 @@ export class Service {
       (result) => ({ input: result.tokens, output: 0, cost: result.tokens === null || settings.price === null ? null : result.tokens * settings.price / 1e6, currency: settings.currency }));
       return { ok: true, dimensions: result.vectors[0].length, tokens: result.tokens };
     }
-    if (command === 'skills.list')
-      return new SkillRegistry(this.skillRoot).entries.map((e) => ({
-        ...e,
-        host: new SkillRegistry(this.skillRoot).get(e.id).host
-      }));
+    if (command === 'skills.list') {
+      const registry = new SkillRegistry(this.skillRoot);
+      return registry.entries.map(entry => registry.get(entry.id));
+    }
     if (command === 'search.test') {
       const journal = this.requestJournal ?? this.store;
       if (!journal) throw new Error('请求账本未初始化');
@@ -1517,6 +1522,7 @@ export class Service {
       const decision = recoveryDecision(r);
       if (decision.confirmation && a.retryUnknown !== true) throw new ApplicationError('REMOTE_RESULT_UNKNOWN', '上次请求结果与费用未知，核对后确认才能重新请求', ['authorize_attempt']);
       if (decision.kind === 'inspect' || decision.kind === 'author') throw new ApplicationError(decision.code, decision.detail, ['refresh']);
+      if (decision.confirmation && a.retryUnknown === true) authorizeUnknownAttempts(s, r);
       const instruction = typeof a.instruction === 'string' ? a.instruction.trim() : '';
       if (r.creative) {
         if (instruction) throw new Error('创作工具恢复只继续原范围，修改范围请从创作工具建立新任务');
@@ -1552,6 +1558,7 @@ export class Service {
       if (old.accepted || old.status === 'discarded') throw new Error('此任务不能交接');
       if (retryNeedsConfirmation(old) && a.retryUnknown !== true)
         throw new Error('上次请求结果未知，须先核对收费请求');
+      if (retryNeedsConfirmation(old) && a.retryUnknown === true) authorizeUnknownAttempts(s, old);
       const r = this.rebuildRun(old, str(a.profileId), typeof a.instruction === 'string' ? a.instruction : '');
       return this.launch(r);
     }
@@ -1561,6 +1568,7 @@ export class Service {
       if (r.accepted || r.status === 'discarded') throw new Error('此任务不能恢复');
       if (retryNeedsConfirmation(r) && a.retryUnknown !== true)
         throw new Error('上次请求结果与费用未知，需明确选择重新请求');
+      if (retryNeedsConfirmation(r) && a.retryUnknown === true) authorizeUnknownAttempts(s, r);
       if (r.creative && typeof a.instruction === 'string' && a.instruction.trim())
         throw new Error('创作工具恢复只继续原阅读范围和输入，修改范围请建立新任务');
       if (r.creative && a.retryUnknown === true && retryNeedsConfirmation(r) &&

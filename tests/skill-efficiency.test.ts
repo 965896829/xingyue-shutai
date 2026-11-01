@@ -197,7 +197,7 @@ for (const mode of ['valid', 'contradicted', 'invalid-quote']) test(`独立章�
         assert.match(messages[2].content, /不把否定或不明确结论改成默认通过/);
       } else assert.equal(messages.length, 1);
       return fakeResult(JSON.stringify({ memory: { decisions: input.items.map((item: any) => ({ id: item.id,
-        verdict: rejected && audits === 1 ? 'contradicted' : 'supported', reason: rejected && audits === 1 ? '原文医生没有接，不能记成已经交付。' : '原文明确写出递出动作，未声称完成交付。', ...(item.fact ? { evidenceRefs: [0] } : {}),
+        verdict: rejected && audits === 1 && item.action !== 'review_document' ? 'contradicted' : 'supported', reason: rejected && audits === 1 && item.action !== 'review_document' ? '原文医生没有接，不能记成已经交付。' : '原文明确写出递出动作，未声称完成交付。', ...(item.fact ? { evidenceRefs: [0] } : {}),
         evidence: [...fixtureAuditEvidence(item, input.sources).map((e: any) => ({ path: e.path, quote: mode === 'invalid-quote' && audits === 1 ? '伪造的证据片段' : e.quote })),
           { path: input.plans[0].path, quote: input.sources.find((s: any) => s.path === input.plans[0].path).content.slice(0, 30) }] })) },
         plans: { decisions: input.plans.map((plan: any) => ({ path: plan.path, verdict: 'consistent', reason: '后续求医计划与当前递出记录本的行为相容。', planQuote: input.sources.find((s: any) => s.path === plan.path).content.slice(0, 30), proseQuote: input.sources.find((s: any) => s.path === input.prose.path).content.slice(0, 30) })) } }));

@@ -108,8 +108,14 @@ test('人物视角保留作者能力禁令、伤势和承诺，未知秘密不�
     assert.ok(!manifest.retrievedFacts!.some(f => ['key-secret','alternate-arm','old-arm'].includes(f.id)));
     assert.ok(manifest.sources.some(s => s.path === paths.world && s.layer === 'author_rules'));
     assert.match(JSON.stringify(contextPayload(manifest)), /不能借他人能力绕过/);
+    assert.doesNotMatch(JSON.stringify(contextPayload(manifest)), /林澈的师父/);
     const source = manifest.sources.find(s => s.path === prosePath(24))!;
-    assert.equal(source.content, source.ranges!.map(r => Array.from(files[source.path]).slice(r.start, r.end).join('')).join('\n\n'));
+    assert.equal(source.category, 'formal_fact');
+    assert.match(source.content, /林澈|玉钥/);
+    for (const range of source.ranges!) {
+      const quote = Array.from(files[source.path]).slice(range.start, range.end).join('');
+      assert.ok(store.db.facts().some(f => f.evidence.some(e => e.path === source.path && e.quote === quote)), '证据坐标仍精确定位原文，模型只收到可见事实投影');
+    }
   } finally { store.close(); }
 });
 
@@ -138,6 +144,23 @@ test('章节选择理解中文章号，无法可靠匹配时保留全文，结�
   const tail = endingSlice(body, 80);
   assert.equal(tail.content, Array.from(body).slice(tail.ranges[0].start).join(''));
   assert.ok(!tail.content.includes('\uFFFD'));
+});
+
+test('S09 实际编译保留全局说明与本章前后承接，不装入整批无关细纲', () => {
+  const { store, project, files } = contextBook(false);
+  try {
+    const file = batchPath(activeBatch(project));
+    files[file] += '\n\n## 第27章\n\n无关远期安排。';
+    const current = { ...project, revision: project.revision + 1 };
+    store.commit([{ path: file, content: files[file], baseHash: store.db.document(file)!.hash }], current);
+    const manifest = compileContext(store, current, 'S09', contextCase.request, model);
+    const source = manifest.sources.find(source => source.path === file)!;
+    assert.equal(source.content, chapterSlice(files[file], project.chapter - 1, project.chapter + 1).content);
+    assert.match(source.content, /本批禁止提前揭示|只揭示玉钥最后出现地点/);
+    assert.equal(source.mode, 'excerpt');
+    assert.doesNotMatch(source.content, /无关远期安排/);
+    assert.ok(contextDependencies(manifest).some(dependency => dependency.path === file && dependency.hash === source.hash));
+  } finally { store.close(); }
 });
 
 test('资料来源中的章号不被当成章节计划，后续同步仍保护真正的过往章节', () => {
@@ -264,7 +287,7 @@ test('讨论、自由试写和正式修订实际发送同一编排器提供的�
     await service.invoke('proposal.confirm', { id: card.id, version: card.version }); await idle();
     await service.invoke('run.start', { mode: 'revision', request: contextCase.request, profileId: model.id }); await idle();
     assert.equal(requests.length, 3);
-    for (const request of requests) { assert.match(request, /ability-ban/); assert.match(request, /第30章前不能瞬移/); assert.match(request, /withheld/); assert.match(request, /key-secret/); }
+    for (const request of requests) { assert.match(request, /ability-ban/); assert.match(request, /第30章前不能瞬移/); assert.match(request, /withheld/); assert.match(request, /key-secret/); assert.doesNotMatch(request, /林澈的师父/); }
     const turns = (await service.invoke('chat.read', { id: chat })).turns;
     assert.ok(turns.every((t: any) => t.manifest?.selectedBy === 'context-compiler-v1'));
   } finally { service.close(); }

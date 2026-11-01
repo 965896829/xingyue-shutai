@@ -5,7 +5,9 @@ import { chapterCoverageSchema } from '../../shared/chapter-memory';
 import { hash, memoryPaths, prosePath, updatePath, qualityPath } from '../domain';
 import { requiredCharacterCoverage, validateChapterCoverage, locateCoverageQuotes } from '../chapter-memory';
 import { checkReviewEvidence, reviewAspects } from '../manuscript-check';
-import { attempts } from '../runtime/model-gateway';
+import { validatedResponse } from '../runtime/validated-response';
+import { compatibleRunBase } from '../runtime-settings';
+import { ApplicationError } from '../../shared/errors';
 import { fingerprint } from '../runtime/canonical';
 import { setRunStatus } from '../runtime/run-state';
 import { memoryReviewIssues } from '../memory-review';
@@ -14,7 +16,6 @@ import { templates } from '../skill';
 import { sameStoryText } from '../memory-source';
 import { validateCandidate } from '../validation';
 
-const parse = (raw: string) => JSON.parse(raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, ''));
 export function requiresRevisionCore(store: FileStore, run: Run) {
   return !!run.revisionCoreRequired && !run.revisionCore && !run.pipeline && !run.memoryRepair && run.changes.some(c => c.path.startsWith('07_') && (!store.db.document(c.path)?.hash || !sameStoryText(store.readAccepted(c.path).content, c.content)));
 }
@@ -67,17 +68,17 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
   const core = run.revisionCore!;
   if (core.version !== 1) throw new Error('修订工作流版本不受支持');
   setRunStatus(run, 'running'); host.save(run);
-  const request = async (phase: string, instruction: string, input: object) => {
-    const purpose = `${phase}:${fingerprint(input)}`;
-    const prior = attempts(host.store, run.id).findLast(a => a.purpose === purpose && a.status === 'complete');
-    if (prior?.responseRef) {
-      const response = JSON.parse(host.store.object(prior.responseRef).toString('utf8')).result;
-      if (response.stop !== 'complete' || response.calls.length) throw new Error('已保存回执不完整');
-      return response.text as string;
-    }
-    if (attempts(host.store, run.id).some(a => a.status === 'unknown' || a.status === 'dispatching')) throw new Error('上次请求结果未知，请先核对，未自动重发');
-    return host.memoryCall(run, project, profile, signal, purpose, instruction, input);
-  };
+  const request = <T>(phase: string, instruction: string, input: object, validate: (value: unknown) => T) =>
+    validatedResponse({ store: host.store, run, phase, instruction, input, signal, validate,
+      send: (purpose, rule, payload) => host.memoryCall(run, project, profile, signal, purpose, rule, payload),
+      assertCurrent: () => {
+        if (!compatibleRunBase(host.store, run)) throw new ApplicationError('VERSION_CONFLICT', '修订依据已改变，停止使用旧响应');
+        const saved = host.store.db.run(run.id);
+        for (const chapter of core.chapters)
+          if (hash(run.changes.find(change => change.path === prosePath(chapter))?.content ?? '') !== core.proseHashes[chapter] ||
+              hash(saved.changes.find(change => change.path === prosePath(chapter))?.content ?? '') !== core.proseHashes[chapter])
+            throw new ApplicationError('VERSION_CONFLICT', '修订正文已改变，停止使用旧响应');
+      } });
   for (const chapter of core.chapters) {
     const file = prosePath(chapter), prose = run.changes.find(c => c.path === file)!;
     if (hash(prose.content) !== core.proseHashes[chapter]) throw new Error('修订候选已变化');
@@ -88,12 +89,14 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
       const input = { chapter, prose: { ...prose, hash: core.proseHashes[chapter] }, requiredCharacters: requiredCharacterCoverage(host.store, scoped), currentFacts: host.store.db.facts(), candidateFacts: run.facts, documents,
         formatRequirements: validateCandidate(run.stage, { ...project, chapter }, documents.map(d => ({ ...d, baseHash: null })), host.skillRoot, 'revision').filter(i => i.severity === 'error').map(i => ({ path: i.path, code: i.code, message: i.message })),
         schemas: { fact: z.toJSONSchema(factSchema), coverage: z.toJSONSchema(chapterCoverageSchema) } };
-      const raw = await request(`revision-extract-${chapter}`, '根据修订后正文批量提取人物与核心记忆。不能改写正文。保留未受影响台账原文和事实；错误旧事实用带 supersedes 的新事实替代，不猜测未知。稳定人格与当章情绪分开，误信保留主体。只返回 JSON {documents:[{path,content}],facts:[],coverage:...}。documents 只允许已给路径，包含本章记忆更新；facts 与 coverage 按给定 schema。覆盖全部出场人物，无变化和依据不足也是合法结果。', input);
-      const result = z.object({ documents: z.array(z.object({ path: z.string(), content: z.string().min(1) }).strict()).min(1), facts: z.array(factSchema), coverage: chapterCoverageSchema }).strict().parse(parse(raw));
+      const { result, nextFacts, coverage } = await request(`revision-extract-${chapter}`, '根据修订后正文批量提取人物与核心记忆。不能改写正文。保留未受影响台账原文和事实；错误旧事实用带 supersedes 的新事实替代，不猜测未知。稳定人格与当章情绪分开，误信保留主体。只返回 JSON {documents:[{path,content}],facts:[],coverage:...}。documents 只允许已给路径，包含本章记忆更新；facts 与 coverage 按给定 schema。覆盖全部出场人物，无变化和依据不足也是合法结果。', input, value => {
+      const result = z.object({ documents: z.array(z.object({ path: z.string(), content: z.string().min(1) }).strict()).min(1), facts: z.array(factSchema), coverage: chapterCoverageSchema }).strict().parse(value);
       if (new Set(result.documents.map(d => d.path)).size !== result.documents.length || result.documents.some(d => !allowed.includes(d.path)) || !result.documents.some(d => d.path === updatePath(chapter))) throw new Error('修订记忆输出范围不完整或越界');
       if (new Set(result.facts.map(f => f.id)).size !== result.facts.length || result.facts.some(f => run.facts.some(prior => prior.id === f.id && fingerprint(prior) !== fingerprint(f)))) throw new Error('跨章事实标识冲突，请为新事实使用独立标识');
       const nextFacts = [...run.facts.filter(f => !result.facts.some(next => next.id === f.id)), ...result.facts];
       const coverage = validateChapterCoverage(host.store, { ...scoped, facts: nextFacts }, locateCoverageQuotes(scoped, result.coverage));
+      return { result, nextFacts, coverage };
+      });
       if (fingerprint(coverage) !== fingerprint(result.coverage)) host.store.db.event(run.id, 'evidence-located', '已按本版唯一原文定位人物覆盖坐标');
       for (const doc of result.documents) {
         const existing = run.changes.find(c => c.path === doc.path);
@@ -103,10 +106,12 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
       run.facts = nextFacts; core.coverage[chapter] = coverage; run.memoryReview = undefined; host.save(run);
     }
     if (!core.reports[chapter]) {
-      const raw = await request(`revision-review-${chapter}`, `独立审阅最终修订正文。只返回 JSON {report:"完整 Markdown 审稿报告"}。填写输入模板全部字段和十项分数，总分正确；报告附 json wenxu-review 代码块 {proseHash,checks:[{aspect,verdict,quote,reason}]}，checks 恰好五项：${reviewAspects.join('、')}。verdict 为 pass/warning/error；quote 是正文连续原文至少8字，reason 至少8字。故事依据、人物一致性与表达建议分别判断，文学偏好只作为 warning，硬矛盾才是 error。`, { prose: prose.content, proseHash: core.proseHashes[chapter], constraints: project.config.constraints, template: templates(host.skillRoot)['章节质量评分'] });
-      const report = z.object({ report: z.string().min(1) }).strict().parse(parse(raw)).report;
+      const report = await request(`revision-review-${chapter}`, `独立审阅最终修订正文。只返回 JSON {report:"完整 Markdown 审稿报告"}。填写输入模板全部字段和十项分数，总分正确；报告附 json wenxu-review 代码块 {proseHash,checks:[{aspect,verdict,quote,reason}]}，checks 恰好五项：${reviewAspects.join('、')}。verdict 为 pass/warning/error；quote 是正文连续原文至少8字，reason 至少8字。故事依据、人物一致性与表达建议分别判断，文学偏好只作为 warning，硬矛盾才是 error。`, { prose: prose.content, proseHash: core.proseHashes[chapter], constraints: project.config.constraints, template: templates(host.skillRoot)['章节质量评分'] }, value => {
+      const report = z.object({ report: z.string().min(1) }).strict().parse(value).report;
       const issues = checkReviewEvidence(qualityPath(chapter), report, prose.content);
       if (issues.some(i => i.severity === 'error')) throw new Error(issues.map(i => i.message).join('；'));
+      return report;
+      });
       core.reports[chapter] = report;
       const existing = run.changes.find(c => c.path === qualityPath(chapter));
       if (existing) existing.content = report; else run.changes.push({ path: qualityPath(chapter), content: report, baseHash: host.store.db.document(qualityPath(chapter))?.hash ?? null });
@@ -119,9 +124,11 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
     if (!errors.length) break;
     const targets = [...new Set(errors.flatMap(i => i.path ? [i.path] : []))];
     const input = { documents: memory.filter(c => targets.includes(c.path)), errors: [...new Set(errors.map(i => `${i.path}: ${i.message}`))], facts: run.facts, prose: run.changes.filter(c => c.path.startsWith('07_')), instruction: '仅修正列出的文档格式。保留明确事实与人物标识，不发明人格、经历或事件。不要改变正文、facts 或 coverage。叙事状态与候选采纳状态分开：关系极性只用 positive/neutral/negative/ambiguous；伏笔状态只用已埋/推进中/已回收/已废弃。未知关系或伏笔不伪造表格数据行，只保留表头；信任度未知填未评估。' };
-    const raw = await request(`revision-format-${attempt + 1}`, '只返回 JSON {documents:[{path,content}]}，包含每个待修复文件的完整 Markdown。依据输入 errors 修复字段与分节。禁止改变已核验的事实含义和原文。', input);
-    const fixed = z.object({ documents: z.array(z.object({ path: z.string(), content: z.string().min(1) }).strict()) }).strict().parse(parse(raw));
+    const fixed = await request(`revision-format-${attempt + 1}`, '只返回 JSON {documents:[{path,content}]}，包含每个待修复文件的完整 Markdown。依据输入 errors 修复字段与分节。禁止改变已核验的事实含义和原文。', input, value => {
+    const fixed = z.object({ documents: z.array(z.object({ path: z.string(), content: z.string().min(1) }).strict()) }).strict().parse(value);
     if (new Set(fixed.documents.map(d => d.path)).size !== targets.length || fixed.documents.some(d => !targets.includes(d.path))) throw new Error('记忆格式修复越界或缺少文档');
+    return fixed;
+    });
     for (const doc of fixed.documents) run.changes.find(c => c.path === doc.path)!.content = doc.content;
     (run.repairAttempts ??= {}).memory_sync = attempt + 1;
     run.memoryReview = undefined; host.save(run);
@@ -134,8 +141,12 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
       documents: run.changes.filter(c => memoryPaths.some(path => path === c.path) || core.chapters.some(chapter => c.path === updatePath(chapter))),
       facts: run.facts, currentFacts: host.store.db.facts(), coverage: core.coverage, review: run.memoryReview,
       schemas: { fact: z.toJSONSchema(factSchema), coverage: z.toJSONSchema(chapterCoverageSchema) } };
-    const raw = await request(`revision-memory-repair-${attempt + 1}`, '根据独立核对指出的问题定向修复记忆和人物覆盖，绝对不能改写正文。只返回 JSON {documents:[{path,content}],facts:[],coverages:[{chapter,coverage}]}。facts 返回完整候选事实，未被审核否定的既有候选事实须逐字段保留；缺少的人物允许无变化、依据不足、仅提及，不强制新增事实。coverages 覆盖每个修订章节，含未具名但出场的人员，使用来源可追溯的稳定标识。documents 仅返回需修正的记忆台账及章后更新，不返回正文或审稿。不得声称另一份不存在的记录已完成核对。', input);
-    applyRevisionMemoryRepair(host.store, run, parse(raw));
+    const repaired = await request(`revision-memory-repair-${attempt + 1}`, '根据独立核对指出的问题定向修复记忆和人物覆盖，绝对不能改写正文。只返回 JSON {documents:[{path,content}],facts:[],coverages:[{chapter,coverage}]}。facts 返回完整候选事实，未被审核否定的既有候选事实须逐字段保留；缺少的人物允许无变化、依据不足、仅提及，不强制新增事实。coverages 覆盖每个修订章节，含未具名但出场的人员，使用来源可追溯的稳定标识。documents 仅返回需修正的记忆台账及章后更新，不返回正文或审稿。不得声称另一份不存在的记录已完成核对。', input, value => {
+      const candidate = structuredClone(run);
+      applyRevisionMemoryRepair(host.store, candidate, value);
+      return candidate;
+    });
+    run.changes = repaired.changes; run.facts = repaired.facts; core.coverage = repaired.revisionCore!.coverage; run.memoryReview = undefined;
     (run.repairAttempts ??= {}).revision_memory = attempt + 1; host.save(run);
     await repairFormat();
     await host.auditMemory(run, project, profile, signal);

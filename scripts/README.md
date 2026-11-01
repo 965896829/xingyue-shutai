@@ -12,6 +12,7 @@
 | `check-deliverables.mjs` | `node scripts/check-deliverables.mjs <本次测试日志>` | 检查文档、资源锁和已生成的安装包；非默认发布目录通过 `WENXU_RELEASE_DIR` 指定。每次交付显式提供本次日志，不使用脚本内的历史默认日志作为新版本证据。 |
 | `verify-v7-release.mjs` | `node scripts/verify-v7-release.mjs <本次测试日志>` | 核对 `release/xingyue-v7` 中的版本、前端、Electron 程序及全部 Skill 资源，生成带版本号的交付清单。显式提供本次日志；脚本将显式日志标为专项范围，不能据此宣称全量回归。保留既有付费调用账本，不调用模型。 |
 | `generate-contract-schemas.mjs` | `node scripts/generate-contract-schemas.mjs` | 从类型生成 `src/shared/contract-shapes.json` 和 `contract-schemas.ts`；修改契约后运行，并审阅差异、执行类型检查及回归。 |
+| `update-prompt-locks.mjs` | `node scripts/update-prompt-locks.mjs` | 在人工审阅提示词改动后更新运行资源锁和技能注册表哈希；不导入旧设计稿，不改变工具合同。随后运行提示词及恢复回归。 |
 | `create-icon.mjs`、`export-brand.cjs` | `node scripts/create-icon.mjs` | 前者启动 Electron，后者使用 `nativeImage` 导出图标；二者是调用链，不是重复脚本。会更新品牌资源。 |
 
 ## 回归、专项验证与本机模拟
@@ -33,6 +34,8 @@
 | `tests/profile-large-book.ts` | 定位大数据样本各打开阶段耗时，须显式传入已存在的隔离容量样本路径；未提供路径时退出，不再默认访问旧日期目录。 | 否 |
 
 ## 维护与清理
+
+- `import-creative-design.mjs` 已退役，避免从历史 V6 设计稿覆盖当前提示词。当前可执行规则直接维护在 `resources/skill/`；设计目录保留为历史依据，不参与构建导入。
 
 - 只把可复用、说明了输入输出的工具放入 `scripts/`；回归断言放入 `tests/*.test.ts`，合成输入放入 `tests/fixtures/`。
 - `refactor-baseline.mjs`、`refactor-audit.mjs`、两份 `refactor-*-benchmark.ts` 及 `docs/refactor/*-evidence/` 中的一次性执行脚本已于 2026-10-28 退役。它们绑定旧基线、旧界面与旧打包限制，不是当前发布门槛。对应历史报告保留。

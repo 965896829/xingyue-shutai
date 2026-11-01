@@ -607,6 +607,34 @@ test('角色规则覆盖、回退与再次启动保留用户版本，不影响�
   assert.equal(reopened.roles()[0].defaultText, original.defaultText);
 });
 
+test('对话实际读取文风与流程规则时不重新注入旧禁词、强制能力代价或固定角色阵容', async () => {
+  let calls = 0;
+  const { service, chatId } = await setup(async (_profile, system, messages) => {
+    calls++;
+    assert.match(system, /作者当前明确要求 → 已确认作品声音/);
+    if (calls === 1) return response('', [
+      { name: 'read_rule', args: { name: 'style', lines: 400 } },
+      { name: 'read_rule', args: { name: 'workflow', lines: 400 } }
+    ]);
+    const inputs = messages.filter(message => message.role === 'tool').map(message => JSON.parse(message.content));
+    const style = inputs.find(input => input.name === 'style')?.content;
+    const workflow = inputs.find(input => input.name === 'workflow')?.content;
+    assert.match(style, /不强制改写否定对照句/);
+    assert.match(style, /样例只指导表达、不提供故事事实/);
+    assert.doesNotMatch(style, /叙述中默认不用|发现一个触发词时|在关键碰撞处使用短句/);
+    assert.match(workflow, /无体系、多体系与自定义/);
+    assert.doesNotMatch(workflow, /先建立主角、女主|每条规则都要能变成剧情冲突/);
+    return response('按作者确认的叙述距离与当前场景选择表达。');
+  });
+  try {
+    await service.invoke('chat.send', { conversationId: chatId, profileId: 'test', text: '检查当前文风与流程规则' });
+    await done(service);
+    const data = await service.invoke('chat.read', { id: chatId });
+    assert.equal(data.turns[0].status, 'complete');
+    assert.equal(calls, 2);
+  } finally { await service.drain(); }
+});
+
 test('长聊天摘要可回查，助手建议不变成作者决定，保留原消息', async () => {
   let system = '';
   const { service, chatId } = await setup(async (_p, text) => {

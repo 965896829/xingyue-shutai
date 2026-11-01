@@ -1999,6 +1999,13 @@ function ProjectSettings({
               placeholder="人物编号或姓名"
             />
           </label>
+          <label>
+            正文生成方式
+            <select value={c.proseMode ?? 'chapter'} onChange={e => field('proseMode', e.target.value)}>
+              <option value="chapter">整章生成</option>
+              <option value="scene">逐场生成（每场一次写作调用，需视角人物）</option>
+            </select>
+          </label>
           <label className="check">
             <input
               type="checkbox"

@@ -193,7 +193,7 @@ test('正文与审稿共同表达规则逐字共用；EDIT独立追加且所有�
   assert.ok(block(review,'expression-edit'));
   const items=(pack:typeof prose)=>rules(pack).map(text=>({role:'developer',content:[{type:'input_text',text}]}));
   const input=appendStageInput(items(prose),items(review));
-  assert.ok(input.omittedCharacters>18000);
+  assert.ok(input.omittedCharacters > 500, '按阶段精简后，共用语义和实际相同规则仍可复用');
   for(const rule of expressionLibrary(root).rules.filter(r=>review.binding!.ruleIds.includes(r.id))) {
     for(const value of [rule.trigger,rule.repair,...rule.exceptions,...rule.preserve,...rule.do_not,...rule.context_required])
       assert.ok(review.prompt.includes(value),rule.id+' '+value);

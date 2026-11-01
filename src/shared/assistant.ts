@@ -72,6 +72,7 @@ export interface ConversationTurn {
   displayedError?: string;
   /** Host-bound permission to revise this unsaved candidate when explicitly requested in this turn. */
   candidateEdit?: { runId: string; runHash: string };
+  objectEdit?: { bindingHash: string };
   tagBinding?: { inputHash: string; contractRevision: number; knowledgeVersion: string };
   expressionRules?: import('./expression').ExpressionBinding;
   id: string;

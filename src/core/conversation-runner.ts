@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import { resolveWorkbenchObject } from './workbench';
+import { explicitlyRequestsEdit } from '../shared/author-intent';
+import { fingerprint } from './runtime/canonical';
 import path from 'node:path';
 import { z } from 'zod';
 import type {
@@ -141,7 +143,7 @@ export class ConversationRunner {
   propose(conversationId: string, turnId: string, profileId: string, input: unknown) {
     const conversation = this.records.get('conversations', conversationId);
     const turn = turnId ? this.records.get('conversation_turns', turnId) : undefined;
-    if (turn?.candidateEdit && this.records.all('action_proposals', conversationId).some(item => item.turnId === turnId)) throw new Error('本轮已提出修改，请等待当前修改完成');
+    if ((turn?.candidateEdit || turn?.objectEdit) && this.records.all('action_proposals', conversationId).some(item => item.turnId === turnId)) throw new Error('本轮已提出修改，请等待当前修改完成');
     const a = z
       .object({
         kind: z.enum(['stage', 'revision', 'draft']),
@@ -197,6 +199,9 @@ export class ConversationRunner {
       proposal.outputs = run.mode === 'stage' ? stageOutputs(run.stage, p) : run.changes.map(change => change.path);
       if (turn?.candidateEdit?.runId === run.id && turn.candidateEdit.runHash === taskRunHash(run) && !retryNeedsConfirmation(run)) proposal.executionSource = 'author_message';
     }
+    if (turn?.objectEdit && conversation.objectBinding && a.kind === 'revision' &&
+        explicitlyRequestsEdit(turn.request) && turn.objectEdit.bindingHash === fingerprint(conversation.objectBinding))
+      proposal.executionSource = 'author_message';
     this.records.save('action_proposals', proposal);
     this.emit({ type: 'snapshot', resource: 'chat', resourceId: conversationId });
     return proposal;

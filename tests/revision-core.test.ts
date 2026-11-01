@@ -9,11 +9,17 @@ import { hash, prosePath, qualityPath, stageOutputs, updatePath } from '../src/c
 import { proposalHash } from '../src/core/storage';
 import { revisionCoreIssues } from '../src/core/workflows/revision-core';
 
-test('旧章手写修改先保留候选，正文、独立审阅与批量人物覆盖同版采纳', async () => {
+for (const invalidFirst of [false, true]) test(`旧章手写修改先保留候选，正文、独立审阅与批量人物覆盖同版采纳${invalidFirst ? '，完整无效结果原预算内修复' : ''}`, async () => {
   let service: Service, requests = 0;
   service = new Service(path.resolve('resources/skill'), () => {}, async (_p, _system, messages) => {
     requests++;
     const input = JSON.parse(messages[0].content), store = service.store!, run = store.db.runs().find(r => r.status === 'running')!;
+    if (invalidFirst && requests === 1) return fakeResult('{"documents":[]}');
+    if (invalidFirst && requests === 2) {
+      assert.match(input.responseRepair.error, /facts|coverage|documents/);
+      assert.equal(input.responseRepair.previousResponse, '{"documents":[]}');
+      assert.equal(input.prose.hash, run.revisionCore!.proseHashes[1]);
+    }
     if (input.items) return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => ({ id: item.id, verdict: 'supported', reason: '修订覆盖与当前完整正文一致。', evidence: fixtureAuditEvidence(item, input.sources) })) }));
     if (input.template) {
       const report = fixture({ ...store.db.project(), chapter: 1 }, qualityPath(1), service);
@@ -40,7 +46,7 @@ test('旧章手写修改先保留候选，正文、独立审阅与批量人物�
     for (let i = 0; i < 300; i++) { const r = store.db.run(id); if (r.revisionCore?.phase === 'ready' || ['failed', 'paused', 'unknown'].includes(r.status)) break; await new Promise(resolve => setTimeout(resolve, 20)); }
     const ready = store.db.run(id);
     assert.equal(ready.status, 'awaiting_review', ready.error ?? JSON.stringify(ready.issues));
-    assert.equal(requests, 3); assert.equal(store.db.headRef()!.id, before); assert.deepEqual(revisionCoreIssues(store, ready), []);
+    assert.equal(requests, invalidFirst ? 4 : 3); assert.equal(store.db.headRef()!.id, before); assert.deepEqual(revisionCoreIssues(store, ready), []);
     const changed = structuredClone(ready); changed.changes.find(c => c.path === prosePath(1))!.content += '\n另一个结局。';
     assert.equal(revisionCoreIssues(store, changed)[0].severity, 'error');
     await service.invoke('run.accept', { id, proposalHash: proposalHash(ready) });

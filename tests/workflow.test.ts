@@ -46,8 +46,8 @@ for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正
       const mode = _s.match(/<expression_rules version="3\.1\.0" mode="([a-z]+)">/)?.[1];
       assert.ok(mode, '每次实际模型请求必须包含表达规则');
       expressionModes.add(mode);
-      assert.match(_s, /\[SYN-001\]/);
-      assert.match(_s, /对比论辩、角色口癖或强节奏段落/);
+      if (mode !== 'record') assert.match(_s, /\[VOICE-001\]/);
+      assert.match(_s, /作者当前明确要求/);
       if (_s.includes('rubric narrative-1')) assert.equal(mode, 'record');
       const current = service.store!.db.project();
       if (current.titlePending) {

@@ -19,6 +19,7 @@ const message = (role: 'developer' | 'user', text: string, breakpoint = false): 
 /** Deterministic wire layout only. Stored assistant/tool history is never edited.
  * Source text remains user data, even when it precedes the stage instruction. */
 export function cacheableInput(system: string, input: WireItem[], explicit = true) {
+  const focused = system.includes('<wenxu-stage-focus ');
   const boundary = system.indexOf('\n--- 当前专项技能：');
   const common = boundary > 0 ? system.slice(0, boundary) : system;
   const { remaining: stage, rules } = splitSharedRules(boundary > 0 ? system.slice(boundary) : '');
@@ -42,6 +43,10 @@ export function cacheableInput(system: string, input: WireItem[], explicit = tru
       const { sources: _duplicate, ...identity } = manifest;
       dynamic.context_manifest = { ...identity, sources_ref: '本消息 sources 中各项的 path/hash/required/mode；同一来源清单，不重复列出。' };
     }
+    if (focused) {
+      if (stage) prefix.push(message('developer', stage));
+      prefix.push(...rules.map(rule => message('developer', rule)));
+    }
     prefix.push(message('user', JSON.stringify({ authorPremise }), explicit));
     const sourceItems = [...sources].sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
     // Source content is present exactly once; per-task selection metadata follows.
@@ -53,9 +58,14 @@ export function cacheableInput(system: string, input: WireItem[], explicit = tru
     // "shared" rule may be absent or different in prose/review/memory mode.
     // Keep those variable blocks after the data so a role or rule change does
     // not invalidate the unchanged source prefix. Roles and text stay intact.
-    prefix.push(...rules.map(rule => message('developer', rule)));
-    if (stage) prefix.push(message('developer', stage));
-    return [...prefix, { ...first, content: JSON.stringify({ ...dynamic, sources: sources.map(({ content, ...s }: any) => ({ ...s, contentRef: '本会话中相同 path/hash 的 source、已保存工具提交原文或可精确还原的sourceMaterialization；当前范围仍以本条为准' })) }) }, ...input.slice(1)];
+    if (!focused) {
+      prefix.push(...rules.map(rule => message('developer', rule)));
+      if (stage) prefix.push(message('developer', stage));
+    }
+    return [...prefix, { ...first, content: JSON.stringify({ ...dynamic,
+      ...(focused ? { sourceReading: '按以下 path/hash 使用本请求 source 中的原文及范围；full 为全文，excerpt 为片段。' } : {}),
+      sources: focused ? sources.map(({ path, hash, mode, required }: any) => ({ path, hash, mode, required }))
+        : sources.map(({ content, ...s }: any) => ({ ...s, contentRef: '本会话中相同 path/hash 的 source、已保存工具提交原文或可精确还原的sourceMaterialization；当前范围仍以本条为准' })) }) }, ...input.slice(1)];
   }
   prefix.push(...rules.map(rule => message('developer', rule)));
   if (stage) prefix.push(message('developer', stage, explicit));

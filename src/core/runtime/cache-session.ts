@@ -162,6 +162,11 @@ export function appendStageInput(prefix: Item[], current: Item[]) {
 /** Bounded, restart-safe continuation for accepted adjacent planning stages.
  * Chapter tasks share a current-material input, excluding closed planning execution. */
 export function prepareCacheSession(store: FileStore, run: Run, profile: SecretProfile, body: Item, messages: ModelMessage[], toolCount: number, purpose = run.stage as string, onCompacting?: () => void) {
+  // Focused tasks use provider prefix caching of their current inputs only. A
+  // closed stage's instructions/data must not re-enter via an inherited prefix.
+  // The caller still supplies the complete active tool history and its receipts.
+  if (Array.isArray(body.input) && body.input.some((item: Item) => item.role === 'developer' &&
+      JSON.stringify(item.content).includes('<wenxu-stage-focus '))) return;
   // Independent chapter tasks share pre-execution inputs, never generated outputs.
   // In particular a reviewer cannot inherit the writer's reasoning or self-review.
   const fork = run.mode === 'stage' && run.stage === 'S10' && !!run.pipeline &&

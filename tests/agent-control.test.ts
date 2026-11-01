@@ -45,7 +45,7 @@ test('总控实际装入全部技能，支持本机修改且其他内置资源�
   const registry = new SkillRegistry(root), before = registry.load('webnovel-project-config');
   for (const entry of registry.entries) {
     const loaded = registry.load(entry.id);
-    assert.match(loaded.content, /总控优先级与工作模式/);
+    assert.match(loaded.content, /依宿主提供的任务、作者要求、当前版本和实际工具完成本轮工作/);
     assert.ok(entry.tools.includes('propose_changes'));
     assert.ok(entry.tools.every(tool => !tool.includes('.')));
   }
@@ -62,7 +62,7 @@ test('S02 获得真实授权与版本资料，遗漏产物自动补齐后停在�
   let service: Service;
   const created = await setup(async (_profile, system, messages, tools) => {
     calls++;
-    assert.match(system, /总控优先级与工作模式/);
+    assert.match(system, /依宿主提供的任务、作者要求、当前版本和实际工具完成本轮工作/);
     assert.doesNotMatch(system, /本客户端拟实现的接口/);
     assert.ok(tools.some(tool => tool.name === 'propose_changes'));
     const envelope = JSON.parse(messages[0].content);
@@ -234,7 +234,7 @@ test('讨论和叙事评估均加载总控，保留各自输出模式', async ()
     const conv = service.chat!.records.create('总控讨论', false);
     const turn = service.chat!.prepare(conv.id, '什么是待确认内容？', model.id);
     await service.chat!.drive(turn.id);
-    assert.match(prompt, /总控优先级与工作模式/);
+    assert.match(prompt, /依宿主提供的任务、作者要求、当前版本和实际工具完成本轮工作/);
     assert.match(prompt, /"mode":"discussion","generate":false/);
     assert.equal(service.store!.db.runs().length, 1);
     const telemetry = new NarrativeTelemetry(service.store!, () => {}, async (_profile, system, messages) => {
@@ -245,7 +245,7 @@ test('讨论和叙事评估均加载总控，保留各自输出模式', async ()
     const result = await telemetry.final(run, '维修员检查电表', model);
     await telemetry.stop();
     assert.ok(result);
-    assert.match(prompt, /总控优先级与工作模式/);
+    assert.match(prompt, /依宿主提供的任务、作者要求、当前版本和实际工具完成本轮工作/);
     assert.match(prompt, /本次仅做阅读评估/);
   } finally { await service.drain(); }
 });
@@ -275,7 +275,7 @@ test('正文审稿缺失时自动修复，未完成不能跳到记忆或被接�
   let calls = 0;
   const { service } = await setup(async (_profile, system, messages) => {
     calls++;
-    assert.match(system, /总控优先级与工作模式/);
+    assert.match(system, /依宿主提供的任务、作者要求、当前版本和实际工具完成本轮工作/);
     assert.match(system, /本阶段为 review/);
     assert.match(system, /使用 propose_changes 提交完整质量报告候选/);
     assert.match(system, /json wenxu-review/);

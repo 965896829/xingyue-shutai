@@ -54,7 +54,7 @@
       "path": "skills/webnovel-premise-lab/SKILL.md",
       "contract": "skills/webnovel-premise-lab/contract.json",
       "version": "3.4.2-original-intent",
-      "sha256": "7a54f600ceacf36fb9afe41317131e8904078968ec7ee36ce06a49e38246f693",
+      "sha256": "4c42ff097a93ef8618e28cdeb184a3f5a255097cc8b778afcc3ef2be13b0716a",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -74,7 +74,7 @@
       "path": "skills/webnovel-project-config/SKILL.md",
       "contract": "skills/webnovel-project-config/contract.json",
       "version": "3.4.2-original-intent",
-      "sha256": "bee2197de03d7cdf157fddf6c177661b8f73b7e98d92ec5110059499a27e7579",
+      "sha256": "a44e599561d440d426fdb9e60e22033101042f2d66d3a7fa71d1909a65266079",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -94,7 +94,7 @@
       "path": "skills/webnovel-world-engine/SKILL.md",
       "contract": "skills/webnovel-world-engine/contract.json",
       "version": "3.4.1-accepted-design",
-      "sha256": "f61d142cea39c414cd67f4421680ae8ab2e87de920ff69032b17d3207dcfbd9f",
+      "sha256": "1b333d213eac68d5d0a0cbe432080e97c8ba031a76ee4bd5d9df5ec338ed223b",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -114,7 +114,7 @@
       "path": "skills/webnovel-character-engine/SKILL.md",
       "contract": "skills/webnovel-character-engine/contract.json",
       "version": "3.5.0-context-efficiency",
-      "sha256": "1851b2ffb0cfcdb154ccba1d1f0c470a4f4cdf8d2617489a7f510f4e13d48e29",
+      "sha256": "62bf491d3aeda93ef0475cd20198bca6c827b5420d8d10581aed6d291fdd903c",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -154,7 +154,7 @@
       "path": "skills/webnovel-voice-profile/SKILL.md",
       "contract": "skills/webnovel-voice-profile/contract.json",
       "version": "3.3.0-proposal",
-      "sha256": "37309db0f2f227dc115e62ff9cebd8cb7e6b2dcb3e047fe62f33c8b1cd4b6a78",
+      "sha256": "f0f802bbff06814339a706d32bd7d05f3040cf81b5d425d8230425b9a05301ac",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -174,7 +174,7 @@
       "path": "skills/webnovel-volume-architect/SKILL.md",
       "contract": "skills/webnovel-volume-architect/contract.json",
       "version": "3.5.0-volume-market",
-      "sha256": "006f18cb578adc2ad6e07457f79ad9e515d606e5bc79eeec14d85faffac5574b",
+      "sha256": "559c913ee784b427331f858f58837684f42bbe4e1705833257bf901ed4774919",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -194,7 +194,7 @@
       "path": "skills/webnovel-chapter-roadmap/SKILL.md",
       "contract": "skills/webnovel-chapter-roadmap/contract.json",
       "version": "3.5.0-context-efficiency",
-      "sha256": "b673c8210aadaf4b71d112dc55307848a877fb4dafd9d3cc5da62c0ed552c83e",
+      "sha256": "f450adbdda9bba75fe70117a7bed5e821c9c964d4bf41536f8bb360f631960ed",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -214,7 +214,7 @@
       "path": "skills/webnovel-rhythm-designer/SKILL.md",
       "contract": "skills/webnovel-rhythm-designer/contract.json",
       "version": "3.4.3-compact-planning",
-      "sha256": "f86170eb455e31123781066b5b348d7cec52fabf5d11bd921637fc9aec348ce6",
+      "sha256": "7e85a0e35273ceafe9752bc01f2a3aca1f6b66ff11408166360eec1ec6015e95",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -234,7 +234,7 @@
       "path": "skills/webnovel-batch-outline/SKILL.md",
       "contract": "skills/webnovel-batch-outline/contract.json",
       "version": "3.5.0-context-efficiency",
-      "sha256": "8b09bd21cca6c42578e0b68bec8d76d78d791c8d6a01bd5adc0c49bcbd30487f",
+      "sha256": "11298e041bb9039899166e7f91cbbda5ad2207563dc88603615b4ca792d66a35",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -254,7 +254,7 @@
       "path": "skills/webnovel-chapter-planner/SKILL.md",
       "contract": "skills/webnovel-chapter-planner/contract.json",
       "version": "3.3.1-skill-parity",
-      "sha256": "8995bc89dd9f9c03f0032d0a3fbeff2d76ab9964e22d652bfb0e29429fc0081f",
+      "sha256": "80d8d4fd2f4fbfab253b127fb7e2b441cddc375c314755bead7a9ad6e5516456",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -274,7 +274,7 @@
       "path": "skills/webnovel-chapter-drafter/SKILL.md",
       "contract": "skills/webnovel-chapter-drafter/contract.json",
       "version": "3.4.1-bounded-repair",
-      "sha256": "db5ef6de42e26566b0bca22ca17c9782d7a7c140e4bbf898f479b72e7998439f",
+      "sha256": "5ea41bfec3f8ceb23acc200c07062925b12c23160627557d45ea7e7282374623",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -294,7 +294,7 @@
       "path": "skills/webnovel-chapter-reviewer/SKILL.md",
       "contract": "skills/webnovel-chapter-reviewer/contract.json",
       "version": "3.4.1-accepted-design",
-      "sha256": "1da640a3b043042727e2aa093f005622d3f4059eface98f5d095adca39200837",
+      "sha256": "a949dddd79a0850adcf43578a8bb30ebb563240a5b91cd0ec450bb5040bdf7dd",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -314,7 +314,7 @@
       "path": "skills/webnovel-prose-polisher/SKILL.md",
       "contract": "skills/webnovel-prose-polisher/contract.json",
       "version": "3.3.0-proposal",
-      "sha256": "1e6a4c3dcad082f570377f584af4b3930ee218f1a1aee73572b57a2cd22f29b3",
+      "sha256": "5e65087bbcaedb9b1400bb199588d5895c3629bb3a157c8c985af34021641726",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -354,7 +354,7 @@
       "path": "skills/webnovel-memory-extractor/SKILL.md",
       "contract": "skills/webnovel-memory-extractor/contract.json",
       "version": "3.5.1-fact-recovery",
-      "sha256": "b4135a47ad078208f037662df5cd4d6e3f54c5f761811b59a2e32dc867515711",
+      "sha256": "8c7040571805d5deb0f09b749f015ddf53cea381889243d4c5af63a36cafae95",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -394,7 +394,7 @@
       "path": "skills/webnovel-revision-cascade/SKILL.md",
       "contract": "skills/webnovel-revision-cascade/contract.json",
       "version": "3.3.0-proposal",
-      "sha256": "f121fbf162eb2da5310f2d1bd1856621ab4a7e71753dfb659a4ee6e07d46f7b0",
+      "sha256": "35830ffc0a951d23692f7e6d1d728fac4b26dc4e1c351513c7d8ff9c1b907db5",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -434,7 +434,7 @@
       "path": "skills/webnovel-packaging/SKILL.md",
       "contract": "skills/webnovel-packaging/contract.json",
       "version": "3.3.0-proposal",
-      "sha256": "c2d726f0fc8e9bcb7cf75271e5675aaab51aa04c557ba9760844931d2a047d8b",
+      "sha256": "143dbae0ddeb72c79e765f26c09eae2752ef373dcc65c36177758af6e5a520e2",
       "tools": [
         "read_naming_rules",
         "read_document",
@@ -514,7 +514,7 @@
       "path": "skills/webnovel-memory-audit/SKILL.md",
       "contract": "skills/webnovel-memory-audit/contract.json",
       "version": "3.3.0-proposal",
-      "sha256": "6c90ff1425bde3cfcf198f5d24262bad0c098d873902285562985fee97beeefe",
+      "sha256": "464e7ad1ebc589ea75744c58670ee4bad7a702133b7fb5be6a294267e90c900d",
       "tools": [
         "read_naming_rules",
         "read_document",

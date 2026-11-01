@@ -235,7 +235,7 @@ test('独立证据审核拒绝后实际调用提取器修复，不在旧完成�
     if (system.includes('你独立核对本章实际正文')) return fakeResult(JSON.stringify({ decisions: input.plans.map((plan: any) => ({ path: plan.path, verdict: 'consistent', reason: '后续求医计划与本章事件相容。', planQuote: plan.content.slice(0, 30), proseQuote: input.prose.content.slice(0, 30) })) }));
     if (system.includes('你独立检查')) {
       audits++;
-      return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => ({ id: item.id, verdict: audits === 1 ? 'contradicted' : 'supported', reason: audits === 1 ? '原文只是递出，尚未把记录本交给医生。' : '修订后的事实准确保留递出动作。', evidence: fixtureAuditEvidence(item, input.sources) })) }));
+      return fakeResult(JSON.stringify({ decisions: input.items.map((item: any) => ({ id: item.id, verdict: audits === 1 && item.action !== 'review_document' ? 'contradicted' : 'supported', reason: audits === 1 && item.action !== 'review_document' ? '原文只是递出，尚未把记录本交给医生。' : '当前资料准确保留递出动作。', evidence: fixtureAuditEvidence(item, input.sources) })) }));
     }
     if (!tools.length) return fakeResult(fixture(p, prosePath(1), service));
     if (system.includes('本阶段为 review')) return proposal([service.change(qualityPath(1), fixture(p, qualityPath(1), service))]);

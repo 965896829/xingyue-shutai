@@ -6,6 +6,9 @@ import { safePath } from './storage';
 import { sharedRuleBlock } from './runtime/prompt-cache';
 import type { StageId } from '../shared/types';
 import { chapterNamingSkills } from './chapter-naming';
+import { creationPolicies, creationPolicy } from './creation-policy';
+import { skillExecutionSchema } from '../shared/skill-contract';
+import { promptProfileVersion } from './prompt-profile';
 
 const entrySchema = z.object({
   id: z.string(),
@@ -46,18 +49,6 @@ const hostSkills = new Set([
   'webnovel-batch-close',
   'webnovel-memory-audit'
 ]);
-function guidanceFor(skillId: string, content: string) {
-  const sections = new Set(
-    /project-config/.test(skillId) ? [3, 5] :
-    /memory|context-retriever|character|batch-close/.test(skillId) ? [6, 10, 12] :
-    /revision/.test(skillId) ? [6, 9] :
-    /chapter-drafter/.test(skillId) ? [7, 8, 9] :
-    /review|polish/.test(skillId) ? [7, 9] :
-    /voice|name-governance/.test(skillId) ? [7] :
-    /narrative/.test(skillId) ? [8, 12] : [8, 11]
-  );
-  return content.split(/(?=^## \d+\.)/m).filter(section => sections.has(Number(section.match(/^## (\d+)\./)?.[1]))).join('\n');
-}
 export class SkillRegistry {
   readonly root: string;
   readonly entries: SkillEntry[];
@@ -94,24 +85,26 @@ export class SkillRegistry {
     )
       throw new Error('技能权限契约无效');
     if (JSON.stringify(contract.tools) !== JSON.stringify(entry.tools)) throw new Error('技能工具契约不一致');
-    return { ...entry, host: hostSkills.has(skillId) };
+    return { ...entry, host: hostSkills.has(skillId), execution: skillExecutionSchema.parse(contract.execution) };
   }
-  load(skillId: string, options: { outputMode?: SkillOutputMode; legacyVolumeNaming?: boolean; volumeNamingVersion?: 1 | 2; chapterNamingVersion?: 1 } = {}) {
+  load(skillId: string, options: { outputMode?: SkillOutputMode; legacyVolumeNaming?: boolean; volumeNamingVersion?: 1 | 2; chapterNamingVersion?: 1; chapterTitleFixed?: boolean } = {}) {
     const entry = this.get(skillId),
       current = this.read(entry.path),
       controller = this.controller();
     if (hash(current) !== entry.sha256) throw new Error('技能版本与注册表不一致');
-    // Resuming a pre-0.4.72 run must retain its exact specialist prompt, not gain a new paid preflight.
-    const content = skillId !== 'webnovel-volume-architect' ? current
-      : options.volumeNamingVersion === 2 ? this.read('skills/webnovel-volume-architect/commercial-v2.md')
-      : options.legacyVolumeNaming ? this.read('skills/webnovel-volume-architect/legacy-0.4.71.md') : current;
-    const files = new Set<string>(['references/shared-contract.md', 'references/agent-guidance.md']);
-    if (options.chapterNamingVersion === 1 && chapterNamingSkills.includes(skillId)) files.add('references/chapter-naming-commercial.md');
+    // Persisted naming versions control contracts and research budgets, not creative policy.
+    // The changed hash sends in-flight tasks through the existing version handoff.
+    const content = current;
+    const files = new Set<string>(['references/shared-contract.md']);
+    if (chapterNamingSkills.includes(skillId)) files.add('references/chapter-naming-commercial.md');
     for (const match of content.matchAll(/`(\.\.\/\.\.\/references\/[^`]+\.md)`/g)) {
       const relative = path.posix.normalize(path.posix.join(path.posix.dirname(entry.path), match[1]));
       if (!relative.includes('/naming/')) files.add(relative);
     }
     const rawMode = options.outputMode === 'prose';
+    const operation = creationPolicies[skillId];
+    const policy = operation ? creationPolicy(path.dirname(this.root), operation) : undefined;
+    if (policy && /^## 规则(?:\s|$)/m.test(content)) throw new Error('专项技能包含重复的旧创作规则');
     const specialist = content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
       .split(/(?=^## )/m).filter(section => !rawMode || !/^## 输出(?:契约)?(?:\s|$)/.test(section)).join('');
     // Validate every declared dependency even when its tool-output instructions are
@@ -119,15 +112,15 @@ export class SkillRegistry {
     const references = [...files].map(file => ({ file, content: this.read(file) }));
     return {
       entry,
-      content: [controller.content, `\n--- 当前专项技能：${entry.title} ---\n${specialist}`,
-        ...references.filter(({ file }) => !rawMode || file !== 'references/shared-contract.md')
+      content: [controller.content, `\n--- 当前专项技能：${entry.title} ---\n${specialist}`, ...(policy ? [policy.content] : []),
+        ...references.filter(({ file }) => (!rawMode || !['references/shared-contract.md', 'references/chapter-naming-commercial.md'].includes(file)) &&
+          (!options.chapterTitleFixed || file !== 'references/chapter-naming-commercial.md'))
           .map(({ file, content: reference }) => {
-            const block = `\n--- ${file} ---\n${file === 'references/agent-guidance.md' ? guidanceFor(skillId, reference) : reference}`;
-            return ['references/shared-contract.md', 'references/agent-guidance.md'].includes(file)
-              ? sharedRuleBlock(file.includes('agent-guidance') ? 'agent-guidance' : 'shared-contract', block) : block;
+            const block = `\n--- ${file} ---\n${reference}`;
+            return file === 'references/shared-contract.md' ? sharedRuleBlock('shared-contract', block) : block;
           })].join('\n'),
-      hash: hash(JSON.stringify(['structured-loading-2', controller.hash, entry,
-        ...(content !== current ? [hash(content)] : []), ...[...files].map((f) => this.lock[f])]))
+      hash: hash(JSON.stringify([promptProfileVersion, 'current-policy-3', controller.hash, entry,
+        ...(policy ? [policy.hash] : []), ...[...files].map((f) => this.lock[f])]))
     };
   }
 }

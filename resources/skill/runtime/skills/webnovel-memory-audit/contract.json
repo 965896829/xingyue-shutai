@@ -28,5 +28,38 @@
     "版本与POV匹配",
     "模型输出不修改正史",
     "显示边界与评估局限"
-  ]
+  ],
+  "execution": {
+    "trigger": "作者明确选择此操作或宿主将已授权任务路由至此技能",
+    "inputs": "宿主快照与来源、角色或场景、授权预算和量表/审计规则版本",
+    "readScope": [
+      "本轮 taskScope 的作品、分支、资料版本、目标章及批次",
+      "可见事实、适用声音和合同规定的相关来源"
+    ],
+    "outputs": [
+      "memory_audit_report",
+      "missing_dependencies",
+      "candidate_repairs"
+    ],
+    "writeScope": "candidate-only",
+    "calls": {
+      "kind": "shared_phase",
+      "minimum": 1,
+      "maximum": null
+    },
+    "dependencies": [
+      "当前专项规则及实际引用资源哈希",
+      "任务范围、作者配置、来源文稿和事实版本"
+    ],
+    "invalidation": [
+      "来源、知情范围、规则或创作配置改变",
+      "候选或审核所依据的正文及人物资料改变；预算只变不重置内容"
+    ],
+    "acceptance": [
+      "所有观点或数值有原文依据或明确未知",
+      "版本与POV匹配",
+      "模型输出不修改正史",
+      "显示边界与评估局限"
+    ]
+  }
 }

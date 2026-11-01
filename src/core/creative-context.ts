@@ -5,11 +5,11 @@ import { hash, prosePath, paths } from './domain';
 import { worldContext } from './world-model';
 import { creativeInputSchema, creativeOperations, type CreativeTask } from '../shared/creative';
 import { memoryScopeSchema } from '../shared/studio';
-import { conflictingFacts, sourceValidator, visibleFact } from './memory-studio';
+import { applicableFact, conflictingFacts, sourceValidator, visibleFact } from './memory-studio';
 import { pendingSource } from './memory-source';
 import { factReadDependency } from './runtime/fact-read-set';
 import { fingerprint } from './runtime/canonical';
-import { readQuality, evidenceUsable, qualityStatistics, voiceSlice } from './quality';
+import { readQuality, evidenceUsable, qualityStatistics, voiceSlice, taskVoicePreferences } from './quality';
 
 export function creativeRules(root: string, operation: CreativeTask['input']['operation']) {
   const directory = path.join(root, 'creative-v7');
@@ -37,10 +37,7 @@ export function rehearsalCharacters(store: FileStore, chapter: number) {
     validSource = sourceValidator(store, info.documents, chapter, store.db.project());
   const known = facts.filter(
     (fact) =>
-      fact.reviewStatus === 'accepted' &&
-      !['disputed', 'superseded'].includes(fact.state) &&
-      fact.fromChapter <= chapter &&
-      (fact.toChapter === null || fact.toChapter >= chapter) &&
+      applicableFact(fact, memoryScopeSchema.parse({ chapter })) &&
       fact.revealedAt <= chapter &&
       !['plan', 'author_constraint'].includes(fact.kind) &&
       fact.evidence.every(validSource)
@@ -135,6 +132,7 @@ export function compileCreative(store: FileStore, root: string, raw: unknown, br
       character: self?.subject ?? input.characterId,
       chapter: input.chapter,
       observations: input.observations,
+      expressionGuidance: taskVoicePreferences(store, { entityIds: [input.characterId], sceneIds: [`第${input.chapter}章`], sceneFunctions: ['对话'] }),
       ...(parent ? { visibleInteractionHistory: [{ speaker: '上一位行动者', ...parent.creative!.result!.turn }] } : {}),
       beliefs: eligible.map((fact, index) => ({
         source: `observation-${index + 1}`,

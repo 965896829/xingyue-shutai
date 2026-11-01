@@ -30,6 +30,7 @@ import { samePath } from '../recycle-bin';
 import { candidateChangesForCurrentSettings, compatibleRunBase } from '../runtime-settings';
 import { ProjectCommitService } from '../runtime/commit-kernel';
 import { voicePath } from '../quality';
+import { compareStoryPosition } from '../../shared/story-position';
 import { mediaPath } from '../workbench-media';
 import { bookProfilePath, parseBookProfile } from '../publishing';
 import { plotAffectedChapters, plotPath } from '../workbench-plot';
@@ -146,19 +147,15 @@ export async function handleAdoptionCommand(
     if (!r.changes.length) throw new Error('没有可接受的候选文件');
     if (a.warningReason) s.db.event(r.id, 'warning-review', String(a.warningReason));
     let next = r.mode === 'stage' ? advance(p, r.id) : structuredClone(p);
-    if (r.pipeline) next = advance(next, r.id);
+    if (r.pipeline && r.mode === 'stage' && r.chapter === p.chapter) next = advance(next, r.id);
     next.revision++;
     let changes = candidateChangesForCurrentSettings(s, r);
-    // S02's reviewed creative settings must also become the settings shown by
-    // the client. Otherwise saving a later budget change restores the old
-    // constraints/style over the accepted configuration document.
-    const creativeConfig =
-      r.mode === 'stage' && r.stage === 'S02'
-        ? changes.find((change) => change.path === paths.config)
-        : undefined;
-    if (creativeConfig) {
+    const creativeConfig = changes.find((change) => change.path === paths.config);
+    if (creativeConfig && !changes.some(change => change.path === bookProfilePath)) {
       const reviewed = parseConfig(creativeConfig.content, p.config);
       for (const key of ['pov', 'genre', 'style', 'constraints'] as const) next.config[key] = reviewed[key];
+      for (const key of ['targetWords', 'chapterWords', 'minWords', 'maxWords', 'batchSize'] as const) next.config[key] = reviewed[key];
+      creativeConfig.content = updateConfigDocument(creativeConfig.content, next);
     }
     const profileChange = changes.find(change => change.path === bookProfilePath);
     if (profileChange && changes.some(change => change.path === paths.config) && !r.planning) {
@@ -274,9 +271,15 @@ export async function handleAdoptionCommand(
         if (!old) throw new Error('被替代记忆不存在');
         if (!f.replacementReason) throw new Error('替代既有事实必须说明依据和原因');
         old.state = 'superseded';
-        if (f.fromChapter <= old.fromChapter) {
-          old.reviewStatus = 'retracted';
-          old.toChapter = old.fromChapter;
+        if (f.fromPosition && f.fromChapter >= old.fromChapter &&
+            (compareStoryPosition(f.fromPosition, old.fromPosition ?? { chapter: old.fromChapter }) ?? 1) > 0) {
+          old.untilPosition = f.fromPosition;
+          old.toChapter = f.fromChapter;
+        } else if (f.fromChapter <= old.fromChapter) {
+          // Without an ordered interval, retain the superseded record with unknown
+          // validity. Only an explicit retraction can declare its original claim wrong.
+          old.toChapter = null;
+          delete old.untilPosition;
         } else old.toChapter = f.fromChapter - 1;
       }
       facts.push(f);

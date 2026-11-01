@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Service } from '../src/core/service';
-import { designCatalog, designResource, designSpec, bindDesign, assertDesign, designPrompt } from '../src/core/design-operations';
+import { designCatalog, designResource, designSpec, bindDesign, assertDesign, designPrompt, designContext } from '../src/core/design-operations';
 import { fakeProfile, fakeResult, isolatedRoot, refactorFixture } from './fixtures/refactor';
 import { hash, paths, prosePath } from '../src/core/domain';
 import { proposalHash } from '../src/core/storage';
@@ -34,7 +34,8 @@ test('全部设计能力具有宿主处理器、选定资源和具体输入输�
     run.workflowVersion = 1; bindWorkflow(run);
     assert.equal(run.workflowBinding!.registry, 'scoped-design-v1');
     const fingerprint = proposalHash(run);
-    assert.match(designPrompt(store, root, run), /原稿𠮷/);
+    assert.match(JSON.stringify(designContext(store, run)), /原稿𠮷/);
+    assert.doesNotMatch(designPrompt(store, root, run), /原稿𠮷/, '选中原文通过资料输入传递，不嵌入专业指令');
     assert.throws(() => assertDesign(store, run, [{ path: paths.roles, content: '越界', baseHash: null }]), /范围/);
     run.design!.targets.push({ path: '其他.md', hash: null });
     assert.notEqual(proposalHash(run), fingerprint);
@@ -64,6 +65,34 @@ test('新操作通过原执行器保存候选，接受前无正式写入且不�
     assert.match(store.readAccepted(run.design!.targets[0].path).content, /比较结果/);
     assert.equal(store.db.project().stage, 'S01');
     assert.equal(store.db.project().chapter, 1);
+  } finally { await service.drain(); }
+});
+
+test('已退役的设计提示通过原恢复路径重绑当前规则，候选、目标和预算保留', async () => {
+  const service = new Service(root, () => {}, async () => { throw new Error('本地恢复不应调用模型'); });
+  service.profiles = [fakeProfile];
+  try {
+    await service.invoke('project.create', { parent: isolatedRoot('retired-design-prompt'), title: '规则恢复', premise: '日常生活', config: { defaultProfileId: fakeProfile.id } });
+    const store = service.store!;
+    const run = service.makeRun('revision', '比较当前方案');
+    bindDesign(store, root, run, { id: 'co-creation.compare', request: '比较当前方案' });
+    run.design!.promptHash = 'f'.repeat(64);
+    run.rounds = 3; run.toolCount = 4; run.usage = { input: 200, output: 50, cost: 0.2, currency: 'USD' };
+    run.status = 'paused';
+    run.changes = [{ path: run.design!.targets[0].path, baseHash: run.design!.targets[0].hash, content: '# 比较结果\n原有候选保留。' }];
+    store.db.saveRun(run);
+    assert.equal(service.runner!.needsFreshContext(run), true);
+    const next = service.rebuildRun(run, fakeProfile.id);
+    assert.equal(next.design!.promptHash, designResource(root, run.design!.input.id).hash);
+    assert.deepEqual(next.design!.targets, run.design!.targets);
+    assert.deepEqual(next.design!.sources, run.design!.sources);
+    assert.deepEqual(next.changes, run.changes);
+    assert.equal(next.rounds, run.rounds); assert.equal(next.toolCount, run.toolCount);
+    assert.deepEqual(next.usage, run.usage); assert.equal(next.parentRunId, run.id);
+    assert.equal(next.stage, run.stage); assert.equal(next.chapter, run.chapter);
+    assert.match(designPrompt(store, root, next), /依宿主提供的任务/);
+    assert.doesNotMatch(designPrompt(store, root, next), /星月书台创作内核 V6/);
+    assert.equal(store.db.run(run.id).design!.promptHash, 'f'.repeat(64));
   } finally { await service.drain(); }
 });
 

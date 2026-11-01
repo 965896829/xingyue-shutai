@@ -205,25 +205,19 @@ test('公共搜索连接只检索一次，之后直接读官方目录，不再�
   } finally { f.store.close(); }
 });
 
-test('旧S05恢复保持原专项提示；新版与原Codex skill共用卷名规则且不改变模板', () => {
-  const legacyRoot = isolatedRoot('legacy-volume-skill');
-  fs.cpSync(path.join(root, 'runtime'), path.join(legacyRoot, 'runtime'), { recursive: true });
-  const runtime = path.join(legacyRoot, 'runtime');
-  const target = 'skills/webnovel-volume-architect/SKILL.md';
-  const before = fs.readFileSync(path.join(runtime, 'skills/webnovel-volume-architect/legacy-0.4.71.md'));
-  fs.writeFileSync(path.join(runtime, target), before);
-  const registry = JSON.parse(fs.readFileSync(path.join(runtime, 'skills.registry.json'), 'utf8'));
-  registry.skills.find((s: { id: string }) => s.id === 'webnovel-volume-architect').sha256 = hash(before);
-  fs.writeFileSync(path.join(runtime, 'skills.registry.json'), JSON.stringify(registry));
-  const lock = JSON.parse(fs.readFileSync(path.join(runtime, 'resources.lock.json'), 'utf8'));
-  lock[target] = hash(before); lock['skills.registry.json'] = hash(fs.readFileSync(path.join(runtime, 'skills.registry.json')));
-  fs.writeFileSync(path.join(runtime, 'resources.lock.json'), JSON.stringify(lock));
-  const historical = new SkillRegistry(legacyRoot).load('webnovel-volume-architect').content;
-  const current = new SkillRegistry(root);
-  assert.equal(current.load('webnovel-volume-architect', { legacyVolumeNaming: true }).content, historical);
-  assert.notEqual(current.load('webnovel-volume-architect').content, historical);
-  assert.equal(fs.readFileSync(path.join(root, 'references/volume-naming.md'), 'utf8'), current.read('references/volume-naming.md'));
-  assert.equal(hash(before), '853a4bd99f37062f2d84cf9f6785de2f756ccf6b42ed9996dc5047580e2652a8');
+test('旧S05合同只保留研究预算差异，所有入口使用当前卷名与规划规则', () => {
+  const registry = new SkillRegistry(root);
+  const current = registry.load('webnovel-volume-architect');
+  for (const options of [{ legacyVolumeNaming: true }, { volumeNamingVersion: 1 as const }, { volumeNamingVersion: 2 as const }]) {
+    const loaded = registry.load('webnovel-volume-architect', options);
+    assert.equal(loaded.content, current.content);
+    assert.equal(loaded.hash, current.hash);
+    assert.match(loaded.content, /番茄分卷命名：与商业书名一致/);
+    assert.match(loaded.content, /进入时的局面|全书中心问题/);
+  }
+  assert.equal(fs.readFileSync(path.join(root, 'references/volume-naming-commercial.md'), 'utf8'), registry.read('references/volume-naming-commercial.md'));
+  for (const old of ['skills/webnovel-volume-architect/legacy-0.4.71.md', 'skills/webnovel-volume-architect/commercial-v2.md', 'references/volume-naming.md'])
+    assert.equal(fs.existsSync(path.join(root, 'runtime', old)), false);
 });
 
 test('S05集成：一次目录研究后直接生成原结构大纲，来源在任务上下文内，旧任务恢复不加搜索', async () => {
@@ -236,7 +230,8 @@ test('S05集成：一次目录研究后直接生成原结构大纲，来源在�
     if (options?.webSearch) return { ...fakeResult(url), webSearch: { calls: [{ id: 'one-search', status: 'completed', sources: [{ title: '目录测试书', url }] }], citations: [] } };
     assert.match(messages[0].content, /volumeNamingReference/); assert.match(messages[0].content, /停在门外/);
     assert.doesNotMatch(system, /目录测试书|停在门外/);
-    assert.match(system, /已预载：[^\n]*都市/);
+    assert.match(JSON.stringify(JSON.parse(messages[0].content).volumeNamingReference), /都市/, '目录的目标题材仍随真实研究样本提供');
+    assert.doesNotMatch(system, /可按需读取的模块索引/, '卷名沿用商业命名专用规则，不加载人名等通用命名百科');
     const p = service.store!.db.project();
     submitted = fixture(p, paths.volumes, service).replace('| 1 | 第一卷 | 1—1200 | 1200 |', '| 第1卷 | 第一卷 | 001—1200 | 1200章 |');
     return { ...fakeResult(''), stop: 'tools', calls: [{ id: 'candidate', name: 'propose_changes', arguments: JSON.stringify({ changes: [service.change(paths.volumes, submitted)] }) }] };

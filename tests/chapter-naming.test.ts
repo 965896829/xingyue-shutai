@@ -35,17 +35,18 @@ async function setup(stage: StageId, caller: ConstructorParameters<typeof Servic
   return { service, store, project };
 }
 
-test('章名商业规则只装配到新命名版本，旧批量/单章/正文规则完整指纹不变', () => {
+test('章名商业规则统一覆盖新旧合同，旧提示指纹失效且审稿不加载起名规则', () => {
   const registry = new SkillRegistry(root);
   const historic = {
-    'webnovel-batch-outline': 'a90bf4cb897422bcbd16598779ac296b483f3d298d6e000186d456b1a6ccc8c6',
-    'webnovel-chapter-planner': '616fcacedbad49c70d345bb7dbe01405f23a8018a50f3d559b4ae2fe89cd7f5d',
-    'webnovel-chapter-drafter': 'a490dfbc1f267ca778ad835f0e91413f026600ed9b440dd31306ad80332e10d5'
+    'webnovel-batch-outline': 'b8fb0119e1685bb5076585d58deb01676167d52049a98f7df1b57bed4d6fa45f',
+    'webnovel-chapter-planner': '75235a8ce810916388146641240d1fac68aa8e2170353d592d405d8627af2504',
+    'webnovel-chapter-drafter': '1de87e73658074b885be7adc5cbc88c43bb587c59a7d6e8be5d6a891919356df'
   };
   for (const [skill, digest] of Object.entries(historic)) {
-    assert.equal(registry.load(skill).hash, digest);
+    assert.notEqual(registry.load(skill).hash, digest);
+    assert.match(registry.load(skill).content, /番茄章节命名：与书名、卷名一致/);
     assert.match(registry.load(skill, { chapterNamingVersion: 1 }).content, /番茄章节命名：与书名、卷名一致/);
-    assert.notEqual(registry.load(skill, { chapterNamingVersion: 1 }).hash, digest);
+    assert.equal(registry.load(skill, { chapterNamingVersion: 1 }).hash, registry.load(skill).hash);
   }
   assert.equal(registry.load('webnovel-chapter-reviewer').hash, registry.load('webnovel-chapter-reviewer', { chapterNamingVersion: 1 }).hash);
   assert.equal(registry.read('references/chapter-naming-commercial.md'), fs.readFileSync(path.join(root, 'references/chapter-naming-commercial.md'), 'utf8'));
@@ -187,7 +188,8 @@ test('S09提交与S10正文保存继承已确认章名，正文哈希按同步�
   for (const stage of ['S09', 'S10'] as const) {
     let service: Service, calls = 0, emitted = '';
     const { service: created, store, project } = await setup(stage, async (_profile, system, messages) => {
-      calls++; assert.match(system, /番茄章节命名/);
+      calls++; assert.match(system, /沿用作者确认的人名、称谓、地名、术语及本轮确认的标题/);
+      assert.doesNotMatch(system, /番茄章节命名/, '已确认章名直接继承，不在正文或场景阶段重新策划命名');
       assert.match(messages[0].content, /chapterNamingReference/);
       if (stage === 'S10') { emitted = fixture(store.db.project(), prosePath(1), service); return fakeResult(emitted); }
       return { ...fakeResult(''), calls: [{ id: 'plan', name: 'propose_changes', arguments: JSON.stringify({ changes: stageOutputs(stage, store.db.project()).map(file => service.change(file, fixture(store.db.project(), file, service))) }) }] };

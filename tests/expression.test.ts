@@ -72,8 +72,8 @@ test('905条来源保持完整；讨论和正文分别加载完整的生效规�
   const config = configSchema.parse({});
   const discussion = expressionPack(skill, config, 'discussion');
   const prose = expressionPack(skill, config, 'prose');
-  assert.equal(discussion.binding!.ruleIds.length, 48);
-  assert.equal(prose.binding!.ruleIds.length, 192);
+  assert.equal(discussion.binding!.ruleIds.length, 1);
+  assert.equal(prose.binding!.ruleIds.length, 5);
   assert.ok(!discussion.binding!.ruleIds.includes('META-001'));
   assert.match(discussion.prompt, /必要的列表、分析、创作术语和解释可以保留/);
   assert.match(prose.prompt, /当前只生成小说正文/);
@@ -154,12 +154,12 @@ test('长对话压缩后每轮和工具续轮仍携带规则，自由试写使�
     assert.equal(requests.length, 2);
     for (const system of requests) {
       assert.match(system, /mode="discussion"/);
-      assert.match(system, /\[SYN-001\]/);
+      assert.match(system, /\[VOICE-001\]/);
       assert.match(system, /较早消息已转为可回查摘要/);
     }
     const chat = await service.invoke('chat.read', { id: chatId });
     assert.ok(chat.turns[0].expressionRules);
-    assert.equal(chat.turns[0].expressionRules.ruleIds.length, 48);
+    assert.equal(chat.turns[0].expressionRules.ruleIds.length, 1);
     assert.equal(service.snapshot().runs.length, 0);
     const card = await service.invoke('proposal.create', {
       conversationId: chatId,
@@ -179,7 +179,7 @@ test('长对话压缩后每轮和工具续轮仍携带规则，自由试写使�
     const updated = await service.invoke('chat.read', { id: chatId });
     const draftTurn = updated.turns.find((t) => t.kind === 'draft');
     assert.ok(draftTurn?.expressionRules);
-    assert.equal(draftTurn.expressionRules.ruleIds.length, 192);
+    assert.equal(draftTurn.expressionRules.ruleIds.length, 5);
     assert.equal(service.snapshot().runs.length, 0);
   } finally {
     service.close();
@@ -297,9 +297,9 @@ test('正式修订在工具续轮与恢复时保留表达约束和防过度改�
     for (const system of requests) {
       assert.match(system, /mode="revision"/);
       assert.match(system, /\[EDIT-001\]/);
-      assert.match(system, /\[SYN-001\]/);
+      assert.match(system, /\[VOICE-001\]/);
     }
-    assert.equal(service.store!.db.run(runId).expressionRules!.revision!.ruleIds.length, 204);
+    assert.equal(service.store!.db.run(runId).expressionRules!.revision!.ruleIds.length, 6);
   } finally {
     service.close();
   }

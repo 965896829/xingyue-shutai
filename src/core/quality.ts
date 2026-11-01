@@ -150,24 +150,51 @@ export function voiceDocument(store: FileStore, selected: string[]) {
   return `# 声音偏好\n\n\`\`\`json\n${JSON.stringify({ version: 1, preferences }, null, 2)}\n\`\`\`\n`;
 }
 export function voiceSlice(store: FileStore, scope: VoiceScope) {
-  if (!store.db.document(voicePath)?.hash) return [];
-  const doc = store.readAccepted(voicePath), match = doc.content.match(/```json\s*([\s\S]*?)```/);
-  if (!match) return [];
-  let value: unknown;
-  try { value = JSON.parse(match[1]); } catch { return []; }
-  const parsed = z.object({ version: z.literal(1), preferences: z.array(voicePreferenceSchema) }).safeParse(value);
-  if (!parsed.success) return [];
-  const state = readQuality(store);
-  return parsed.data.preferences.filter(p => p.scope.sceneFunction === scope.sceneFunction && (p.scope.kind === 'book' && scope.kind !== 'character' || p.scope.kind === scope.kind && p.scope.target === scope.target) && p.evidenceIds.every(key => state.evidence.some(e => e.id === key && evidenceUsable(store, e)))).map(p => ({ statement: p.statement, exceptions: p.exceptions }));
+  return taskVoicePreferences(store, { entityIds: scope.kind === 'character' ? [scope.target] : [],
+    sceneIds: scope.kind === 'scene' ? [scope.target] : [], sceneFunctions: [scope.sceneFunction],
+    addresseeIds: scope.addresseeIds, relationshipIds: scope.relationshipIds })
+    .map(({ statement, exceptions }) => ({ statement, exceptions }));
 }
-export function taskVoicePreferences(store: FileStore, query: string, entityIds: string[]) {
+export interface VoiceSelection {
+  entityIds: string[];
+  sceneFunctions: string[];
+  sceneIds: string[];
+  addresseeIds?: string[];
+  relationshipIds?: string[];
+  scope?: import('../shared/studio').MemoryScope;
+}
+export function voiceScopeMatches(scope: VoiceScope, selection: VoiceSelection) {
+  if (scope.sceneFunction === '未分类') return false;
+  if (scope.sceneFunction !== '*' && !selection.sceneFunctions.includes(scope.sceneFunction)) return false;
+  if (scope.kind === 'character' && !selection.entityIds.includes(scope.target)) return false;
+  if (scope.kind === 'scene' && !selection.sceneIds.includes(scope.target)) return false;
+  if (scope.addresseeIds?.length && !scope.addresseeIds.some(id => selection.addresseeIds?.includes(id))) return false;
+  if (scope.relationshipIds?.length && !scope.relationshipIds.some(id => selection.relationshipIds?.includes(id))) return false;
+  if (scope.exceptSceneFunctions?.some(value => selection.sceneFunctions.includes(value))) return false;
+  if (scope.exceptAddresseeIds?.some(id => selection.addresseeIds?.includes(id))) return false;
+  return true;
+}
+export function taskVoicePreferences(store: FileStore, query: string | VoiceSelection, entityIds: string[] = []) {
   if (!store.db.document(voicePath)?.hash) return [];
   const content = store.readAccepted(voicePath).content, match = content.match(/```json\s*([\s\S]*?)```/);
   if (!match) return [];
   try {
     const saved = z.object({ version: z.literal(1), preferences: z.array(voicePreferenceSchema) }).parse(JSON.parse(match[1]));
     const state = readQuality(store);
-    return saved.preferences.filter(p => p.scope.sceneFunction !== '未分类' && query.includes(p.scope.sceneFunction) && (p.scope.kind === 'book' || p.scope.kind === 'character' && entityIds.includes(p.scope.target) || p.scope.kind === 'scene' && query.includes(p.scope.target)) && p.evidenceIds.every(key => state.evidence.some(e => e.id === key && evidenceUsable(store, e)))).map(p => ({ scope: p.scope, statement: p.statement, exceptions: p.exceptions }));
+    const selection: VoiceSelection = typeof query === 'string' ? { entityIds, sceneIds: [query], sceneFunctions: [query] } : query;
+    let remainingSamples = 3;
+    return saved.preferences.filter(p => p.state === 'proposal' && voiceScopeMatches(p.scope, selection) &&
+      state.preferences.some(current => current.id === p.id && current.state === 'proposal' && fingerprint(current) === fingerprint(p)) &&
+      p.evidenceIds.every(key => state.evidence.some(e => e.id === key && evidenceUsable(store, e))))
+      .slice(0, 12).map(p => {
+        const samples = selection.scope?.viewpoint === 'author' ? p.evidenceIds.flatMap(key => {
+          const evidence = state.evidence.find(e => e.id === key)!;
+          if (!remainingSamples || evidence.editor !== 'author' || !['expression', 'narrative_focus'].includes(evidence.domain) || evidence.scope.sceneFunction === '未分类') return [];
+          remainingSamples--;
+          return [{ kind: 'expression_sample' as const, text: Array.from(evidence.after.quote).slice(0, 600).join(''), source: { path: evidence.after.path, hash: evidence.after.hash }, instruction: '只参考表达与详略，不继承样例中的人物、物品或情节事实。' }];
+        }) : [];
+        return { scope: p.scope, statement: p.statement, exceptions: p.exceptions, ...(samples.length ? { samples } : {}) };
+      });
   } catch { return []; }
 }
 export function storePatterns(store: FileStore, runId: string, raw: unknown) {

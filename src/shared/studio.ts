@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { storyPositionSchema } from './story-position';
 import type { Fact, ProjectState, Change, Usage } from './types';
 
 export interface SnapshotRef {
@@ -37,6 +38,7 @@ export const memoryScopeSchema = z
   .object({
     projectId: z.string().optional(),
     chapter: z.number().int().nonnegative(),
+    position: storyPositionSchema.optional(),
     snapshotId: z.string().optional(),
     mode: z.enum(['current', 'historical']).default('current'),
     viewpoint: z.enum(['author', 'reader', 'character']).default('author'),
@@ -44,7 +46,8 @@ export const memoryScopeSchema = z
     worldId: z.string().default('main'),
     timelineId: z.string().default('main')
   })
-  .refine((v) => v.viewpoint !== 'character' || !!v.characterId, '请选择视角人物');
+  .refine((v) => v.viewpoint !== 'character' || !!v.characterId, '请选择视角人物')
+  .refine(v => !v.position || v.position.chapter === v.chapter, '故事位置与章节不一致');
 export type MemoryScope = z.infer<typeof memoryScopeSchema>;
 export interface LedgerCoverage {
   ledger: 'timeline' | 'hooks' | 'items' | 'terms' | 'knowledge';
@@ -59,6 +62,7 @@ export interface EntityState {
   snapshotId: string;
   facts: Fact[];
   unknown: string[];
+  disputes?: Fact[];
 }
 export const embeddingSettingsSchema = z.object({
   enabled: z.boolean().default(false),
