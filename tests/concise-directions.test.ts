@@ -4,16 +4,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
 import { Service } from '../src/core/service';
-import { directionPromptResources, planningReportContext } from '../src/core/creation-prompts';
+import { creationPromptResources, directionPromptResources, planningReportContext } from '../src/core/creation-prompts';
 import { planningRulesHash } from '../src/core/tag-planning';
 import { validateReport, tagHash, tagBundle } from '../src/core/tags';
 import { hash, paths } from '../src/core/domain';
 import { emptyTagInput, concisePlanningReportSchema, planningReportSchema, type TagPlanning } from '../src/shared/tags';
 import { runSchema } from '../src/shared/contract-schemas';
 import { planKinds } from '../src/shared/creation';
+import { emptyBookProfile } from '../src/shared/publishing';
 import type { Caller } from '../src/core/runner';
 import { fakeProfile, fakeResult, isolatedRoot } from './fixtures/refactor';
 import { fixture } from './fixtures/workflow';
+import { attempts } from '../src/core/runtime/model-gateway';
 
 const skillRoot = path.resolve('resources/skill');
 const compactReport = (): z.infer<typeof concisePlanningReportSchema> => ({
@@ -43,7 +45,7 @@ async function settled(service: Service) {
   await new Promise<void>(resolve => setImmediate(resolve));
 }
 
-async function setup(transform?: (report: ReturnType<typeof compactReport>, task: TagPlanning) => ReturnType<typeof compactReport>) {
+async function setup(transform?: (report: ReturnType<typeof compactReport>, task: TagPlanning) => ReturnType<typeof compactReport>, modular = false) {
   const root = isolatedRoot('concise-directions');
   const calls: { name: string; input: Record<string, any>; schema: Record<string, any>; system: string }[] = [];
   let service: Service;
@@ -53,7 +55,11 @@ async function setup(transform?: (report: ReturnType<typeof compactReport>, task
     const input = JSON.parse(messages[0].content);
     calls.push({ name, input, schema: tools[0].parameters, system });
     let value: unknown;
-    if (name === 'submit_planning_report') value = transform?.(compactReport(), task) ?? compactReport();
+    if (name === 'submit_planning_report') {
+      const report = transform?.(compactReport(), task) ?? compactReport();
+      value = task.directionFormatVersion === 2 ? { ...report, directions: report.directions.map(direction => ({ ...direction,
+        worldSuggestions: [{ moduleId: 'society-factions', state: 'enabled', reason: '调查需要明确组织权责', assumptionIds: [] }] })) } : report;
+    }
     else if (name === 'submit_planning_review') value = { issues: [] };
     else if (name === 'submit_creation_contract') value = {
       directionId: task.selectedDirectionId, constraints: [{ id: 'rule-1', optionIds: [],
@@ -70,7 +76,8 @@ async function setup(transform?: (report: ReturnType<typeof compactReport>, task
   service = new Service(skillRoot, () => {}, caller);
   service.profiles = [{ ...structuredClone(fakeProfile), outputLimit: 8000 }];
   await service.invoke('project.create', { parent: root, premise: '事故调查员持有自己的死亡权。',
-    creationInput: { ...emptyTagInput(), premise: '事故调查员持有自己的死亡权。', mustKeep: ['保留事故调查员身份和死亡权规则'] },
+    creationInput: { ...emptyTagInput(), ...(modular ? { bookProfile: emptyBookProfile() } : {}),
+      premise: '事故调查员持有自己的死亡权。', mustKeep: ['保留事故调查员身份和死亡权规则'] },
     config: { defaultProfileId: fakeProfile.id, expressionRules: { enabled: false }, preview: { enabled: false, maxCalls: 0 } } });
   const request = { inputHash: service.snapshot().tagDraft!.inputHash, profileId: fakeProfile.id, requestId: crypto.randomUUID() };
   const id = await service.invoke('creation.start', request);
@@ -99,16 +106,21 @@ test('新三案省去诊断和逐标签输出，但保留故事因果、区别�
   assert.ok(JSON.stringify(schema).length < JSON.stringify(z.toJSONSchema(planningReportSchema)).length);
 });
 
-test('真实服务三案只发一次请求，重复点击不重发，新增设定及修改意见传入完整方案', async () => {
-  const f = await setup();
+for (const format of [1, 2] as const) test(`真实服务三案 v${format} 只发一次请求，重复点击不重发，新增设定及修改意见传入完整方案`, async () => {
+  const f = await setup(undefined, format === 2);
   try {
     let run = f.service.store!.db.run(f.id);
     assert.equal(run.status, 'awaiting_input', run.error ?? '');
     assert.equal(run.rounds, 1); assert.equal(run.planning!.formatRepairs, 0);
-    assert.equal(runSchema.parse(run).planning!.directionFormatVersion, 1);
+    assert.equal(runSchema.parse(run).planning!.directionFormatVersion, format);
     assert.equal(f.calls.length, 1);
     assert.equal(f.calls[0].schema.properties.diagnosis, undefined);
-    assert.match(f.calls[0].system, /模型新增的关键身份/);
+    const specialist = directionPromptResources(skillRoot).planner;
+    assert.equal(f.calls[0].system.split(specialist).length - 1, 1, '当前完整三案专用提示词只装入一次');
+    const sent = attempts(f.service.store!, f.id);
+    assert.equal(sent.length, 1);
+    const request = JSON.parse(f.service.store!.object(sent[0].requestRef!).toString('utf8')).request;
+    assert.ok(JSON.stringify(request).includes(JSON.stringify(specialist).slice(1, -1)), '完整专用提示词进入最终网关请求');
     assert.doesNotMatch(f.calls[0].system, /每案tagCoverage覆盖/);
     assert.equal(await f.service.invoke('creation.start', f.request), f.id);
     await settled(f.service); assert.equal(f.calls.length, 1);
@@ -125,6 +137,17 @@ test('真实服务三案只发一次请求，重复点击不重发，新增设�
     assert.equal(f.calls[1].input.resolutions['rescue-cost'], '作者已确认采用此设定');
     assert.equal(f.calls[1].input.report.directions.length, 1);
     assert.deepEqual(f.calls[1].input.report.assumptions, originalReport!.assumptions);
+    assert.deepEqual(f.calls[1].input.report.directions[0], originalReport!.directions[0], '仅移除跨阶段指令，所选方向和世界模块资料完整保留');
+    const contractPrompt = creationPromptResources(skillRoot).contract;
+    assert.equal(f.calls[1].system.split(contractPrompt).length - 1, 1, '完整作品方案提示词只装入一次');
+    assert.doesNotMatch(f.calls[1].system, /为每案提交 worldSuggestions|始终返回恰好三案|优势具有代价、边界和反制/);
+    assert.deepEqual(Object.keys(f.calls[1].schema.properties).sort(), ['constraints', 'directionId', 'openQuestions', 'plan', 'premiseDocument', 'tagCoverage']);
+    assert.ok(!f.calls[2].system.includes(contractPrompt), '独立审核继续使用审核专用提示词');
+    assert.doesNotMatch(f.calls[2].system, /为每案提交 worldSuggestions|始终返回恰好三案/);
+    const dispatched = attempts(f.service.store!, f.id).map(attempt =>
+      JSON.parse(f.service.store!.object(attempt.requestRef!).toString('utf8')).request);
+    assert.equal(dispatched.length, 3, '保留一次三案、一次方案及一次独立审核，不新增调用');
+    assert.ok(JSON.stringify(dispatched[1]).includes(JSON.stringify(contractPrompt).slice(1, -1)), '完整方案提示词进入最终网关请求');
     assert.ok(run.changes.some(change => change.path === paths.seed));
   } finally { await f.service.drain(); }
 });
@@ -146,6 +169,9 @@ test('新格式保留一案换两案不复查，冻结设定保持原样，恢�
     assert.deepEqual(run.planning!.report!.assumptions, original.assumptions);
     assert.equal(f.calls.length, 2); assert.equal(f.calls[1].input.report, undefined);
     assert.equal(f.calls[1].input.regenerate.original.directions.length, 3);
+    assert.equal(f.calls[1].system.split(directionPromptResources(skillRoot).planner).length - 1, 1, '重做仍使用同一专用提示词');
+    assert.deepEqual(f.calls[1].input.regenerationScope.frozenDirectionIds, ['rescue']);
+    assert.deepEqual(f.calls[1].input.regenerationScope.changedDirectionIds, ['market', 'truth']);
     const root = f.service.store!.root;
     await f.service.invoke('project.open', { root });
     const restored = f.service.store!.db.run(f.id);

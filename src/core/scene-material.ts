@@ -18,7 +18,7 @@ export function sceneMaterials(sources: ContextSource[]) {
     source.content.split(/(?=^## 场面\s*\d+[：:])/m).filter(block => /^## 场面/.test(block)).map(block => {
       const values: Partial<Record<keyof typeof fields, string>> = {};
       for (const [key, label] of Object.entries(fields)) {
-        const value = block.match(new RegExp(`^[-*]\\s+${label}[：:]\\s*([^\\r\\n]+)`, 'm'))?.[1].trim();
+        const value = block.match(new RegExp(`^[-*][ \\t]+${label}[：:][ \\t]*([^\\r\\n]+)`, 'm'))?.[1].trim();
         if (value && !/^(无|未知|不适用|待填写)[。.]?$/.test(value)) values[key as keyof typeof fields] = value;
       }
       return { scene: block.split('\n')[0].replace(/^## /, '').trim(), kind: 'plan' as const,
@@ -45,7 +45,7 @@ export function writingMaterials(store: FileStore, manifest: ContextManifest): W
     const doc = store.readAccepted(file);
     const entry = { chapter, scene: `第${chapter}章`, conflict: '', strategy: '', response: '', solution: '', change: '', reward: '', cost: '', protectedRepetition: '', sources: [] as WritingMaterials['historicalMechanisms'][number]['sources'], category: 'accepted_memory_summary' as const };
     for (const [key, label] of Object.entries({ conflict: '冲突来源', strategy: '主角策略', response: '对手反制', solution: '解法', change: '局面变化', reward: '阅读回报', cost: '付出与损失', protectedRepetition: '有意复现' })) {
-      const match = doc.content.match(new RegExp(`^[-*]\\s*${label}[：:]\\s*([^\\r\\n]+)`, 'm'));
+      const match = doc.content.match(new RegExp(`^[-*][ \\t]*${label}[：:][ \\t]*([^\\r\\n]+)`, 'm'));
       if (!match || /^(?:未知|暂无|待填写|具体事件与原因)/.test(match[1])) continue;
       entry[key as 'conflict'] = match[1].trim();
       entry.sources.push({ path: file, hash: doc.hash, quote: match[0] });

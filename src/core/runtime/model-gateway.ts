@@ -9,6 +9,7 @@ import { canRecoverRequest, recoveryDelay, cancellableDelay } from './network-re
 import { normalizeToolArguments } from '../output-normalization';
 import { prepareCacheSession } from './cache-session';
 import type { GenerationPhase } from '../../shared/generation';
+import { verifyRequestCoverage } from './request-coverage';
 
 export interface Attempt {
   version: 1; id: string; runId: string; purpose: string; parentRunId: string;
@@ -171,6 +172,8 @@ export async function callModel(
   args[5] = text => { if (text) partial = true; requestOptions.onActivity('responding'); delta?.(text); };
   for (let retry = 0; ; retry++) {
     try {
+      if (signal.aborted) throw new ApplicationError('CANCEL_REQUESTED', '任务已停止，未发送请求');
+      verifyRequestCoverage(store, owner, purpose, body);
       owner.contextUsage.status = 'pending';
       const result = await callExternal(store, owner, purpose, {
         provider: profile.protocol, model: profile.model, version: profile.version,

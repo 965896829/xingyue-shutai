@@ -13,6 +13,7 @@ import { compileContext, contextPayload } from '../src/core/context-compiler';
 import { memoryScopeSchema } from '../src/shared/studio';
 import { visibleFact } from '../src/core/memory-studio';
 import { factSchema } from '../src/shared/types';
+import { creationPolicy, professionalMethod } from '../src/core/creation-policy';
 
 const root = path.resolve('resources/skill');
 const model = { ...fakeProfile, contextLimit: 1000000, outputLimit: 32768 };
@@ -31,7 +32,7 @@ for (const mode of ['chapter', 'scene'] as const) test(`正常生成按钮的 S0
       return fakeResult(JSON.stringify(input.plans ? { memory, plans } : memory));
     }
     if (!tools.length) {
-      assert.match(system, /让当前关切影响人物注意什么/);
+      assert.ok(system.includes(professionalMethod(root, 'prose').content), '当前共享正文方法完整进入首稿请求');
       assert.match(system, /流式/);
       if (mode === 'scene') {
         assert.ok(input.scope.position.scene);
@@ -50,7 +51,7 @@ for (const mode of ['chapter', 'scene'] as const) test(`正常生成按钮的 S0
       return fakeResult(fixture(p, prosePath(1), service));
     }
     const files = run.stage === 'S09' ? stageOutputs('S09', p) : run.pipeline!.phase === 'review' ? [qualityPath(1)] : stageOutputs('S11', p);
-    if (run.stage === 'S09') assert.match(system, /只为需要详写的时刻补少量体验材料/);
+    if (run.stage === 'S09') assert.ok(system.includes(creationPolicy(root, 'scene-contract.plan').content), '当前场景方法完整进入规划请求');
     if (run.pipeline?.phase === 'memory') {
       assert.equal(input.writingMaterials, undefined, '提取只依据最终正文，不携带首稿体验计划');
       assert.equal(input.voicePreferences, undefined, '提取不携带表达样例');

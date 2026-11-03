@@ -286,6 +286,7 @@ export interface ContextSource {
   mode: 'full' | 'excerpt';
 }
 export interface ContextManifest {
+  readPlan?: import('./context-reading').ContextReadPlan;
   writingMaterials?: import('./scene-material').WritingMaterials;
   qualityReadHash?: string;
   voicePreferences?: { scope: import('./quality').VoiceScope; statement: string; exceptions: string[]; samples?: { kind: 'expression_sample'; text: string; source: { path: string; hash: string }; instruction: string }[] }[];

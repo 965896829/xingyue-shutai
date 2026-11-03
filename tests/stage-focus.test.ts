@@ -8,7 +8,7 @@ import { fixture } from './fixtures/workflow';
 import { stageIds, type ContextManifest, type ContextSource } from '../src/shared/types';
 import { hash, paths, prosePath, renderConfig, renderProgress, stageOutputs } from '../src/core/domain';
 import { creationPolicies, creationPolicy } from '../src/core/creation-policy';
-import { stageSkills } from '../src/core/skill-registry';
+import { SkillRegistry, stageSkills } from '../src/core/skill-registry';
 import { stageSources } from '../src/core/stage-context';
 import { contextPayload, contextChanged } from '../src/core/context-compiler';
 import { contractPath, renderContract, tagContext } from '../src/core/tags';
@@ -39,19 +39,34 @@ for (const stage of stageIds) test(`阶段真实入口与网关请求专注当�
     const store = service.store!;
     for (const prior of stageIds.filter(s => s < stage)) {
       const p = store.db.project();
-      store.commit(stageOutputs(prior, p).map(file => service.change(file, fixture(p, file, service))), p);
+      store.commit(stageOutputs(prior, p).map(file => {
+        let content = fixture(p, file, service);
+        if (stage === 'S10' && prior === 'S09' && /第\d+章细纲\.md$/.test(file))
+          content = content.replace(/(^## 场面\s*1[：:][^\r\n]*\r?\n)/m,
+            '$1- 当前关切：保住这笔送货订单\n- 个人意义：兑现对伙伴的承诺\n- 对话意图：请伙伴留下帮忙\n- 可用经验：\n');
+        return service.change(file, content);
+      }), p);
     }
     const p = store.db.project(); p.stage = stage; store.db.set('project', p);
     const before = store.db.headRef()!.id;
     const run = service.makeRun('stage', '只处理当前阶段，保留作者的全部必要条件。');
     store.db.saveRun(run); await service.runner!.drive(run.id);
     assert.ok(observed, store.db.run(run.id).error ?? '当前阶段没有发起请求');
+    const controller = new SkillRegistry(root).controller().content;
+    assert.equal(observed.system.split(controller).length - 1, 1, '完整总控在阶段请求中只装入一次');
     assert.ok(observed.system.includes(creationPolicy(root, creationPolicies[stageSkills[stage]]).content));
     assert.match(observed.system, /wenxu-stage-focus/);
     assert.match(observed.system, /只能携带随身小物；伤势不会因穿越消失/);
     assert.doesNotMatch(observed.system, /"defaultProfileId"|"modelRouting"|"backupDirectory"/);
     if (!['S03', 'S04'].includes(stage)) assert.doesNotMatch(observed.system, /全题材扩展版|可按需读取的模块索引/);
     if (stage === 'S10') {
+      const experience = observed.input.writingMaterials.focalExperience.scenes[0];
+      assert.equal(experience.concern, '保住这笔送货订单');
+      assert.equal(experience.personalMeaning, '兑现对伙伴的承诺');
+      assert.equal(experience.experience, undefined);
+      assert.equal(experience.kind, 'plan');
+      assert.equal(observed.input.writingMaterials.dialogueIntent[0].intent, '请伙伴留下帮忙');
+      assert.doesNotMatch(observed.system, /# 番茄创作共编|# 当前任务解释与处理/);
       assert.equal(observed.input.proseOperation.mode, 'draft');
       assert.equal(observed.input.prior, undefined);
       assert.doesNotMatch(observed.system, /read_naming_rules|使用 ask_author/);
@@ -64,8 +79,11 @@ for (const stage of stageIds) test(`阶段真实入口与网关请求专注当�
     }
     const dispatched = attempts(store, run.id).map(attempt => JSON.parse(store.object(attempt.requestRef!).toString('utf8')).request);
     assert.equal(dispatched.length, 1, '阶段聚焦不新增模型调用');
+    assert.ok(JSON.stringify(dispatched[0]).includes(JSON.stringify(controller).slice(1, -1)), '当前完整总控进入最终网关请求');
+    assert.ok(store.db.get(`context-preflight:${run.id}`), '实际阶段请求必须经过最终资料核验');
     assert.equal(store.db.headRef()!.id, before, '截获请求不修改正式作品');
     assert.ok(JSON.stringify(dispatched[0]).includes('二十年后的同城'));
+    assert.doesNotMatch(JSON.stringify(dispatched[0]), /readPlan|context-preflight/, '必读清单与核验记录留在宿主，不挤占阶段专业提示词');
     fs.writeFileSync(path.join(output, `${stage}.json`), JSON.stringify({ caller: observed, wire: dispatched[0] }, null, 2));
   } finally { await service.drain(); }
 });

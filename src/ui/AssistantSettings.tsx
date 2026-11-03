@@ -8,15 +8,20 @@ import type { EmbeddingSettings } from '../shared/studio';
 type Settings = { roles: RoleRule[]; search: SearchSettings; hasKey: boolean; embedding: EmbeddingSettings };
 export function AssistantSettings({ onClose, profiles = [], initialSection = 'editor' }: { onClose: () => void; profiles?: Profile[]; initialSection?: 'editor' | 'search' | 'embedding' }) {
   const [data, setData] = useState<Settings>(),
-    [selected, select] = useState<string>(initialSection),
+    [selected, select] = useState<string>(initialSection === 'editor' ? 'coeditor' : initialSection),
     [text, setText] = useState(''),
     [key, setKey] = useState(''),
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(false),
     [version, setVersion] = useState(''),
+    [archive, setArchive] = useState(''),
+    [importSource, setImportSource] = useState<{ id: string; version: string }>(),
     [testProfile, setTestProfile] = useState(profiles.find(profile => profile.protocol === 'responses' && profile.tools)?.id ?? '');
   const role = data?.roles.find((r) => r.id === selected);
+  const legacyVersions = data?.roles.filter(r => r.archived).flatMap(r =>
+    r.history.map(v => ({ key: `${r.id}:${v.id}`, id: r.id, title: r.title, version: v }))) ?? [];
+  const legacy = legacyVersions.find(v => v.key === archive);
   async function call(command: Command, args: Record<string, unknown> = {}) {
     setBusy(true);
     setError('');
@@ -42,6 +47,7 @@ export function AssistantSettings({ onClose, profiles = [], initialSection = 'ed
   useEffect(() => {
     setText(role?.current.text ?? '');
     setVersion(role?.current.id ?? '');
+    setImportSource(undefined);
   }, [selected, role?.current.id]);
   return (
     <div className="scrim">
@@ -60,7 +66,7 @@ export function AssistantSettings({ onClose, profiles = [], initialSection = 'ed
           </button>
         </header>
         <div className="editor-tabs">
-          {data?.roles.map((r) => (
+          {data?.roles.filter(r => !r.archived).map((r) => (
             <button key={r.id} className={selected === r.id ? 'active' : ''} onClick={() => select(r.id)}>
               {r.title}
             </button>
@@ -252,9 +258,9 @@ export function AssistantSettings({ onClose, profiles = [], initialSection = 'ed
         ) : role ? (
           <div className="assistant-settings-body">
             <label>
-              角色规则
+              编辑偏好
               <textarea
-                aria-label="角色规则"
+                aria-label="编辑偏好"
                 rows={15}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -264,9 +270,9 @@ export function AssistantSettings({ onClose, profiles = [], initialSection = 'ed
               <button
                 className="primary"
                 disabled={busy || !text.trim()}
-                onClick={() => void call('assistant.role.save', { id: role.id, text })}
+                onClick={() => void call('assistant.role.save', { id: role.id, text, ...(importSource ? { source: importSource } : {}) })}
               >
-                保存角色规则
+                保存编辑偏好
               </button>
               <button disabled={busy} onClick={() => void call('assistant.role.reset', { id: role.id })}>
                 恢复默认
@@ -288,6 +294,25 @@ export function AssistantSettings({ onClose, profiles = [], initialSection = 'ed
             >
               回退到所选版本
             </button>
+            {legacyVersions.length > 0 && <details>
+              <summary>旧编辑偏好</summary>
+              <label>来源与版本
+                <select aria-label="旧编辑偏好版本" value={archive} onChange={event => setArchive(event.target.value)}>
+                  <option value="">选择要查看的旧版本</option>
+                  {legacyVersions.map(item => <option key={item.key} value={item.key}>
+                    {item.title} · {item.version.at} · {item.version.reason}
+                  </option>)}
+                </select>
+              </label>
+              {legacy && <>
+                <textarea aria-label="旧编辑偏好原文" rows={8} readOnly value={legacy.version.text} />
+                <button disabled={busy} onClick={() => {
+                  setText(legacy.version.text);
+                  setImportSource({ id: legacy.id, version: legacy.version.id });
+                  setNotice(`已将${legacy.title}所选版本放入编辑区，请调整后保存。`);
+                }}>用此版本编辑</button>
+              </>}
+            </details>}
           </div>
         ) : data && selected === 'search' ? (
           <div className="assistant-settings-body">

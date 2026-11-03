@@ -56,15 +56,18 @@ test('输出去重保留完整批次与可执行场面，不把内部证据搬�
   const registry = new SkillRegistry(root);
   const batch = registry.load(stageSkills.S08).content;
   assert.match(batch, /默认完整30章/);
-  assert.match(batch, /逐章写完整十二字段/);
-  assert.match(batch, /通常三场的可执行推进，按内容需要增减/);
-  assert.match(batch, /场所、参与者、信息依据、行动或对话、选择代价和结果/);
-  assert.match(batch, /不能.*省略章节|不要.*省略章节/);
-  assert.match(batch, /工具要求的 baseHash、独立质量审阅证据、结构化记忆来源仍须准确提交/);
+  assert.match(batch, /逐章完整填写原十二字段/);
+  assert.match(batch, /核心场面通常三场，按内容增减/);
+  assert.match(batch, /场所、参与者、信息依据、行动或对白、选择及结果/);
+  assert.match(batch, /已定无代价行动保持无代价/);
+  assert.match(batch, /禁止“其余同上”或一句摘要代替细纲/);
+  assert.match(batch, /版本哈希、证据与来源使用本轮真实资料和回执，不猜造/);
+  assert.match(batch, /baseHash、证据 path\/hash\/quote 必须来自本轮真实资料/);
+  assert.match(batch, /内部字段与传输数据由宿主处理，不进入读者可见正文/);
   const rhythm = registry.load(stageSkills.S07).content;
-  assert.match(rhythm, /每行一个3—5章单元/);
-  assert.match(rhythm, /完整覆盖当前范围/);
-  assert.match(rhythm, /确有重复风险或有意例外/);
+  assert.match(rhythm, /每行一个 3—5 章单元/);
+  assert.match(rhythm, /完整覆盖本批范围/);
+  assert.match(rhythm, /重复风险和有意例外据实/);
   const world = registry.load(stageSkills.S03).content;
   assert.match(world, /边界、代价、谁知道/);
   assert.doesNotMatch(world, /--- references\/templates\/连续性台账模板.md ---/);
@@ -78,21 +81,25 @@ test('S01 读者承诺留在十二字段，真实风险不被结构约束删除'
   assert.match(prompt, /本轮完整原始输入已经随上下文提供并单独存档/);
   assert.match(prompt, /不写场面分镜、前三章详案或首批三十章计划/);
   assert.match(prompt, /完整规则、势力细案、后期真相与分卷安排留给S03、S05/);
-  for (const issue of ['规则禁则与退出条件冲突', '主角异常与通常退出路径', '转移的生效', '反作用及其结果归属', '强迫与自主选择的责任', '前期公开与后期保密', '分卷边界衔接'])
-    assert.ok(prompt.includes(issue), `保留实际存在的逻辑接口：${issue}`);
+  const relevant = systemPrompt(root, project(), 'S01', undefined, undefined, { creativeMaterial: '退出契约时涉及保管与资源转移。' });
+  for (const issue of ['规则禁则与退出条件冲突', '主角异常与通常退出路径', '转移的生效', '反作用及其结果归属', '强迫与自主选择的责任']) {
+    assert.ok(relevant.includes(issue), `相关创意仍核对逻辑接口：${issue}`);
+    assert.ok(!prompt.includes(issue), `无相关材料不加载案例规则：${issue}`);
+  }
+  for (const issue of ['前期公开与后期保密', '分卷边界衔接']) assert.ok(prompt.includes(issue));
   assert.match(prompt, /其他关键矛盾也不能省略/);
-  assert.match(prompt, /必要因果和作者硬约束优先，不因篇幅建议删掉实际风险/);
+  assert.match(prompt, /必要因果和作者硬约束优先，不因篇幅建议省略/);
   assert.match(prompt, /不增加硬性短字数门槛/);
   assert.doesNotMatch(prompt, /已授权的S01[^\n]*；第1章，批次/);
 });
 
 test('S03 实际提示保留八栏目，同时把规则去重与退出责任闭合交给专项', () => {
-  const prompt = systemPrompt(root, project(), 'S03');
+  const prompt = systemPrompt(root, project(), 'S03', undefined, undefined, { creativeMaterial: '保管与所有权、退出契约。' });
   for (const field of ['世界底层规则', '主角金手指', '金手指限制', '使用代价', '信息差', '敌人反制方式', '体系升级空间', '中后期防重复机制'])
     assert.ok(prompt.includes(field), `S03 不能因去重丢失原栏目：${field}`);
   assert.match(prompt, /紧凑规则表或短条目/);
-  assert.match(prompt, /不要求每条机械展开六个子段/);
-  assert.match(prompt, /其余栏目引用规则编号，只补本栏独有/);
+  assert.match(prompt, /不要求每条机械展开/);
+  assert.match(prompt, /其余栏目引用规则编号，只补独有/);
   assert.match(prompt, /保管默认等同权属转移/);
   assert.match(prompt, /仍有效的他人权益由谁承接/);
   assert.match(prompt, /权利人通过什么可执行路径取回或主张/);
@@ -171,7 +178,7 @@ test('设计阶段承担必要决策，后续审稿使用宿主采纳记录且�
   assert.match(review, /尚未选择的互斥方案、条件未满足或真实规则冲突仍须指出/);
   assert.match(review, /不要求作者补内部确认记录/);
   assert.match(review, /模型始终无权自我批准/);
-  assert.match(registry.controller().content, /正式采纳后的版本状态以宿主记录为准/);
+  assert.match(registry.controller().content, /最终正式状态以宿主记录为准/);
 });
 
 test('S01、S02、S05 不把上游建议升级为作者约束，事件卷属先于平均分卷', () => {

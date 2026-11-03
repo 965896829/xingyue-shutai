@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   creationPromptResources,
+  directionPromptResources,
   planningHistoryDigest,
   planningRegenerationScope,
   planningSystemPrompt,
@@ -65,6 +66,7 @@ test('专用提示词通过资源锁读取，改词仍触发完整性门禁', ()
   const resources = creationPromptResources(root);
   assert.match(resources.planner, /主角身份、目标、困境/);
   assert.match(resources.titleWriter, /书名编辑/);
+  assert.equal(resources.contract, creationPolicy(root, 'story-contract.build').content);
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'xingyue-prompts-'));
   try {
     fs.cpSync(root, temp, { recursive: true });
@@ -164,15 +166,28 @@ test('三案、单案修订与保留一案只改变数据范围，不改变相�
 
 test('策划提示词按相位限定输出，不要求审核员重写三案或契约', () => {
   const resources = creationPromptResources(root);
-  const t = planning();
-  const build = (submitTool: string) => planningSystemPrompt({ controller: '', resources, planning: t, submitTool, expression: '' });
-  assert.doesNotMatch(build('submit_planning_report'), /最终plan覆盖全部kind/);
-  t.phase = 'contract';
-  assert.match(build('submit_creation_contract'), /最终plan覆盖全部kind/);
-  assert.doesNotMatch(build('submit_creation_contract'), /始终返回恰好三案/);
-  t.phase = 'reviewing_contract';
-  assert.match(build('submit_planning_review'), /返回issues，不重新生成/);
-  assert.doesNotMatch(build('submit_planning_review'), /最终plan覆盖全部kind|始终返回恰好三案/);
+  for (const directionFormatVersion of [undefined, 1, 2] as const) {
+    const t = { ...planning(), directionFormatVersion };
+    const build = (submitTool: string) => planningSystemPrompt({ controller: '', resources, planning: t,
+      submitTool, expression: '', directionResources: directionPromptResources(root) });
+    const directions = build('submit_planning_report');
+    assert.doesNotMatch(directions, /最终plan覆盖全部kind/);
+    assert.equal(directions.includes('为每案提交 worldSuggestions'), directionFormatVersion === 2);
+    assert.ok(!directions.includes(resources.contract));
+    t.phase = 'contract';
+    const contract = build('submit_creation_contract');
+    assert.match(contract, /最终plan覆盖全部kind/);
+    assert.equal(contract.split(resources.contract).length - 1, 1);
+    assert.doesNotMatch(contract, /始终返回恰好三案|为每案提交 worldSuggestions|优势具有代价、边界和反制/);
+    for (const phase of ['reviewing_report', 'reviewing_contract'] as const) {
+      t.phase = phase;
+      const review = build('submit_planning_review');
+      assert.match(review, /返回issues/);
+      if (phase === 'reviewing_contract') assert.match(review, /返回issues，不重新生成/);
+      assert.doesNotMatch(review, /最终plan覆盖全部kind|始终返回恰好三案|为每案提交 worldSuggestions/);
+      assert.ok(!review.includes(resources.contract));
+    }
+  }
 });
 
 test('历史比较限定当前作品与输入版本，并保留近期不同机制', () => {
@@ -236,7 +251,7 @@ test('正文只输出正文，独立审核和记忆阶段携带实际工具提�
   assert.match(prose, /按正文流式协议返回本章完整正文/);
   assert.match(prose, /小说文字中不夹带说明、评分、事实回执或工具调用/);
   assert.doesNotMatch(prose, /必须使用 propose_changes|使用实际工具提交完整文件候选|结构化事实的字段/);
-  assert.equal(prose.split('依宿主提供的任务、作者要求、当前版本和实际工具完成本轮工作。').length - 1, 1);
+  assert.equal(prose.split(new SkillRegistry(root).controller().content).length - 1, 1);
   const review = systemPrompt(root, p, 'S10', undefined, 'webnovel-chapter-reviewer', { outputMode: 'review' });
   assert.match(review, /使用 propose_changes 提交完整质量报告候选/);
   assert.match(review, /08_章后更新\/第001章质量评分\.md/);

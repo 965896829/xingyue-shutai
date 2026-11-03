@@ -46,6 +46,8 @@ const tool = (
 });
 const string = { type: 'string' },
   number = { type: 'integer', minimum: 1 };
+export const legacyHistoryTool = tool('search_history', '回查本聊天历史原消息。其他聊天仅限作者本轮明确选择的 ID。',
+  { query: string, conversationId: string, messageId: string }, ['query']);
 export const discussionTools: ToolDefinition[] = [
   tool('read_task_candidate', '读取当前任务中尚未接受的候选；候选不能当作正式资料。仅当前任务对话可用。', { path: string, startLine: number, lines: number }, ['path']),
   tool(
@@ -59,13 +61,15 @@ export const discussionTools: ToolDefinition[] = [
   ]),
   tool(
     'search_history',
-    '回查本聊天历史原消息。其他聊天仅限作者本轮明确选择的 ID。',
-    { query: string, conversationId: string, messageId: string },
+    '定位本聊天历史，支持关键词、人物别名、消息 ID 和结果分页。新版返回原文片段及 read 指针；重要依据用 read_history_message 回读。其他聊天仅限作者明确选择的 ID。',
+    { query: string, conversationId: string, messageId: string, cursor: string, limit: number },
     ['query']
   ),
+  tool('read_history_message', '按消息 ID 和 hash 分页回读历史原文。每页返回 nextCursor，继续读取直到 complete；位置按 Unicode 字符计数。讨论和候选不能当作已采纳事实。',
+    { messageId: string, conversationId: string, hash: string, cursor: string, limit: number }, ['messageId']),
   tool(
     'read_rule',
-    '读取规则或角色细则。name: editor/tomato/qidian/skill/workflow/memory/style/templates/naming；section 可选标题关键词，startLine/lines 分页。命名需要先读核心再按模块读取。',
+    '读取规则或角色细则。name: coeditor/skill/workflow/memory/style/templates/naming；section 可选标题关键词，startLine/lines 分页。命名需要先读核心再按模块读取。',
     { name: string, section: string, startLine: number, lines: number },
     ['name']
   ),
@@ -125,7 +129,7 @@ export class ConversationRunner {
         );
     return hash(
       JSON.stringify([
-        this.settings().roles.map((r) => [r.id, r.current.id]),
+        this.settings().roles.filter(r => !r.archived && r.id === 'coeditor').map((r) => [r.id, r.current.id]),
         this.settings().search,
         walk(this.skillRoot),
         expressionFingerprint(this.skillRoot, this.store.db.project().config)
@@ -240,6 +244,7 @@ export class ConversationRunner {
       messageId = id();
     textArg(request, 120000);
     const turn: ConversationTurn = {
+      historyReadVersion: 1,
       executorId: 'pi',
       executorVersion: piExecutorVersion,
       id: turnId,

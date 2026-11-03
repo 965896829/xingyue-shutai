@@ -52,6 +52,7 @@ const effects: Record<string, ToolEffect> = {
   read_task_candidate: 'read',
   read_book: 'read',
   search_history: 'read',
+  read_history_message: 'read',
   read_rule: 'read',
   propose_changes: 'candidate_proposal',
   propose_memory: 'candidate_proposal',

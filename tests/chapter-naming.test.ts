@@ -50,7 +50,8 @@ test('章名商业规则统一覆盖新旧合同，旧提示指纹失效且审�
   }
   assert.equal(registry.load('webnovel-chapter-reviewer').hash, registry.load('webnovel-chapter-reviewer', { chapterNamingVersion: 1 }).hash);
   assert.equal(registry.read('references/chapter-naming-commercial.md'), fs.readFileSync(path.join(root, 'references/chapter-naming-commercial.md'), 'utf8'));
-  assert.equal(hash(fs.readFileSync(path.join(root, 'title-market-editing/writer.system.md'))), '431aa319029905738d5da5a1f8beb1e52525dd771ae69cc6be61413bbf751363');
+  const titleLock = JSON.parse(fs.readFileSync(path.join(root, 'title-market-editing/resources.lock.json'), 'utf8'));
+  assert.equal(hash(fs.readFileSync(path.join(root, 'title-market-editing/writer.system.md'))), titleLock['writer.system.md']);
 });
 
 test('章名识别不碰文档名称、场面标题、对白和代码示例；换行与其他文字逐字冻结', () => {

@@ -171,7 +171,7 @@ export class Service {
   chat: ConversationRunner | null = null;
   executor: ExecutorRouter | null = null;
   assistant: AssistantRuntime = {
-    roles: builtInRoles(),
+    roles: [],
     search: searchSettingsSchema.parse({}),
     searchKey: ''
   };
@@ -186,6 +186,7 @@ export class Service {
     readonly caller?: Caller,
     readonly importFile: (file: string, signal: AbortSignal) => Promise<ReturnType<typeof importDocument>> = async (file) => importDocument(file)
   ) {
+    this.assistant.roles = builtInRoles(skillRoot);
     this.emit = (event) => {
       try { emit({
         ...event,

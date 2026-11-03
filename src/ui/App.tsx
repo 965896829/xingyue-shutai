@@ -1742,6 +1742,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           wide
         >
           <div className="modal-body">
+            {manifest.readPlan && <details>
+              <summary>必读清单 · {manifest.readPlan.sources.length} 份资料 · {manifest.readPlan.facts.length} 条关键事实</summary>
+              {manifest.readPlan.verified && <p>最近一次发送前核验通过 · {new Date(manifest.readPlan.verified.at).toLocaleString()}</p>}
+              <ul>{manifest.readPlan.facts.map(fact => <li key={fact.id}>{fact.label}</li>)}</ul>
+              {manifest.readPlan.observations.length > 0 && <p>部分人物尚无已确认的当下状态，按未知保留。</p>}
+            </details>}
             {manifest.sources.map((s) => (
               <details key={s.path}>
                 <summary>

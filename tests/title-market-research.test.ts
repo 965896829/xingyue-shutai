@@ -127,8 +127,8 @@ test('书名专用表达上下文保留语言规则和作者设置，不带全�
     editorial, naming: { editorialVersion: 1, marketResearchVersion: 1, candidateCount: 6 } as TitlePlanning,
     reviewing: false, submitTool: 'submit_title_candidates', expression: title.prompt });
   assert.match(prompt, /styleBrief/);
-  assert.match(prompt, /不能.*事实正确.*代替推荐依据/);
-  assert.match(prompt, /常见商业句式本身不是AI味/);
+  assert.match(prompt, /推荐依据是本书目标、题材表达与可兑现承诺/);
+  assert.match(prompt, /常见商业句式本身不是\s*AI\s*味/);
   assert.match(editorial.reviewer, /风格判断不触发额外返工/);
   assert.match(editorial.reviewer, /旧任务工具没有此字段时/);
 });
@@ -184,9 +184,9 @@ test('实时样本用于自然表达与多样角度，不新增结构、审核�
   const t = { marketResearchVersion: 1, phase: 'generating', candidateCount: 6 } as TitlePlanning;
   const prompt = titleSystemPrompt({ controller: '', resources: creationPromptResources(root), naming: t,
     reviewing: false, submitTool: 'submit_title_candidates', expression: '' });
-  assert.match(prompt, /相同读者群/);
-  assert.match(prompt, /不增加搜索或模型请求/);
-  assert.match(prompt, /常见商业句式本身不是AI味/);
+  assert.match(prompt, /样本须匹配目标读者与语气/);
+  assert.match(prompt, /不增加搜索、模型调用或审核轮/);
+  assert.match(prompt, /常见商业句式本身不是\s*AI\s*味/);
   assert.match(prompt, /不把搜索排序当榜单/);
   assert.match(prompt, /不再搜索或编造来源/);
   assert.match(prompt, /本批恰好6个候选/);

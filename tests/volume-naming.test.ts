@@ -38,7 +38,8 @@ test('商业卷名规则统一装配，旧语义指纹失效而书名规则保�
   assert.doesNotMatch(next, /从真实目录到本书的叙事口吻|处理角色口吻、意象、留白/);
   assert.equal(registry.read('references/volume-naming-commercial.md'), fs.readFileSync(path.join(root, 'references/volume-naming-commercial.md'), 'utf8'));
   const title = fs.readFileSync(path.join(root, 'title-market-editing/writer.system.md'));
-  assert.equal(hash(title), '431aa319029905738d5da5a1f8beb1e52525dd771ae69cc6be61413bbf751363');
+  const titleLock = JSON.parse(fs.readFileSync(path.join(root, 'title-market-editing/resources.lock.json'), 'utf8'));
+  assert.equal(hash(title), titleLock['writer.system.md']);
 });
 
 test('仅改卷名与扩大修订区分；已有市场资料复制保留，不携带过期的改名范围', () => {
@@ -102,7 +103,7 @@ test('分卷设计工具共用当前商业规则，历史合同仍保留只改�
     delete run.volumeNaming;
     assert.notEqual(proposalHash(run), fingerprint);
     assert.match(designPrompt(store, root, run), /番茄分卷命名：与商业书名一致/);
-    assert.equal(designPrompt(store, root, run).split('依宿主提供的任务、作者要求、当前版本和实际工具完成本轮工作。').length - 1, 1);
+    assert.equal(designPrompt(store, root, run).split(new SkillRegistry(root).controller().content).length - 1, 1);
   } finally { store.close(); }
 });
 

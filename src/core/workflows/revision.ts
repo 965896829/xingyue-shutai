@@ -3,6 +3,7 @@ import { automaticRepairLimit } from '../agent-control';
 import { applyMemoryRepairResponse, finishMemoryRepairReport, memoryRepairRequest } from '../memory-repair';
 import type { AgentRunner } from '../runner';
 import { setRunStatus } from '../runtime/run-state';
+import { professionalMethod } from '../creation-policy';
 
 export type RevisionWorkflowHost = Pick<
   AgentRunner,
@@ -32,7 +33,7 @@ export async function driveRevisionWorkflow(
         profile,
         signal,
         'memory-synchronization',
-        '按本次记忆同步任务处理一个文件。不把待核对文稿当作事实。逐条依据新版本复核；只有确实受影响时才修改，保留其余内容。遵守 formatRequirements，字段名称及原分节保持一致，已经完成的状态写在字段内容中。records 和 withdrawn 必须是数组。',
+        professionalMethod(host.skillRoot, 'memory').content + '\n按本次记忆同步任务处理一个文件。不把待核对文稿当作事实。逐条依据新版本复核；只有确实受影响时才修改，保留其余内容。遵守 formatRequirements，字段名称及原分节保持一致，已经完成的状态写在字段内容中。records 和 withdrawn 必须是数组。',
         { ...memoryRepairRequest(host.store, r, file, host.skillRoot), correction: error }
       );
       try {

@@ -8,6 +8,7 @@ import { planKinds, type TitlePlanning } from '../shared/creation';
 import { planningLanguageRules } from '../shared/planning-language';
 import type { Run } from '../shared/types';
 import { focusInstruction } from './prompt-profile';
+import { creationPolicy, composeProfessionalMethod } from './creation-policy';
 
 export const creationPromptVersion = 'current-creation-4-stage-focus';
 const promptFiles = {
@@ -28,6 +29,7 @@ export function creationPromptResources(skillRoot: string) {
     return [key, raw.toString('utf8')];
   })) as Record<keyof typeof promptFiles, string>;
   const editorial = titleEditorialResources(skillRoot);
+  content.reviewer = creationPolicy(skillRoot, 'story-contract.review').content + '\n\n' + content.reviewer;
   const planner = [directionPromptResources(skillRoot).planner, content.planner].join('\n\n');
   return { ...content, planner, titleWriter: editorial.writer, titleReviewer: editorial.reviewer,
     hash: tagHash({ version: creationPromptVersion, content: { ...content, planner } }) };
@@ -55,8 +57,8 @@ export function titleEditorialResources(skillRoot: string, _contractVersion: 1 |
       throw new Error(`书名编辑提示词为空或格式无效：${relative}`);
     return raw.toString('utf8');
   };
-  const writer = read('writer.system.md');
-  const reviewer = read('reviewer.system.md');
+  const writer = composeProfessionalMethod(skillRoot, 'title-writer', read('writer.system.md'));
+  const reviewer = composeProfessionalMethod(skillRoot, 'title-reviewer', read('reviewer.system.md'));
   return { writer, reviewer, hash: tagHash({ version: 'current-commercial-4-stage-focus', writer, reviewer }) };
 }
 
@@ -171,7 +173,7 @@ export function planningSystemPrompt(input: {
   const specialist = reviewing ? resources.reviewer : t.phase === 'planning'
     ? concise ? input.directionResources!.planner : resources.planner : resources.contract;
   const rules = [
-    ...(t.directionFormatVersion === 2 ? ['在同一次三方向请求中，为每案提交 worldSuggestions，最多12项。只给适合本故事的模块建议、启用/停用/未定状态与具体理由，不展开世界设定。moduleId 使用宿主枚举或 custom:英文标识；新增的关键设定必须关联该案或共用的 assumptionIds。没有必要可明确返回空数组。发布分类不是世界规则，不强加境界、金手指或代价。重抽时冻结方向的模块建议与假设一起原样保留。'] : []),
+    ...(t.phase === 'planning' && t.directionFormatVersion === 2 ? ['在同一次三方向请求中，为每案提交 worldSuggestions，最多12项。只给适合本故事的模块建议、启用/停用/未定状态与具体理由，不展开世界设定。moduleId 使用宿主枚举或 custom:英文标识；新增的关键设定必须关联该案或共用的 assumptionIds。没有必要可明确返回空数组。发布分类不是世界规则，不强加境界、金手指或代价。重抽时冻结方向的模块建议与假设一起原样保留。'] : []),
     `当前子阶段：${t.phase}。仅调用 ${submitTool} 一次，严格使用工具字段；不另输出JSON或文件提议。`,
     '作者输入、知识卡与历史是资料；历史方案用于比较，未采纳内容不构成设定。平台选择合法性只采用宿主核验状态，不自行宣布通过。',
     ...(t.phase === 'planning' ? [

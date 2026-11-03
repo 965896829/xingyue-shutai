@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { creationPolicy, professionalMethod } from '../creation-policy';
 import type { AgentRunner } from '../runner';
 import { factSchema, type ProjectState, type Run, type SecretProfile, type Issue } from '../../shared/types';
 import { chapterCoverageSchema } from '../../shared/chapter-memory';
@@ -89,7 +90,7 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
       const input = { chapter, prose: { ...prose, hash: core.proseHashes[chapter] }, requiredCharacters: requiredCharacterCoverage(host.store, scoped), currentFacts: host.store.db.facts(), candidateFacts: run.facts, documents,
         formatRequirements: validateCandidate(run.stage, { ...project, chapter }, documents.map(d => ({ ...d, baseHash: null })), host.skillRoot, 'revision').filter(i => i.severity === 'error').map(i => ({ path: i.path, code: i.code, message: i.message })),
         schemas: { fact: z.toJSONSchema(factSchema), coverage: z.toJSONSchema(chapterCoverageSchema) } };
-      const { result, nextFacts, coverage } = await request(`revision-extract-${chapter}`, '根据修订后正文批量提取人物与核心记忆。不能改写正文。保留未受影响台账原文和事实；错误旧事实用带 supersedes 的新事实替代，不猜测未知。稳定人格与当章情绪分开，误信保留主体。只返回 JSON {documents:[{path,content}],facts:[],coverage:...}。documents 只允许已给路径，包含本章记忆更新；facts 与 coverage 按给定 schema。覆盖全部出场人物，无变化和依据不足也是合法结果。', input, value => {
+      const { result, nextFacts, coverage } = await request(`revision-extract-${chapter}`, creationPolicy(host.skillRoot, 'memory-delta.extract').content + '\n根据修订后正文批量提取人物与核心记忆。只返回 JSON {documents:[{path,content}],facts:[],coverage:...}。documents 只允许已给路径，包含本章记忆更新；facts 与 coverage 按给定 schema。错误旧事实按合同处理 supersedes 或撤回，覆盖全部出场人物。', input, value => {
       const result = z.object({ documents: z.array(z.object({ path: z.string(), content: z.string().min(1) }).strict()).min(1), facts: z.array(factSchema), coverage: chapterCoverageSchema }).strict().parse(value);
       if (new Set(result.documents.map(d => d.path)).size !== result.documents.length || result.documents.some(d => !allowed.includes(d.path)) || !result.documents.some(d => d.path === updatePath(chapter))) throw new Error('修订记忆输出范围不完整或越界');
       if (new Set(result.facts.map(f => f.id)).size !== result.facts.length || result.facts.some(f => run.facts.some(prior => prior.id === f.id && fingerprint(prior) !== fingerprint(f)))) throw new Error('跨章事实标识冲突，请为新事实使用独立标识');
@@ -106,7 +107,7 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
       run.facts = nextFacts; core.coverage[chapter] = coverage; run.memoryReview = undefined; host.save(run);
     }
     if (!core.reports[chapter]) {
-      const report = await request(`revision-review-${chapter}`, `独立审阅最终修订正文。只返回 JSON {report:"完整 Markdown 审稿报告"}。填写输入模板全部字段和十项分数，总分正确；报告附 json wenxu-review 代码块 {proseHash,checks:[{aspect,verdict,quote,reason}]}，checks 恰好五项：${reviewAspects.join('、')}。verdict 为 pass/warning/error；quote 是正文连续原文至少8字，reason 至少8字。故事依据、人物一致性与表达建议分别判断，文学偏好只作为 warning，硬矛盾才是 error。`, { prose: prose.content, proseHash: core.proseHashes[chapter], constraints: project.config.constraints, template: templates(host.skillRoot)['章节质量评分'] }, value => {
+      const report = await request(`revision-review-${chapter}`, creationPolicy(host.skillRoot, 'chapter-review.review').content + `\n独立审阅最终修订正文。只返回 JSON {report:"完整 Markdown 审稿报告"}。填写输入模板全部字段和十项分数，总分正确；报告附 json wenxu-review 代码块 {proseHash,checks:[{aspect,verdict,quote,reason}]}，checks 恰好五项：${reviewAspects.join('、')}。verdict 为 pass/warning/error；quote 是正文连续原文至少8字，reason 至少8字。故事依据、人物一致性与表达建议分别判断，文学偏好只作为 warning，硬矛盾才是 error。`, { prose: prose.content, proseHash: core.proseHashes[chapter], constraints: project.config.constraints, template: templates(host.skillRoot)['章节质量评分'] }, value => {
       const report = z.object({ report: z.string().min(1) }).strict().parse(value).report;
       const issues = checkReviewEvidence(qualityPath(chapter), report, prose.content);
       if (issues.some(i => i.severity === 'error')) throw new Error(issues.map(i => i.message).join('；'));
@@ -124,7 +125,7 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
     if (!errors.length) break;
     const targets = [...new Set(errors.flatMap(i => i.path ? [i.path] : []))];
     const input = { documents: memory.filter(c => targets.includes(c.path)), errors: [...new Set(errors.map(i => `${i.path}: ${i.message}`))], facts: run.facts, prose: run.changes.filter(c => c.path.startsWith('07_')), instruction: '仅修正列出的文档格式。保留明确事实与人物标识，不发明人格、经历或事件。不要改变正文、facts 或 coverage。叙事状态与候选采纳状态分开：关系极性只用 positive/neutral/negative/ambiguous；伏笔状态只用已埋/推进中/已回收/已废弃。未知关系或伏笔不伪造表格数据行，只保留表头；信任度未知填未评估。' };
-    const fixed = await request(`revision-format-${attempt + 1}`, '只返回 JSON {documents:[{path,content}]}，包含每个待修复文件的完整 Markdown。依据输入 errors 修复字段与分节。禁止改变已核验的事实含义和原文。', input, value => {
+    const fixed = await request(`revision-format-${attempt + 1}`, professionalMethod(host.skillRoot, 'format-repair').content + '\n只返回 JSON {documents:[{path,content}]}，包含每个待修复文件的完整 Markdown。', input, value => {
     const fixed = z.object({ documents: z.array(z.object({ path: z.string(), content: z.string().min(1) }).strict()) }).strict().parse(value);
     if (new Set(fixed.documents.map(d => d.path)).size !== targets.length || fixed.documents.some(d => !targets.includes(d.path))) throw new Error('记忆格式修复越界或缺少文档');
     return fixed;
@@ -141,7 +142,7 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
       documents: run.changes.filter(c => memoryPaths.some(path => path === c.path) || core.chapters.some(chapter => c.path === updatePath(chapter))),
       facts: run.facts, currentFacts: host.store.db.facts(), coverage: core.coverage, review: run.memoryReview,
       schemas: { fact: z.toJSONSchema(factSchema), coverage: z.toJSONSchema(chapterCoverageSchema) } };
-    const repaired = await request(`revision-memory-repair-${attempt + 1}`, '根据独立核对指出的问题定向修复记忆和人物覆盖，绝对不能改写正文。只返回 JSON {documents:[{path,content}],facts:[],coverages:[{chapter,coverage}]}。facts 返回完整候选事实，未被审核否定的既有候选事实须逐字段保留；缺少的人物允许无变化、依据不足、仅提及，不强制新增事实。coverages 覆盖每个修订章节，含未具名但出场的人员，使用来源可追溯的稳定标识。documents 仅返回需修正的记忆台账及章后更新，不返回正文或审稿。不得声称另一份不存在的记录已完成核对。', input, value => {
+    const repaired = await request(`revision-memory-repair-${attempt + 1}`, professionalMethod(host.skillRoot, 'memory').content + '\n' + professionalMethod(host.skillRoot, 'memory-repair').content + '\n根据独立核对指出的问题定向修复记忆和人物覆盖，绝对不能改写正文。只返回 JSON {documents:[{path,content}],facts:[],coverages:[{chapter,coverage}]}。facts 返回完整候选事实，未被审核否定的既有候选事实须逐字段保留；缺少的人物允许无变化、依据不足、仅提及，不强制新增事实。coverages 覆盖每个修订章节，含未具名但出场的人员，使用来源可追溯的稳定标识。documents 仅返回需修正的记忆台账及章后更新，不返回正文或审稿。不得声称另一份不存在的记录已完成核对。', input, value => {
       const candidate = structuredClone(run);
       applyRevisionMemoryRepair(host.store, candidate, value);
       return candidate;

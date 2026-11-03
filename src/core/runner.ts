@@ -23,7 +23,7 @@ type ToolDefinition
 } from '../shared/types';
 import { usesNativeSearch } from '../shared/web-search';
 import { assertControllerRules,automaticRepairLimit,controllerRules,taskEnvelope,modelTaskEnvelope } from './agent-control';
-import { canCombineChapterAudit,chapterAuditInput,chapterAuditInstruction,compactAuditInstruction,memoryAuditInstruction,parseChapterAudit,planAuditInstruction } from './chapter-audit';
+import { canCombineChapterAudit,chapterAuditInput,chapterAuditPrompts,compactAuditInstruction,parseChapterAudit } from './chapter-audit';
 import { assertRequestFits,countInput } from './context-budget';
 import { contextChanged,contextPayload,fitContext } from './context-compiler';
 import {
@@ -264,6 +264,7 @@ export class AgentRunner {
         ? '当前是作者授权的修订任务，不推进阶段。已失效事实只用于定位冲突，不能当作当前依据。请检查明确范围内的相关文件，提出候选与有来源的记忆替代。\n'
         : '') +
       (r.design ? designPrompt(this.store, this.skillRoot, r) : systemPrompt(this.skillRoot, p, r.stage, naming, r.skillId ?? stageSkills[r.stage], {
+        creativeMaterial: ['S01', 'S03'].includes(r.stage) ? [r.request, this.store.db.get<string>('premise'), this.store.db.document(paths.world)?.hash ? this.store.readAccepted(paths.world).content : ''].join('\n') : undefined,
         legacyVolumeNaming: !r.volumeNaming, volumeNamingVersion: r.volumeNaming?.version, chapterNamingVersion: r.chapterNaming?.version, chapterTitleFixed: !!r.chapterNaming?.source, namingGenre: r.volumeNaming?.research?.genre, worldModules: !!r.worldContract, worldSystems: r.worldContract === 2
       })) +
       (r.mode === 'analysis'
@@ -469,6 +470,17 @@ export class AgentRunner {
             ...contextPayload(r.manifest, p, r.stage === 'S11' && r.mode === 'stage' && !r.design ? 'memory' : 'tools')
           })
         });
+      } else if (r.manifest.readPlan) {
+        // Resume may follow a proven execution-settings-only commit. Rebind the
+        // working context to its newly compiled sources; archived requests,
+        // candidates, tool receipts and cumulative budgets keep their versions.
+        const message = r.messages.find(message => {
+          if (message.role !== 'user') return false;
+          try { const data = JSON.parse(message.content); return typeof data.contextPolicy === 'string' && Array.isArray(data.sources); }
+          catch { return false; }
+        });
+        if (message) message.content = JSON.stringify({ ...JSON.parse(message.content),
+          ...contextPayload(r.manifest, p, r.stage === 'S11' && r.mode === 'stage' && !r.design ? 'memory' : 'tools') });
       }
       setRunStatus(r, 'running');
       if (r.responseText.trim()) r.responseText += '\n\n';
@@ -1030,12 +1042,13 @@ export class AgentRunner {
     return { promptProfileVersion, runId: r.id, baseRevision: r.baseRevision, chapter: r.chapter, request: r.request,
       controller: controllerRules(this.skillRoot).hash, constraints: p.config.constraints, tags: tagContext(p, 'discussion', { focused: true }),
       authorPremise: this.store.db.get('premise'), profileId: profile.id, profileVersion: profile.version,
-      reasoning: r.reasoningEfforts, instructions: { memoryAuditInstruction, planAuditInstruction, chapterAuditInstruction, compactAuditInstruction } };
+      reasoning: r.reasoningEfforts, instructions: chapterAuditPrompts(this.skillRoot) };
   }
   private planReceiptBinding(r: Run, p: ProjectState, profile: SecretProfile, input: ReturnType<typeof futurePlanReviewInput>) {
     return { policy: this.auditBinding(r, p, profile), kind: 'future-plans', input };
   }
   async auditMemory(r: Run, p: ProjectState, profile: SecretProfile, signal: AbortSignal) {
+    const { memoryAuditInstruction, chapterAuditInstruction } = chapterAuditPrompts(this.skillRoot);
     if (r.facts.some(fact => validateEvidence(this.store, fact, p.chapter, r.pipeline || r.mode === 'revision' ? r.changes : [], r.memoryRepair?.paths).length)) return;
     const input = memoryReviewInput(this.store, r);
     if (!input.items.length) return;
@@ -1075,7 +1088,7 @@ export class AgentRunner {
       const pendingInput = { ...input, items: pending };
       const shared = chapterAuditInput(pendingInput, plans);
       const resident = controllerRules(this.skillRoot).content + tagContext(p, 'discussion', { focused: true }) + p.config.constraints;
-      if (plans.plans.length && canCombineChapterAudit(profile, shared, resident)) {
+      if (plans.plans.length && canCombineChapterAudit(profile, shared, resident, chapterAuditInstruction)) {
         const receipts = await this.reviewReceipt(r, p, profile, signal, 'chapter-consistency-review',
           chapterAuditInstruction + compactAuditInstruction, shared, raw => parseChapterAudit(raw, pendingInput, plans), 'chapter-audit-format');
         remember(receipts.memoryDecisions);
@@ -1108,6 +1121,7 @@ export class AgentRunner {
     if (!issues.length) await this.auditFuturePlans(r, p, profile, signal);
   }
   private async auditFuturePlans(r: Run, p: ProjectState, profile: SecretProfile, signal: AbortSignal) {
+    const { planAuditInstruction } = chapterAuditPrompts(this.skillRoot);
     if (r.mode !== 'stage' || !(r.pipeline || r.stage === 'S11') || !r.facts.length) return;
     const input = futurePlanReviewInput(this.store, r);
     const policy = hash(JSON.stringify(this.auditBinding(r, p, profile)));

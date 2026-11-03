@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { SkillRegistry } from '../src/core/skill-registry';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -90,7 +91,7 @@ test('已退役的设计提示通过原恢复路径重绑当前规则，候选�
     assert.equal(next.rounds, run.rounds); assert.equal(next.toolCount, run.toolCount);
     assert.deepEqual(next.usage, run.usage); assert.equal(next.parentRunId, run.id);
     assert.equal(next.stage, run.stage); assert.equal(next.chapter, run.chapter);
-    assert.match(designPrompt(store, root, next), /依宿主提供的任务/);
+    assert.ok(designPrompt(store, root, next).includes(new SkillRegistry(root).controller().content));
     assert.doesNotMatch(designPrompt(store, root, next), /星月书台创作内核 V6/);
     assert.equal(store.db.run(run.id).design!.promptHash, 'f'.repeat(64));
   } finally { await service.drain(); }

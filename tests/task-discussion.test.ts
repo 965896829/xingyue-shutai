@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Service } from '../src/core/service';
+import { professionalMethod } from '../src/core/creation-policy';
 import { hash, paths, renderProgress } from '../src/core/domain';
 import { recordUsage } from '../src/core/telemetry';
 import { profileSchema, type ModelResult, type Run, type SecretProfile } from '../src/shared/types';
@@ -121,7 +122,7 @@ test('任务报错提问带入真实状态和上一阶段确认记录，不重�
     assert.equal(calls, 1);
     assert.equal(data.messages.length, 2);
     assert.equal(data.proposals.length, 0);
-    assert.match(system, /当前是任务内对话/);
+    assert.ok(system.includes(professionalMethod(path.resolve('resources/skill'), 'task-discussion').content));
     const context = JSON.parse(data.turns[0].taskContext!);
     assert.equal(context.project.completed.S01, '已确认');
     assert.equal(context.task.status, 'needs_repair');

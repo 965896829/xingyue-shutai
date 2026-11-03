@@ -593,15 +593,15 @@ test('草稿历史与外部冲突保护；转正式任务卡绑定草稿版本',
   }
 });
 
-test('角色规则覆盖、回退与再次启动保留用户版本，不影响内置默认', () => {
+test('统一编辑偏好覆盖、回退与再次启动保留用户版本，不影响内置默认', () => {
   const dir = temp(),
     settings = new AssistantSettings(dir),
     original = settings.roles()[0];
-  settings.saveRole('editor', '按我的特定审稿口径。');
+  settings.saveRole('coeditor', '按我的特定审稿口径。');
   const custom = settings.roles()[0].current.id;
-  settings.reset('editor');
+  settings.reset('coeditor');
   assert.equal(settings.roles()[0].current.text, original.defaultText);
-  settings.rollback('editor', custom);
+  settings.rollback('coeditor', custom);
   const reopened = new AssistantSettings(dir);
   assert.equal(reopened.roles()[0].current.text, '按我的特定审稿口径。');
   assert.equal(reopened.roles()[0].defaultText, original.defaultText);

@@ -10,6 +10,7 @@ import { pendingSource } from './memory-source';
 import { factReadDependency } from './runtime/fact-read-set';
 import { fingerprint } from './runtime/canonical';
 import { readQuality, evidenceUsable, qualityStatistics, voiceSlice, taskVoicePreferences } from './quality';
+import { composeProfessionalMethod } from './creation-policy';
 
 export function creativeRules(root: string, operation: CreativeTask['input']['operation']) {
   const directory = path.join(root, 'creative-v7');
@@ -26,7 +27,8 @@ export function creativeRules(root: string, operation: CreativeTask['input']['op
     throw new Error('此操作尚无可用适配器');
   const content = fs.readFileSync(path.join(directory, `${operation}.md`), 'utf8');
   if (hash(content) !== lock[`${operation}.md`]) throw new Error('创作工具规则完整性检查失败');
-  return { content, hash: hash(content) };
+  const assembled = composeProfessionalMethod(root, operation, content);
+  return { content: assembled, hash: hash(assembled) };
 }
 
 export function rehearsalCharacters(store: FileStore, chapter: number) {
@@ -126,14 +128,14 @@ export function compileCreative(store: FileStore, root: string, raw: unknown, br
     if (!eligible.length) throw new Error('尚无该人物在此章可用的知情记录，可先使用探索草稿');
     const self = eligible.find((fact) => fact.entityIds.includes(input.characterId));
     const parent = input.parentRunId ? store.db.run(input.parentRunId) : undefined;
-    if (parent && (parent.creative?.input.operation !== 'rehearse' || parent.status !== 'complete' || parent.creative.snapshotId !== snapshot.id || !parent.creative.result?.turn)) throw new Error('上一回合已失效或缺少可见行动，请重新开始试演');
+    if (parent && (parent.creative?.input.operation !== 'rehearse' || parent.creative.input.chapter > input.chapter || parent.status !== 'complete' || parent.creative.snapshotId !== snapshot.id || !parent.creative.result?.turn)) throw new Error('上一回合已失效、超出当前故事位置或缺少可见行动，请重新开始试演');
     if (parent) parentResultHash = fingerprint(parent.creative!.result!.turn);
     modelPayload = {
       character: self?.subject ?? input.characterId,
       chapter: input.chapter,
       observations: input.observations,
-      expressionGuidance: taskVoicePreferences(store, { entityIds: [input.characterId], sceneIds: [`第${input.chapter}章`], sceneFunctions: ['对话'] }),
-      ...(parent ? { visibleInteractionHistory: [{ speaker: '上一位行动者', ...parent.creative!.result!.turn }] } : {}),
+      expressionGuidance: taskVoicePreferences(store, { entityIds: [input.characterId], sceneIds: [`第${input.chapter}章`], sceneFunctions: ['对话'], scope }),
+      ...(parent ? { visibleInteractionHistory: [{ speaker: '上一位行动者', speech: parent.creative!.result!.turn!.speech, action: parent.creative!.result!.turn!.action }] } : {}),
       beliefs: eligible.map((fact, index) => ({
         source: `observation-${index + 1}`,
         subject: fact.subject,

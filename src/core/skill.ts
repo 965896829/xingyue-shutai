@@ -30,7 +30,7 @@ import { SkillRegistry, stageSkills, type SkillOutputMode } from './skill-regist
 import { reviewAspects } from './manuscript-check';
 import { authorOutputContract } from './skill-output-contract';
 import { sharedRuleBlock } from './runtime/prompt-cache';
-import { creationPolicy } from './creation-policy';
+import { creationPolicy, conditionalCreationPolicy } from './creation-policy';
 import { creativeConfig, focusInstruction, preserveNames, stageGoal } from './prompt-profile';
 export function templates(root: string) {
   const result: Record<string, string> = {};
@@ -93,7 +93,7 @@ export function systemPrompt(
   stage: StageId,
   naming: NamingRules = loadNamingRules(root),
   skillId = stageSkills[stage],
-  options: { outputMode?: SkillOutputMode; legacyVolumeNaming?: boolean; volumeNamingVersion?: 1 | 2; chapterNamingVersion?: 1; chapterTitleFixed?: boolean; namingGenre?: string; worldModules?: boolean; worldSystems?: boolean } = {}
+  options: { outputMode?: SkillOutputMode; legacyVolumeNaming?: boolean; volumeNamingVersion?: 1 | 2; chapterNamingVersion?: 1; chapterTitleFixed?: boolean; namingGenre?: string; worldModules?: boolean; worldSystems?: boolean; creativeMaterial?: string } = {}
 ) {
   const mode = options.outputMode ?? 'tools';
   const loaded = new SkillRegistry(root).load(skillId, { ...options, outputMode: mode });
@@ -130,6 +130,7 @@ export function systemPrompt(
             : [];
   return [
     options.worldModules && stage === 'S03' ? new SkillRegistry(root).controller().content + '\n' + creationPolicy(root, 'world-design.create').content : loaded.content,
+    conditionalCreationPolicy(root, stage, `${p.config.constraints}\n${options.creativeMaterial ?? ''}`),
     `# ${brand.name}当前任务`,
     '## 角色',
     focusInstruction(`${skillId}:${mode}`, primary || mode !== 'tools' ? stageGoal(stage, mode) : loaded.entry.description),

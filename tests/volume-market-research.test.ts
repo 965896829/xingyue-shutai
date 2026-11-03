@@ -213,7 +213,7 @@ test('旧S05合同只保留研究预算差异，所有入口使用当前卷名�
     assert.equal(loaded.content, current.content);
     assert.equal(loaded.hash, current.hash);
     assert.match(loaded.content, /番茄分卷命名：与商业书名一致/);
-    assert.match(loaded.content, /进入时的局面|全书中心问题/);
+    assert.match(loaded.content, /每卷有入场局面、主要矛盾、不可轻易撤销的变化及留下的问题/);
   }
   assert.equal(fs.readFileSync(path.join(root, 'references/volume-naming-commercial.md'), 'utf8'), registry.read('references/volume-naming-commercial.md'));
   for (const old of ['skills/webnovel-volume-architect/legacy-0.4.71.md', 'skills/webnovel-volume-architect/commercial-v2.md', 'references/volume-naming.md'])

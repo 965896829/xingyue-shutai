@@ -1,15 +1,17 @@
 import { z } from 'zod';
 import type { ModelMessage, Usage } from './types';
 
-export const roleIds = ['editor', 'tomato', 'qidian'] as const;
+export const roleIds = ['coeditor', 'editor', 'tomato', 'qidian'] as const;
 export type RoleId = (typeof roleIds)[number];
 export interface RoleVersion {
   id: string;
   text: string;
   at: string;
   reason: string;
+  source?: { id: string; version: string };
 }
 export interface RoleRule {
+  archived?: boolean;
   id: RoleId;
   title: string;
   summary: string;
@@ -60,6 +62,8 @@ export interface ConversationMessage {
   citations: Citation[];
 }
 export interface ConversationTurn {
+  historyReadVersion?: 1;
+  historyReads?: { messageId: string; conversationId: string; hash: string }[];
   executorId?: 'legacy' | 'pi';
   executorVersion?: string;
   contextUsage?: import('./context-meter').ContextUsage;

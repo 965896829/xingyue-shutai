@@ -219,7 +219,7 @@ export const commandContracts = {
   'draft.promote': define(z.strictObject({ id: key, hash: key, profileId: key, kind: z.enum(['stage', 'revision']).optional(), scope: key }), schemas.actionProposalSchema, 'write'),
   'draft.chapter': define(z.strictObject({ id: key, hash: key, profileId: key }), key, 'write'),
   'assistant.settings': define(empty, settings, 'read', 'global'),
-  'assistant.role.save': define(z.strictObject({ id: key, text }), settings, 'write', 'global'),
+  'assistant.role.save': define(z.strictObject({ id: key, text, source: z.strictObject({ id: key, version: key }).optional() }), settings, 'write', 'global'),
   'assistant.role.reset': define(identity, settings, 'write', 'global'),
   'assistant.role.rollback': define(z.strictObject({ id: key, version: key }), settings, 'write', 'global'),
   'search.settings.save': define(z.strictObject({ search: searchSettingsSchema, apiKey: optionalText, clearKey: flag }), settings, 'write', 'global'),

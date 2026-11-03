@@ -23,6 +23,7 @@ import { sceneMaterials, writingMaterials } from './scene-material';
 import { modelFact } from './model-memory';
 import { stageSources } from './stage-context';
 import type { PromptPhase } from './prompt-profile';
+import { bindContextReadPlan, checkContextReadPlan, importantCurrentFact } from './context-reading';
 
 export interface CompileOptions {
   purpose?: NonNullable<ContextManifest['purpose']>;
@@ -53,6 +54,7 @@ export function contextPayload(manifest: ContextManifest, project?: ProjectState
 }
 
 export function fitContext(manifest: ContextManifest, profile: Profile, resident: unknown = '', toolCount = 0, rejectOverflow = true, project?: ProjectState) {
+  checkContextReadPlan(manifest);
   const allowance = contextAllowance(profile, toolCount), residentTokens = countInput(profile, resident).tokens;
   manifest.availableTokens = Math.max(0, allowance.availableInput - residentTokens);
   const measure = () => countInput(profile, contextPayload(manifest, project));
@@ -78,6 +80,8 @@ export function fitContext(manifest: ContextManifest, profile: Profile, resident
     size = measure();
   }
   manifest.factIds = [...new Set([...(manifest.retrievedFacts ?? []), ...(manifest.hardConstraints ?? [])].map(f => f.id))];
+  checkContextReadPlan(manifest);
+  size = measure();
   manifest.estimatedTokens = size.tokens;
   const { availableInput, ...details } = allowance;
   manifest.budget = { ...details, residentTokens, method: size.method, inputBytes: size.bytes };
@@ -202,6 +206,18 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   const hardIds = new Set(m.hardConstraints!.map(f => f.id));
   m.retrievedFacts = found.facts.filter(x => x.fact.kind !== 'expression_sample' && !hardIds.has(x.fact.id) && (purpose === 'discussion' || x.fact.revealedAt <= p.chapter)).map(x => x.fact);
   m.requiredFactIds = found.facts.filter(x => x.required).map(x => x.fact.id);
+  // Select core state independently of ranked recall. A low relevance score must
+  // never remove a participating character's injury, possession or belief.
+  if (['S09', 'S10'].includes(stage) && purpose !== 'discussion') {
+    for (const fact of current.filter(f => importantCurrentFact(f) && related(f, query, entities))) {
+      if (!visibleFact(fact, scope) || fact.revealedAt > p.chapter) continue;
+      if (conflicts.has(fact.id) || !fact.evidence.every(e => validSource(e) && status.get(e.path)?.status === 'accepted')) {
+        m.conflicts.push(`${fact.subject}：${fact.predicate} 的必读依据缺失或存在冲突`); continue;
+      }
+      if (!hardIds.has(fact.id) && !m.retrievedFacts.some(f => f.id === fact.id)) m.retrievedFacts.push(fact);
+      if (!m.requiredFactIds.includes(fact.id)) m.requiredFactIds.push(fact.id);
+    }
+  }
   const diagnostics = selectMemoryDiagnostics(store, { scope, query, sourcePaths: m.sources.filter(source => !(source.path === paths.roles && source.category === 'author_instruction' && source.mode === 'excerpt')).map(s => s.path), entityIds: m.entityIds });
   options.onMemoryDiagnostics?.(diagnostics);
   m.conflicts.push(...found.issues, ...diagnostics.blocking);
@@ -229,6 +245,7 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     m.writingMaterials = writingMaterials(store, m);
     m.qualityReadHash = fingerprint({ records: store.db.get('creative-quality-v1'), voice: store.db.document(voicePath)?.hash });
   }
+  bindContextReadPlan(m);
   return fitContext(m, profile, options.resident, options.toolCount, !options.deferBudgetCheck, p);
 }
 

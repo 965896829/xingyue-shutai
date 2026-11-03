@@ -311,7 +311,8 @@ async function handle(command: Command, a: Record<string, unknown>) {
   }
   if (command.startsWith('assistant.role.')) {
     const key = z.enum(roleIds).parse(a.id);
-    if (command === 'assistant.role.save') assistantSettings.saveRole(key, z.string().parse(a.text));
+    if (command === 'assistant.role.save') assistantSettings.saveRole(key, z.string().parse(a.text), '作者编辑',
+      a.source === undefined ? undefined : z.object({ id: z.string(), version: z.string() }).parse(a.source));
     if (command === 'assistant.role.reset') assistantSettings.reset(key);
     if (command === 'assistant.role.rollback') assistantSettings.rollback(key, z.string().parse(a.version));
     sync();
@@ -599,7 +600,7 @@ else {
       devOrigin: !app.isPackaged ? process.env.VITE_DEV_SERVER_URL : undefined
     });
     stateFile = path.join(app.getPath('userData'), 'settings.json');
-    assistantSettings = new AssistantSettings(app.getPath('userData'));
+    assistantSettings = new AssistantSettings(app.getPath('userData'), app.isPackaged ? path.join(process.resourcesPath, 'skill') : path.join(app.getAppPath(), 'resources/skill'));
     appearanceFile = path.join(app.getPath('userData'), 'appearance.json');
     let persistedAppearance: StoredAppearance | undefined;
     try {

@@ -18,6 +18,7 @@ export const generationLabels: Record<GenerationPhase, string> = {
 const operationLabels = {
   read_book: '正在读取作品资料',
   read_document: '正在读取作品资料',
+  read_history_message: '正在回读历史原文',
   read_task_candidate: '正在核对当前候选',
   search_memory: '正在检索作品记忆',
   search_history: '正在回查聊天记录',

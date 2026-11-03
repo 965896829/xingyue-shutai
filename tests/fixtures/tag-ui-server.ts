@@ -258,6 +258,12 @@ service.profiles = [
   }
 ];
 const assistantSettings = new AssistantSettings(parent);
+if (creationScenario === 'editor_preferences') {
+  assistantSettings.saveRole('editor', '保留必要的长句，不改剧情。');
+  assistantSettings.saveRole('tomato', '短句用于紧张交锋，日常可以舒缓。');
+  assistantSettings.saveSearch({ enabled: false, maxResults: 7 });
+  service.assistant.roles = assistantSettings.roles();
+}
 if (creationScenario === 'writing_style') {
   fs.mkdirSync(path.join(parent, 'request-journal'), { recursive: true });
   service.requestJournal = new FileStore(path.join(parent, 'request-journal'));
@@ -418,6 +424,14 @@ const server = await createServer({
               throw new Error('模拟启动失败：请再次点击，验证错误提示与按钮位于同一张卡片。');
             }
             if (command === 'assistant.settings') {
+              res.end(JSON.stringify({ value: assistantSettings.settings() })); return;
+            }
+            if (command === 'assistant.role.save' || command === 'assistant.role.reset' || command === 'assistant.role.rollback') {
+              const key = args.id as import('../../src/shared/assistant').RoleId;
+              if (command === 'assistant.role.save') assistantSettings.saveRole(key, String(args.text), '作者编辑', args.source as { id: string; version: string } | undefined);
+              if (command === 'assistant.role.reset') assistantSettings.reset(key);
+              if (command === 'assistant.role.rollback') assistantSettings.rollback(key, String(args.version));
+              service.assistant.roles = assistantSettings.roles();
               res.end(JSON.stringify({ value: assistantSettings.settings() })); return;
             }
             if (command === 'search.settings.save') {
