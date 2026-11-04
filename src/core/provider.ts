@@ -581,7 +581,10 @@ async function* responseWebSocketEvents(
     sent, diagnostic('WEBSOCKET_CONNECTION_ERROR')
   ));
   const close = (event: { code: number }) => {
-    if (!terminalReceived) fail(new RequestError(interruptedResponse, sent, diagnostic('WEBSOCKET_CLOSED', event.code)));
+    if (!terminalReceived) fail(new RequestError(
+      `模型 WebSocket 连接被对端关闭（关闭码 ${event.code}，距最后事件约 ${Math.round((Date.now() - lastEventAt) / 1000)} 秒），未收到完整结果。已保留收到的内容；服务端结果与费用未知。`,
+      sent, diagnostic('WEBSOCKET_CLOSED', event.code)
+    ));
   };
   const abort = () => fail(signal.reason);
   socket.addEventListener('open', open);

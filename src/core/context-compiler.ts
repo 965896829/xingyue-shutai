@@ -40,10 +40,12 @@ export function contextPayload(manifest: ContextManifest, project?: ProjectState
   const restricted = manifest.scope && manifest.scope.viewpoint !== 'author';
   const canUse = (fact: Fact) => !restricted || fact.kind === 'author_constraint' || visibleFact(fact, manifest.scope!);
   return {
-    contextPolicy: '作者规则必须遵守，但不是人物已知事实；事实块仅限当前视角。未揭示内容仅用于避免提前揭密，不能写成已经发生或人物已经知道。计划不是事实。',
+    contextPolicy: '作者规则不是人物已知事实；事实块按故事有效位置与人物获知记录筛选。人物可以知道读者尚不知道的秘密，并据此行动或隐瞒；revelation 限制向读者的直接揭示，不撤销人物已有知识。未来计划不是已发生事实。',
     scope: manifest.scope, entities: manifest.entityIds,
     authorRules: manifest.hardConstraints?.filter(canUse).map(f => modelFact(f, manifest.scope)), revelation: restricted && manifest.revelation
-      ? { ...manifest.revelation, withheld: manifest.revelation.withheld.map(({ id, revealedAt }) => ({ id, revealedAt, reason: '本范围不可揭示的事实，内容未装入' })) }
+      ? { ...manifest.revelation, withheld: manifest.revelation.withheld.map(({ id, revealedAt }) => ({ id, revealedAt, reason:
+        [...manifest.hardConstraints ?? [], ...manifest.retrievedFacts ?? []].some(fact => fact.id === id && canUse(fact))
+          ? '人物已知但读者尚未获知，可影响选择，不得提前直述秘密' : '本范围不可揭示的事实，内容未装入' })) }
       : manifest.revelation,
     facts: manifest.retrievedFacts?.filter(canUse).map(f => modelFact(f, manifest.scope)), coverage: manifest.coverage, conflicts: manifest.conflicts,
     disputedRecords: manifest.disputedFacts?.map(f => modelFact(f, manifest.scope)),
@@ -80,6 +82,7 @@ export function fitContext(manifest: ContextManifest, profile: Profile, resident
     size = measure();
   }
   manifest.factIds = [...new Set([...(manifest.retrievedFacts ?? []), ...(manifest.hardConstraints ?? [])].map(f => f.id))];
+  if (manifest.selectionTrace) manifest.selectionTrace.facts = manifest.selectionTrace.facts.filter(fact => manifest.factIds.includes(fact.id));
   checkContextReadPlan(manifest);
   size = measure();
   manifest.estimatedTokens = size.tokens;
@@ -158,8 +161,9 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     if (file === plotPath) { m.sources.at(-1)!.content = plotContext(source.content, p.chapter); m.sources.at(-1)!.reason = '作者确认的本章场景与因果连接'; }
   }
   const query = [request, scope.characterId ?? '', ...m.sources.filter(s => s.layer === 'chapter_plan' || s.path === prosePath(p.chapter - 1)).map(s => s.content)].join('\n');
-  const all = store.db.facts(scope);
-  m.factReadDependency = factReadDependency(all, scope);
+  const selection = { query, entityIds: scope.characterId ? [scope.characterId] : [], chapter: scope.chapter, includeFuture: true };
+  const all = store.db.factsForTask(scope, selection);
+  m.factReadDependency = factReadDependency(all, scope, selection);
   const validSource = sourceValidator(store, snapshot.documents, scope.chapter, p);
   const candidates = all.filter(f => f.kind !== 'expression_sample' && f.worldId === scope.worldId && f.timelineId === scope.timelineId && f.reviewStatus === 'accepted' && f.state !== 'disputed' && (applicableFact(f, { ...scope, viewpoint: 'author' }) || f.state !== 'superseded' && f.revealedAt > p.chapter));
   const entities = new Set<string>(scope.characterId ? [scope.characterId] : []);
@@ -197,20 +201,20 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   }
   for (const fact of usable) {
     if (!related(fact, query, entities) && !['world_rule','author_constraint'].includes(fact.kind)) continue;
-    if (fact.revealedAt > p.chapter) m.revelation!.withheld.push({ id: fact.id, subject: fact.subject, predicate: fact.predicate, value: fact.value, revealedAt: fact.revealedAt, reason: '本章尚未允许揭示，只用于防止提前泄露，不是人物已知事实', evidence: fact.evidence });
+    if (fact.revealedAt > p.chapter) m.revelation!.withheld.push({ id: fact.id, subject: fact.subject, predicate: fact.predicate, value: fact.value, revealedAt: fact.revealedAt, reason: '本章尚未向读者揭示；人物是否知道另由其获知记录决定', evidence: fact.evidence });
     else if (fact.revealedAt === p.chapter) m.revelation!.allowed.push(fact.id);
   }
-  const found = retrieveMemory(store, query, scope, 12, undefined, validSource);
+  const found = retrieveMemory(store, query, scope, 12, undefined, validSource, all);
   m.coverage = found.coverage;
   m.disputedFacts = found.disputes;
   const hardIds = new Set(m.hardConstraints!.map(f => f.id));
-  m.retrievedFacts = found.facts.filter(x => x.fact.kind !== 'expression_sample' && !hardIds.has(x.fact.id) && (purpose === 'discussion' || x.fact.revealedAt <= p.chapter)).map(x => x.fact);
+  m.retrievedFacts = found.facts.filter(x => x.fact.kind !== 'expression_sample' && !hardIds.has(x.fact.id) && (purpose === 'discussion' || scope.viewpoint === 'character' || x.fact.revealedAt <= p.chapter)).map(x => x.fact);
   m.requiredFactIds = found.facts.filter(x => x.required).map(x => x.fact.id);
   // Select core state independently of ranked recall. A low relevance score must
   // never remove a participating character's injury, possession or belief.
   if (['S09', 'S10'].includes(stage) && purpose !== 'discussion') {
     for (const fact of current.filter(f => importantCurrentFact(f) && related(f, query, entities))) {
-      if (!visibleFact(fact, scope) || fact.revealedAt > p.chapter) continue;
+      if (!visibleFact(fact, scope) || scope.viewpoint !== 'character' && fact.revealedAt > p.chapter) continue;
       if (conflicts.has(fact.id) || !fact.evidence.every(e => validSource(e) && status.get(e.path)?.status === 'accepted')) {
         m.conflicts.push(`${fact.subject}：${fact.predicate} 的必读依据缺失或存在冲突`); continue;
       }
@@ -245,6 +249,10 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     m.writingMaterials = writingMaterials(store, m);
     m.qualityReadHash = fingerprint({ records: store.db.get('creative-quality-v1'), voice: store.db.document(voicePath)?.hash });
   }
+  m.selectionTrace = { version: 1, candidates: all.length, facts: [...new Map([...m.hardConstraints ?? [], ...m.retrievedFacts ?? []].map(fact => [fact.id, fact])).values()].map(fact => ({
+    id: fact.id, kind: fact.kind, required: m.requiredFactIds!.includes(fact.id) || hardIds.has(fact.id),
+    reason: hardIds.has(fact.id) ? '持续约束' : m.requiredFactIds!.includes(fact.id) ? '参与人物的关键状态' : found.facts.find(item => item.fact.id === fact.id)?.reason ?? '本章相关资料'
+  })) };
   bindContextReadPlan(m);
   return fitContext(m, profile, options.resident, options.toolCount, !options.deferBudgetCheck, p);
 }

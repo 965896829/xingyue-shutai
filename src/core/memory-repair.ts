@@ -9,6 +9,11 @@ import { contractPath } from './tags';
 import { approvedCreation } from '../shared/creation';
 import { validateCandidate } from './validation';
 
+function fileProject(store: FileStore, file: string) {
+  const project = store.db.project(), chapter = file.match(/第(\d+)章/);
+  return chapter ? { ...project, chapter: Number(chapter[1]) } : project;
+}
+
 export function memoryRepairScope(repair: NonNullable<Run['memoryRepair']>): Run['continuity'] {
   const creationChange = repair.impacts?.some(impact => impact.creationChange);
   return repair.impacts?.length && repair.impacts.every(impact => impact.scope.mode === 'forward') && repair.paths.every(file => (creationChange ? /^(03_|04_|05_|06_|11_)/ : /^(05_|06_)/).test(file))
@@ -45,8 +50,12 @@ export function memoryRepairRequest(store: FileStore, run: Run, file: string, sk
   };
   const facts = store.db.facts().filter(fact => fact.reviewStatus !== 'retracted' && fact.state !== 'superseded' &&
     repair.paths.find(path => path.startsWith('07_') && fact.evidence.some(e => e.path === path)) === file);
-  const format = validateCandidate(run.stage, store.db.project(), [{ path: file, content: '', baseHash: null }], skillRoot, 'revision')
-    .filter(issue => issue.severity === 'error' && issue.code !== 'placeholder');
+  const project = fileProject(store, file);
+  const required = validateCandidate(run.stage, project, [{ path: file, content: '', baseHash: null }], skillRoot, 'revision')
+    .filter(issue => issue.code === 'missing_field');
+  const currentFile = read(file);
+  const format = validateCandidate(run.stage, project, [{ ...currentFile, baseHash: store.db.document(file)?.hash ?? null }], skillRoot, 'revision')
+    .filter(issue => issue.severity === 'error');
   return {
     authorRequest: run.request,
     scope: run.continuity,
@@ -55,10 +64,10 @@ export function memoryRepairRequest(store: FileStore, run: Run, file: string, sk
     stateChanges: repair.impacts?.flatMap(impact => impact.stateChanges) ?? [],
     changeReasons: repair.impacts?.map(impact => ({ reason: impact.reason, scope: impact.scope, targets: impact.targets })) ?? [],
     task: '核对前文修改的影响，仅修复现有内容与记忆，不扩写新章节。不受影响的文稿返回 content:null。每条既有记忆必须保留或替换到 records，或明确放入 withdrawn；不因引用位置改变而丢弃仍成立的事实。新增记录的 state 必须明确为 active 或 resolved，不能照抄旧记录的 disputed/superseded 标记；无法证实则撤回并说明。新增事实同样须有准确原文证据，人物误解不能当成客观事实。',
-    file: read(file),
+    file: currentFile,
     formatRequirements: {
       policy: '必需字段保留原名称及所在分节，特别是文件首部字段；用字段内容区分历史、已发生和未来计划，不通过改名或移位表达状态变化。新增后续承接说明以生效章节或全局说明命名，不挂在已完成章节的分节下；此前章节分节和表格行保持不变。每份文件通过格式检查后才继续下游；内容无需修改也须满足现有格式。',
-      requiredFields: [...new Set(format.filter(issue => issue.code === 'missing_field').map(issue => issue.message.replace(/^缺少字段：/, '')))],
+      requiredFields: [...new Set(required.map(issue => issue.message.replace(/^缺少字段：/, '')))],
       checks: [...new Set(format.filter(issue => issue.code !== 'missing_field').map(issue => issue.message))]
     },
     changedSources: repair.sources.filter(path => path !== file).map(read),
@@ -93,7 +102,7 @@ export function applyMemoryRepairResponse(store: FileStore, run: Run, file: stri
     throw new Error('只能在复读原文章节时提取事件记忆');
   const content = response.content ?? request.file.content;
   const change = { path: file, content, baseHash: store.db.document(file)!.hash };
-  const formatIssues = validateCandidate(run.stage, store.db.project(), [change], skillRoot, 'revision').filter(issue => issue.severity === 'error');
+  const formatIssues = validateCandidate(run.stage, fileProject(store, file), [change], skillRoot, 'revision').filter(issue => issue.severity === 'error');
   if (formatIssues.length) throw new Error(`当前文件格式需要修正：${formatIssues.map(issue => issue.message).join('；')}`);
   const changes = [...run.changes.filter(item => item.path !== file), change];
   const scopeIssues = continuityIssues(store, { ...run, changes });

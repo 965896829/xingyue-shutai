@@ -46,13 +46,15 @@ export function requiredCharacterCoverage(store: FileStore, run: Run) {
       if ([character.name, ...character.aliases].some((name) => name && prose.includes(name)))
         result.set(character.id, { entityId: character.id, name: character.name });
   }
-  for (const fact of [...store.db.facts({ worldId: 'main', timelineId: 'main' }), ...run.facts]) {
+  for (const fact of [...store.db.factsForTask({ worldId: 'main', timelineId: 'main' }, { query: prose, entityIds: [...result.keys()], chapter: run.chapter, textSearch: false }), ...run.facts]) {
     if (fact.worldId !== 'main' || fact.timelineId !== 'main' || fact.fromChapter > run.chapter ||
       (fact.toChapter !== null && fact.toChapter < run.chapter) ||
       fact.category !== 'character' || fact.reviewStatus === 'retracted' || ['superseded', 'disputed'].includes(fact.state))
       continue;
     if (![fact.subject, ...fact.aliases].some((name) => name && prose.includes(name))) continue;
-    const entityId = fact.entityIds[0] || `entity-${hash(`${fact.worldId}:${fact.subject}`).slice(0, 24)}`;
+    const namedIdentity = [...result.entries()].find(([id, character]) => character.name === fact.subject && fact.entityIds.includes(id));
+    if (!namedIdentity && fact.entityIds.length > 1) continue;
+    const entityId = namedIdentity?.[0] ?? (fact.entityIds[0] || `entity-${hash(`${fact.worldId}:${fact.subject}`).slice(0, 24)}`);
     for (const [key, character] of result)
       if (character.name === fact.subject && key !== entityId) result.delete(key);
     result.set(entityId, { entityId, name: fact.subject });
@@ -60,7 +62,7 @@ export function requiredCharacterCoverage(store: FileStore, run: Run) {
   return [...result.values()];
 }
 
-export function validateChapterCoverage(store: FileStore, run: Run, raw: unknown): ChapterCoverage {
+function parseChapterCoverage(raw: unknown): ChapterCoverage {
   if (raw === undefined || raw === null)
     throw new Error('本章尚未提交人物覆盖记录；请在 propose_changes 或 propose_memory 中一并提交 coverage，再标记 complete:true');
   const parsed = chapterCoverageSchema.safeParse(raw);
@@ -68,7 +70,11 @@ export function validateChapterCoverage(store: FileStore, run: Run, raw: unknown
     const fields = [...new Set(parsed.error.issues.map(issue => issue.path.join('.') || 'coverage'))];
     throw new Error(`人物覆盖字段不完整或格式不正确，请按 coverage 结构修正：${fields.join('、')}`);
   }
-  const coverage = parsed.data;
+  return parsed.data;
+}
+
+export function validateChapterCoverage(store: FileStore, run: Run, raw: unknown): ChapterCoverage {
+  const coverage = parseChapterCoverage(raw);
   const prose = run.changes.find((change) => change.path === prosePath(run.chapter));
   if (!prose || coverage.proseHash !== hash(prose.content) || coverage.proseHash !== run.pipeline?.proseHash)
     throw new Error('人物覆盖与最终正文版本不一致，须重新提取与核验');
@@ -80,26 +86,33 @@ export function validateChapterCoverage(store: FileStore, run: Run, raw: unknown
     if (character.outcome === 'changed' ? !character.factIds.length : !!character.factIds.length)
       throw new Error(`人物“${character.name}”的覆盖状态与事实引用不一致：changed 必须引用本章已提交的事实 ID，其他状态的 factIds 必须为空`);
     for (const evidence of character.evidence) {
-      if (points.slice(evidence.start, evidence.end).join('') !== evidence.quote)
-        throw new Error('人物覆盖证据与正文坐标不一致');
+      if (points.slice(evidence.start, evidence.end).join('') !== evidence.quote) {
+        const at = prose.content.indexOf(evidence.quote);
+        const reason = at < 0 ? '引文不在本章最终正文中，请使用真实原句'
+          : prose.content.indexOf(evidence.quote, at + 1) >= 0 ? '引文在正文中出现多次，请提供更完整的原句或准确坐标'
+          : '请按包含标题与换行的完整正文计算 Unicode 码点坐标';
+        throw new Error(`人物覆盖证据与正文坐标不一致：${character.name}；${reason}。引文：${JSON.stringify(Array.from(evidence.quote).slice(0, 160).join(''))}`);
+      }
     }
     for (const factId of character.factIds) {
       const fact = run.facts.find((f) => f.id === factId);
-      if (
-        !fact ||
-        !(fact.entityIds.includes(character.entityId) || fact.subject === character.name) ||
-        !fact.evidence.some((e) => e.path === prose.path && e.hash === coverage.proseHash)
-      )
-        throw new Error('人物变化缺少本章同版本事实依据');
+      const reason = !fact ? '该事实尚未提交'
+        : !(fact.entityIds.includes(character.entityId) || fact.subject === character.name)
+          ? `事实主体“${fact.subject}”及关联人物 ${JSON.stringify(fact.entityIds)} 与该人物不匹配`
+          : !fact.evidence.some((e) => e.path === prose.path && e.hash === coverage.proseHash)
+            ? `事实证据未绑定 ${prose.path} 的最终正文版本 ${coverage.proseHash}` : null;
+      if (reason)
+        throw new Error(`人物变化缺少本章同版本事实依据：${character.name}（${character.entityId}）引用 ${factId}，${reason}。请核对该人物的事实引用和证据，保留其他已通过的事实。`);
     }
   }
-  if (requiredCharacterCoverage(store, run).some((character) => !seen.has(character.entityId)))
-    throw new Error('人物覆盖遗漏本章出现的已登记人物');
+  const missing = requiredCharacterCoverage(store, run).filter(character => !seen.has(character.entityId));
+  if (missing.length)
+    throw new Error(`人物覆盖遗漏本章出现的已登记人物：${missing.map(character => `${character.name}（${character.entityId}）`).join('、')}。仅提及、无变化或证据不足也应分别记录，不必新增事实。`);
   return coverage;
 }
 
 export function locateCoverageQuotes(run: Run, raw: unknown) {
-  const coverage = chapterCoverageSchema.parse(raw), prose = run.changes.find(c => c.path === prosePath(run.chapter));
+  const coverage = parseChapterCoverage(raw), prose = run.changes.find(c => c.path === prosePath(run.chapter));
   if (!prose || hash(prose.content) !== coverage.proseHash) return coverage;
   const points = Array.from(prose.content);
   for (const character of coverage.characters) for (const evidence of character.evidence) {

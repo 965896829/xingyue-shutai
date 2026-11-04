@@ -554,7 +554,7 @@ async function dispatch(command: Command, args: unknown, rawContext: unknown, ca
     const input = parseInput(command, args);
     const result = parseOutput(command, await requestContext.run({ ...context, signal: controller.signal, fileGrants: caller.fileGrants }, () => handle(command, input)));
     // Changing the active book is shared with every view, including an already-open desktop window.
-    if (contract.scope === 'global' && contract.access !== 'read') emitAppEvent({ type: 'snapshot', workerGeneration: supervisor.generation });
+    if (contract.scope === 'global' && contract.access !== 'read' && !command.startsWith('lab.')) emitAppEvent({ type: 'snapshot', workerGeneration: supervisor.generation });
     return { ok: true, result, projectSessionId, workerGeneration: supervisor.generation };
   } catch (error) {
     const payload = errorPayload(error, [

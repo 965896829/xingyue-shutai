@@ -8,6 +8,7 @@ import { latestContext, type ContextUsage } from '../shared/context-meter';
 import { GenerationStatus, GenerationStep } from './GenerationStatus';
 import { WritingStyleField } from './WritingStyleField';
 import { defaultWritingStyle, normalizeWritingStyle } from '../shared/writing-style';
+import { StoryLab } from './story-lab/StoryLab';
 import { useStreamSession, proseBinding, proseFile } from './useLiveStream';
 import { LiveMarkdown } from './LiveMarkdown';
 import { LiveProseEditor, LiveProseCount } from './LiveProseEditor';
@@ -143,6 +144,7 @@ const invoke: Invoke = (command, args) => {
   return invokeCommand(command, args);
 };
 export function App({ management = false, managementView = 'workspace' }: { management?: boolean; managementView?: ManagementView } = {}) {
+  const [labEnabled, setLabEnabled] = useState(() => { try { return localStorage.getItem('story-lab:hidden') !== 'true'; } catch { return true; } });
   const [inspector, setInspector] = useState<'manuscript' | 'characters' | 'story' | 'details'>('manuscript');
   const [source, setSource] = useState<SourceRef | null>(null);
   const [focus, setFocus] = useState(false);
@@ -152,7 +154,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   const [agentSettings, setAgentSettings] = useState(false);
   const [titleConfirmation, setTitleConfirmation] = useState<{ projectId: string; candidate: Run; startNext: boolean; warningReason: string } | null>(null);
   const [snapshot, setSnapshot] = useState(empty),
-    [page, setPage] = useState<'work' | 'memory' | 'cover'>('work'),
+    [page, setPage] = useState<'work' | 'memory' | 'cover' | 'lab'>('work'),
     [modal, setModal] = useState<'new' | 'settings' | 'project' | 'publishing' | 'transfer' | 'legacy' | 'trash' | null>(
       null
     ),
@@ -711,6 +713,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         <nav>
           {[
             ['work', BookOpen, '写作工作台'],
+            ...(labEnabled ? [['lab', Sparkles, '自由创作实验室']] : []),
             ['memory', Layers, '记忆与连续性'],
             ['cover', ImageIcon, '封面设计']
           ].map(([key, Icon, label]) => (
@@ -796,6 +799,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           </div>
         )}
         <div className="sidebar-bottom">
+          {!labEnabled && <button onClick={() => { localStorage.removeItem('story-lab:hidden'); setLabEnabled(true); setPage('lab'); }}>{btn(<Sparkles size={16} />, '启用自由创作实验室')}</button>}
           {!management && window.wenxu?.desktop && <button aria-label="打开网页管理后台" title="打开网页管理后台" onClick={() => void act(() => invoke('management.open'), '已在浏览器打开管理后台')}>
             {btn(<MonitorCog size={16} />, '网页管理后台')}
           </button>}
@@ -828,7 +832,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         {!management && <header className="topbar">
           <div className="breadcrumb">
             创作空间 <ChevronRight size={14} />
-            <b>{p?.title ?? '我的工作台'}</b>
+            <b>{page === 'lab' ? '自由创作实验室' : p?.title ?? '我的工作台'}</b>
           </div>
           <div className="top-actions">
             <ThemeToggle />
@@ -891,7 +895,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
             refresh={refresh}
           />
         )}
-        {!p ? (
+        {!management && <StoryLab active={page === 'lab'} profiles={snapshot.profiles} formalBusy={!!running || !!snapshot.chatBusy} onBack={() => setPage('work')} onSettings={() => setModal('settings')} onHide={() => { localStorage.setItem('story-lab:hidden', 'true'); setLabEnabled(false); setPage('work'); }} />}
+        {page === 'lab' ? null : !p ? (
           <div className="welcome">
             <div className="welcome-symbol">
               <BrandLogo symbolOnly />
@@ -904,6 +909,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
               <button className="large" onClick={openProjectDirectory}>
                 {btn(<FolderOpen size={18} />, '打开已有作品')}
               </button>
+              {labEnabled && <button className="large" onClick={() => setPage('lab')}>{btn(<Sparkles size={18} />, '自由创作实验室')}</button>}
             </div>
           </div>
         ) : page === 'memory' ? (
@@ -1760,6 +1766,10 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                 <pre>{s.content}</pre>
               </details>
             ))}
+            {manifest.selectionTrace && <details><summary>记忆选择依据 · {manifest.selectionTrace.facts.length} 条</summary>
+              {manifest.selectionTrace.facts.map(fact => <p key={fact.id}>{[...manifest.retrievedFacts ?? [], ...manifest.hardConstraints ?? []].find(item => item.id === fact.id)?.subject ?? '记录'} · {fact.reason} · {fact.required ? '必需' : '按需'}</p>)}
+            </details>}
+            {!!manifest.omitted?.length && <details><summary>未装入资料及原因</summary>{manifest.omitted.map((item, index) => <p key={index}>{item.path} · {item.reason}</p>)}</details>}
           </div>
         </Modal>
       )}

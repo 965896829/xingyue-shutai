@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 type WireItem = Record<string, any>;
+export const sourceMaterialVersion = 2;
 const ruleVersion = (content: string) => createHash('sha256').update(content).digest('hex').slice(0, 20);
 /** Host-owned instruction blocks only; user/source content never goes through this parser. */
 export const sharedRuleBlock = (key: string, content: string) => content
@@ -52,7 +53,9 @@ export function cacheableInput(system: string, input: WireItem[], explicit = tru
     // Source content is present exactly once; per-task selection metadata follows.
     for (let i = 0; i < sourceItems.length; i++) {
       const s = sourceItems[i];
-      prefix.push(message('user', JSON.stringify({ source: { path: s.path, hash: s.hash, content: s.content, mode: s.mode, ranges: s.ranges, category: s.category } }), explicit && i === sourceItems.length - 1));
+      const { required: _required, reason: _reason, ...material } = s;
+      prefix.push(message('user', JSON.stringify({ source: focused ? material :
+        { path: s.path, hash: s.hash, content: s.content, mode: s.mode, ranges: s.ranges, category: s.category } }), explicit && i === sourceItems.length - 1));
     }
     // All phases share the premise and authoritative files, while even a
     // "shared" rule may be absent or different in prose/review/memory mode.

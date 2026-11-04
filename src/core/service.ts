@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import { WritingStyleRecommender } from './writing-style';
+import { StoryLabService } from './story-lab/service';
+import { labCreateSchema, labUpdateSchema, labEditSchema, labSelectSchema, labGenerateSchema, labExportSchema } from '../shared/story-lab';
 import { writingStyleRequestSchema } from '../shared/writing-style';
 import { proposalHash } from './storage';
 import { readQuality, mutateQuality, qualityStatistics, blindPresentation, voiceDocument, voicePath } from './quality';
@@ -10,6 +12,7 @@ import { creativeOperations } from '../shared/creative';
 import { designCatalog, designResource, assertDesign } from './design-operations';
 import { runDesign } from './commands/design';
 import { readExperience } from './experience';
+import { revisionProseFindings } from './workflows/revision-core';
 import path from 'node:path';
 import { z } from 'zod';
 import { bindTaskScope } from './task-scope';
@@ -146,6 +149,13 @@ export class Service {
   readonly scheduler = new ResourceScheduler();
   requestJournal: FileStore | null = null;
   readonly writingStyles = new WritingStyleRecommender();
+  storyLabRoot?: string;
+  private storyLab?: StoryLabService;
+  private lab() {
+    if (!this.storyLabRoot) throw new Error('自由创作实验室存储尚未配置');
+    // Lazy initialization keeps a damaged or disabled lab from blocking the formal workspace.
+    return this.storyLab ??= new StoryLabService(this.storyLabRoot, this.skillRoot, () => this.profiles, this.emit, this.caller ?? invokeModel);
+  }
   private publishingSnapshots: PublishingSnapshot[] = [];
   private marketSnapshots: Record<string, MarketEvidence> = {};
   tagCatalog() {
@@ -188,6 +198,7 @@ export class Service {
   ) {
     this.assistant.roles = builtInRoles(skillRoot);
     this.emit = (event) => {
+      if (event.workspace === 'story-lab') { try { emit(event); } catch {} return; }
       try { emit({
         ...event,
         projectSessionId: this.projectSessionId,
@@ -214,6 +225,8 @@ export class Service {
     this.proseIndexer?.stop();
     this.managementController.abort();
     this.writingStyles.cancel();
+    await this.storyLab?.close();
+    this.storyLab = undefined;
     await this.runner?.telemetry.stop();
     await Promise.allSettled([...this.requests, ...this.jobs]);
     this.store?.materialize();
@@ -739,12 +752,25 @@ export class Service {
   }
   private async dispatch(command: Command, a: Record<string, unknown>): Promise<unknown> {
     if (
-      this.backingUp &&
+      this.backingUp && !command.startsWith('lab.') &&
       commandContracts[command].access !== 'read' &&
       !['run.cancel', 'terminal.cancel', 'chat.stop', 'embedding.cancel', 'cover.cancel', 'style.cancel'].includes(command)
     )
       throw new Error('正在建立一致备份，请稍后再进行写入或切换项目');
     if (command === 'app.snapshot') return this.snapshot();
+    if (command.startsWith('lab.')) {
+      const lab = this.lab();
+      if (command === 'lab.list') return lab.store.all('sessions').reverse();
+      if (command === 'lab.read') return lab.store.detail(str(a.sessionId));
+      if (command === 'lab.create') return lab.create(labCreateSchema.parse(a));
+      if (command === 'lab.update') return lab.update(labUpdateSchema.parse(a));
+      if (command === 'lab.edit') return lab.edit(labEditSchema.parse(a));
+      if (command === 'lab.select') return lab.select(labSelectSchema.parse(a));
+      if (command === 'lab.preview') return lab.preview(labGenerateSchema.parse(a));
+      if (command === 'lab.generate') return lab.start(labGenerateSchema.parse(a));
+      if (command === 'lab.cancel') return lab.cancel(str(a.sessionId), str(a.requestId));
+      if (command === 'lab.export') { const input = labExportSchema.parse(a); return lab.store.export(input.sessionId, input.versionId, input.requirementsOnly, input.format); }
+    }
     if (command === 'style.cancel') { this.writingStyles.cancel(str(a.requestId)); return true; }
     if (command === 'style.recommend') {
       const input = writingStyleRequestSchema.parse(a);
@@ -1150,7 +1176,7 @@ export class Service {
     if (command === 'quality.exportReview') { idle(); return exportReviewPage(s, z.array(z.string()).parse(a.experimentIds)); }
     if (command === 'quality.importReview') { idle(); return importReviewFeedback(s, Number(a.expectedRevision), a.feedback); }
     if (command === 'design.list') return designCatalog(this.skillRoot);
-    if (command === 'experience.read') return readExperience(s, Number(a.throughChapter));
+    if (command === 'experience.read') return readExperience(s, Number(a.throughChapter), a as { before?: number; watermark?: number; pageSize?: number; fromChapter?: number });
     if (command === 'design.run') return runDesign(this, a.input, typeof a.profileId === 'string' ? a.profileId : undefined, idle);
     if (command === 'run.reviewProse') {
       idle();
@@ -1158,6 +1184,12 @@ export class Service {
       if (source.accepted || proposalHash(source) !== a.proposalHash || !compatibleRunBase(s, source)) throw new Error('修订候选已变化，请重新读取');
       const prose = source.changes.filter(c => /^07_正文章节\/第\d+章\.md$/.test(c.path));
       if (!prose.length) throw new Error('没有需要核对的正文候选');
+      for (const reviewed of [source, ...s.db.revisionReviews(source.revisionCore?.sourceRunId ?? source.id)]) {
+        if (!compatibleRunBase(s, reviewed) || !revisionProseFindings(reviewed).some(issue => issue.severity === 'error')) continue;
+        if (prose.length === reviewed.revisionCore?.chapters.length && prose.every(change =>
+          reviewed.changes.some(previous => previous.path === change.path && hash(previous.content) === hash(change.content))))
+          throw new Error('这版正文已有有效的负面审稿意见，请先修改正文；重复核对不会改写原审核结论。');
+      }
       const r = this.makeRun('revision', '保留作者最终正文，批量核对人物覆盖及核心记忆，统一采纳修订。', str(a.profileId));
       const chapters = prose.map(c => Number(c.path.match(/第(\d+)章/)![1])).sort((a, b) => a - b);
       r.changes = structuredClone(source.changes); r.facts = structuredClone(source.facts);

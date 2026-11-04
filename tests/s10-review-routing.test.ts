@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { Service } from '../src/core/service';
-import { hash, prosePath, qualityPath, batchPath, activeBatch } from '../src/core/domain';
+import { hash, prosePath, qualityPath, batchPath, activeBatch, paths, renderProgress } from '../src/core/domain';
 import { fingerprint } from '../src/core/runtime/canonical';
 import { scoreFields } from '../src/core/output-normalization';
 import { RequestError } from '../src/core/provider';
+import { factSchema } from '../src/shared/types';
 import type { Caller } from '../src/core/runner';
 import { fakeProfile, fakeResult, isolatedRoot } from './fixtures/refactor';
 import { fixture } from './fixtures/workflow';
@@ -46,13 +47,81 @@ async function setup(caller: Caller) {
     config: { defaultProfileId: model.id, maxRounds: 12, maxTools: 64, preview: { enabled: false } } });
   const p = service.store!.db.project();
   p.stage = 'S10'; p.revision++;
-  service.store!.commit([service.change(batchPath(activeBatch(p)), fixture(p, batchPath(activeBatch(p)), service))], p);
+  service.store!.commit([service.change(batchPath(activeBatch(p)), fixture(p, batchPath(activeBatch(p)), service)), service.change(paths.progress, renderProgress(p))], p);
   const run = service.makeRun('stage', '完成当前章的独立审核及章后核验');
   const prose = service.change(prosePath(p.chapter), fixture(p, prosePath(p.chapter), service).replace('# 本章正文', '# 第001章：求医'));
   run.pipeline!.phase = 'review'; run.pipeline!.proseHash = hash(prose.content); run.sourceProseHash = run.pipeline!.proseHash;
   run.changes = [prose]; service.store!.db.saveRun(run);
   return { service, run, p, prose };
 }
+
+test('旧版已就绪候选缺事实替代原因，恢复只将具体事实交给记忆修复', async () => {
+  let called = 0;
+  const created = await setup(async (_profile, system, messages) => {
+    called++;
+    assert.match(system, /本阶段为 memory/);
+    const repair = messages.map(message => { try { return JSON.parse(message.content); } catch { return null; } }).find(value => value?.issues?.some((issue: any) => issue.code === 'fact_transition'));
+    assert.deepEqual(repair.repairScope.factIds, ['current-state']);
+    assert.deepEqual(repair.repairScope.paths, []);
+    assert.ok(repair.protectedPaths.includes(prosePath(1)));
+    assert.match(JSON.stringify(repair.issues), /replacementReason/);
+    throw new RequestError('在修复请求边界暂停，确认正文未重写', false);
+  });
+  try {
+    const { service, run, prose } = created, store = service.store!;
+    const history = '阿宁准备递出记录本。';
+    store.commit([service.change(prosePath(0), history)], store.db.project());
+    const fresh = service.makeRun('stage', run.request);
+    Object.assign(run, { baseRevision: fresh.baseRevision, baseSnapshotId: fresh.baseSnapshotId, taskScope: fresh.taskScope });
+    const old = factSchema.parse({ id: 'prior-state', subject: '阿宁', predicate: '动作', value: '准备递出记录本', kind: 'state', category: 'character', fromChapter: 0, revealedAt: 0, reviewStatus: 'accepted',
+      evidence: [{ path: prosePath(0), hash: hash(history), quote: history }] });
+    store.db.replaceFacts([old], store.db.project().revision);
+    run.facts = [{ ...old, id: 'current-state', reviewStatus: 'candidate', value: '已经递出记录本', fromChapter: 1, revealedAt: 1, supersedes: old.id, replacementReason: '',
+      evidence: [{ path: prose.path, hash: hash(prose.content), quote: '阿宁推开诊室的门，把记录本递到灯下。' }] }];
+    run.pipeline!.phase = 'ready'; run.status = 'awaiting_review';
+    store.db.saveRun(run);
+    await service.invoke('run.resume', { id: run.id });
+    while (service.runner!.controller) await new Promise(resolve => setTimeout(resolve, 10));
+    const restored = store.db.run(run.id);
+    assert.equal(called, 1, restored.error ?? '应当进入记忆修复');
+    assert.equal(restored.pipeline!.phase, 'memory');
+    assert.equal(restored.changes.find(change => change.path === prose.path)!.content, prose.content);
+    assert.equal(restored.repairAttempts?.memory, 1);
+    assert.equal(restored.accepted, false);
+  } finally { await created.service.drain(); }
+});
+
+for (const changeBudget of [false, true]) test(`章后记忆暂停与重启恢复保留完整阶段资料包，不重复审稿：调整预算=${changeBudget}`, async () => {
+  let service: Service, memories = 0, reviews = 0;
+  const sources: unknown[] = [];
+  const reviewRequests: string[] = [];
+  const caller: Caller = async (_profile, system, messages) => {
+    if (system.includes('本阶段为 review')) { reviews++; reviewRequests.push(messages.at(-1)!.content); return reply('', [report(service, 'pass')]); }
+    assert.match(system, /本阶段为 memory/);
+    sources.push(JSON.parse(messages[0].content).sources);
+    memories++;
+    throw new RequestError('模拟记忆中断', memories === 1);
+  };
+  const created = await setup(caller); service = created.service;
+  try {
+    await service.runner!.drive(created.run.id);
+    assert.equal(memories, 1);
+    await service.invoke('run.resume', { id: created.run.id, retryUnknown: true });
+    while (service.runner!.controller) await new Promise(resolve => setTimeout(resolve, 10));
+    assert.equal(memories, 2, service.store!.db.run(created.run.id).error ?? '恢复应到达记忆模型入口');
+    if (changeBudget) await service.invoke('project.configure', { config: { ...service.store!.db.project().config, maxRounds: 32 } });
+    const root = service.store!.root; await service.drain();
+    service = new Service(skill, () => {}, caller); service.profiles = [structuredClone(model)];
+    await service.invoke('project.open', { root });
+    await service.invoke('run.resume', { id: created.run.id });
+    while (service.runner!.controller) await new Promise(resolve => setTimeout(resolve, 10));
+    assert.equal(memories, 3, service.store!.db.run(created.run.id).error ?? '重启恢复应到达记忆模型入口');
+    assert.equal(reviews, 1, reviewRequests.at(-1) ?? '预算调整不应使故事审核失效'); assert.deepEqual(sources[1], sources[0]);
+    if (!changeBudget) assert.deepEqual(sources[2], sources[0]);
+    else assert.ok((sources[2] as any[]).some(source => source.path.includes('角色卡') && source.mode === 'full'));
+    assert.ok((sources[0] as any[]).some(source => source.path.includes('知情边界')));
+  } finally { await service.drain(); }
+});
 
 function report(service: Service, verdict: 'pass' | 'warning' | 'error', invalidQuote = false) {
   const p = service.store!.db.project(), file = qualityPath(p.chapter);

@@ -25,6 +25,19 @@ const profile = { ...fakeProfile, contextLimit: 200000, outputLimit: 4096, strea
 const body = '# 第一章\n\n阿宁右臂骨折，尚未治疗。';
 const later = '# 第二章\n\n阿宁右臂骨折，尚未治疗。';
 
+test('记忆同步格式反馈检查实际原文，不把提取模板要求的空文本当作正文错误', async () => {
+  const { service, store } = await setup();
+  try {
+    const run = service.makeRun('revision', '核对第一章的既有记录');
+    run.memoryRepair = { paths: [prosePath(1)], sources: [], completed: [], cursor: 0 };
+    const input = memoryRepairRequest(store, run, prosePath(1), service.skillRoot);
+    assert.equal(input.file.content, body);
+    assert.ok(!input.formatRequirements.checks.some(check => /0.*字|占位/.test(check)), JSON.stringify(input.formatRequirements));
+    run.changes = [service.change(prosePath(1), '# 第一章\n\n' + '内容'.repeat(300))];
+    assert.ok(memoryRepairRequest(store, run, prosePath(1), service.skillRoot).formatRequirements.checks.some(check => /正文 600 字/.test(check)), '真正超出字数仍须提示实际统计值');
+  } finally { await service.drain(); }
+});
+
 const caller: Caller = async (_profile, system, messages) => {
   const input = JSON.parse(messages[0].content);
   if (system.includes('你独立核对本章实际正文')) return fakeResult(JSON.stringify({ decisions: input.plans.map((plan: any) => ({

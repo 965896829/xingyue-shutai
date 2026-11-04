@@ -20,6 +20,7 @@ export function syncEventCursor(cursor: EventCursor, snapshot: Snapshot) {
   cursor.waiting = false;
 }
 export function gateEvent(cursor: EventCursor, event: AppEvent): 'ignore' | 'refresh' | 'apply' {
+  if (event.workspace === 'story-lab' || event.type === 'story-lab') return 'ignore';
   if (event.workerGeneration !== undefined && cursor.workerGeneration !== undefined && event.workerGeneration < cursor.workerGeneration) return 'ignore';
   if (event.projectSessionId && cursor.projectSessionId && event.projectSessionId !== cursor.projectSessionId && event.workerGeneration === cursor.workerGeneration) return 'ignore';
   if (event.projectId && cursor.projectId && event.projectId !== cursor.projectId) return 'ignore';

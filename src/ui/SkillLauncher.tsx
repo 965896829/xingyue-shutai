@@ -31,6 +31,7 @@ export function SkillLauncher({ profileId, onRun }: { profileId: string; onRun: 
   const [runs, setRuns] = useState<NonNullable<CommandOutput<'resource.read'>['runs']>>([]);
   const design = selected.startsWith('design:') ? designs.find(d => d.id === selected.slice(7)) : undefined;
   const [chapter, setChapter] = useState(1), [character, setCharacter] = useState('');
+  const [fromChapter, setFromChapter] = useState(1);
   const [characters, setCharacters] = useState<{ id: string; name: string }[]>([]);
   const [displayedTitle, setDisplayedTitle] = useState(''), [displayedDescription, setDisplayedDescription] = useState('');
   const [end, setEnd] = useState('');
@@ -79,7 +80,7 @@ export function SkillLauncher({ profileId, onRun }: { profileId: string; onRun: 
                 setBusy(true);
                 setError('');
                 const input: CreativeInput | undefined = creative === 'first-read'
-                  ? { operation: 'first-read', throughChapter: chapter, ...(end ? { end: Number(end) } : {}), displayedTitle, displayedDescription }
+                  ? { operation: 'first-read', throughChapter: chapter, ...(fromChapter > 1 ? { fromChapter } : {}), ...(end ? { end: Number(end) } : {}), displayedTitle, displayedDescription }
                   : creative === 'rehearse' ? { operation: 'rehearse', characterId: character, chapter, observations: request, ...(parentRunId ? { parentRunId } : {}) }
                   : creative === 'explore' ? { operation: 'explore', prompt: request, sources, ...(protocolId ? { protocolId } : {}), ...(preferences ? { preferences } : {}), ...(exploration ? { exploration } : {}) } : undefined;
                 const task = design ? invokeCommand('design.run', { profileId, input: { id: design.id, request, sources, targets, chapter, ...(sourceRun ? { runId: sourceRun } : {}), ...(direction ? { directionId: direction } : {}), ...(design.targetKind ? { targetKind } : {}), ...(design.feedback ? { feedback } : {}) } }) : input ? invokeCommand('creative.run', { input, profileId }) : invokeCommand('skill.run', {
@@ -134,7 +135,9 @@ export function SkillLauncher({ profileId, onRun }: { profileId: string; onRun: 
                 {design.adapter !== 'scoped-task' && <label>来源任务<select value={sourceRun} onChange={e => { setSourceRun(e.target.value); setDirection(''); }}><option value="">当前作品</option>{runs.filter(r => design.adapter === 'revision-core' ? r.changes.some(c => c.path.startsWith('07_')) : !!r.planning).map(r => <option key={r.id} value={r.id}>{r.request} · {r.createdAt}</option>)}</select></label>}
                 {design.adapter === 'planning' && design.id !== 'concept-forge.create' && <label>{design.id === 'concept-forge.regenerate' ? '保留方向' : '故事方向'}<select value={direction} onChange={e => setDirection(e.target.value)}><option value="">选择方向</option>{runs.find(r => r.id === sourceRun)?.planning?.report?.directions.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}</select></label>}
               </>}
-              {(creative === 'first-read' || creative === 'rehearse') && <div className={creative === 'first-read' ? 'form-grid' : undefined}><label>
+              {(creative === 'first-read' || creative === 'rehearse') && <div className={creative === 'first-read' ? 'form-grid' : undefined}>
+                {creative === 'first-read' && <label>阅读起始章节<input type="number" min={1} max={chapter} value={fromChapter} onChange={event => setFromChapter(Number(event.target.value))} /></label>}
+                <label>
                 {creative === 'first-read' ? '阅读截至第几章' : '故事位置：第几章'}
                 <input type="number" min={1} max={100000} required value={chapter} onChange={event => setChapter(Number(event.target.value))} />
               </label>{creative === 'first-read' && <label>本章截止字符数（可留空）<input type="number" min={1} value={end} onChange={event => setEnd(event.target.value)} /></label>}</div>}

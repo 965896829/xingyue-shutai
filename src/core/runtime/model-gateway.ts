@@ -20,7 +20,7 @@ export interface Attempt {
   requestHash: string; requestRef?: string; responseRef?: string; partialResponseRef?: string; createdAt: string; completedAt?: string;
   failure?: RequestDiagnostic;
 }
-export type AttemptOwner = Pick<Run, 'id' | 'usage' | 'parentRunId' | 'reasoningEfforts' | 'contextUsage'> & { rounds?: number; networkRetries?: number; budgets?: { round: number }[] };
+export type AttemptOwner = Pick<Run, 'id' | 'usage' | 'parentRunId' | 'reasoningEfforts' | 'contextUsage'> & { workspace?: 'story-lab'; sessionId?: string; rounds?: number; networkRetries?: number; budgets?: { round: number }[] };
 export function moneyUnits(value: number): bigint {
   if (!Number.isFinite(value) || value < 0) throw new Error('无效金额');
   const [digits, exponent = '0'] = value.toString().toLowerCase().split('e');
@@ -146,7 +146,7 @@ export async function callModel(
     if (['responding', 'tool_input', 'thinking'].includes(phase)) partial = true;
     options?.onActivity?.(phase);
   }, promptCacheKey: `wenxu-v1-${fingerprint({
-    project: store.db.project()?.id ?? 'management', profile: bound.id, endpoint: bound.baseUrl,
+    project: owner.workspace === 'story-lab' ? `story-lab:${owner.sessionId}` : store.db.project()?.id ?? 'management', profile: bound.id, endpoint: bound.baseUrl,
     model: bound.model, protocol: bound.protocol, reasoning: bound.reasoningEffort,
     ...(isolated ? { audience: isolated.audienceHash, policy: isolated.rulesHash } : {})
   }).slice(0, 48)}` };

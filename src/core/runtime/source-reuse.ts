@@ -41,7 +41,17 @@ function lineAnchorOffset(source: string, anchor: string, index: number) {
   throw new Error(`行更新锚点必须在同版本来源中准确且唯一（${label}；完整行匹配=${exactLines}，子串匹配=${occurrences}）`);
 }
 
-/** All edits bind to one immutable source version, with overlapping ranges rejected. */
+function changedRange(start: number, before: string, after: string) {
+  const a = Array.from(before), b = Array.from(after);
+  let prefix = 0, suffix = 0;
+  while (prefix < a.length && prefix < b.length && a[prefix] === b[prefix]) prefix++;
+  while (suffix < a.length - prefix && suffix < b.length - prefix && a[a.length - 1 - suffix] === b[b.length - 1 - suffix]) suffix++;
+  if (prefix === a.length && prefix === b.length) return [];
+  return [{ start: start + a.slice(0, prefix).join('').length, end: start + a.slice(0, a.length - suffix).join('').length,
+    after: b.slice(prefix, b.length - suffix).join('') }];
+}
+
+/** Anchors bind to the immutable source; only unchanged context may overlap. */
 export function patchDocument(source: string, patch: NonNullable<z.infer<typeof changeSubmissionSchema>['patch']>) {
   if (hash(source) !== patch.sourceHash) throw new Error('增量更新的来源版本已改变');
   const ranges = (patch.edits ?? []).flatMap((edit, index) => {
@@ -54,7 +64,7 @@ export function patchDocument(source: string, patch: NonNullable<z.infer<typeof 
       if (at >= 0 && source.indexOf(edit.after, at + 1) < 0) return [];
     }
     if (start < 0 || source.indexOf(edit.before, start + 1) >= 0) throw new Error(`增量更新锚点必须在来源中准确且唯一，请扩展到所属标题或整行（edits[${index}] before=${anchorLabel(edit.before)}）`);
-    return [{ start, end: start + edit.before.length, after: edit.after }];
+    return changedRange(start, edit.before, edit.after);
   });
   for (const [index, line] of (patch.lines ?? []).entries()) {
     const at = lineAnchorOffset(source, line.anchor, index);
@@ -72,10 +82,10 @@ export function patchDocument(source: string, patch: NonNullable<z.infer<typeof 
     const after = withoutTerminator !== line.text && row(source.slice(start, end)) &&
       next !== undefined && row(next) && withoutTerminator.split(/\r?\n/).every(row)
       ? withoutTerminator : line.text;
-    ranges.push({ start, end, after });
+    ranges.push(...changedRange(start, source.slice(start, end), after));
   }
   ranges.sort((a, b) => a.start - b.start);
-  if (ranges.some((r, i) => i > 0 && r.start < ranges[i - 1].end)) throw new Error('增量更新的替换范围不能重叠');
+  if (ranges.some((r, i) => i > 0 && (r.start < ranges[i - 1].end || r.start === ranges[i - 1].start))) throw new Error('增量更新的替换范围不能重叠');
   let content = source;
   for (const r of ranges.reverse()) content = content.slice(0, r.start) + r.after + content.slice(r.end);
   content += patch.append ?? '';

@@ -286,6 +286,7 @@ export interface ContextSource {
   mode: 'full' | 'excerpt';
 }
 export interface ContextManifest {
+  selectionTrace?: { version: 1; candidates: number; facts: { id: string; kind: Fact['kind']; reason: string; required: boolean }[] };
   readPlan?: import('./context-reading').ContextReadPlan;
   writingMaterials?: import('./scene-material').WritingMaterials;
   qualityReadHash?: string;
@@ -351,7 +352,7 @@ export type RunStatus =
 export interface Run {
   taskScope?: import('./task-scope').TaskScope;
   revisionCoreRequired?: 1;
-  revisionCore?: { version: 1; sourceRunId: string; chapters: number[]; proseHashes: Record<string, string>; coverage: Record<string, import('./chapter-memory').ChapterCoverage>; reports: Record<string, string>; phase: 'extract' | 'review' | 'ready' };
+  revisionCore?: { version: 1; sourceRunId: string; chapters: number[]; proseHashes: Record<string, string>; coverage: Record<string, import('./chapter-memory').ChapterCoverage>; reports: Record<string, string>; phase: 'extract' | 'review' | 'needs_prose_revision' | 'ready' };
   worldContract?: 1 | 2;
   workflowVersion?: 1;
   workflowBinding?: import('./workflow').WorkflowBinding;
@@ -553,12 +554,16 @@ export interface Snapshot {
 }
 export type { Command } from './contracts';
 export interface AppEvent {
+  workspace?: 'story-lab';
+  sessionId?: string;
+  requestId?: string;
+  sequence?: number;
   resource?: 'runs' | 'chat' | 'documents' | 'studio';
   projectSessionId?: string;
   workerGeneration?: number;
   resourceId?: string;
   resourceVersion?: number;
-  type: 'snapshot' | 'run-event' | 'delta' | 'error' | 'prose-delta' | 'narrative-event' | 'assessment';
+  type: 'snapshot' | 'run-event' | 'delta' | 'error' | 'prose-delta' | 'narrative-event' | 'assessment' | 'story-lab';
   projectId?: string;
   snapshotId?: string;
   epoch?: string;

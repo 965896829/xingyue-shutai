@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { invokeCommand } from '../shared/client';
 import type { CommandOutput } from '../shared/contracts';
 import { maxExperienceChapter } from '../shared/experience';
@@ -7,7 +7,11 @@ export function ReadingExperience() {
   const [through, setThrough] = useState(1),
     [data, setData] = useState<CommandOutput<'experience.read'>>(),
     [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const generation = useRef(0);
   useEffect(() => {
+    generation.current++;
+    setData(undefined); setLoading(false);
     let active = true;
     if (!Number.isInteger(through) || through < 1 || through > maxExperienceChapter) return;
     void invokeCommand('experience.read', { throughChapter: through })
@@ -24,6 +28,27 @@ export function ReadingExperience() {
       active = false;
     };
   }, [through]);
+  const loadOlder = async () => {
+    if (!data?.firstReadPage?.nextBefore || loading) return;
+    const epoch = generation.current;
+    setLoading(true);
+    try {
+      const value = await invokeCommand('experience.read', { throughChapter: through,
+        before: data.firstReadPage.nextBefore, watermark: data.firstReadPage.watermark });
+      if (epoch !== generation.current) return;
+      setData(previous => {
+        if (!previous) return value;
+        const chapters = new Map(previous.chapters.map(chapter => [chapter.chapter, chapter]));
+        for (const chapter of value.chapters) {
+          const existing = chapters.get(chapter.chapter);
+          chapters.set(chapter.chapter, { ...chapter, simulated: [...new Map([...(existing?.simulated ?? []), ...chapter.simulated].map(item => [item.id, item])).values()] });
+        }
+        return { ...value, chapters: [...chapters.values()].sort((a, b) => a.chapter - b.chapter) };
+      });
+      setError('');
+    } catch (error) { if (epoch === generation.current) setError((error as Error).message); }
+    finally { if (epoch === generation.current) setLoading(false); }
+  };
   return (
     <>
       <label>
@@ -108,6 +133,7 @@ export function ReadingExperience() {
           ))}
       </div>
       {!!data?.feedback.length && <section><h3>作品试读 · 真人反馈</h3>{data.feedback.map(item => <p key={item.id}>{item.text}</p>)}</section>}
+      {data?.firstReadPage?.nextBefore && <button disabled={loading} onClick={() => void loadOlder()}>{loading ? '加载中…' : '加载更早的初读记录'}</button>}
     </>
   );
 }

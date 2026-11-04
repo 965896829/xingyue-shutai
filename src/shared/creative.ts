@@ -10,6 +10,7 @@ export const creativeInputSchema = z.discriminatedUnion('operation', [
     .object({
       operation: z.literal('first-read'),
       throughChapter: z.number().int().min(1).max(100000),
+      fromChapter: z.number().int().min(1).max(100000).optional(),
       end: z.number().int().positive().optional(),
       displayedTitle: z.string().max(200).default(''),
       displayedDescription: z.string().max(5000).default('')
@@ -50,6 +51,9 @@ export interface CreativeTask {
   sourceVersions: { path: string; hash: string }[];
   factReadDependency?: import('./workflow').FactReadDependency;
   parentResultHash?: string;
+  selectionTrace?: { version: 1; entityId: string; displayName: string; identityBasis: string; snapshotId: string;
+    selected: { id: string; kind: string; reason: string; readerRevealed: boolean }[];
+    excluded: { id: string; reason: string }[] };
   result?: { content: string; hash: string; createdAt: string; synthetic: true; draftId?: string; turn?: { speech: string; action: string } };
 }
 export const creativeOperations: {

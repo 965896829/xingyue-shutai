@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import type { Fact, Run, Issue } from '../shared/types';
 import type { FileStore } from './storage';
-import { hash } from './domain';
+import { hash, countWords } from './domain';
 import { currentSettingsSourceHash } from './runtime-settings';
 import { memoryPaths, updatePath, prosePath } from './domain';
+import { factTransitionPreview } from './fact-transitions';
 
 /** A completed extraction is invalidated by any prose, document or fact edit. */
 export function memoryCompletionHash(run: Run) {
@@ -33,7 +34,7 @@ export function memoryReviewInput(store: FileStore, run: Run) {
   const items: { id: string; action: string; fact?: Fact; reason: string; path?: string }[] = [
     ...run.facts.map(fact => ({ id: fact.id, action: 'record', fact, reason: fact.replacementReason })),
     ...(run.factRetractions ?? []).map(retirement => {
-      const fact = store.db.facts().find(fact => fact.id === retirement.id);
+      const fact = store.db.factsByIds([retirement.id])[0];
       if (!fact) throw new Error('待撤回记忆不存在');
       return { id: retirement.id, action: 'retract', fact, reason: retirement.reason };
     }),
@@ -60,9 +61,19 @@ export function memoryReviewInput(store: FileStore, run: Run) {
   });
   const entities = new Set([...run.facts.flatMap(f => f.entityIds), ...(run.chapterCoverage?.characters ?? []).map(c => c.entityId),
     ...Object.values(run.revisionCore?.coverage ?? {}).flatMap(c => c.characters.map(character => character.entityId))]);
-  const replaced = new Set(run.facts.map(f => f.supersedes).filter(Boolean));
-  const relatedFacts = changedMemory.length ? store.db.facts().filter(f => replaced.has(f.id) || f.entityIds.some(id => entities.has(id)) && f.fromChapter <= Math.max(...chapters)) : [];
-  const input = { items, sources, ...(run.continuity ? { scope: run.continuity } : {}),
+  const replaced = run.facts.flatMap(f => f.supersedes ? [f.supersedes] : []);
+  const transitionBase = store.db.factsByIds([...replaced, ...(run.factRetractions ?? []).map(item => item.id)]);
+  const factTransitions = factTransitionPreview(transitionBase, run.facts, run.factRetractions);
+  const relatedFacts = changedMemory.length ? [...new Map([
+    ...transitionBase,
+    ...(entities.size ? store.db.factsForTask(run.taskScope?.memory ?? { worldId: 'main', timelineId: 'main' },
+      { query: [...entities].join(' '), entityIds: [...entities], chapter: Math.max(...chapters) })
+      .filter(f => f.entityIds.some(id => entities.has(id))) : [])
+  ].map(fact => [fact.id, fact])).values()] : [];
+  const proseMetrics = sources.filter(source => chapters.some(chapter => source.path === prosePath(chapter)))
+    .map(source => ({ path: source.path, hash: source.hash, words: countWords(source.content),
+      method: '提取正文后移除空白，按 Unicode 码点计数；首个章节标题不计入。', computedBy: 'host' as const }));
+  const input = { items, sources, proseMetrics, factTransitions, ...(run.continuity ? { scope: run.continuity } : {}),
     ...(relatedFacts.length ? { relatedFacts } : {}),
     ...(run.memoryRepair?.impacts?.length ? { impacts: run.memoryRepair.impacts } : {}) };
   return { ...input, fingerprint: hash(JSON.stringify(input)) };
@@ -88,6 +99,13 @@ export type MemoryDecision = z.infer<typeof memoryReviewSchema>['decisions'][num
 /** Return validated decisions so unchanged items can retain their actual verdict. */
 export function parseMemoryDecisions(raw: string, items: { id: string; fact?: Fact; path?: string }[], sources: { path: string; content: string }[]) {
   const wire = JSON.parse(raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, ''));
+  const declared = z.object({ decisions: z.array(z.object({ id: z.string().min(1) })) }).parse(wire).decisions;
+  const ids = new Set(declared.map(item => item.id)), expectedIds = new Set(items.map(item => item.id));
+  if (ids.size !== declared.length || ids.size !== items.length || items.some(item => !ids.has(item.id)))
+    throw new Error(`证据核对未逐条覆盖待处理记忆：${JSON.stringify({ expected: [...expectedIds],
+      missing: items.filter(item => !ids.has(item.id)).map(item => item.id),
+      unexpected: [...ids].filter(id => !expectedIds.has(id)),
+      duplicates: [...ids].filter(id => declared.filter(item => item.id === id).length > 1) })}`);
   // A reference selects an existing quote; it never certifies its semantics.
   // The independent reviewer still supplies an item verdict and a reason.
   if (Array.isArray(wire?.decisions)) for (const decision of wire.decisions) {
@@ -101,7 +119,7 @@ export function parseMemoryDecisions(raw: string, items: { id: string; fact?: Fa
     const item = items.find(item => item.id === decision.id);
     decision.evidence = [...refs.map(ref => {
       const evidence = item?.fact?.evidence[ref];
-      if (!evidence) throw new Error('核对证据编号不存在于当前记忆');
+      if (!evidence) throw new Error(`核对证据编号不存在于当前记忆：${JSON.stringify({ id: decision.id, ref, available: item?.fact?.evidence.length ?? 0 })}`);
       const source = sources.find(s => s.path === evidence.path);
       if (!source || hash(source.content) !== evidence.hash || !source.content.includes(evidence.quote))
         throw new Error('核对证据引用缺少同版本原文');
@@ -109,9 +127,6 @@ export function parseMemoryDecisions(raw: string, items: { id: string; fact?: Fa
     }), ...supplemental];
   }
   const parsed = memoryReviewSchema.parse(wire);
-  const ids = new Set(parsed.decisions.map(item => item.id));
-  if (ids.size !== parsed.decisions.length || ids.size !== items.length || items.some(item => !ids.has(item.id)))
-    throw new Error('证据核对未逐条覆盖待处理记忆');
   for (const decision of parsed.decisions) {
     const missing = decision.evidence.find(e => !sources.some(source => source.path === e.path && source.content.includes(e.quote)));
     if (missing)
@@ -119,7 +134,7 @@ export function parseMemoryDecisions(raw: string, items: { id: string; fact?: Fa
     const item = items.find(item => item.id === decision.id)!;
     const expected = item.fact?.evidence.map(e => e.path) ?? (item.path ? [item.path] : []);
     if (expected.length && !decision.evidence.some(e => expected.includes(e.path)))
-      throw new Error('核对结论引用了无关文件，不能证明当前记忆或修订结果');
+      throw new Error(`核对结论引用了无关文件，不能证明当前记忆或修订结果：${JSON.stringify({ id: decision.id, requiredSourcePaths: expected })}`);
   }
   return parsed.decisions;
 }

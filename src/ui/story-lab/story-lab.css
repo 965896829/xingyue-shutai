@@ -1,0 +1,371 @@
+.story-lab {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--ink);
+}
+.story-lab[hidden],
+.story-lab [hidden] {
+  display: none;
+}
+.lab-page {
+  min-width: 0;
+  min-height: 0;
+}
+.lab-page .workflow-heading > div:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.lab-empty p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+.lab-eyebrow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.lab-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.lab-sessions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+  padding: 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.lab-sessions > button {
+  justify-content: flex-start;
+  text-align: left;
+  white-space: normal;
+  height: auto;
+  min-height: 42px;
+}
+.lab-sessions > button:not(.primary) {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+.lab-sessions strong {
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+.lab-sessions small {
+  color: var(--muted);
+  line-height: 1.7;
+}
+.lab-sessions .active {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+}
+.lab-main,
+.lab-document,
+.lab-conversation {
+  min-width: 0;
+}
+.lab-main,
+.lab-work,
+.lab-conversation {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.lab-create {
+  padding: 32px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+.lab-create h2 {
+  font-size: 23px;
+  margin: 16px 0 28px;
+}
+.lab-main label:not(.lab-check) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--soft);
+  margin: 14px 0;
+}
+.lab-main input:not([type='checkbox']),
+.lab-main select,
+.lab-main textarea {
+  width: 100%;
+  min-width: 0;
+  color: var(--ink);
+  background: var(--inset);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.lab-main textarea {
+  resize: vertical;
+  font: inherit;
+  line-height: 1.85;
+}
+.lab-fields {
+  display: flex;
+  gap: 18px;
+  align-items: flex-end;
+}
+.lab-fields > label {
+  flex: 1;
+}
+.lab-fields > button {
+  margin-bottom: 14px;
+}
+.lab-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.lab-toolbar > strong {
+  margin-right: auto;
+}
+.story-lab summary:focus-visible,
+.story-lab button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.lab-main button {
+  gap: 6px;
+  flex-shrink: 0;
+}
+.lab-create > .primary {
+  margin-top: 22px;
+}
+.lab-editor {
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 12px;
+}
+.lab-tag {
+  color: var(--muted);
+  font-size: 11px;
+  background: var(--inset);
+  padding: 4px 7px;
+  border-radius: 5px;
+}
+.lab-related > details {
+  margin-left: 14px;
+}
+.lab-compose-options {
+  max-height: min(480px, 65vh);
+  overflow: auto;
+  width: 300px;
+}
+.lab-compose-options .lab-toolbar {
+  margin-bottom: 0;
+}
+.lab-compose-options label:not(.lab-check) {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+}
+.lab-compose-options select {
+  width: 100%;
+}
+.lab-page > .composer > .muted,
+.lab-page > .composer > .lab-warning {
+  font-size: 12px;
+  margin: 4px 8px 8px;
+}
+.lab-context pre,
+.lab-request pre {
+  font-size: 12px;
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.lab-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 10px 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.lab-check input {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  accent-color: var(--accent-fill);
+}
+.story-lab fieldset {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  max-height: 260px;
+  overflow: auto;
+  margin: 14px 0;
+}
+.story-lab legend {
+  font-size: 12px;
+  color: var(--muted);
+}
+.lab-warning,
+.lab-error,
+.lab-notice {
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.lab-warning {
+  color: var(--warning);
+  background: var(--warning-bg);
+}
+.lab-error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  margin-bottom: 16px;
+}
+.lab-notice {
+  color: var(--success);
+  background: var(--success-bg);
+  margin-bottom: 16px;
+}
+.lab-notice button,
+.lab-error button {
+  margin-left: 12px;
+}
+.lab-receipt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 16px 0 24px;
+  font-size: 12px;
+}
+.lab-receipt > p {
+  flex-basis: 100%;
+  margin: 0;
+}
+.lab-receipt > span {
+  color: var(--muted);
+}
+.lab-request {
+  border-bottom: 1px solid var(--line);
+  padding: 12px 0;
+  font-size: 12px;
+}
+.lab-toc nav {
+  display: grid;
+  gap: 4px;
+  max-height: 300px;
+  overflow: auto;
+  margin-top: 12px;
+}
+.lab-toc button {
+  text-align: left;
+  justify-content: flex-start;
+  white-space: normal;
+}
+.story-lab textarea.lab-manuscript {
+  min-height: 550px;
+  font-family: ui-monospace, 'Microsoft YaHei', monospace;
+  margin: 14px 0;
+}
+.lab-selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+.lab-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.lab-compare section {
+  min-width: 0;
+}
+.lab-compare h4 {
+  font-size: 12px;
+}
+.lab-compare pre {
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 400px;
+  overflow: auto;
+  background: var(--inset);
+  padding: 12px;
+}
+.lab-empty {
+  text-align: center;
+  padding: 70px 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  margin-top: 20px;
+  color: var(--accent);
+}
+.lab-pin {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lab-pin p {
+  flex: 1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.lab-document ol {
+  font-size: 12px;
+  line-height: 2.2;
+  padding-left: 24px;
+}
+.lab-document li > button {
+  padding: 2px 8px;
+  min-height: 24px;
+  margin-left: 8px;
+  font-size: 11px;
+}
+.story-lab .markdown-body {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .lab-create {
+    padding: 22px;
+  }
+  .lab-fields {
+    flex-wrap: wrap;
+  }
+  .lab-fields > label {
+    flex-basis: 160px;
+  }
+  .lab-compare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lab-editor {
+    padding: 16px;
+  }
+  .lab-page .workflow-heading {
+    flex-wrap: wrap;
+  }
+}

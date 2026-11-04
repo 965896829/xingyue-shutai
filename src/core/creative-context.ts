@@ -11,6 +11,7 @@ import { factReadDependency } from './runtime/fact-read-set';
 import { fingerprint } from './runtime/canonical';
 import { readQuality, evidenceUsable, qualityStatistics, voiceSlice, taskVoicePreferences } from './quality';
 import { composeProfessionalMethod } from './creation-policy';
+import { resolveCharacterIdentity } from './character-identity';
 
 export function creativeRules(root: string, operation: CreativeTask['input']['operation']) {
   const directory = path.join(root, 'creative-v7');
@@ -40,7 +41,6 @@ export function rehearsalCharacters(store: FileStore, chapter: number) {
   const known = facts.filter(
     (fact) =>
       applicableFact(fact, memoryScopeSchema.parse({ chapter })) &&
-      fact.revealedAt <= chapter &&
       !['plan', 'author_constraint'].includes(fact.kind) &&
       fact.evidence.every(validSource)
   );
@@ -60,7 +60,7 @@ export function rehearsalCharacters(store: FileStore, chapter: number) {
     .sort()
     .map((id) => ({
       id,
-      name: facts.find((fact) => fact.category === 'character' && fact.entityIds.includes(id))?.subject ?? id
+      name: resolveCharacterIdentity(store, id, memoryScopeSchema.parse({ chapter, viewpoint: 'character', characterId: id }), known).name
     }));
 }
 
@@ -85,8 +85,10 @@ export function compileCreative(store: FileStore, root: string, raw: unknown, br
   let modelPayload: object;
   let factDependency: CreativeTask['factReadDependency'];
   let parentResultHash: string | undefined;
+  let selectionTrace: CreativeTask['selectionTrace'];
   if (input.operation === 'first-read') {
-    for (let chapter = 1; chapter <= input.throughChapter; chapter++)
+    if ((input.fromChapter ?? 1) > input.throughChapter) throw new Error('阅读起始章节不能晚于截止章节');
+    for (let chapter = input.fromChapter ?? 1; chapter <= input.throughChapter; chapter++)
       read(
         prosePath(chapter),
         `chapter-${chapter}`,
@@ -94,7 +96,8 @@ export function compileCreative(store: FileStore, root: string, raw: unknown, br
       );
     modelPayload = {
       coverage: {
-        kind: 'complete_prefix',
+        kind: (input.fromChapter ?? 1) > 1 ? 'chapter_range' : 'complete_prefix',
+        ...((input.fromChapter ?? 1) > 1 ? { fromChapter: input.fromChapter, priorReading: '未提供前文，不代表已完整阅读此前章节；只评价当前章段。' } : {}),
         throughChapter: input.throughChapter,
         end: input.end ?? 'chapter_end'
       },
@@ -108,8 +111,9 @@ export function compileCreative(store: FileStore, root: string, raw: unknown, br
       viewpoint: 'character',
       characterId: input.characterId
     });
+    const selection = { query: input.characterId, entityIds: [input.characterId], chapter: input.chapter };
     const info = store.db.snapshotInfo(snapshot.id),
-      all = store.db.facts(scope);
+      all = store.db.factsForTask(scope, selection);
     const validSource = sourceValidator(store, info.documents, input.chapter, project);
     const visible = all.filter(
       (fact) =>
@@ -126,27 +130,39 @@ export function compileCreative(store: FileStore, root: string, raw: unknown, br
     const conflicts = conflictingFacts(visible);
     const eligible = visible.filter((fact) => !conflicts.has(fact.id));
     if (!eligible.length) throw new Error('尚无该人物在此章可用的知情记录，可先使用探索草稿');
-    const self = eligible.find((fact) => fact.entityIds.includes(input.characterId));
+    const identity = resolveCharacterIdentity(store, input.characterId, scope, eligible);
+    selectionTrace = { version: 1, entityId: input.characterId, displayName: identity.name, identityBasis: identity.basis, snapshotId: snapshot.id,
+      selected: eligible.map(fact => ({ id: fact.id, kind: fact.kind, reason: '本人获知记录及同版来源已核验', readerRevealed: fact.revealedAt <= input.chapter })),
+      excluded: all.filter(fact => !eligible.includes(fact)).map(fact => ({ id: fact.id, reason: conflicts.has(fact.id) ? '事实冲突' : !visibleFact(fact, scope) ? '故事位置或人物知情范围不适用' : '来源无效' })) };
+    if (identity.basis === 'ambiguous') throw new Error('人物身份记录存在歧义，请先核对该人物的名字与标识');
     const parent = input.parentRunId ? store.db.run(input.parentRunId) : undefined;
     if (parent && (parent.creative?.input.operation !== 'rehearse' || parent.creative.input.chapter > input.chapter || parent.status !== 'complete' || parent.creative.snapshotId !== snapshot.id || !parent.creative.result?.turn)) throw new Error('上一回合已失效、超出当前故事位置或缺少可见行动，请重新开始试演');
     if (parent) parentResultHash = fingerprint(parent.creative!.result!.turn);
     modelPayload = {
-      character: self?.subject ?? input.characterId,
+      character: identity.name,
+      characterId: input.characterId,
+      narrationBoundary: { readerThroughChapter: input.chapter,
+        privateKnowledge: eligible.filter(fact => fact.revealedAt > input.chapter).map(fact => fact.id),
+        instruction: '人物可依据自己的私有信息选择、隐瞒或试探；尚未向读者揭示的信息不得直接写进对白、行动描写或不确定性说明。' },
       chapter: input.chapter,
       observations: input.observations,
       expressionGuidance: taskVoicePreferences(store, { entityIds: [input.characterId], sceneIds: [`第${input.chapter}章`], sceneFunctions: ['对话'], scope }),
       ...(parent ? { visibleInteractionHistory: [{ speaker: '上一位行动者', speech: parent.creative!.result!.turn!.speech, action: parent.creative!.result!.turn!.action }] } : {}),
       beliefs: eligible.map((fact, index) => ({
         source: `observation-${index + 1}`,
+        id: fact.id,
         subject: fact.subject,
         statement: `${fact.predicate}：${fact.value}`
       }))
     };
+    for (const source of identity.sources)
+      if (!sourceVersions.some(version => version.path === source.path && version.hash === source.hash))
+        sourceVersions.push({ path: source.path, hash: source.hash });
     for (const fact of eligible)
       for (const evidence of fact.evidence)
         if (!sourceVersions.some((source) => source.path === evidence.path && source.hash === evidence.hash))
           sourceVersions.push({ path: evidence.path, hash: evidence.hash });
-    factDependency = factReadDependency(all, scope);
+    factDependency = factReadDependency(all, scope, selection);
   } else {
     if (input.operation === 'learn-edits') {
       const state = readQuality(store), evidence = input.evidenceIds.map(id => state.evidence.find(e => e.id === id));
@@ -187,6 +203,7 @@ export function compileCreative(store: FileStore, root: string, raw: unknown, br
     snapshotId: snapshot.id,
     sourceVersions,
     factReadDependency: factDependency,
+    ...(selectionTrace ? { selectionTrace } : {}),
     ...(parentResultHash ? { parentResultHash } : {}),
     audienceHash: fingerprint({
       project: project.id,

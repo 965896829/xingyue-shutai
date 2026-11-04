@@ -22,4 +22,14 @@ export interface FactReadDependency {
   worldId: string;
   timelineId: string;
   hash: string;
+  selection?: FactSelection;
+}
+
+export interface FactSelection {
+  query: string;
+  entityIds: string[];
+  chapter: number;
+  includeFuture?: boolean;
+  sourcePaths?: string[];
+  textSearch?: boolean;
 }

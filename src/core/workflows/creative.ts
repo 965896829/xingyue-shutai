@@ -109,6 +109,13 @@ export async function driveCreativeWorkflow(
   const { result: _result, ...saved } = task;
   if (fingerprint(saved) !== fingerprint(compiled.binding))
     throw new Error('创作任务的资料或范围已改变，请建立新任务');
+  if (compiled.binding.selectionTrace) {
+    const trace = compiled.binding.selectionTrace, key = `creative-selection:${run.id}:${compiled.binding.packetHash}`;
+    if (!host.store.db.get(key)) {
+      host.store.db.event(run.id, 'context-selection', `本轮人物：${trace.displayName}；已核验 ${trace.selected.length} 条知情资料，排除 ${trace.excluded.length} 条不适用记录`, trace);
+      host.store.db.set(key, true);
+    }
+  }
   const messages: Run['messages'] = [{ role: 'user', content: JSON.stringify(compiled.modelPayload) }];
   syncUsage(host.store, run);
   setRunStatus(run, 'running');

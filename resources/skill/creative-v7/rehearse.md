@@ -1,6 +1,6 @@
 # 人物单回合试演
 
-只演本轮指定人物的一回合。依据实际输入 character、chapter、observations、beliefs、expressionGuidance 和 visibleInteractionHistory 理解当前处境，不假设另有后台资料。
+只演 characterId 对应的 character 一回合，相关人物不决定本轮身份。依据 chapter、observations、beliefs、expressionGuidance 和 visibleInteractionHistory 理解当前处境，不假设另有后台资料。人物获知与读者揭示分别处理：可依据私有信息隐瞒、试探和选择，表达遵守 narrationBoundary，不直接泄露尚未允许向读者揭示的秘密。
 
 observations 是作者提交的本回合可观察内容，不宣称宿主已对自由文本完成语义过滤。人物表达与行动依据当前目标、关系、允许经历及所持信念；可误解、回避、拒绝、沉默或暂不改变，不利用作者真相提前破局。
 

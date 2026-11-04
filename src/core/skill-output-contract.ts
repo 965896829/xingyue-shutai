@@ -64,7 +64,7 @@ export function authorOutputContract(stage: StageId, mode: string) {
 }
 
 /** Only managed automatic outputs are checked; unknown prose or author edits are never deleted. */
-export function authorStructureIssues(change: Change): Issue[] {
+export function authorStructureIssues(change: Change, previousContent?: string): Issue[] {
   const file = change.path;
   let allowed: ((title: string) => boolean) | undefined;
   const exact = (...names: string[]) => (title: string) => names.includes(title);
@@ -79,6 +79,20 @@ export function authorStructureIssues(change: Change): Issue[] {
   else if (/第\d+章记忆更新\.md$/.test(file)) allowed = exact('本章结果', '人物更新', '下一章交接', '同步检查');
   if (!allowed) return [];
   const issues: Issue[] = [];
+  const sections = (content: string) => {
+    const lines = content.split(/\r?\n/), boundaries: number[] = [];
+    let fence = '';
+    for (const [index, line] of lines.entries()) {
+      const marker = line.match(/^\s{0,3}(`{3,}|~{3,})/)?.[1];
+      if (marker) { if (!fence) fence = marker; else if (marker[0] === fence[0] && marker.length >= fence.length) fence = ''; continue; }
+      if (!fence && /^ {0,3}#{1,2}\s+\S/.test(line)) boundaries.push(index);
+    }
+    return new Map(boundaries.map((start, i) => [start, lines.slice(start, boundaries[i + 1] ?? lines.length).join('\n').trimEnd()]));
+  };
+  const priorSections = new Map<string, number>();
+  if (previousContent !== undefined) for (const section of sections(previousContent).values())
+    priorSections.set(section, (priorSections.get(section) ?? 0) + 1);
+  const currentSections = sections(change.content);
   let fence = '';
   let documentTitles = 0;
   for (const [index, line] of change.content.split(/\r?\n/).entries()) {
@@ -87,9 +101,14 @@ export function authorStructureIssues(change: Change): Issue[] {
     if (fence) continue;
     if (/^ {0,3}#\s+\S/.test(line)) documentTitles++;
     const heading = line.match(/^ {0,3}##\s+(.+?)\s*#*$/)?.[1].replace(/\*\*/g, '').trim();
-    if (heading && !allowed(heading) && !['客户端设置', '客户端管理参数', '可追溯事实记录'].includes(heading))
+    if (heading && !allowed(heading) && !['客户端设置', '客户端管理参数', '可追溯事实记录'].includes(heading)) {
+      const section = currentSections.get(index)!, inherited = priorSections.get(section) ?? 0;
+      // Preserve accepted author/legacy sections byte-for-byte (apart from line endings).
+      // Changed, appended or duplicated sections still require the current template.
+      if (inherited) { priorSections.set(section, inherited - 1); continue; }
       issues.push({ code: 'template_extra_section', severity: 'error', path: file, line: index + 1,
         message: `模板外小节“${heading}”：把独有的有效内容并入原模板对应字段，删除重复说明；不要删除实质因果或重写已合格的其他文件。` });
+    }
   }
   if (tableDocument(file) && documentTitles !== 1)
     issues.push({ code: 'template_document_title', severity: 'error', path: file,

@@ -51,6 +51,55 @@ test('结构检查只报告模板外附节，不删除独有内容、场面或�
   assert.deepEqual(authorStructureIssues({ ...change, path: qualityPath(1), content: '# 评分\n```json wenxu-review\n{"quote":"## 原文引文"}\n```' }), []);
 });
 
+test('继承小节只豁免完整未变的既有内容，新增、改写、重复和假标题仍受模板约束', () => {
+  const note = '## 作者备注\n保留她已经作出的选择。\n\n```text\n## 引文内标题\n```\n### 适用条件\n她本人在场。';
+  const previous = '# 项目配置\n- 风格：冷叙述\n\n' + note;
+  const change = { path: paths.config, content: previous.replace('冷叙述', '直接叙述'), baseHash: hash(previous) };
+  assert.deepEqual(authorStructureIssues(change, previous), []);
+  assert.deepEqual(authorStructureIssues({ ...change, content: change.content.replaceAll('\n', '\r\n') }, previous), []);
+  for (const content of [change.content.replace('她本人在场。', '不需要她在场。'), change.content + '\n新增加的要求。',
+    change.content + '\n\n' + note, change.content + '\n\n## 新增报告\n新内容。']) {
+    assert.equal(authorStructureIssues({ ...change, content }, previous).filter(issue => issue.code === 'template_extra_section').length, 1);
+  }
+  assert.equal(authorStructureIssues(change, '# 项目配置\n```text\n' + note + '\n```').length, 1, '引文中的假小节不能授权正文新小节');
+  assert.equal(authorStructureIssues(change).length, 1, '没有已确认原文时不能豁免');
+});
+
+test('普通跨批次S06候选保留旧承接说明，验证及采纳均不改旧资料，过期基线不能豁免新内容', async () => {
+  const { service } = await setup(async () => { throw new Error('本地检查不调用模型'); });
+  try {
+    const store = service.store!;
+    let p = store.db.project();
+    const notes = '\n\n## 第2章起承接说明\n第二章已经决定先求医。\n\n## 第5章起承接说明\n左臂在复查以前不能负重。\n';
+    const previous = normalizeCandidate(service.change(paths.outline, fixture(p, paths.outline, service))).change.content + notes;
+    store.commit([service.change(paths.outline, previous)], p);
+    p = store.db.project();
+    const nextBatch = { ...p.batches[0], id: crypto.randomUUID(), start: 31, end: 60 };
+    p.batches.push(nextBatch); p.chapter = 31; p.stage = 'S06';
+    store.db.set('project', p);
+    const run = service.makeRun('stage', '生成下一批章节总纲，保留前批原文');
+    const rows = normalizeCandidate(service.change(paths.outline, fixture(p, paths.outline, service))).change.content.split('\n').filter(line => /^\|\s*0(?:3\d|[45]\d|60)\s*\|/.test(line)).join('\n');
+    assert.equal(rows.split('\n').length, 30);
+    const content = previous.replace(notes, '\n' + rows + notes);
+    run.changes = [service.change(paths.outline, content)];
+    service.runner!.check(run, p);
+    assert.deepEqual(run.issues.filter(issue => issue.severity === 'error'), []);
+    assert.equal(run.changes[0].content, content);
+    run.status = 'awaiting_review'; store.db.saveRun(run);
+    await service.invoke('run.accept', { id: run.id, proposalHash: proposalHash(run), startNext: false,
+      warningReason: '测试只保留已采纳的旧说明，不改历史内容' });
+    assert.equal(store.readAccepted(paths.outline).content, content);
+    const candidate = service.makeRun('stage', '测试新增或改写附节');
+    candidate.stage = 'S06';
+    candidate.changes = [service.change(paths.outline, content.replace('不能负重', '可以负重'))];
+    service.runner!.check(candidate, store.db.project());
+    assert.equal(candidate.issues.filter(issue => issue.code === 'template_extra_section').length, 1);
+    candidate.changes[0] = { ...candidate.changes[0], content, baseHash: hash(previous) };
+    service.runner!.check(candidate, store.db.project());
+    assert.equal(candidate.issues.filter(issue => issue.code === 'template_extra_section').length, 2);
+  } finally { await service.drain(); }
+});
+
 test('尾文仅在实际出站历史完整哈希链可重建时省略，恢复和断链保留尾文', () => {
   const a = '第一段。', b = '\n第二段。', file = paths.outline;
   const run = { messages: [], documentDrafts: [{ path: file, content: a + b, baseHash: 'base', hash: hash(a + b), chunks: 2 }] } as unknown as Run;

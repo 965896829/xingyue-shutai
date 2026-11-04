@@ -30,7 +30,7 @@ import { samePath } from '../recycle-bin';
 import { candidateChangesForCurrentSettings, compatibleRunBase } from '../runtime-settings';
 import { ProjectCommitService } from '../runtime/commit-kernel';
 import { voicePath } from '../quality';
-import { compareStoryPosition } from '../../shared/story-position';
+import { supersedeFact } from '../fact-transitions';
 import { mediaPath } from '../workbench-media';
 import { bookProfilePath, parseBookProfile } from '../publishing';
 import { plotAffectedChapters, plotPath } from '../workbench-plot';
@@ -269,18 +269,8 @@ export async function handleAdoptionCommand(
       if (f.supersedes) {
         const old = facts.find((x) => x.id === f.supersedes);
         if (!old) throw new Error('被替代记忆不存在');
-        if (!f.replacementReason) throw new Error('替代既有事实必须说明依据和原因');
-        old.state = 'superseded';
-        if (f.fromPosition && f.fromChapter >= old.fromChapter &&
-            (compareStoryPosition(f.fromPosition, old.fromPosition ?? { chapter: old.fromChapter }) ?? 1) > 0) {
-          old.untilPosition = f.fromPosition;
-          old.toChapter = f.fromChapter;
-        } else if (f.fromChapter <= old.fromChapter) {
-          // Without an ordered interval, retain the superseded record with unknown
-          // validity. Only an explicit retraction can declare its original claim wrong.
-          old.toChapter = null;
-          delete old.untilPosition;
-        } else old.toChapter = f.fromChapter - 1;
+        if (!f.replacementReason.trim()) throw new Error('替代既有事实必须说明依据和原因');
+        supersedeFact(old, f);
       }
       facts.push(f);
     }

@@ -20,6 +20,7 @@ let ready = false;
 let draining = false;
 const importer = new DocumentImporter(path.join(__dirname, 'document-worker.cjs'));
 const service = new Service(process.argv[2], (event) => port.postMessage({ event: { ...event, protocolVersion, workerGeneration: generation } }), undefined, (file, signal) => importer.read(file, signal));
+service.storyLabRoot = path.join(process.argv[3], 'story-lab');
 const requestRoot = path.join(process.argv[3], 'request-journal');
 fs.mkdirSync(requestRoot, { recursive: true });
 service.requestJournal = new FileStore(requestRoot);

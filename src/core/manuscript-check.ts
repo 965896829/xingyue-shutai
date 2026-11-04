@@ -14,16 +14,17 @@ const reviewEvidence = z.object({
   })).max(32)
 });
 
-export function checkReviewEvidence(file: string, report: string, prose: string): Issue[] {
+export function assessReviewEvidence(file: string, report: string, prose: string) {
   const blocks = [...report.matchAll(/^```json wenxu-review[\t ]*\r?\n([\s\S]*?)^```[\t ]*$/gm)];
   let value: z.infer<typeof reviewEvidence>;
   try {
     if (blocks.length !== 1) throw new Error();
     value = reviewEvidence.parse(JSON.parse(blocks[0][1]));
   } catch {
-    return [{ code: 'review_evidence_missing', severity: 'error', path: file, message: '审稿缺少完整的原文依据，需补齐五项判断、引文和理由。' }];
+    return { validationIssues: [{ code: 'review_evidence_missing', severity: 'error', path: file, message: '审稿缺少完整的原文依据，需补齐五项判断、引文和理由。' }] as Issue[], findings: [] as Issue[] };
   }
   const issues: Issue[] = [];
+  const findings: Issue[] = [];
   if (value.proseHash !== hash(prose))
     issues.push({ code: 'review_evidence_stale', severity: 'error', path: file, message: '审稿对应的正文已经变化，请重新审阅当前稿。' });
   if (value.checks.length !== reviewAspects.length || reviewAspects.some(aspect => value.checks.filter(check => check.aspect === aspect).length !== 1))
@@ -32,9 +33,14 @@ export function checkReviewEvidence(file: string, report: string, prose: string)
     if (!prose.includes(check.quote))
       issues.push({ code: 'review_evidence_quote', severity: 'error', path: file, message: `“${check.aspect}”引用的文字不在当前正文中，请重新核对。` });
     if (check.verdict !== 'pass')
-      issues.push({ code: 'review_finding', severity: check.verdict, path: file, message: `${check.aspect}：${check.reason}` });
+      findings.push({ code: 'review_finding', severity: check.verdict, path: file, message: `${check.aspect}：${check.reason}` });
   }
-  return issues;
+  return { validationIssues: issues, findings };
+}
+
+export function checkReviewEvidence(file: string, report: string, prose: string): Issue[] {
+  const assessment = assessReviewEvidence(file, report, prose);
+  return [...assessment.validationIssues, ...assessment.findings];
 }
 
 export function checkProse(file: string, content: string, config: ProjectConfig): Issue[] {

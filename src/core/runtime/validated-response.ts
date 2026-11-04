@@ -22,6 +22,7 @@ export async function validatedResponse<T>(options: {
   store: FileStore; run: Run; phase: string; instruction: string; input: object; signal: AbortSignal;
   initialPurpose?: string;
   decode?: (raw: string) => unknown;
+  revalidateCompleted?: boolean;
   send: (purpose: string, instruction: string, input: object) => Promise<string>;
   validate: (value: unknown) => T;
   assertCurrent: () => void;
@@ -36,7 +37,19 @@ export async function validatedResponse<T>(options: {
     options.assertCurrent();
     const key = `response-validation:v1:${ownerId}:${binding}:${attempt}`;
     const saved = store.db.get<ValidationReceipt>(key);
-    if (saved?.error) { previous = saved; continue; }
+    if (saved?.error) {
+      if (options.revalidateCompleted) {
+        try {
+          const raw = store.object(saved.responseRef).toString('utf8');
+          const parsed = options.decode ? options.decode(raw) : JSON.parse(normalizeToolArguments(raw));
+          const result = options.validate(parsed);
+          store.db.set(key, { ...saved, parse: 'valid', structure: 'valid', business: 'valid', error: undefined });
+          store.db.event(run.id, 'response-revalidated', '保留原始回执，已按当前合同确认审核结果有效', { phase: options.phase, responseRef: saved.responseRef });
+          return result;
+        } catch (error) { if (error instanceof ApplicationError) throw error; }
+      }
+      previous = saved; continue;
+    }
     const phase = attempt === 0 ? purpose : `${purpose}:repair:${attempt}:${binding}`;
     const ledger = attempts(store, ownerId);
     if (unresolvedAttempts(store, run, row => row.purpose === purpose || row.purpose.startsWith(`${purpose}:repair:`)).length)

@@ -5,7 +5,7 @@ import { factSchema, type ProjectState, type Run, type SecretProfile, type Issue
 import { chapterCoverageSchema } from '../../shared/chapter-memory';
 import { hash, memoryPaths, prosePath, updatePath, qualityPath } from '../domain';
 import { requiredCharacterCoverage, validateChapterCoverage, locateCoverageQuotes } from '../chapter-memory';
-import { checkReviewEvidence, reviewAspects } from '../manuscript-check';
+import { assessReviewEvidence, checkReviewEvidence, reviewAspects } from '../manuscript-check';
 import { validatedResponse } from '../runtime/validated-response';
 import { compatibleRunBase } from '../runtime-settings';
 import { ApplicationError } from '../../shared/errors';
@@ -20,9 +20,20 @@ import { validateCandidate } from '../validation';
 export function requiresRevisionCore(store: FileStore, run: Run) {
   return !!run.revisionCoreRequired && !run.revisionCore && !run.pipeline && !run.memoryRepair && run.changes.some(c => c.path.startsWith('07_') && (!store.db.document(c.path)?.hash || !sameStoryText(store.readAccepted(c.path).content, c.content)));
 }
+export function revisionProseFindings(run: Run): Issue[] {
+  return (run.revisionCore?.chapters ?? []).flatMap(chapter => {
+    const prose = run.changes.find(change => change.path === prosePath(chapter));
+    const report = run.revisionCore?.reports[chapter];
+    if (!prose || !report || hash(prose.content) !== run.revisionCore?.proseHashes[chapter]) return [];
+    const assessment = assessReviewEvidence(qualityPath(chapter), report, prose.content);
+    return assessment.validationIssues.length ? [] : assessment.findings;
+  });
+}
 export function revisionCoreIssues(store: FileStore, run: Run): Issue[] {
   const core = run.revisionCore;
   if (!core) return [];
+  const findings = revisionProseFindings(run);
+  if (findings.some(issue => issue.severity === 'error')) return findings;
   try {
     if (core.version !== 1 || core.phase !== 'ready') throw new Error('修订正文与核心记忆尚未完成核对');
     for (const chapter of core.chapters) {
@@ -37,6 +48,24 @@ export function revisionCoreIssues(store: FileStore, run: Run): Issue[] {
   } catch (error) { return [{ code: 'revision_core', severity: 'error', message: (error as Error).message }]; }
 }
 type Host = Pick<AgentRunner, 'store' | 'save' | 'skillRoot' | 'memoryCall' | 'auditMemory' | 'check'>;
+export function revisionMaterials(store: FileStore, run: Run, chapter: number) {
+  const scoped = { ...run, chapter };
+  const prose = run.changes.find(change => change.path === prosePath(chapter))?.content ?? '';
+  const characters = requiredCharacterCoverage(store, scoped);
+  const selection = { query: prose, chapter, entityIds: characters.map(character => character.entityId), sourcePaths: [prosePath(chapter)], textSearch: false };
+  const facts = store.db.factsForTask(run.taskScope?.memory ?? { worldId: 'main', timelineId: 'main' }, selection);
+  const dependencies = new Set(facts.flatMap(fact => fact.evidence.map(evidence => evidence.path)));
+  const documents = [...memoryPaths, updatePath(chapter)].flatMap(path => {
+    const changed = run.changes.find(change => change.path === path);
+    const content = changed?.content ?? (store.db.document(path)?.hash ? store.readAccepted(path).content : '');
+    if (content.length > 2000 && path !== updatePath(chapter) && !changed && !dependencies.has(path) &&
+        !characters.some(character => content.includes(character.name) || content.includes(character.entityId))) return [];
+    return [{ path, content }];
+  });
+  // Full selected documents are retained because this operation replaces files.
+  // The gateway rejects an oversized request; an excerpt must never replace a ledger.
+  return { characters, facts, documents, selection };
+}
 export function applyRevisionMemoryRepair(store: FileStore, run: Run, raw: unknown) {
   const core = run.revisionCore!;
   const result = z.object({
@@ -71,6 +100,7 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
   setRunStatus(run, 'running'); host.save(run);
   const request = <T>(phase: string, instruction: string, input: object, validate: (value: unknown) => T) =>
     validatedResponse({ store: host.store, run, phase, instruction, input, signal, validate,
+      revalidateCompleted: phase.startsWith('revision-review-'),
       send: (purpose, rule, payload) => host.memoryCall(run, project, profile, signal, purpose, rule, payload),
       assertCurrent: () => {
         if (!compatibleRunBase(host.store, run)) throw new ApplicationError('VERSION_CONFLICT', '修订依据已改变，停止使用旧响应');
@@ -85,9 +115,10 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
     if (hash(prose.content) !== core.proseHashes[chapter]) throw new Error('修订候选已变化');
     const scoped = { ...run, chapter, pipeline: { phase: 'memory' as const, proseHash: core.proseHashes[chapter], epoch: run.id, version: 1, previewCalls: 0, coverageVersion: 1 as const } };
     if (!core.coverage[chapter]) {
-      const allowed = [...memoryPaths, updatePath(chapter)];
-      const documents = allowed.map(path => ({ path, content: run.changes.find(c => c.path === path)?.content ?? (host.store.db.document(path)?.hash ? host.store.readAccepted(path).content : '') }));
-      const input = { chapter, prose: { ...prose, hash: core.proseHashes[chapter] }, requiredCharacters: requiredCharacterCoverage(host.store, scoped), currentFacts: host.store.db.facts(), candidateFacts: run.facts, documents,
+      const materials = revisionMaterials(host.store, run, chapter);
+      const { documents } = materials;
+      const allowed = documents.map(document => document.path);
+      const input = { chapter, prose: { ...prose, hash: core.proseHashes[chapter] }, requiredCharacters: materials.characters, currentFacts: materials.facts, candidateFacts: run.facts, documents,
         formatRequirements: validateCandidate(run.stage, { ...project, chapter }, documents.map(d => ({ ...d, baseHash: null })), host.skillRoot, 'revision').filter(i => i.severity === 'error').map(i => ({ path: i.path, code: i.code, message: i.message })),
         schemas: { fact: z.toJSONSchema(factSchema), coverage: z.toJSONSchema(chapterCoverageSchema) } };
       const { result, nextFacts, coverage } = await request(`revision-extract-${chapter}`, creationPolicy(host.skillRoot, 'memory-delta.extract').content + '\n根据修订后正文批量提取人物与核心记忆。只返回 JSON {documents:[{path,content}],facts:[],coverage:...}。documents 只允许已给路径，包含本章记忆更新；facts 与 coverage 按给定 schema。错误旧事实按合同处理 supersedes 或撤回，覆盖全部出场人物。', input, value => {
@@ -109,7 +140,7 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
     if (!core.reports[chapter]) {
       const report = await request(`revision-review-${chapter}`, creationPolicy(host.skillRoot, 'chapter-review.review').content + `\n独立审阅最终修订正文。只返回 JSON {report:"完整 Markdown 审稿报告"}。填写输入模板全部字段和十项分数，总分正确；报告附 json wenxu-review 代码块 {proseHash,checks:[{aspect,verdict,quote,reason}]}，checks 恰好五项：${reviewAspects.join('、')}。verdict 为 pass/warning/error；quote 是正文连续原文至少8字，reason 至少8字。故事依据、人物一致性与表达建议分别判断，文学偏好只作为 warning，硬矛盾才是 error。`, { prose: prose.content, proseHash: core.proseHashes[chapter], constraints: project.config.constraints, template: templates(host.skillRoot)['章节质量评分'] }, value => {
       const report = z.object({ report: z.string().min(1) }).strict().parse(value).report;
-      const issues = checkReviewEvidence(qualityPath(chapter), report, prose.content);
+      const issues = assessReviewEvidence(qualityPath(chapter), report, prose.content).validationIssues;
       if (issues.some(i => i.severity === 'error')) throw new Error(issues.map(i => i.message).join('；'));
       return report;
       });
@@ -117,6 +148,15 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
       const existing = run.changes.find(c => c.path === qualityPath(chapter));
       if (existing) existing.content = report; else run.changes.push({ path: qualityPath(chapter), content: report, baseHash: host.store.db.document(qualityPath(chapter))?.hash ?? null });
       host.save(run);
+    }
+    const findings = revisionProseFindings(run);
+    if (findings.some(issue => issue.severity === 'error')) {
+      core.phase = 'needs_prose_revision';
+      host.check(run, project);
+      run.responseText = '审稿已完成并保存，正文存在需要修改的问题。请根据审稿意见修改正文，再核对新版本。';
+      run.error = undefined;
+      setRunStatus(run, 'needs_repair'); host.save(run);
+      return;
     }
   }
   const repairFormat = async () => { for (let attempt = run.repairAttempts?.memory_sync ?? 0; attempt < 3; attempt++) {
@@ -140,7 +180,7 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
   for (let attempt = run.repairAttempts?.revision_memory ?? 0; run.memoryReview?.issues.length && attempt < 2; attempt++) {
     const input = { chapters: core.chapters, prose: run.changes.filter(c => c.path.startsWith('07_')), proseHashes: core.proseHashes,
       documents: run.changes.filter(c => memoryPaths.some(path => path === c.path) || core.chapters.some(chapter => c.path === updatePath(chapter))),
-      facts: run.facts, currentFacts: host.store.db.facts(), coverage: core.coverage, review: run.memoryReview,
+      facts: run.facts, currentFacts: [...new Map(core.chapters.flatMap(chapter => revisionMaterials(host.store, run, chapter).facts).map(fact => [fact.id, fact])).values()], coverage: core.coverage, review: run.memoryReview,
       schemas: { fact: z.toJSONSchema(factSchema), coverage: z.toJSONSchema(chapterCoverageSchema) } };
     const repaired = await request(`revision-memory-repair-${attempt + 1}`, professionalMethod(host.skillRoot, 'memory').content + '\n' + professionalMethod(host.skillRoot, 'memory-repair').content + '\n根据独立核对指出的问题定向修复记忆和人物覆盖，绝对不能改写正文。只返回 JSON {documents:[{path,content}],facts:[],coverages:[{chapter,coverage}]}。facts 返回完整候选事实，未被审核否定的既有候选事实须逐字段保留；缺少的人物允许无变化、依据不足、仅提及，不强制新增事实。coverages 覆盖每个修订章节，含未具名但出场的人员，使用来源可追溯的稳定标识。documents 仅返回需修正的记忆台账及章后更新，不返回正文或审稿。不得声称另一份不存在的记录已完成核对。', input, value => {
       const candidate = structuredClone(run);

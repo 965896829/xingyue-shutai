@@ -238,7 +238,8 @@ export function validateCandidate(
   p: ProjectState,
   changes: Change[],
   skillRoot: string,
-  mode = 'stage'
+  mode = 'stage',
+  previousContents?: ReadonlyMap<string, string>
 ): Issue[] {
   const issues: Issue[] = [],
     b = activeBatch(p),
@@ -286,7 +287,7 @@ export function validateCandidate(
       issues.push({ code: 'file_type', severity: 'error', path: c.path, message: '写作产物必须是 Markdown' });
       continue;
     }
-    if (mode === 'stage') issues.push(...authorStructureIssues(c));
+    if (mode === 'stage') issues.push(...authorStructureIssues(c, previousContents?.get(c.path)));
     const lines = c.content.split(/\r?\n/);
     for (const header of tableContracts[c.path] ?? []) {
       const cells = (line: string) =>

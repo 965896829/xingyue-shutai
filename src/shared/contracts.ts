@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { labSessionSchema, labDetailSchema, labCreateSchema, labUpdateSchema, labEditSchema, labSelectSchema, labGenerateSchema, labContextSchema, labRequestSchema, labExportSchema } from './story-lab';
 import { skillExecutionSchema } from './skill-contract';
 import { writingStyleRequestSchema, writingStyleReportSchema } from './writing-style';
 import { bookProfileSchema, bookProfileStateSchema, publishingSnapshotSchema } from './publishing';
@@ -58,6 +59,16 @@ function define<I extends z.ZodType, O extends z.ZodType>(input: I, output: O, a
 }
 
 export const commandContracts = {
+  'lab.list': define(empty, z.array(labSessionSchema), 'read', 'global'),
+  'lab.read': define(z.strictObject({ sessionId: z.string().uuid() }), labDetailSchema, 'read', 'global'),
+  'lab.create': define(labCreateSchema, labDetailSchema, 'write', 'global'),
+  'lab.update': define(labUpdateSchema, labDetailSchema, 'write', 'global'),
+  'lab.edit': define(labEditSchema, labDetailSchema, 'write', 'global'),
+  'lab.select': define(labSelectSchema, labDetailSchema, 'write', 'global'),
+  'lab.preview': define(labGenerateSchema, labContextSchema, 'read', 'global'),
+  'lab.generate': define(labGenerateSchema, labRequestSchema, 'write', 'global'),
+  'lab.cancel': define(z.strictObject({ sessionId: z.string().uuid(), requestId: z.string().uuid() }), ok, 'write', 'global'),
+  'lab.export': define(labExportSchema, z.strictObject({ filename: text, content: text, path: text }), 'write', 'global'),
   'style.recommend': define(writingStyleRequestSchema, writingStyleReportSchema, 'remote', 'global'),
   'style.cancel': define(z.strictObject({ requestId: z.string().uuid() }), ok, 'write', 'global'),
   'publishing.refresh': define(empty, z.object({ updated: ok, catalog: publishingSnapshotSchema, message: text }), 'remote', 'global'),
@@ -84,7 +95,7 @@ export const commandContracts = {
   'quality.exportReview': define(z.strictObject({ experimentIds: z.array(key).min(1).max(100) }), z.strictObject({ packetId: key, html: text }), 'write'),
   'quality.importReview': define(z.strictObject({ expectedRevision: integer, feedback: reviewFeedbackSchema }), z.strictObject({ state: qualityStateSchema, imported: integer, duplicate: ok }), 'write'),
   'design.list': define(empty, z.array(designEntrySchema)),
-  'experience.read': define(z.object({ throughChapter: integer.min(1).max(maxExperienceChapter) }).strict(), experienceSchema),
+  'experience.read': define(z.object({ throughChapter: integer.min(1).max(maxExperienceChapter), fromChapter: integer.min(1).max(maxExperienceChapter).optional(), before: integer.min(1).optional(), watermark: integer.min(0).optional(), pageSize: integer.min(1).max(100).optional() }).strict(), experienceSchema),
   'design.run': define(z.object({ input: designInputSchema, profileId: optionalText }).strict(), key, 'write'),
   'quality.mutate': define(z.strictObject({ expectedRevision: integer, mutation: qualityMutationSchema }), qualityStateSchema, 'write'),
   'quality.statistics': define(z.strictObject({ experimentId: key }), qualityStatsSchema),

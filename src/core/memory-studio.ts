@@ -68,8 +68,8 @@ export function applicableFact(f: Fact, scope: MemoryScope) {
 export function visibleFact(f: Fact, scope: MemoryScope) {
   if (!applicableFact(f, scope)) return false;
   if (scope.viewpoint === 'author') return true;
-  if (f.revealedAt > scope.chapter || ['plan', 'author_constraint', 'expression_sample'].includes(f.kind)) return false;
-  if (scope.viewpoint === 'reader') return true;
+  if (['plan', 'author_constraint', 'expression_sample'].includes(f.kind)) return false;
+  if (scope.viewpoint === 'reader') return f.revealedAt <= scope.chapter;
   return f.knowledge.some(
     (k) => k.who === scope.characterId && k.fromChapter <= scope.chapter && k.mode !== 'unknown' &&
       (f.kind === 'belief' || k.mode !== 'misunderstood') &&
@@ -143,12 +143,15 @@ export function retrieveMemory(
   input: unknown,
   limit = 20,
   browse?: { category: string; offset: number; pageSize: number },
-  validateSource?: ReturnType<typeof sourceValidator>
+  validateSource?: ReturnType<typeof sourceValidator>,
+  recalledFacts?: Fact[]
 ) {
   const scope = memoryScopeSchema.parse(input),
     snapshot = scopeSnapshotInfo(store, scope);
   if (!snapshot) throw new Error('作品尚无正式快照');
-  const all = scopeFacts(store, scope);
+  const all = recalledFacts ?? (scope.mode === 'current' && !scope.snapshotId && query
+    ? store.db.factsForTask(scope, { query, entityIds: scope.characterId ? [scope.characterId] : [], chapter: scope.chapter })
+    : scopeFacts(store, scope));
   const validSource = validateSource ?? sourceValidator(store, snapshot.documents, scope.chapter, snapshot.project);
   const visible = all.filter((f) => visibleFact(f, scope));
   const names = [...new Set(visible.filter(f => [f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))).flatMap(f => [f.subject, ...f.aliases]))];

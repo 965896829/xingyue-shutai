@@ -43,6 +43,8 @@ import { chapterCoverageInstruction, requiredCharacterCoverage } from '../chapte
 import { alignChapterTitle, chapterNamingContext, chapterTitleIssues } from '../chapter-naming';
 import { writeScopedScenes } from './scene-draft';
 import { proseTask } from '../prose-task';
+import { fingerprint } from '../runtime/canonical';
+import { bindContextReadPlan } from '../context-reading';
 
 export type ChapterWorkflowHost = Pick<
   AgentRunner,
@@ -97,21 +99,39 @@ export async function driveChapterWorkflow(
   const writer = select('writing'),
     reviewer = select('review'),
     extractor = select('extraction');
+  let pendingTransitionIssues: Run['issues'] = [];
+  if (pipeline.phase === 'ready') {
+    host.check(r, p);
+    pendingTransitionIssues = r.issues.filter(issue => issue.code === 'fact_transition');
+    if (pendingTransitionIssues.length) {
+      pipeline.phase = 'memory';
+    }
+  }
   const { resident } = host.contextResident(r, p, naming);
   const reviewReferences = r.pipeline?.phase !== 'prose' ? r.manifest?.referenceSources : undefined;
-  r.manifest = assembleContext(host.store, p, 'S10', r.request, writer, false, { resident, scope: r.taskScope?.memory });
+  let restoredPhase = false;
+  if (pipeline.phase !== 'prose' && r.messages.length && r.manifest && !contextChanged(host.store, r.manifest)) {
+    try {
+      const packet = JSON.parse(r.messages.find(message => message.role === 'user')?.content ?? '');
+      const phase = pipeline.phase === 'memory' ? 'memory' : 'review';
+      restoredPhase = fingerprint(packet.sources) === fingerprint(contextPayload(r.manifest, p, phase).sources);
+    } catch {}
+  }
+  if (!restoredPhase) r.manifest = assembleContext(host.store, p, 'S10', r.request, writer, false, { resident, scope: r.taskScope?.memory });
   // Keep a completed review's evidence through memory extraction and approval;
   // only a new prose draft can replace that review and its source versions.
-  r.manifest.referenceSources = [...new Map([...(r.manifest.referenceSources ?? []), ...(reviewReferences ?? [])].map(source => [source.path, source])).values()];
-  await host.enrichContext(r, p, writer);
-  fitContext(r.manifest, writer, resident, 0, true, p);
+  r.manifest!.referenceSources = [...new Map([...(r.manifest!.referenceSources ?? []), ...(reviewReferences ?? [])].map(source => [source.path, source])).values()];
+  if (!restoredPhase) {
+    await host.enrichContext(r, p, writer);
+    fitContext(r.manifest!, writer, resident, 0, true, p);
+  }
   const context = {
     ...modelTaskEnvelope(host.store, host.skillRoot, r, 'prose'),
     ...chapterNamingContext(r),
     task: '生成本章正文，审阅与记忆由对应子任务处理。',
     authorRequest: r.request,
-    authorPremise: r.manifest.scope?.viewpoint === 'character' ? undefined : host.store.db.get('premise'),
-    ...contextPayload(r.manifest, p, 'prose'),
+    authorPremise: r.manifest!.scope?.viewpoint === 'character' ? undefined : host.store.db.get('premise'),
+    ...contextPayload(r.manifest!, p, 'prose'),
     chapter: p.chapter,
     batch: r.batch
   };
@@ -350,7 +370,7 @@ export async function driveChapterWorkflow(
     const expression = expressionPack(host.skillRoot, p.config, phase === 'memory' ? 'record' : 'review');
     bindExpressionRules(r, expression.binding);
     const system = `${systemPrompt(host.skillRoot, p, stage, naming, skillId, { outputMode: phase })}\n本阶段为 ${phase}。${phase === 'memory' ? '记忆与正文一起待作者确认。证据 hash 使用候选哈希；同步字段填待提交。' : `质量报告路径：${qualityPath(r.chapter)}。`}实际字数 ${countWords(prose.content)}；候选哈希 ${pipeline.proseHash}。${expression.prompt}${phase === 'memory' ? sharedRuleBlock('source-reuse', sourceReuseInstructions) : ''}`;
-    if (!r.messages.length) {
+    if (!r.messages.length || !restoredPhase) {
       if (phase === 'memory') {
         // The Skill requires current ledgers before updating them. Supply each
         // exact full version once instead of forcing a model round to re-read
@@ -377,6 +397,9 @@ export async function driveChapterWorkflow(
         host.save(r);
       }
       preloadOutputTargets(host.store, r, p, r.manifest!);
+      bindContextReadPlan(r.manifest!);
+    }
+    if (!r.messages.length) {
       const input = {
         authorPremise: context.authorPremise, authorRequest: r.request,
         chapter: p.chapter, batch: r.batch,
@@ -429,6 +452,24 @@ export async function driveChapterWorkflow(
           modelRequests: 0
         });
       } else r.messages.push({ role: 'user', content: JSON.stringify(input) });
+    } else if (!restoredPhase) {
+      const at = r.messages.findIndex(message => message.role === 'user');
+      const previous = JSON.parse(r.messages[at].content);
+      r.messages[at].content = JSON.stringify({ ...previous,
+        ...modelTaskEnvelope(host.store, host.skillRoot, r, phase),
+        ...contextPayload(r.manifest!, p, phase),
+        authorRequest: r.request, authorPremise: context.authorPremise,
+        prose: { ...prose, hash: pipeline.proseHash }, repairScope: repairContext(r),
+        existingCandidates: r.changes.filter(c => c.path !== prose.path && (phase !== 'memory' || c.path !== qualityPath(r.chapter)))
+      });
+      host.event(r, 'phase-context-rebuilt', '按当前有效版本重新绑定本阶段资料，保留请求历史、候选与累计用量');
+      host.save(r);
+    }
+    if (pendingTransitionIssues.length) {
+      if (!host.queueRepair(r, p, pendingTransitionIssues, 'memory')) {
+        setRunStatus(r, 'needs_repair'); host.save(r); return;
+      }
+      pendingTransitionIssues = [];
     }
     const lastAssistant = [...r.messages].reverse().find((m) => m.role === 'assistant');
     for (const tool of lastAssistant?.calls ?? [])

@@ -13,6 +13,8 @@ import { DatabaseSync } from 'node:sqlite';
 import { checkDatabaseCompatibility, databaseVersion } from './compatibility';
 import { decodeSnapshot, encodeSnapshot, type StoredSnapshot } from './snapshot-codec';
 import { indexProse } from './prose-index';
+import { queryTerms } from './text-search';
+import { ensureFactRecallIndex } from './fact-recall-index';
 import { updateFactIndex } from './fact-index';
 import { assertRunTransition } from './runtime/run-state';
 import { ApplicationError } from '../shared/errors';
@@ -110,7 +112,14 @@ export function atomicWrite(file: string, data: string | Buffer) {
   const tmp = `${file}.${id()}.tmp`;
   durableCreate(tmp, data);
   try {
-    fs.renameSync(tmp, file);
+    const delays = process.platform === 'win32' ? [20, 40, 80, 160, 320] : [];
+    for (let attempt = 0; ; attempt++) {
+      try { fs.renameSync(tmp, file); break; }
+      catch (error) {
+        if (attempt >= delays.length || !['EPERM', 'EACCES', 'EBUSY'].includes((error as NodeJS.ErrnoException).code ?? '') || !fs.existsSync(tmp)) throw error;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delays[attempt]);
+      }
+    }
   } catch (e) {
     if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
     throw e;
@@ -188,6 +197,8 @@ export class Database {
       CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY,path TEXT UNIQUE NOT NULL,hash TEXT,bytes INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS revisions(document_id TEXT NOT NULL,hash TEXT NOT NULL,created_at TEXT NOT NULL,tx TEXT NOT NULL,PRIMARY KEY(document_id,hash));
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS run_creative_read ON runs(json_extract(data,'$.creative.input.operation'),json_extract(data,'$.creative.input.throughChapter'));
+      CREATE INDEX IF NOT EXISTS run_revision_source ON runs(json_extract(data,'$.revisionCore.sourceRunId'));
       CREATE TABLE IF NOT EXISTS events(seq INTEGER PRIMARY KEY AUTOINCREMENT,run_id TEXT NOT NULL,kind TEXT NOT NULL,text TEXT NOT NULL,at TEXT NOT NULL,data TEXT);
       CREATE TABLE IF NOT EXISTS facts(id TEXT PRIMARY KEY,data TEXT NOT NULL,source_hash TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS fact_world_timeline ON facts(json_extract(data,'$.worldId'),json_extract(data,'$.timelineId'));
@@ -227,6 +238,7 @@ export class Database {
       CREATE TABLE IF NOT EXISTS execution_checkpoints(run_id TEXT NOT NULL,sequence INTEGER NOT NULL,data TEXT NOT NULL,PRIMARY KEY(run_id,sequence));
       CREATE TABLE IF NOT EXISTS execution_records(id TEXT PRIMARY KEY,run_id TEXT NOT NULL,data TEXT NOT NULL);
       PRAGMA user_version=${databaseVersion}; COMMIT;`);
+      ensureFactRecallIndex(this.sql);
     } catch (error) {
       try {
         this.sql.exec('ROLLBACK');
@@ -297,6 +309,28 @@ export class Database {
       this.sql.prepare('SELECT data FROM runs ORDER BY rowid DESC LIMIT 100').all() as { data: string }[]
     ).map((r) => this.withUsage(JSON.parse(r.data)));
   }
+  revisionReviews(sourceId: string): Run[] {
+    return this.sql.prepare("SELECT data FROM runs WHERE json_extract(data,'$.revisionCore.sourceRunId')=? ORDER BY rowid DESC")
+      .all(sourceId).map(row => this.withUsage(JSON.parse(String(row.data))));
+  }
+  firstReadPage(throughChapter: number, options: { fromChapter?: number; before?: number; watermark?: number; pageSize?: number } = {}) {
+    const limit = Math.max(1, Math.min(100, options.pageSize ?? 50));
+    const watermark = options.watermark ?? Number(this.sql.prepare('SELECT COALESCE(MAX(rowid),0) AS n FROM runs').get()!.n);
+    const rows = this.sql.prepare(`SELECT rowid AS cursor,id,
+      json_extract(data,'$.creative.input.throughChapter') AS chapter,
+      json_extract(data,'$.creative.input.fromChapter') AS fromChapter,
+      json_extract(data,'$.creative.result.content') AS content,
+      json_extract(data,'$.creative.sourceVersions') AS sources
+      FROM runs WHERE json_extract(data,'$.creative.input.operation')='first-read'
+      AND json_type(data,'$.creative.result.content')='text'
+      AND json_extract(data,'$.creative.input.throughChapter') BETWEEN ? AND ?
+      AND rowid<=? AND rowid<? ORDER BY rowid DESC LIMIT ?`)
+      .all(options.fromChapter ?? 1, throughChapter, watermark, options.before ?? watermark + 1, limit + 1);
+    return { items: rows.slice(0, limit).map(row => ({ id: String(row.id), chapter: Number(row.chapter),
+      fromChapter: Number(row.fromChapter ?? 1), content: String(row.content),
+      sources: JSON.parse(String(row.sources ?? '[]')) as { path: string; hash: string }[] })),
+      watermark, nextBefore: rows.length > limit ? Number(rows[limit - 1].cursor) : null };
+  }
   runPage(before?: number, watermark?: number, limit = 100) {
     const boundary = watermark ?? Number(this.sql.prepare('SELECT COALESCE(MAX(rowid),0) AS n FROM runs').get()!.n);
     const rows = this.sql.prepare('SELECT rowid AS cursor,data FROM runs WHERE rowid<=? AND rowid<? ORDER BY rowid DESC LIMIT ?').all(boundary, before ?? boundary + 1, limit + 1);
@@ -357,11 +391,13 @@ export class Database {
     return { items: rows.slice(0, limit).map(row => ({ hash: String(row.hash), createdAt: String(row.createdAt), tx: String(row.tx) })), watermark: boundary, nextBefore: rows.length > limit ? Number(rows[limit - 1].cursor) : null };
   }
   replaceFacts(facts: Fact[], revision: number) {
+    this.transaction(() => {
     this.sql.exec('DELETE FROM facts');
     const insert = this.sql.prepare('INSERT INTO facts VALUES(?,?,?)');
     for (const f of facts) insert.run(f.id, JSON.stringify(f), f.evidence.map((e) => e.hash).join(','));
     this.set('indexRevision', revision);
     this.set('factLedgerIndexValid', false);
+    });
   }
   facts(scope?: { worldId: string; timelineId: string }): Fact[] {
     const rows = scope
@@ -370,6 +406,38 @@ export class Database {
     return (rows as { data: string }[]).map((r) =>
       JSON.parse(r.data)
     );
+  }
+  factsByIds(ids: string[]): Fact[] {
+    if (!ids.length) return [];
+    return this.sql.prepare('SELECT data FROM facts WHERE id IN (SELECT value FROM json_each(?)) ORDER BY rowid')
+      .all(JSON.stringify(ids)).map(row => JSON.parse(String(row.data)) as Fact);
+  }
+  factsForTask(scope: { worldId: string; timelineId: string }, selection: import('../shared/workflow').FactSelection): Fact[] {
+    const rows = this.sql.prepare(`WITH names AS MATERIALIZED (
+      SELECT DISTINCT name FROM fact_recall_names WHERE length(name)>0 AND instr(?,name)>0
+    ), named AS MATERIALIZED (
+      SELECT DISTINCT n.fact_id FROM fact_recall_names n JOIN names ON names.name=n.name
+    ), identities AS MATERIALIZED (
+      SELECT value AS entity FROM json_each(?) UNION
+      SELECT DISTINCT e.entity FROM fact_recall_links e JOIN fact_recall r ON r.id=e.fact_id
+      WHERE r.world=? AND r.timeline=? AND e.role='entity' AND (
+        e.fact_id IN (SELECT fact_id FROM named) OR (length(e.entity)>0 AND instr(?,e.entity)>0))
+    ), linked AS MATERIALIZED (
+      SELECT DISTINCT fact_id FROM fact_recall_links WHERE (role IN ('entity','related') AND entity IN (SELECT entity FROM identities))
+        OR (role='knowledge' AND entity IN (SELECT value FROM json_each(?)))
+    ), sources AS MATERIALIZED (
+      SELECT fact_id FROM fact_recall_sources WHERE path IN (SELECT value FROM json_each(?))
+    ), terms AS MATERIALIZED (SELECT value FROM json_each(?))
+    SELECT f.data FROM fact_recall r JOIN facts f ON f.id=r.id
+    WHERE r.world=? AND r.timeline=? AND (? OR r.chapter<=?) AND (
+      r.kind IN ('world_rule','author_constraint') OR (r.scope='global' AND (r.mandatory=1 OR r.category IN ('injury','promise','hook')))
+      OR r.id IN (SELECT fact_id FROM named) OR r.id IN (SELECT fact_id FROM linked) OR r.id IN (SELECT fact_id FROM sources)
+      OR (? AND (EXISTS (SELECT 1 FROM terms WHERE instr(r.search_text,terms.value)>0) OR ?=''))
+      OR instr(?,r.id)>0
+    ) ORDER BY f.rowid`).all(selection.query, JSON.stringify(selection.entityIds), scope.worldId, scope.timelineId, selection.query,
+      JSON.stringify(selection.entityIds), JSON.stringify(selection.sourcePaths ?? []), JSON.stringify(queryTerms(selection.query)),
+      scope.worldId, scope.timelineId, selection.includeFuture ? 1 : 0, selection.chapter, selection.textSearch === false ? 0 : 1, selection.query, selection.query);
+    return rows.map(row => JSON.parse(String(row.data)) as Fact);
   }
   head(): CanonicalSnapshot | null {
     const key = this.get<string>('headSnapshot');
