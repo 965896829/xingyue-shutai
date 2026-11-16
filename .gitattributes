@@ -1,3 +1,6 @@
+* text=auto eol=lf
+# Prompt bytes are hashed recovery inputs. Preserve the committed bytes on every OS.
+resources/skill/** -text -whitespace
 resources/skill/runtime/** -text -whitespace
 resources/skill/expression/** -text -whitespace
 resources/skill/tags/** -text -whitespace

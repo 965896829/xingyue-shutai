@@ -1,19 +1,26 @@
 {
   "name": "wenxu-desktop",
-  "version": "0.4.97",
+  "version": "0.4.97-macos.1",
   "private": true,
   "description": "星月书台 · 本地网文创作工作台",
   "author": "AIkehuduan",
   "type": "module",
   "main": "dist-electron/main.cjs",
+  "engines": {
+    "node": ">=24.11.1 <25"
+  },
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "dev:isolated": "node scripts/dev.mjs --isolated",
+    "doctor": "node scripts/doctor.mjs",
     "build": "tsc --noEmit && vite build && node scripts/build-main.mjs",
     "test": "node --import tsx --test --test-concurrency=1 tests/*.test.ts",
     "check": "tsc --noEmit",
     "start": "electron .",
     "pack": "npm run build && electron-builder --win dir",
     "dist": "npm run build && electron-builder --win nsis",
+    "pack:mac": "node scripts/package-macos.mjs dir",
+    "dist:mac": "node scripts/package-macos.mjs dist",
     "preview": "vite --host 127.0.0.1",
     "test:scale": "node --import tsx tests/scale.ts",
     "test:large-book": "node scripts/test-large-book.mjs",
@@ -40,6 +47,18 @@
       }
     ],
     "asar": true,
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.productivity",
+      "icon": "public/brand/app-icon.png",
+      "minimumSystemVersion": "13.5",
+      "identity": "-",
+      "hardenedRuntime": true,
+      "entitlements": "resources/entitlements.mac.plist",
+      "entitlementsInherit": "resources/entitlements.mac.plist",
+      "notarize": false,
+      "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
+    },
     "win": {
       "target": [
         {
