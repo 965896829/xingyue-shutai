@@ -1,7 +1,6 @@
-import fs from 'node:fs';
 import { databaseVersion } from '../../src/core/compatibility';
 import path from 'node:path';
-import { FileStore } from '../../src/core/storage';
+import { atomicWrite, FileStore } from '../../src/core/storage';
 import { callModel } from '../../src/core/runtime/model-gateway';
 import { fakeProfile, fakeResult } from './refactor';
 import { DatabaseSync } from 'node:sqlite';
@@ -10,7 +9,8 @@ const [root, point, runId] = process.argv.slice(2);
 const base = path.resolve('.test-output/refactor/fixtures');
 if (!path.resolve(root).startsWith(base + path.sep)) throw new Error('拒绝测试路径越界');
 const halt = () => {
-  fs.writeFileSync(path.join(root, 'crash-barrier.json'), JSON.stringify({ point, pid: process.pid }));
+  // Publish the complete barrier before the parent observes it and kills this process.
+  atomicWrite(path.join(root, 'crash-barrier.json'), JSON.stringify({ point, pid: process.pid }));
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0);
 };
 if (point === 'migration-in-progress') {
