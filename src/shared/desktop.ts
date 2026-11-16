@@ -7,6 +7,8 @@ export interface WindowAppearance {
   animate?: boolean;
 }
 export interface DesktopApi {
+  /** macOS owns its title bar and application menu; older bridges omit this flag. */
+  readonly nativeTitleBar?: boolean;
   setAppearance(appearance: WindowAppearance): Promise<void>;
   openMenu(menu: DesktopMenu, position: { x: number; y: number }): Promise<void>;
   onHomeRequested(listener: () => void): () => void;

@@ -30,6 +30,7 @@ export function WindowTitleBar({ onHome, homeDisabled }: { onHome: () => void; h
   };
 
   useEffect(() => {
+    if (window.wenxu?.desktop?.nativeTitleBar) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'F10' && !event.shiftKey) {
         event.preventDefault();
@@ -48,7 +49,7 @@ export function WindowTitleBar({ onHome, homeDisabled }: { onHome: () => void; h
   }, []);
 
   // Browser previews and non-desktop renderers have no window controls to manage.
-  if (!window.wenxu?.desktop) return null;
+  if (!window.wenxu?.desktop || window.wenxu.desktop.nativeTitleBar) return null;
   return (
     <header className="window-titlebar">
       <div className="window-titlebar-safe">

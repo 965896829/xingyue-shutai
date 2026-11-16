@@ -1,6 +1,8 @@
 # 星月书台 · 网文写作客户端
 
-Windows 本地创作客户端。源码版本以 [package.json](package.json) 为准；源码、安装包和本机已安装程序是不同状态，构建成功不表示已经覆盖安装。
+本地创作客户端。本分支为基于 **0.4.97** 的 macOS 开发准备版，保留原创作流程和提示词。Windows 构建继续保留；Mac 新机器下载、开发、打包和作品迁移见 **[Mac mini 开发指南](docs/macos-development.md)**。Mac 交互功能仍需目标设备实机验收。
+
+源码版本以 [package.json](package.json) 为准；源码、安装包和本机已安装程序是不同状态，构建成功不表示已经覆盖安装。
 
 ## 当前结构
 
@@ -24,11 +26,12 @@ Windows 本地创作客户端。源码版本以 [package.json](package.json) 为
 
 ## 开发与构建
 
-需要 Node.js 24 或支持项目依赖的兼容版本。
+需要 Node.js 24.x（至少 24.11.1），版本范围见 `engines`，nvm 用户可使用 `.nvmrc`。
 
 ```powershell
 npm ci
-npm run dev
+npm run doctor
+npm run dev:isolated
 ```
 
 ```powershell
@@ -39,6 +42,8 @@ npm start
 ```
 
 Windows 安装包使用 `npm run dist`，输出到 `release/`；可运行目录为 `release/win-unpacked/`，其中的程序和资源需要一起保留。编译、离线回归和打包不需要模型 API Key；安装包未配置代码签名证书。
+
+Mac 在本机使用 `npm run pack:mac` / `npm run dist:mac`，按原生 CPU 架构生成开发包，采用 ad-hoc 签名，尚未配置 Developer ID 和公证。首次调试用 `dev:isolated`；`npm run dev` 和 `npm start` 使用正常配置目录。
 
 本地管理后台由客户端开启，沿用客户端授权与业务接口。开发验证应使用独立的 `WENXU_DATA_DIR` 和临时作品目录，不使用作者正在创作的作品。
 

@@ -9,6 +9,7 @@ import {
   Menu,
   nativeTheme,
   clipboard,
+  type MenuItemConstructorOptions,
   type UtilityProcess
 } from 'electron';
 import fs from 'node:fs';
@@ -47,6 +48,7 @@ import { embeddingSettingsSchema } from '../src/shared/studio';
 import { roleIds, searchSettingsSchema } from '../src/shared/assistant';
 import { brand, windowThemes } from '../src/shared/brand';
 import { CloseConfirmation } from './close-confirmation';
+import { applyWindowColors, usesNativeTitleBar, windowChrome } from './platform-window';
 import {
   appearanceSchema,
   WindowAppearanceTransition,
@@ -148,7 +150,7 @@ fs.mkdirSync(userData, { recursive: true });
 app.setPath('userData', userData);
 app.setPath('sessionData', userData);
 app.setName(brand.name);
-app.setAppUserModelId(brand.appId);
+if (process.platform === 'win32') app.setAppUserModelId(brand.appId);
 if (!app.isPackaged && process.env.WENXU_DEBUG_PORT)
   app.commandLine.appendSwitch('remote-debugging-port', process.env.WENXU_DEBUG_PORT);
 function saveSettings() {
@@ -301,7 +303,7 @@ async function handle(command: Command, a: Record<string, unknown>) {
       !sameEndpoint(settings.baseUrl, assistantSettings.settings().embedding.baseUrl)
     )
       throw new Error('语义服务地址改变，请重新填写 Key');
-    if (key && !safeStorage.isEncryptionAvailable()) throw new Error('Windows 密钥加密不可用');
+    if (key && !safeStorage.isEncryptionAvailable()) throw new Error('系统密钥加密不可用');
     assistantSettings.saveEmbedding(
       settings,
       a.clearKey === true ? '' : key ? safeStorage.encryptString(key).toString('base64') : undefined
@@ -329,7 +331,7 @@ async function handle(command: Command, a: Record<string, unknown>) {
       !sameEndpoint(search.baseUrl, assistantSettings.settings().search.baseUrl)
     )
       throw new Error('搜索服务地址改变，请重新填写此服务的 Key');
-    if (key && !safeStorage.isEncryptionAvailable()) throw new Error('Windows 密钥加密不可用，不能保存 Key');
+    if (key && !safeStorage.isEncryptionAvailable()) throw new Error('系统密钥加密不可用，不能保存 Key');
     assistantSettings.saveSearch(
       search,
       a.clearKey === true ? '' : key ? safeStorage.encryptString(key).toString('base64') : undefined
@@ -630,8 +632,7 @@ else {
       minHeight: 760,
       show: false,
       backgroundColor: appearance.background,
-      titleBarStyle: 'hidden',
-      titleBarOverlay: { color: appearance.background, symbolColor: appearance.foreground, height: 38 },
+      ...windowChrome(process.platform, appearance),
       autoHideMenuBar: false,
       title: brand.windowTitle,
       icon: app.isPackaged
@@ -647,11 +648,7 @@ else {
     });
     windowAppearance = new WindowAppearanceTransition(
       appearance,
-      (colors) => {
-        if (win.isDestroyed()) return;
-        win.setBackgroundColor(colors.background);
-        win.setTitleBarOverlay({ color: colors.background, symbolColor: colors.foreground, height: 38 });
-      },
+      (colors) => applyWindowColors(win, process.platform, colors),
       (colors) => atomicWrite(appearanceFile, JSON.stringify(colors)),
       undefined,
       persistedAppearance,
@@ -673,11 +670,23 @@ else {
         { id: 'app', label: brand.name, submenu: [
           { id: 'return-home', label: '返回首页', click: () => win.webContents.send('wenxu:home-requested') },
           { type: 'separator' },
+          ...(process.platform === 'darwin' ? [
+            { role: 'about', label: `关于${brand.name}` },
+            { type: 'separator' }
+          ] satisfies MenuItemConstructorOptions[] : []),
           { label: '打开网页管理后台', click: () => void dispatch('management.open', {}, {}, { source: 'desktop' }) },
           { label: '复制网页管理链接', click: () => void dispatch('management.link', {}, {}, { source: 'desktop' }).then(result => { if (result.ok) clipboard.writeText(String(result.result)); }) },
           { label: '断开所有网页连接', click: () => void dispatch('management.revoke', {}, {}, { source: 'desktop' }) },
           { label: '停止网页管理服务', click: () => void dispatch('management.stop', {}, {}, { source: 'desktop' }) },
-          { type: 'separator' }, { label: '退出', click: requestClose }
+          ...(process.platform === 'darwin' ? [
+            { type: 'separator' },
+            { role: 'services', label: '服务' },
+            { type: 'separator' },
+            { role: 'hide', label: `隐藏${brand.name}` },
+            { role: 'hideOthers', label: '隐藏其他' },
+            { role: 'unhide', label: '显示全部' }
+          ] satisfies MenuItemConstructorOptions[] : []),
+          { type: 'separator' }, { label: '退出', ...(process.platform === 'darwin' ? { accelerator: 'Command+Q' } : {}), click: requestClose }
         ] },
         {
           id: 'edit',
@@ -701,11 +710,20 @@ else {
             { role: 'zoomOut', label: '缩小' },
             { role: 'togglefullscreen', label: '全屏' }
           ]
-        }
+        },
+        ...(process.platform === 'darwin' ? [{
+          label: '窗口', submenu: [
+            { role: 'minimize', label: '最小化' },
+            { role: 'zoom', label: '缩放' },
+            { role: 'close', label: '关闭窗口' },
+            { type: 'separator' },
+            { role: 'front', label: '前置全部窗口' }
+          ]
+        }] satisfies MenuItemConstructorOptions[] : [])
       ])
     );
     // Keep native menu roles and accelerators, but render its top-level buttons in our theme.
-    win.setMenuBarVisibility(false);
+    if (!usesNativeTitleBar(process.platform)) win.setMenuBarVisibility(false);
     win.once('ready-to-show', () => win.show());
     win.on('unresponsive', () => {
       rendererResponsive = false;

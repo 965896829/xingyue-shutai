@@ -7,6 +7,9 @@
 | 脚本 | 入口 | 用途与前提 |
 | --- | --- | --- |
 | `dev.mjs` | `npm run dev` | 启动 Vite 和 Electron 开发环境。 |
+| `dev.mjs --isolated` | `npm run dev:isolated` | 在 `.test-output/development-profile` 使用独立开发配置，首次调试配合独立测试作品。 |
+| `doctor.mjs` | `npm run doctor` | 检查 Node、系统、架构、SQLite 与 Electron；不读取作品、模型配置或发送模型请求。 |
+| `package-macos.mjs` | `npm run pack:mac` / `npm run dist:mac` | 仅在原生 macOS 上检查、构建并生成当前 CPU 架构的 ad-hoc 开发包，不自动发布；见 [Mac 开发指南](../docs/macos-development.md)。 |
 | `build-main.mjs` | `npm run build` 间接调用 | 构建 Electron 主进程、预加载、业务进程和文档进程。 |
 | `bundle-dependencies.mjs` | `build-main.mjs` 调用 | 核对生成代码只外部引用 Node/Electron，保留打包输入及生产依赖树的许可到 `dist/third-party-licenses`。安装包排除重复 `node_modules`；若增加外部依赖，构建先失败，须重新验证打包边界。 |
 | `check-deliverables.mjs` | `node scripts/check-deliverables.mjs <本次测试日志>` | 检查文档、资源锁和已生成的安装包；非默认发布目录通过 `WENXU_RELEASE_DIR` 指定。每次交付显式提供本次日志，不使用脚本内的历史默认日志作为新版本证据。 |

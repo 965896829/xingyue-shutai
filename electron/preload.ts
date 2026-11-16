@@ -9,6 +9,7 @@ let projectSessionId: string | undefined;
 let workerGeneration: number | undefined;
 contextBridge.exposeInMainWorld('wenxu', {
   desktop: {
+    nativeTitleBar: process.platform === 'darwin',
     setAppearance: (appearance) => ipcRenderer.invoke('wenxu:appearance', appearance),
     openMenu: (menu, position) => ipcRenderer.invoke('wenxu:menu', menu, position),
     onHomeRequested: (listener) => {

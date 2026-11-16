@@ -1,4 +1,7 @@
 node_modules/
+.DS_Store
+._*
+*.dmg
 dist/
 dist-electron/
 release/

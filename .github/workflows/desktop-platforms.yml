@@ -1,0 +1,62 @@
+name: Windows and macOS preparation
+
+on:
+  push:
+    branches: [codex/macos-0.4.97]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-platforms-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-2022
+          - name: macOS Apple Silicon
+            os: macos-15
+          - name: macOS Intel
+            os: macos-15-intel
+    env:
+      NODE_TLS_REJECT_UNAUTHORIZED: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run doctor
+      - name: Offline regression tests (no model credentials)
+        run: npm test
+      - name: Build and package Windows
+        if: runner.os == 'Windows'
+        run: npm run pack
+      - name: Build ad-hoc macOS development packages
+        if: runner.os == 'macOS'
+        run: npm run dist:mac
+      - name: Retain macOS development packages
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-development-${{ runner.arch }}-${{ github.sha }}
+          path: |
+            release/*-mac-*.dmg
+            release/*-mac-*.zip
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
