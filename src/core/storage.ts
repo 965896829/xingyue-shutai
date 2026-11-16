@@ -912,6 +912,11 @@ export class FileStore {
           this.db.sql.prepare('UPDATE materialization_outbox SET status=?,error=? WHERE id=?').run(error instanceof MaterializationConflict ? 'conflict' : 'pending', error instanceof Error ? error.message : '文件同步失败', row.id);
           return;
         }
+        finally {
+          // Replacement can retain the previous size and timestamp on fast or coarse filesystems.
+          // Also invalidate after a partial write so recovery never reads a pre-write hash.
+          this.fingerprints.delete(c.path);
+        }
         fault?.('file:' + c.path);
       }
       this.db.sql
