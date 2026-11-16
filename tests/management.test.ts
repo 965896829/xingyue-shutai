@@ -186,11 +186,15 @@ test('文件选择只授予当前会话，中文路径、创建目录、保存�
     await fetch(f.api + 'files?path=' + encodeURIComponent(child), { headers: { Cookie: s.cookie } })
   ).json()) as any;
   assert.equal(list.entries[0].name, '正文.md');
-  assert.equal((await f.post(f.api + 'files/select', { mode: 'directory', path: child }, s)).status, 200);
+  const selectedResponse = await f.post(f.api + 'files/select', { mode: 'directory', path: child }, s);
+  assert.equal(selectedResponse.status, 200);
+  const selected = (await selectedResponse.json()) as { path: string };
+  // Async realpath uses native canonical paths, including Windows 8.3 expansion.
+  assert.equal(selected.path, fs.realpathSync.native(child));
   const request = { command: 'app.snapshot', args: {}, context: {} };
   await f.post(f.api + 'rpc', request, s);
   await f.post(f.api + 'rpc', request, other);
-  assert.equal(f.invocations[0].caller.fileGrants!.has(fs.realpathSync(child)), true);
+  assert.equal(f.invocations[0].caller.fileGrants!.has(selected.path), true);
   assert.equal(f.invocations[1].caller.fileGrants!.size, 0);
   const save = (await (
     await f.post(f.api + 'files/select', { mode: 'save', path: path.join(child, '正文.md') }, s)

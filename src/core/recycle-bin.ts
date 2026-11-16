@@ -7,6 +7,7 @@ import { atomicWrite, FileStore } from './storage';
 import { checkDatabaseCompatibility } from './compatibility';
 import { assertProjectLockInactive, parseProjectLock } from './project-lock';
 import { isProjectRecyclePath, projectRecycleDirectory } from '../shared/project-location';
+import { resolveSystemPath } from './system-path';
 
 export const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const BIN = projectRecycleDirectory;
@@ -29,12 +30,13 @@ export function isRecyclePath(root: string) {
 }
 export function samePath(a: string, b: string) {
   const normalize = (p: string) =>
-    process.platform === 'win32' ? path.resolve(p).toLowerCase() : path.resolve(p);
+    process.platform === 'win32' ? path.resolve(p).toLowerCase() : resolveSystemPath(p);
   return normalize(a) === normalize(b);
 }
-// Every move/delete checks resolved ancestry. Never traverse junctions or symlinks.
+// Resolve verified macOS root aliases, then reject links in every resulting ancestor.
 function checked(root: string) {
   if (!path.isAbsolute(root)) throw new Error('回收站记录路径必须是绝对路径');
+  root = resolveSystemPath(root);
   let current = path.parse(root).root;
   for (const part of path.resolve(root).slice(current.length).split(path.sep).filter(Boolean)) {
     current = path.join(current, part);
