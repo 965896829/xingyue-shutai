@@ -9,6 +9,7 @@ export interface WindowAppearance {
 export interface DesktopApi {
   setAppearance(appearance: WindowAppearance): Promise<void>;
   openMenu(menu: DesktopMenu, position: { x: number; y: number }): Promise<void>;
+  onHomeRequested(listener: () => void): () => void;
   onCloseRequested(listener: (requestId: string) => void): () => void;
   respondToClose(requestId: string, action: 'cancel' | 'quit'): Promise<boolean>;
 }

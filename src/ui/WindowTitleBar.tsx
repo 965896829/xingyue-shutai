@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { DesktopMenu } from '../shared/desktop';
 import { brand } from '../shared/brand';
 import { brandAssets } from './BrandLogo';
@@ -9,9 +9,11 @@ const menus: { id: DesktopMenu; label: string; key: string }[] = [
   { id: 'view', label: '视图', key: 'v' }
 ];
 
-export function WindowTitleBar() {
+export function WindowTitleBar({ onHome, homeDisabled }: { onHome: () => void; homeDisabled: boolean }) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const [active, setActive] = useState<DesktopMenu | null>(null);
+  const homeRequested = useEffectEvent(onHome);
+  useEffect(() => window.wenxu?.desktop?.onHomeRequested?.(homeRequested), []);
 
   const open = async (index: number) => {
     const button = buttons.current[index];
@@ -50,10 +52,11 @@ export function WindowTitleBar() {
   return (
     <header className="window-titlebar">
       <div className="window-titlebar-safe">
-        <div className="window-title">
+        <button type="button" className="window-title" aria-label="星月书台，返回首页"
+          title="返回首页" disabled={homeDisabled} onClick={onHome}>
           <img className="window-brand-icon" src={brandAssets.app} width={18} height={18} alt="" />
           <span>{brand.windowTitle}</span>
-        </div>
+        </button>
         <nav className="window-menus" aria-label="应用菜单">
           {menus.map((menu, index) => (
             <button

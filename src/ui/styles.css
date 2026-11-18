@@ -88,12 +88,22 @@ body {
   gap: 20px;
   padding: 0 12px;
 }
-.window-title {
+.window-titlebar .window-title {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
   white-space: nowrap;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  -webkit-app-region: no-drag;
+}
+.window-titlebar .window-title:hover, .window-titlebar .window-title:focus-visible {
+  color: var(--ink);
+  background: var(--raised);
 }
 .window-menus {
   display: flex;

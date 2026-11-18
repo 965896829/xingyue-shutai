@@ -671,6 +671,8 @@ else {
     Menu.setApplicationMenu(
       Menu.buildFromTemplate([
         { id: 'app', label: brand.name, submenu: [
+          { id: 'return-home', label: '返回首页', click: () => win.webContents.send('wenxu:home-requested') },
+          { type: 'separator' },
           { label: '打开网页管理后台', click: () => void dispatch('management.open', {}, {}, { source: 'desktop' }) },
           { label: '复制网页管理链接', click: () => void dispatch('management.link', {}, {}, { source: 'desktop' }).then(result => { if (result.ok) clipboard.writeText(String(result.result)); }) },
           { label: '断开所有网页连接', click: () => void dispatch('management.revoke', {}, {}, { source: 'desktop' }) },

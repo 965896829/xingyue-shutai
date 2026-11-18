@@ -75,6 +75,7 @@ import { ProviderSettings as ModelSettings } from './ProviderSettings';
 import { modelLabel } from './model-label';
 import { ThemeToggle } from './ThemeToggle';
 import { BrandLogo } from './BrandLogo';
+import { WindowTitleBar } from './WindowTitleBar';
 import { brand } from '../shared/brand';
 import { DeleteButton } from './DeleteButton';
 import { ProximitySidebar, type ProximitySection } from './ProximitySidebar';
@@ -674,13 +675,17 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     if (management) window.dispatchEvent(new CustomEvent('management:navigate', { detail: managementView }));
   }, [management, managementView]);
   async function returnHome() {
-    if (!p || busy) return;
+    if (busy || Array.from(document.querySelectorAll('dialog[open], [aria-modal="true"]')).some(el => el.getClientRects().length > 0)) return;
+    if (!p) {
+      setPage('work');
+      return;
+    }
     await act(async () => {
       if (running || snapshot.chatBusy)
         throw new Error('任务正在运行，请先停止或等待完成后返回首页。');
       if (dirty && doc) {
         try {
-          localStorage.setItem(`draft:${p.id}:${doc.runId ?? ''}:${doc.path}`, text);
+          localStorage.setItem(`draft:${doc.projectKey}:${doc.runId ?? ''}:${doc.path}`, text);
         } catch {
           throw new Error('本地草稿缓存空间不足，请先保存编辑内容再返回首页。');
         }
@@ -778,7 +783,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           : []),
       ]
     : [];
-  return (
+  return <>
+    {!management && <WindowTitleBar onHome={returnHome} homeDisabled={busy} />}
     <div
       className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${focus && editorOpen && page === 'work' && !writingLayout ? 'studio-focus' : ''}`}
     >
@@ -1875,7 +1881,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         </Modal>
       )}
     </div>
-  );
+  </>;
 }
 function activeBatchText(p: Snapshot['project']) {
   const b = p?.batches.find((b) => p.chapter >= b.start && p.chapter <= b.end);

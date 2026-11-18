@@ -11,6 +11,11 @@ contextBridge.exposeInMainWorld('wenxu', {
   desktop: {
     setAppearance: (appearance) => ipcRenderer.invoke('wenxu:appearance', appearance),
     openMenu: (menu, position) => ipcRenderer.invoke('wenxu:menu', menu, position),
+    onHomeRequested: (listener) => {
+      const handler = () => listener();
+      ipcRenderer.on('wenxu:home-requested', handler);
+      return () => { ipcRenderer.removeListener('wenxu:home-requested', handler); };
+    },
     onCloseRequested: (listener) => {
       let active = true;
       const handler = (_: unknown, requestId: string) => listener(requestId);
