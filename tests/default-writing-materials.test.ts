@@ -9,7 +9,7 @@ import { fixtureCoverage, fixtureAuditEvidence } from './fixtures/chapter-covera
 import { stageOutputs, detailPath, prosePath, qualityPath, hash } from '../src/core/domain';
 import { proposalHash } from '../src/core/storage';
 import { mutateQuality, readQuality, storeLearnedPreferences, voiceDocument, voicePath } from '../src/core/quality';
-import { compileContext, contextPayload } from '../src/core/context-compiler';
+import { compileContext, contextPayload, contextChanged } from '../src/core/context-compiler';
 import { memoryScopeSchema } from '../src/shared/studio';
 import { visibleFact } from '../src/core/memory-studio';
 import { factSchema } from '../src/shared/types';
@@ -98,7 +98,17 @@ test('人物视角保持适用表达指导，关系例外与撤回生效，不�
     storeLearnedPreferences(store, 'learning', [{ statement: '对医生直接说要求，保留长句', scope, evidenceIds: [state.evidence.at(-1)!.id], alternatives: [], exceptions: ['面对母亲时更温和'] }]);
     state = readQuality(store); store.commit([service.change(voicePath, voiceDocument(store, [state.preferences.at(-1)!.id])), service.change(detailPath(1), '# 细纲\n\n## 场面1：求医\n- 场景功能：对话\n- 交流对象：医生\n')], store.db.project());
     const current = store.db.project(); current.config.viewpointCharacterId = 'AN'; store.db.set('project', current);
-    const packet = () => contextPayload(compileContext(store, store.db.project(), 'S10', '阿宁求医', model, { purpose: 'revision', allowConflicts: true }));
+    const bind = () => compileContext(store, store.db.project(), 'S10', '阿宁求医', model, { purpose: 'revision', allowConflicts: true });
+    const packet = () => contextPayload(bind());
+    const dependency = bind();
+    state = mutateQuality(store, readQuality(store).revision, { kind: 'experiment', experiment: { title: '无关试读', kind: 'voice_fixed_story', stage: 'holdout',
+      family: 'unrelated', sceneFunction: '夜路', audience: '试读', variedFactors: ['voice'], constraints: '事件相同', questions: ['愿意继续读吗？'] },
+      candidates: [{ text: '门开了。', runId: '' }, { text: '她敲了敲门。', runId: '' }] });
+    state = mutateQuality(store, state.revision, { kind: 'present', experimentId: state.experiments.at(-1)!.id, participant: '合成测试者' });
+    mutateQuality(store, state.revision, { kind: 'feedback', observation: { presentationId: state.presentations.at(-1)!.id, origin: 'human_author',
+      outcome: 'tie', alias: '', reason: '离线测试', recruitment: '合成夹具', excluded: '' } });
+    assert.equal(contextChanged(store, dependency), false);
+
     assert.match(JSON.stringify(packet()), /对医生直接说要求/);
     assert.doesNotMatch(JSON.stringify(packet()), /天井|风塔/);
     const authorPacket = contextPayload(compileContext(store, store.db.project(), 'S10', '阿宁求医', model, { purpose: 'revision', allowConflicts: true,
@@ -108,7 +118,9 @@ test('人物视角保持适用表达指导，关系例外与撤回生效，不�
     store.commit([service.change(detailPath(1), '# 细纲\n\n## 场面1：求医\n- 场景功能：对话\n- 交流对象：母亲\n')], store.db.project());
     assert.doesNotMatch(JSON.stringify(packet()), /对医生直接说要求/);
     store.commit([service.change(detailPath(1), '# 细纲\n\n## 场面1：求医\n- 场景功能：对话\n- 交流对象：医生\n')], store.db.project());
+    const active = bind();
     state = readQuality(store); mutateQuality(store, state.revision, { kind: 'retract', id: state.evidence.at(-1)!.id });
+    assert.equal(contextChanged(store, active), true);
     assert.doesNotMatch(JSON.stringify(packet()), /对医生直接说要求/);
   } finally { service.close(); }
 });

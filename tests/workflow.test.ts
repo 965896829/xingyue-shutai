@@ -16,7 +16,7 @@ import {
 import { importLegacy, previewLegacy } from '../src/core/migration';
 import { FileStore } from '../src/core/storage';
 const root = path.resolve('resources/skill');
-import { fixture } from './fixtures/workflow';
+import { fixture, fixtureMemoryChanges } from './fixtures/workflow';
 import { runHasCurrentBasis } from '../src/shared/run-presentation';
 import { fixtureCoverage } from './fixtures/chapter-coverage';
 for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正文记忆一次批准与批次归档${restartWithSettings ? '（每阶段调整预算并重启）' : ''}`, async () => {
@@ -86,7 +86,7 @@ for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正
           phase === 'review'
             ? [qualityPath(p.chapter)]
             : stageOutputs(phase === 'memory' ? 'S11' : p.stage, p),
-        changes = outputs.map((file) => ({
+        changes = phase === 'memory' ? fixtureMemoryChanges(p, service) : outputs.map((file) => ({
           path: file,
           baseHash: service.store!.db.document(file)?.hash ?? null,
           content: fixture(p, file, service)

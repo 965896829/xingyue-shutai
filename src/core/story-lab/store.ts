@@ -130,14 +130,16 @@ export class LabStore {
     const session = this.session(id), older = { versions: 0, messages: 0, requests: 0 };
     const page = <K extends keyof LabCursor>(table: K): Records[K][] => {
       const projection = table === 'versions' ? "json_remove(json_set(data,'$.content',''),'$.materialRules','$.operation.selected')" :
-        table === 'requests' ? "CASE WHEN json_extract(data,'$.status')='running' THEN data ELSE json_remove(json_set(data,'$.response','','$.context.system','','$.context.user','','$.context.sources',json('[]')),'$.input.selection','$.operation.selected') END" : 'data';
+        table === 'requests' ? "CASE WHEN json_extract(data,'$.status')='running' THEN data ELSE json_remove(json_set(data,'$.response','','$.context.system','','$.context.user','','$.context.sources',json('[]')),'$.input.selection','$.operation.selected') END" :
+          "CASE WHEN json_extract(data,'$.role')='assistant' AND length(json_extract(data,'$.content'))>480 THEN json_set(data,'$.content',substr(json_extract(data,'$.content'),1,480),'$.excerpt',json('true')) ELSE data END";
       const rows = this.journal.db.sql.prepare('SELECT rowid,' + projection + ' AS data FROM lab_' + table + ' WHERE session_id=? AND rowid < ? ORDER BY rowid DESC LIMIT 13')
         .all(id, before?.[table] ?? Number.MAX_SAFE_INTEGER);
       const head = rows.slice(0, 12);
       if (rows.length > head.length) older[table] = Number(head.at(-1)!.rowid);
       return head.reverse().map(r => schemas[table].parse(JSON.parse(String(r.data))) as Records[K]);
     };
-    const versions = page('versions'), messages = page('messages'), requests = page('requests');
+    const versions = page('versions'), messages = page('messages'), requests = page('requests').map(req => req.status === 'unknown' && !req.failure
+      ? { ...req, failure: labFailure(attempts(this.journal, req.id).at(-1)?.failure) } : req);
     if (!before) for (const key of new Set([versions.at(-1)?.id, session.currentVersionId, session.currentProseId, this.latestVersionId(id)])) {
       if (!key) continue;
       const full = this.version(id, key), index = versions.findIndex(v => v.id === key);

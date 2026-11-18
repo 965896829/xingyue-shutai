@@ -30,7 +30,7 @@ import { assembleContext, validateEvidence } from '../src/core/memory';
 import { RequestError } from '../src/core/provider';
 import { systemPrompt } from '../src/core/skill';
 import { createBackup, restoreBackup } from '../src/core/documents';
-import { fixture } from './fixtures/workflow';
+import { fixture, fixtureMemoryChanges } from './fixtures/workflow';
 import type { Caller } from '../src/core/runner';
 import { emptyTagInput } from '../src/shared/tags';
 import { approvedCreation, planKinds, recommendedTitleIds, type CreationPlan } from '../src/shared/creation';
@@ -1192,7 +1192,7 @@ test('统一方案采纳后实际走通保留的十一阶段和逐章正文流�
       if (args[2].at(-1)?.role === 'tool') return { ...plainResult(null), text: '候选已完成' };
       const running = active.store!.db.runs().find(r => r.status === 'running')!;
       const outputs = running.pipeline?.phase === 'review' ? [qualityPath(p.chapter)] : stageOutputs(running.pipeline?.phase === 'memory' ? 'S11' : running.stage, p);
-      return result('propose_changes', { changes: outputs.map(file => ({ path: file, content: fixture(p, file, active), baseHash: active.store!.db.document(file)?.hash ?? null })), ...(running.pipeline?.phase === 'memory' ? { facts: [], complete: true, coverage: fixtureCoverage(active, running) } : {}) });
+      return result('propose_changes', { changes: running.pipeline?.phase === 'memory' ? fixtureMemoryChanges(p, active) : outputs.map(file => ({ path: file, content: fixture(p, file, active), baseHash: active.store!.db.document(file)?.hash ?? null })), ...(running.pipeline?.phase === 'memory' ? { facts: [], complete: true, coverage: fixtureCoverage(active, running) } : {}) });
     }
   });
   active = service;
@@ -2039,7 +2039,7 @@ test('标签约束贯穿聊天与完整工作流，正文证据随一次采纳�
           r.pipeline?.phase === 'review'
             ? [qualityPath(p.chapter)]
             : stageOutputs(r.pipeline?.phase === 'memory' ? 'S11' : p.stage, p);
-        const changes = outputs.map((file) => ({
+        const changes = r.pipeline?.phase === 'memory' ? fixtureMemoryChanges(p, s) : outputs.map((file) => ({
           path: file,
           content: fixture(p, file, s),
           baseHash: s.store!.db.document(file)?.hash ?? null

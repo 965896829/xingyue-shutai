@@ -60,9 +60,9 @@ export function memoryReviewInput(store: FileStore, run: Run) {
     if (isLedger(path)) {
       const quotes = items.flatMap(i => i.fact?.evidence.filter(e => e.path === path).map(e => e.quote) ?? []);
       const previous = previousHash ? store.object(previousHash).toString('utf8') : '';
-      const delta = ledgerChange(previous, change ? content : previous);
+      const delta = ledgerChange(previous, change ? content : previous, quotes);
       const material = ledgerMaterial(content, Math.max(...chapters), [], quotes);
-      return { path, hash: hash(content), content: [material.content, delta.after].filter(Boolean).join('\n'),
+      return { path, hash: hash(content), content: delta.after || material.content,
         ...(previousHash ? { previous: { hash: previousHash, content: delta.before } } : {}) };
     }
     return { path, hash: hash(content), content,
@@ -106,7 +106,7 @@ export function memoryReviewIssues(store: FileStore, run: Run) {
 export type MemoryDecision = z.infer<typeof memoryReviewSchema>['decisions'][number];
 
 /** Return validated decisions so unchanged items can retain their actual verdict. */
-export function parseMemoryDecisions(raw: string, items: { id: string; fact?: Fact; path?: string }[], sources: { path: string; content: string }[]) {
+export function parseMemoryDecisions(raw: string, items: { id: string; fact?: Fact; path?: string }[], sources: { path: string; content: string; hash?: string }[]) {
   const wire = JSON.parse(raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, ''));
   const declared = z.object({ decisions: z.array(z.object({ id: z.string().min(1) })) }).parse(wire).decisions;
   const ids = new Set(declared.map(item => item.id)), expectedIds = new Set(items.map(item => item.id));
@@ -130,7 +130,7 @@ export function parseMemoryDecisions(raw: string, items: { id: string; fact?: Fa
       const evidence = item?.fact?.evidence[ref];
       if (!evidence) throw new Error(`核对证据编号不存在于当前记忆：${JSON.stringify({ id: decision.id, ref, available: item?.fact?.evidence.length ?? 0 })}`);
       const source = sources.find(s => s.path === evidence.path);
-      if (!source || hash(source.content) !== evidence.hash || !source.content.includes(evidence.quote))
+      if (!source || (source.hash ?? hash(source.content)) !== evidence.hash || !source.content.includes(evidence.quote))
         throw new Error('核对证据引用缺少同版本原文');
       return { path: evidence.path, quote: evidence.quote };
     }), ...supplemental];

@@ -94,7 +94,7 @@ Mac 使用系统钥匙串保存密钥。开发版签名变化可能导致系统�
 
 ## 6. 自动检查与剩余实机验收
 
-[Windows and macOS preparation 工作流](../.github/workflows/desktop-platforms.yml) 在本分支推送时执行 Windows x64、Mac ARM64 和 Mac Intel 的依赖安装、离线回归和构建。Mac 构建产物保留 14 天；应查看对应提交的运行结果，不能把工作流文件存在当作检查通过。
+[Windows and macOS preparation 工作流](../.github/workflows/desktop-platforms.yml) 在本分支推送时执行 Windows x64、Mac ARM64 和 Mac Intel 的依赖安装、离线回归和构建。Mac 还会启动打包后的应用，检查写作工作台本地页面。Mac 构建产物保留 14 天；应查看对应提交的运行结果，不能把工作流文件存在当作检查通过。
 
 CI 构建与命令行检查不能代替目标 Mac 的交互验收。首次使用时逐项确认：
 

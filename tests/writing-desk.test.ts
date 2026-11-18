@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import path from 'node:path';
@@ -109,6 +110,9 @@ test('进度第五章时，实际出站分别使用第31和第2章的批次及�
       assert.deepEqual(JSON.parse(wire.input).batch, chapter === 31 ? [31,60] : [1,30]);
       assert.equal(store.db.project().chapter, 5);
     }
+    const directory = path.resolve('.test-output/writing-material-acceptance'); fs.mkdirSync(directory, {recursive: true});
+    fs.writeFileSync(path.join(directory, 'desk.json'), JSON.stringify({ projectProgress: store.db.project().chapter,
+      requests: wires.map(w => ({ instruction: JSON.parse(w.input), material: JSON.parse(w.system.split('当前任务资料包：').at(-1)!) })) }, null, 2));
     await send(62); assert.equal(wires.length, 2);
     assert.equal((await send(62, true)).message.status, 'complete'); assert.equal(wires.length, 3);
   } finally { await service.drain(); }

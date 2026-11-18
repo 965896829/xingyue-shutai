@@ -1,3 +1,4 @@
+import { writingOperation } from '../shared/writing-operation';
 import { writingTarget } from '../shared/writing-target';
 import { isLedger, ledgerMaterial } from './ledger-material';
 import { hasChapterPlan } from '../shared/chapter-range';
@@ -32,6 +33,7 @@ export interface CompileOptions {
   purpose?: NonNullable<ContextManifest['purpose']>;
   scope?: MemoryScope;
   allowConflicts?: boolean;
+  writingTarget?: ContextManifest['writingTarget'];
   strictChapterInputs?: boolean;
   resident?: unknown;
   toolCount?: number;
@@ -44,6 +46,9 @@ export function contextPayload(manifest: ContextManifest, project?: ProjectState
   const canUse = (fact: Fact) => !restricted || fact.kind === 'author_constraint' || visibleFact(fact, manifest.scope!);
   return {
     contextPolicy: '作者规则不是人物已知事实；事实块按故事有效位置与人物获知记录筛选。人物可以知道读者尚不知道的秘密，并据此行动或隐瞒；revelation 限制向读者的直接揭示，不撤销人物已有知识。未来计划不是已发生事实。',
+    ...(manifest.stage === 'S10' && phase !== 'memory' ? { target: manifest.writingTarget ?? writingOperation({ project: manifest.projectId!, chapter: manifest.chapter, batch: manifest.writingBatch,
+      action: manifest.purpose === 'discussion' ? 'discuss' : 'chapter', version: manifest.snapshotId ?? null,
+      previousVersion: manifest.sources.find(s => s.path === prosePath(manifest.chapter - 1))?.hash }) } : {}),
     scope: manifest.scope, entities: manifest.entityIds,
     authorRules: manifest.hardConstraints?.filter(canUse).map(f => modelFact(f, manifest.scope)), revelation: restricted && manifest.revelation
       ? { ...manifest.revelation, withheld: manifest.revelation.withheld.map(({ id, revealedAt }) => ({ id, revealedAt, reason:
@@ -84,6 +89,16 @@ export function fitContext(manifest: ContextManifest, profile: Profile, resident
     manifest.omitted!.push({ path: primaryPath(fact), reason: `可选记忆“${fact.subject}：${fact.predicate}”因输入预算未装入` });
     size = measure();
   }
+  if (manifest.writingMaterials) {
+    const retained = new Set([...(manifest.retrievedFacts ?? []), ...(manifest.hardConstraints ?? [])].map(f => f.id));
+    const keep = (ids: string[]) => ids.filter(key => retained.has(key));
+    for (const c of manifest.writingMaterials.characters ?? []) {
+      c.values = keep(c.values); c.goal.facts = keep(c.goal.facts); c.condition.facts = keep(c.condition.facts);
+      c.interlocutor.facts = keep(c.interlocutor.facts); c.experience.known = keep(c.experience.known); c.experience.beliefs = keep(c.experience.beliefs);
+    }
+    const focal = manifest.writingMaterials.focalExperience;
+    focal.currentStateIds = keep(focal.currentStateIds); focal.experienceIds = keep(focal.experienceIds); focal.beliefIds = keep(focal.beliefIds);
+  }
   manifest.factIds = [...new Set([...(manifest.retrievedFacts ?? []), ...(manifest.hardConstraints ?? [])].map(f => f.id))];
   if (manifest.selectionTrace) manifest.selectionTrace.facts = manifest.selectionTrace.facts.filter(fact => manifest.factIds.includes(fact.id));
   checkContextReadPlan(manifest);
@@ -120,6 +135,8 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     const target = writingTarget(p, p.chapter, Object.keys(snapshot.documents));
     p = { ...p, batches: [...p.batches, target.batch] };
   }
+  m.writingTarget = options.writingTarget;
+  m.writingBatch = {start: activeBatch(p).start, end: activeBatch(p).end};
   const planned = formal ? requiredInputs(stage, p) : [paths.config, paths.style, ...(stage >= 'S04' ? [paths.world] : []), ...(purpose === 'draft' && stage >= 'S09' ? [paths.volumes, paths.outline, batchPath(activeBatch(p)), rhythmPath(activeBatch(p)), taskPath(p.chapter), detailPath(p.chapter), ...(p.chapter > 1 ? [prosePath(p.chapter - 1)] : [])] : [])];
   // S09 uses the current chapter's plan and entry/exit neighbors. Character
   // records still supply the first chapter's baseline before prose facts exist.

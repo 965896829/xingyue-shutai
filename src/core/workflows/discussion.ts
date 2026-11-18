@@ -1,3 +1,5 @@
+import { prosePath } from '../domain';
+import { writingOperation } from '../../shared/writing-operation';
 import { focusInstruction } from '../prompt-profile';
 import { professionalMethod } from '../creation-policy';
 import { hasChapterPlan, hasOutlineContent } from '../../shared/chapter-range';
@@ -258,12 +260,15 @@ ${restricted ? '' : tagContext(p, 'discussion', { focused: true })}
     const edit = turn.manuscript;
     const target = edit && writingTarget(p, Number(edit.path.match(/第(\d+)章/)![1]), host.store.db.acceptedDocuments().map(d => d.path));
     const writingProject = target ? { ...p, chapter: target.chapter, batches: [target.batch] } : p;
+    const operation = target && edit ? writingOperation({ project: p.id, chapter: target.chapter, batch: target.batch,
+      action: edit.mode === 'passage' ? 'passage' : 'chapter', version: hash(edit.original),
+      selection: edit.mode === 'passage' ? { start: edit.from, end: edit.from + edit.original.length } : undefined,
+      previousVersion: host.store.db.document(prosePath(target.chapter - 1))?.hash }) : undefined;
     const userContent = edit ? JSON.stringify({ instruction: turn.request, path: edit.path,
-      chapter: target!.chapter, batch: [target!.batch.start, target!.batch.end],
-      suppliedOutline: edit.suppliedOutline, freeTrial: edit.freeTrial,
+      batch: operation?.batch, suppliedOutline: edit.suppliedOutline, freeTrial: edit.freeTrial,
       before: edit.before, original: edit.original, after: edit.after }) : turn.request;
     const manifest = compileContext(host.store, writingProject, edit ? 'S10' : p.stage, turn.request, profile, {
-      purpose: edit ? 'draft' : turn.kind,
+      purpose: edit ? 'draft' : turn.kind, writingTarget: operation,
       allowConflicts: turn.kind === 'discussion',
       deferBudgetCheck: true,
       resident: { system: baseSystem, history: recent, request: userContent, tools: availableTools },

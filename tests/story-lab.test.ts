@@ -616,7 +616,7 @@ test('讨论与纠偏引用本次实验的候选，并保留本轮要求；试�
 test('补写、局部中断、重启恢复和下一章使用相应的正文及方案版本', async () => {
   const plan = '# 主角\n阿宁替人撑渡。\n## 世界核心与隐藏真相\n公开规则：船离水必沉。\n隐藏真相：星台是谁建的。\n## 第一卷\n旧路线。\n## 第二卷\n后卷原句。\n';
   const prose = '阿宁用最后的铜钱买了红伞，左手受伤，对师弟撒了谎。';
-  const returns = [plan, '新路线：先找船。', prose, '阿宁拿起红', '伞。', '他空着钱袋上船。'];
+  const returns = [plan, '新路线：先找船。', prose, '换来一', '把青伞', '他空着钱袋上船。'];
   const wires: string[] = [];
   const caller: typeof invokeModel = async (_p, _system, messages) => {
     const index = wires.push(messages[0].content) - 1;
@@ -637,16 +637,19 @@ test('补写、局部中断、重启恢复和下一章使用相应的正文及�
     const start = prose.indexOf('买了红伞'), end = start + 4;
     const partial = await make({ action: 'revise', baseVersionId: first.versionId, instruction: '改这句',
       selection: { start, end, text: prose.slice(start, end) } });
-    assert.equal(lab.store.version(s.session.id, partial.versionId!).content, '阿宁拿起红');
+    assert.equal(lab.store.version(s.session.id, partial.versionId!).content, '换来一');
     assert.throws(() => select(partial.versionId!), /未完成/);
     await lab.close(); lab = new StoryLabService(s.root, path.resolve('resources/skill'), () => [s.profile], () => {}, caller);
     const resumed = await make({ action: 'continue', baseVersionId: expansion.versionId, sourceVersionId: partial.versionId!, instruction: '接着写' });
     select(resumed.versionId!);
     const updated = lab.store.version(s.session.id, resumed.versionId!).content;
-    assert.equal(updated, prose.slice(0,start) + '阿宁拿起红伞。' + prose.slice(end));
+    assert.equal(updated, prose.slice(0,start) + '换来一把青伞' + prose.slice(end));
     await make({ action: 'prose', baseVersionId: expansion.versionId, instruction: '紧接第一章写第二章' });
     assert.ok(wires[5].includes(updated) && wires[5].includes(resumed.versionId!));
     const solo = lab.preview(input(s.session.id, { action: 'prose', baseVersionId: expansion.versionId, proseMode: 'independent', instruction: '独立试写场景' }));
+    const directory = path.resolve('.test-output/writing-material-acceptance'); fs.mkdirSync(directory, { recursive: true });
+    fs.writeFileSync(path.join(directory, 'lab.json'), JSON.stringify({ before: plan, expansion: { id: expansion.versionId, accepted: merged },
+      prose: { before: prose, start, end, partial: partial.versionId, adopted: resumed.versionId, content: updated }, requests: wires }, null, 2));
     assert.ok(!solo.user.includes(updated));
   } finally { await lab.close(); }
 });
@@ -667,5 +670,28 @@ test('表格中截断逐字接续；核心构想接回原模板，完成后不�
     assert.match(wires[2], /9—17项/); assert.match(wires[2], /17\. 下一步创作/);
     assert.equal(s.lab.store.version(s.session.id,end.versionId!).content, outputs.join(''));
     assert.throws(() => s.lab.preview(resume(end.versionId!)), /未完成/);
+  } finally { await s.lab.close(); }
+});
+
+test('实验室按十二条翻页，按需取旧原文及请求，选中版本固定且读取不修改状态', async () => {
+  const s = setup();
+  try {
+    const first = await generate(s.lab, input(s.session.id));
+    s.lab.select({ sessionId: s.session.id, versionId: first.versionId!, expectedRevision: 0, reviewedStale: false });
+    const ids = [first.versionId!];
+    for (let i = 0; i < 25; i++) {
+      const r = s.lab.edit({ sessionId: s.session.id, baseVersionId: ids.at(-1)!, title: '编辑' + i,
+        expectedRevision: s.lab.store.session(s.session.id).revision, content: blueprint + '\n' + i });
+      ids.push(r.versions.at(-1)!.id);
+    }
+    const stamp = s.lab.store.stamp(s.session.id), head = s.lab.store.detail(s.session.id);
+    assert.equal(head.versions.length, 13); assert.equal(head.versions.filter(v => v.content).length, 2);
+    assert.equal(head.requests[0].context.user, ''); assert.ok(s.lab.store.request(s.session.id, first.id).context.user.includes(requirement.idea));
+    const middle = s.lab.store.detail(s.session.id, head.older);
+    assert.equal(middle.versions.length, 12); assert.ok(middle.versions.every(v => !v.content));
+    const tail = s.lab.store.detail(s.session.id, middle.older); assert.equal(tail.older, undefined);
+    assert.equal(new Set([...head.versions, ...middle.versions, ...tail.versions].map(v => v.id)).size, ids.length);
+    assert.equal(s.lab.store.version(s.session.id, ids[4]).content, blueprint + '\n3');
+    assert.deepEqual(s.lab.store.stamp(s.session.id), stamp);
   } finally { await s.lab.close(); }
 });

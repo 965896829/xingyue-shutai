@@ -172,7 +172,7 @@ export function compileCreative(store: FileStore, root: string, raw: unknown, br
       const state = readQuality(store), evidence = input.evidenceIds.map(id => state.evidence.find(e => e.id === id));
       if (evidence.some(e => !e || !evidenceUsable(store, e))) throw new Error('编辑证据已失效，请重新选择');
       modelPayload = { evidence };
-      for (const e of evidence) sourceVersions.push({ path: e!.after.path, hash: e!.after.hash });
+      for (const e of evidence) sourceVersions.push({ path: e!.after.path, hash: store.readAccepted(e!.after.path).hash });
     } else if (input.operation === 'patterns') {
       for (const chapter of [...new Set(input.chapters)].sort((a, b) => a - b)) read(prosePath(chapter), `chapter-${chapter}`);
       modelPayload = { request: input.request, documents: documents.map((d, i) => ({ ...d, path: sourceVersions[i].path, hash: sourceVersions[i].hash })), patterns: readQuality(store).patterns.filter(p => p.state === 'ready' && input.chapters.includes(p.chapter)), coverage: { chapters: input.chapters, complete: true } };

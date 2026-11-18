@@ -1,9 +1,10 @@
+import { characterVoiceSlice } from './character-voice';
 import { characterMaterial } from './character-material';
 import type { ContextManifest, ContextSource, Fact } from '../shared/types';
 import type { FileStore } from './storage';
 import { readQuality } from './quality';
 import type { WritingMaterials } from '../shared/scene-material';
-import { updatePath } from './domain';
+import { paths, updatePath } from './domain';
 import { pendingSource } from './memory-source';
 
 const fields = {
@@ -55,9 +56,17 @@ export function writingMaterials(store: FileStore, manifest: ContextManifest): W
     historicalMechanisms.push(entry);
     (manifest.referenceSources ??= []).push({ path: file, hash: doc.hash, reason: 'mechanism-comparison' });
   }
+  const cards = manifest.sources.find(s => s.path === paths.roles && s.layer === 'author_rules');
+  const cardExcerpt = (name: string) => {
+    if (!cards) return;
+    const selected = characterVoiceSlice(cards.content, name);
+    if (!selected) return;
+    // These ranges index the excerpt already present in sources, never an unscoped character ledger.
+    return { path: cards.path, hash: cards.hash, excerptRanges: selected.ranges };
+  };
   return {
     version: 1, characters: [...new Set([...(manifest.entityIds ?? []), ...scenes.flatMap(s => s.focalCharacter ?? [])])]
-      .map(name => characterMaterial(store, manifest.chapter, name, facts, scenes, manifest.voicePreferences ?? [], manifest.scope?.viewpoint === 'author')),
+      .map(name => characterMaterial(store, manifest.chapter, name, facts, scenes, manifest.voicePreferences ?? [], manifest.scope?.viewpoint === 'author', cardExcerpt(name))),
     authorPreferences: 'voicePreferences 中的已确认适用偏好',
     narrator: { instruction: '作者当前明确要求优先，继承已确认声音；人物所知和表达指导分别使用。', scenes: scenes.map(({ scene, narration }) => ({ scene, narration })) },
     focalExperience: { scenes, currentStateIds: ids(f => f.kind === 'state' || ['injury', 'item', 'relation'].includes(f.category) && f.kind === 'event'),

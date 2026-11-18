@@ -171,7 +171,8 @@ export function StoryLab({
             />
           )}
         </small>
-        <MarkdownContent content={message.content} />
+        <MarkdownContent content={message.excerpt && request?.response ? request.response : message.content} />
+        {message.excerpt && !request?.response && <button onClick={() => void requestBody(message.requestId).catch(e => setError(String(e)))}>展开完整回复</button>}
         {message.versionId && (
           <div className="button-row subdued">
             <button onClick={() => openDocument(message.versionId!)}>查看 / 编辑这份候选</button>
@@ -208,7 +209,7 @@ export function StoryLab({
   }
   async function requestBody(id: string) {
     const full = await invoke('lab.request', { sessionId: selectedId, id });
-    setDetail(state => state?.session.id === full.sessionId ? { ...state, requests: state.requests.map(r => r.id === id ? full : r) } : state);
+    setDetail(state => state?.session.id === full.sessionId ? { ...state, requests: state.requests.some(r => r.id === id) ? state.requests.map(r => r.id === id ? full : r) : [full, ...state.requests] } : state);
   }
   async function perform<T>(fn: () => Promise<T>): Promise<T | undefined> {
     if (busyRef.current) return;

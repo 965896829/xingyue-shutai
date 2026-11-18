@@ -22,9 +22,20 @@ export interface SceneMaterial {
   actions?: string;
   result?: string;
 }
+export interface CharacterMaterial {
+  character: string;
+  values: string[];
+  goal: { facts: string[]; plan: string[] };
+  condition: { facts: string[]; pressure: string[] };
+  interlocutor: { facts: string[]; scene: string[] };
+  experience: { known: string[]; beliefs: string[]; lastChapter?: { outcome: string; facts: string[]; source: { path: string; hash: string } } };
+  communication: string[];
+  voice: { narration: number[]; dialogue: number[]; local: number[] };
+  card?: { path: string; hash: string; excerptRanges: { start: number; end: number }[] };
+}
 export interface WritingMaterials {
   version: number;
-  characters?: ReturnType<typeof import('../core/character-material').characterMaterial>[];
+  characters?: CharacterMaterial[];
   authorPreferences: string;
   narrator: { instruction: string; scenes: { scene: string; narration?: string }[] };
   focalExperience: { scenes: SceneMaterial[]; currentStateIds: string[]; experienceIds: string[]; beliefIds: string[] };

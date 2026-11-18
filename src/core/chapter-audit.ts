@@ -23,7 +23,7 @@ export function chapterAuditPrompts(root: string) {
   };
 }
 
-const auditSourceSemantics = 'sources[].previous 是同一资料在本轮修改前已采纳的版本；未变更的背景与稳定特征不需由本章重新证明，但与正文冲突仍应指出。proseMetrics 是宿主对对应 path/hash 正文计算的字数和口径，仅作统计依据，不是故事事实。factTransitions 是宿主按实际采纳规则计算的待提交状态变化；sources 中 wenxu-facts:v1 机器块仍是采纳前索引，正式提交时由宿主重建，不能把旧索引当成变化未生效的矛盾，也不要求模型改写机器块。仍须用正文核验 items 及每项状态变化；人物卡和台账的普通原文不受此例外影响。';
+const auditSourceSemantics = 'sources[].previous 是同一资料在本轮修改前已采纳的版本；未变更的背景与稳定特征不需由本章重新证明，但与正文冲突仍应指出。proseMetrics 是宿主对对应 path/hash 正文计算的字数和口径，仅作统计依据，不是故事事实。factTransitions 是宿主按实际采纳规则计算的待提交状态变化；台账展示实际改动和引用原句，hash 对应完整版本，正式提交时由宿主重建机器索引。仍须用正文核验 items 及每项状态变化；人物卡和台账的普通原文不受此例外影响。';
 
 export function chapterAuditInput(memory: MemoryInput, plans: PlanInput) {
   const sources = new Map<string, MemoryInput['sources'][number]>();

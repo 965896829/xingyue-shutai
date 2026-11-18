@@ -43,5 +43,12 @@ export function mergeLabFragment(operation: LabOperation, base: LabVersion | und
   if (base.content.slice(start, end) !== text) throw new Error('原始修改位置已变化');
   if (operation.action !== 'expand' || start !== end) return base.content.slice(0, start) + raw + base.content.slice(end);
   const before = base.content.slice(0, start), after = base.content.slice(end);
-  return before + (before && !before.endsWith('\n\n') ? '\n\n' : '') + raw + (after && !raw.endsWith('\n\n') ? '\n\n' : '') + after;
+  const newline = base.content.includes('\r\n') ? '\r\n' : '\n';
+  const separator = (left: string, right: string) => {
+    if (!left || !right) return '';
+    const breaks = (left.match(/(?:\r?\n)+$/)?.[0] ?? '') + (right.match(/^(?:\r?\n)+/)?.[0] ?? '');
+    const count = breaks.match(/\n/g)?.length ?? 0;
+    return newline.repeat(Math.max(0, 2 - count));
+  };
+  return before + separator(before, raw) + raw + separator(raw, after) + after;
 }

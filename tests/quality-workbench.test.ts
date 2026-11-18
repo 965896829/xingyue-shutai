@@ -32,6 +32,22 @@ test('编辑学习保留对象和场景，撤回证据使已采纳声音停止�
     assert.match(store.readAccepted(voicePath).content, /此人在对话中用动作掩饰情绪/);
   } finally { store.close(); }
 });
+test('无关段落移动后表达样例仍生效，事实和改动过的引文另行核对', () => {
+  const { store, evidence } = edited();
+  try {
+    let state = mutateQuality(store, 0, { kind: 'evidence', evidence });
+    const expression = state.evidence.at(-1)!.id;
+    storeLearnedPreferences(store, 'anchor', [{ statement: '先用动作承接问题', scope: evidence.scope, evidenceIds: [expression], alternatives: [], exceptions: [] }]);
+    state = readQuality(store); store.commit([{ path: voicePath, content: voiceDocument(store, [state.preferences[0].id]), baseHash: null }], store.db.project());
+    state = mutateQuality(store, state.revision, { kind: 'evidence', evidence: { ...evidence, domain: 'fact_correction' } });
+    const current = '无关段落。\n' + evidence.after.quote, file = evidence.after.path;
+    store.commit([{ path: file, content: current, baseHash: evidence.after.hash }], store.db.project());
+    assert.equal(voiceSlice(store, evidence.scope).length, 1);
+    assert.equal(readQuality(store).evidence.find(e => e.domain === 'fact_correction')?.usable, false);
+    store.commit([{ path: file, content: '她改为直接回答。', baseHash: hash(current) }], store.db.project());
+    assert.equal(voiceSlice(store, evidence.scope).length, 0);
+  } finally { store.close(); }
+});
 test('一次编辑、纠错和未知原因均不能形成全书稳定偏好', () => {
   const { store, evidence } = edited();
   try {

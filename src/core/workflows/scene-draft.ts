@@ -1,3 +1,4 @@
+import { writingOperation } from '../../shared/writing-operation';
 import { characterMaterial } from '../character-material';
 import type { ModelResult, ProjectState, Run } from '../../shared/types';
 import { memoryScopeSchema } from '../../shared/studio';
@@ -48,6 +49,7 @@ export async function writeScopedScenes(options: {
         sceneFunctions: material.sceneFunction ? [material.sceneFunction] : [],
         addresseeIds: material.addressees?.split(/[、,，]/), relationshipIds: material.relationship ? [material.relationship] : [], scope, visibleQuotes: recalled.facts.flatMap(f => f.fact.evidence.map(e => e.quote)) });
     const input = {
+      target: writingOperation({ project: project.id, chapter: run.chapter, batch: run.batch, scene: numbers[index], action: 'scene', version: source.hash }),
       scope, chapterBrief, outlineVersion: { path: detailPath(run.chapter), hash: source.hash }, scene: scene.replace(/^.*下一章.*(?:\r?\n|$)/gm, ''),
       authority: '本场细纲是获准展开的计划，未发生前不作为事实；表达指导不提供人物经历。未提供未来场面、原始设定全文或其他视角历史。',
       targetWords: Math.max(100, Math.round(project.config.chapterWords / scenes.length)),

@@ -55,6 +55,7 @@ export const labMessageSchema = z.object({
   requestId: id,
   role: z.enum(['user', 'assistant']),
   content: text,
+  excerpt: z.boolean().optional(),
   versionId: id.nullable(),
   action: labActionSchema,
   createdAt: z.string()

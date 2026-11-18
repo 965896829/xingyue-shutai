@@ -130,12 +130,12 @@ test('实际联合审核传递修改前资料和宿主字数；修改前版本�
     await f.audit();
     const input = f.requests[0];
     assert.ok(input.plans.length, '验证真实联合审核请求');
-    assert.deepEqual(input.sources.find((s: any) => s.path === paths.roles).previous, { hash: hash(before), content: before });
+    assert.deepEqual(input.sources.find((s: any) => s.path === paths.roles).previous, { hash: hash(before), content: before.split('\n').at(-1) });
     const sentSources = f.wireRequests[0].input.flatMap((item: any) => {
       try { const value = JSON.parse(typeof item.content === 'string' ? item.content : item.content?.[0]?.text); return value.source ? [value.source] : []; }
       catch { return []; }
     });
-    assert.deepEqual(sentSources.find((s: any) => s.path === paths.roles).previous, { hash: hash(before), content: before }, '必须检查缓存处理后最终出站数据');
+    assert.deepEqual(sentSources.find((s: any) => s.path === paths.roles).previous, { hash: hash(before), content: before.split('\n').at(-1) }, '必须检查缓存处理后最终出站数据');
     assert.deepEqual(input.proseMetrics.map((m: any) => [m.path, m.hash, m.words, m.computedBy]),
       [[prosePath(1), hash(f.run.changes[0].content), countWords(f.run.changes[0].content), 'host']]);
     const fingerprint = f.run.memoryReview!.fingerprint;
@@ -149,7 +149,7 @@ test('实际联合审核传递修改前资料和宿主字数；修改前版本�
     f.run.baseSnapshotId = refreshed.baseSnapshotId;
     await f.audit();
     const updated = f.requests.at(-1);
-    assert.equal(updated.sources.find((s: any) => s.path === paths.roles).previous.content, older);
+    assert.match(updated.sources.find((s: any) => s.path === paths.roles).previous.content, /修改前已有约定：克制/);
     assert.notEqual(f.run.memoryReview!.fingerprint, fingerprint);
     const sent = f.requests.length;
     await f.audit();
@@ -251,7 +251,9 @@ test('审核收到与采纳同源的事实状态预览，旧机器索引不冒�
     f.run.changes.push(f.service.change(paths.behavior, candidate));
     await f.audit();
     const input = f.requests[0];
-    assert.equal(input.sources.find((s: any) => s.path === paths.behavior).content, candidate, '原始索引与来源哈希不可伪改');
+    const excerpt = input.sources.find((s: any) => s.path === paths.behavior);
+    assert.equal(excerpt.hash, hash(candidate)); assert.ok(excerpt.content.includes('本章已经递出记录本。'));
+    assert.ok(!excerpt.content.includes('wenxu-facts:v1'), '机器索引留在本地，完整版本哈希绑定候选');
     assert.deepEqual(input.factTransitions[0], { id: old.id, replacementId: 'fulfilled', reason: '正文中已经递出记录本',
       before: { state: 'active', reviewStatus: 'accepted', toChapter: null },
       after: { state: 'superseded', reviewStatus: 'accepted', toChapter: 0 } });

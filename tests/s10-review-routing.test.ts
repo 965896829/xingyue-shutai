@@ -118,7 +118,7 @@ for (const changeBudget of [false, true]) test(`章后记忆暂停与重启恢�
     assert.equal(memories, 3, service.store!.db.run(created.run.id).error ?? '重启恢复应到达记忆模型入口');
     assert.equal(reviews, 1, reviewRequests.at(-1) ?? '预算调整不应使故事审核失效'); assert.deepEqual(sources[1], sources[0]);
     if (!changeBudget) assert.deepEqual(sources[2], sources[0]);
-    else assert.ok((sources[2] as any[]).some(source => source.path.includes('角色卡') && source.mode === 'full'));
+    else assert.ok((sources[2] as any[]).some(source => source.path.includes('角色卡') && source.mode === 'excerpt' && source.hash === service.store!.db.document(source.path)?.hash));
     assert.ok((sources[0] as any[]).some(source => source.path.includes('知情边界')));
   } finally { await service.drain(); }
 });

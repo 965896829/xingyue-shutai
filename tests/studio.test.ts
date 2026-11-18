@@ -399,6 +399,7 @@ test('后台评估仅遇到预算变更仍保留结果，遇到创作约束变�
 test('M26：只在完整段落边界评估，未完成尾句不进入请求', async (t) => {
   const { s } = setup();
   try {
+    const p = s.db.project(); p.config.preview.enabled = true; s.db.set('project', p);
     const r = run(s);
     let received = '';
     const telemetry = new NarrativeTelemetry(
@@ -596,6 +597,7 @@ test('预览次数跨任务重载保留，未知费用会阻止预算内追加�
   let telemetry: NarrativeTelemetry | undefined;
   try {
     const p = s.db.project();
+    p.config.preview.enabled = true;
     p.config.preview.maxCalls = 1;
     s.db.set('project', p);
     const r = run(s);

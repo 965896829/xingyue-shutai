@@ -9,7 +9,7 @@ import { paths, stageOutputs, activeBatch, batchPath, rhythmPath, taskPath, deta
 import { encodeFacts } from '../../src/core/memory-records';
 import { proposalHash } from '../../src/core/storage';
 import { fakeResult } from './refactor';
-import { fixture } from './workflow';
+import { fixture, fixtureMemoryChanges } from './workflow';
 import { fixtureAuditEvidence, fixtureCoverage } from './chapter-coverage';
 import { normalize, RequestError } from '../../src/core/provider';
 import { nativeResponse, nativeText, nativeCall } from './native-search';
@@ -113,7 +113,7 @@ const service: Service = new Service(
         return fakeResult(JSON.stringify(input.plans ? { memory, plans } : memory));
       }
       const memory = run.pipeline.phase === 'memory';
-      return { ...fakeResult(''), stop: 'tools', calls: [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes: (memory ? stageOutputs('S11', project) : [qualityPath(1)]).map(file => service.change(file, fixture(project, file, service))), ...(memory ? { facts: [], complete: true, coverage: fixtureCoverage(service, run) } : {}) }) }] };
+      return { ...fakeResult(''), stop: 'tools', calls: [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes: memory ? fixtureMemoryChanges(project, service) : [service.change(qualityPath(1), fixture(project, qualityPath(1), service))], ...(memory ? { facts: [], complete: true, coverage: fixtureCoverage(service, run) } : {}) }) }] };
     }
     if (!run && creationScenario === 'context_meter') {
       await new Promise(resolve => setTimeout(resolve, 300));

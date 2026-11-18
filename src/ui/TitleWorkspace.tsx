@@ -39,6 +39,18 @@ export function TitleWorkspace({
       !r.accepted &&
       !['discarded', 'stale'].includes(r.status)
   );
+  const [blurb, setBlurb] = useState<{ content: string; hash: string }>();
+  const blurbRun = snapshot.runs.find(r => r.accepted && r.design?.input.id === 'packaging.blurb' &&
+    r.design.targets.some(t => snapshot.documents.some(d => d.path === t.path && d.status === 'accepted')));
+  const blurbPath = blurbRun?.design?.targets[0]?.path;
+  const blurbHash = snapshot.documents.find(d => d.path === blurbPath)?.hash;
+  useEffect(() => {
+    let current = true;
+    setBlurb(undefined);
+    if (blurbPath && blurbHash) void invoke('document.read', { path: blurbPath, hash: blurbHash })
+      .then(doc => { if (current) setBlurb({ content: doc.content, hash: blurbHash }); }).catch(() => {});
+    return () => { current = false; };
+  }, [p.id, blurbPath, blurbHash]);
   const t = run?.naming;
   const recommendations = t ? recommendedTitleIds(t) : [];
   const selected = sourceRunId ? parent?.planning?.titleSelection : p.titleBinding;
@@ -163,6 +175,7 @@ export function TitleWorkspace({
       )}
       {selected && plan && <details className="title-style-reference"><summary>入口承诺与后续兑现</summary>
         <p><strong>{selected.candidate.title}</strong>　{selected.candidate.readerPromise}</p>
+        {blurb && blurb.hash === blurbHash && <details><summary>已采纳的简介稿</summary><div style={{whiteSpace:'pre-wrap'}}>{blurb.content}</div></details>}
         {(['opening','stage','long_term','ongoing'] as const).map(stage => {
           const claims = plan.statements.filter(c => c.payoffStage === stage);
           return claims.length ? <section key={stage}><strong>{{opening:'开篇的具体场面',stage:'阶段与首卷回报',long_term:'后续发展',ongoing:'持续推进'}[stage]}</strong>

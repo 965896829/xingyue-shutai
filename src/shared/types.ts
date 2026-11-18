@@ -290,6 +290,8 @@ export interface ContextManifest {
   selectionTrace?: { version: 1; candidates: number; facts: { id: string; kind: Fact['kind']; reason: string; required: boolean }[] };
   readPlan?: import('./context-reading').ContextReadPlan;
   writingMaterials?: import('./scene-material').WritingMaterials;
+  writingTarget?: ReturnType<typeof import('./writing-operation').writingOperation>;
+  writingBatch?: { start: number; end: number };
   qualityReadHash?: string;
   voiceSelection?: { entityIds: string[]; sceneFunctions: string[]; sceneIds: string[]; addresseeIds?: string[]; relationshipIds?: string[]; scope?: import('./studio').MemoryScope };
   voicePreferences?: { scope: import('./quality').VoiceScope; statement: string; exceptions: string[]; samples?: { kind: 'expression_sample'; text: string; source: { path: string; hash: string }; instruction: string }[] }[];

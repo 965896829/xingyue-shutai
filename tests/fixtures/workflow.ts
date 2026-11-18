@@ -8,6 +8,7 @@ import {
   activeBatch,
   batchPath,
   rhythmPath,
+  stageOutputs,
   taskPath,
   detailPath,
   prosePath,
@@ -175,4 +176,14 @@ export function fixture(p: ProjectState, file: string, service: Service) {
   if (file === paths.summary) return filled(t['批次人物摘要']);
   const existing = service.store!.read(file).content;
   return existing.includes('待填写') ? '# 连续性台账\n\n暂无已确认事件，不伪造记录。' : existing;
+}
+
+export function fixtureMemoryChanges(p: ProjectState, service: Service) {
+  const files = stageOutputs('S11', p).filter(file => file === updatePath(p.chapter) || file === paths.behavior ||
+    file === paths.summary && p.chapter === activeBatch(p).end);
+  return files.map(file => {
+    const text = fixture(p, file, service), baseHash = service.store!.db.document(file)?.hash ?? null;
+    if (!baseHash || file === updatePath(p.chapter)) return { path: file, baseHash, content: text };
+    return { path: file, baseHash, patch: { sourceHash: baseHash, append: '\n\n' + text.replace(/^#[^\n]*\n+/, '') } };
+  });
 }

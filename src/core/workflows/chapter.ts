@@ -433,7 +433,7 @@ export async function driveChapterWorkflow(
         ...contextPayload(r.manifest!, p, phase),
         authorRequest: r.request, authorPremise: context.authorPremise,
         prose: { ...prose, hash: pipeline.proseHash }, repairScope: repairContext(r),
-        existingCandidates: r.changes.filter(c => c.path !== prose.path && (phase !== 'memory' || c.path !== qualityPath(r.chapter)))
+        existingCandidates: r.changes.filter(c => c.path !== prose.path && !memoryPaths.some(file => file === c.path) && (phase !== 'memory' || c.path !== qualityPath(r.chapter)))
       });
       host.event(r, 'phase-context-rebuilt', '按当前有效版本重新绑定本阶段资料，保留请求历史、候选与累计用量');
       host.save(r);

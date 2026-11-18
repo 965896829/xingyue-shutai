@@ -32,15 +32,29 @@ export function ledgerMaterial(content: string, chapter: number, names: string[]
   return { content: pieces.join(''), ranges, omitted: body.length !== content.length || selected.size < lines.length };
 }
 
-/** Send both sides of the actual change to an auditor, retaining full-file hashes for adoption. */
-export function ledgerChange(before: string, after: string) {
-  const chunks = diff(before, after).map(c => {
-    const line = (s: string, start: number, end: number) => {
-      const from = start === 0 ? 0 : s.lastIndexOf('\n', start - 1) + 1;
-      const to = end > start && s[end - 1] === '\n' ? end : s.indexOf('\n', end);
-      return s.slice(from, to < 0 ? undefined : to);
-    };
-    return { before: line(before, c.fromA, c.toA), after: line(after, c.fromB, c.toB) };
-  });
-  return { before: [...new Set(chunks.map(c => c.before))].join('\n'), after: [...new Set(chunks.map(c => c.after))].join('\n') };
+// Offsets in the diff are UTF-16. Expand to exact original lines before combining ranges.
+function joinedLines(text: string, spans: { start: number; end: number }[]) {
+  const ranges: { start: number; end: number }[] = [];
+  for (const span of spans.sort((left, right) => left.start - right.start)) {
+    const last = ranges.at(-1);
+    if (last && span.start <= last.end) last.end = Math.max(last.end, span.end);
+    else ranges.push({ ...span });
+  }
+  return ranges.map(r => text.slice(r.start, r.end)).filter(Boolean).join('\n…\n');
+}
+const bodyOf = (text: string) => text.split(/<!--\s*wenxu-facts:v1\s*-->/, 1)[0];
+export function ledgerChange(before: string, after: string, evidence: string[] = []) {
+  const a = bodyOf(before), b = bodyOf(after);
+  const chunks = diff(a, b);
+  const line = (s: string, start: number, end: number) => {
+    const from = start === 0 ? 0 : s.lastIndexOf('\n', start - 1) + 1;
+    const to = end > start && s[end - 1] === '\n' ? end : s.indexOf('\n', end);
+    return { start: from, end: to < 0 ? s.length : to };
+  };
+  const afterRanges = chunks.map(c => line(b, c.fromB, c.toB));
+  for (const quote of evidence) {
+    const at = b.indexOf(quote);
+    if (quote && at >= 0) afterRanges.push({ start: at, end: at + quote.length });
+  }
+  return { before: joinedLines(a, chunks.map(c => line(a, c.fromA, c.toA))), after: joinedLines(b, afterRanges) };
 }

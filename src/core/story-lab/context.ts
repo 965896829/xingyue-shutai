@@ -1,3 +1,4 @@
+import { writingOperation } from '../../shared/writing-operation';
 import { labMaterialBlocks, visibleLabMaterial } from '../../shared/lab-material';
 import { professionalMethod } from '../creation-policy';
 import { describeOperation } from './operation';
@@ -39,6 +40,7 @@ export function buildLabContext(
       throw new Error('请选择未完成的片段，或继续核心构想第9—17项。');
     base = operation.baseId ? store.version(session.id, operation.baseId) : undefined;
   }
+  if (base?.partial && ['revise', 'expand', 'prose'].includes(input.action)) throw new Error('请先继续未完成的原始操作，或编辑已保存片段。');
   if (input.action !== 'blueprint' && !input.instruction.trim())
     throw new Error('请说明这次要讨论、修改、展开或试写什么');
   if (input.action === 'revise') {
@@ -59,7 +61,12 @@ export function buildLabContext(
     ...(prose ? [professionalMethod(skillRoot, 'prose').content, read('prose.md')] : [])
   ].join('\n\n');
   const sources = ['作者原始要求', ...(session.pins.length ? ['明确保留点'] : [])];
-  const parts = [
+  const target = writingOperation({ project: session.id, chapter: operation.chapter, action: input.action === 'continue' ? 'resume' :
+    operation.action === 'prose' ? ({ next: 'next', rewrite: 'rewrite', independent: 'scene', first: 'chapter' } as const)[operation.proseMode ?? 'first'] :
+    operation.action === 'revise' ? 'passage' : operation.action, version: operation.baseId,
+    previousVersion: input.action === 'continue' ? source?.id : operation.proseMode === 'independent' ? undefined : operation.proseParentId,
+    selection: operation.selected && { start: operation.selected.start, end: operation.selected.end } });
+  const parts = ['本轮对象：' + JSON.stringify(target),
     `作者原始要求：\n${JSON.stringify(session.requirements, null, 2)}`,
     ...(session.pins.length ? [`明确保留点：\n${session.pins.join('\n')}`] : [])
   ];
@@ -110,7 +117,7 @@ export function buildLabContext(
 
     const selected =
       input.recentMessageIds === undefined
-        ? store.discussions(session.id)
+        ? operation.proseMode === 'independent' ? [] : store.discussions(session.id)
         : input.recentMessageIds.map((id) => {
             const message = store.get('messages', id);
             if (!message || message.sessionId !== session.id) throw new Error('讨论消息不属于此实验');

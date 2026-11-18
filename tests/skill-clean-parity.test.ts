@@ -11,7 +11,7 @@ import { materializeAftermathStatus, batchSummaryProgress } from '../src/core/af
 import { futurePlanReviewInput, parseFuturePlanReview, confirmedAlignedPlans } from '../src/core/future-plan-review';
 import { proposalHash } from '../src/core/storage';
 import { fakeProfile, fakeResult, isolatedRoot } from './fixtures/refactor';
-import { fixture } from './fixtures/workflow';
+import { fixture, fixtureMemoryChanges } from './fixtures/workflow';
 import { factSchema, type Run } from '../src/shared/types';
 import { documentPreviewText } from '../src/shared/run-presentation';
 import type { Caller } from '../src/core/runner';
@@ -237,11 +237,11 @@ for (const withFacts of [true, false]) for (const combined of [true, false]) tes
     const packet = JSON.parse(messages[0].content);
     const memories = packet.sources.filter((source: any) => source.path.startsWith('04_'));
     assert.equal(memories.length, 9); assert.equal(new Set(memories.map((source: any) => source.path)).size, 9);
-    assert.ok(memories.every((source: any) => source.mode === 'full' && source.hash === service.store!.db.document(source.path)?.hash));
+    assert.ok(memories.every((source: any) => source.mode === 'excerpt' && source.ranges.length && source.hash === service.store!.db.document(source.path)?.hash));
     const r = service.store!.db.runs().find(item => item.status === 'running')!;
     const prose = r.changes.find(item => item.path === prosePath(1))!;
     const facts = withFacts ? [factSchema.parse({ id: 'action-1', subject: '阿宁', predicate: '递出记录本', value: '向医生递出记录本', kind: 'event', category: 'item', fromChapter: 1, revealedAt: 1, evidence: [{ path: prose.path, hash: hash(prose.content), quote: '阿宁推开诊室的门，把记录本递到灯下。' }] })] : [];
-    const changes = stageOutputs('S11', p).map(file => service.change(file, fixture(p, file, service)));
+    const changes = fixtureMemoryChanges(p, service);
     const coverage = fixtureCoverage(service, r, facts);
     return combined ? { ...fakeResult(''), native: null, stop: 'tools' as const, calls: [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes, facts, complete: true, coverage }) }] } : proposal(changes, facts, true, coverage);
   });

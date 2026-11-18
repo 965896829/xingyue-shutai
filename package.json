@@ -24,6 +24,7 @@
     "preview": "vite --host 127.0.0.1",
     "test:scale": "node --import tsx tests/scale.ts",
     "test:large-book": "node scripts/test-large-book.mjs",
+    "eval:reading": "node scripts/reading-study.mjs",
     "eval:context": "node --import tsx scripts/context-eval.ts --run-context-eval",
     "eval:prose": "node --import tsx scripts/prose-eval.ts --run-prose-eval"
   },
