@@ -9,5 +9,6 @@ resources/skill/design-v7/** -text -whitespace
 resources/skill/platform/** -text -whitespace
 xingyue-agent-design/** -text -whitespace
 resources/skill/references/volume-naming.md text eol=lf
+resources/skill/references/chapter-naming-commercial.md text eol=lf
 tests/fixtures/chapter-056-prose.md text eol=lf
 tests/fixtures/death-right-roadmap-041.md text eol=lf

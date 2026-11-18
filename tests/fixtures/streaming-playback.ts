@@ -6,14 +6,15 @@ import { NarrativeDecoder } from '../../src/shared/narrative-events';
 import { playbackPlan, playbackProse, playbackResponse } from './streaming-content';
 export { playbackPlan, playbackProse } from './streaming-content';
 
-export async function createPlaybackFixture(service: Service, parent: string) {
-  await service.invoke('project.create', { parent, title: '流式输出与节奏同步验收', premise: '仅用于本地界面性能验收的合成故事。',
+export async function createPlaybackFixture(service: Service, parent: string, acceptedProse?: string) {
+  await service.invoke('project.create', { parent, title: acceptedProse ? '雨夜来客' : '流式输出与节奏同步验收', premise: '仅用于本地界面性能验收的合成故事。',
     config: { defaultProfileId: 'fixture', expressionRules: { enabled: false }, preview: { enabled: false, maxCalls: 8 }, chapterWords: 2500 } });
   const store = service.store!, project = store.db.project();
   project.stage = 'S10'; project.revision++;
   store.commit([{ path: detailPath(1), baseHash: store.db.document(detailPath(1))?.hash ?? null, content: playbackPlan },
     { path: paths.outline, baseHash: store.db.document(paths.outline)?.hash ?? null, content: '# 总纲\n\n| 章节 | 类型 | 强度 |\n| --- | --- | --- |\n' + [4, 3, 2, 4, 5, 2, 3, 4, 2, 5].map((strength, i) => `| ${i + 1} | 推进 | ${strength} |`).join('\n') }], project);
-  const run = service.makeRun('stage', '生成第001章正文', 'fixture');
+  if (acceptedProse) store.commit([service.change(prosePath(1), acceptedProse)], store.db.project());
+  let run = service.makeRun('stage', '生成第001章正文', 'fixture');
   store.db.saveRun(run);
   let timer: ReturnType<typeof setTimeout> | undefined, offset = 0, eventCount = 0, startedAt = 0, endedAt = 0;
   const notify = () => service.emit({ type: 'snapshot', resource: 'runs', runId: run.id });
@@ -23,6 +24,7 @@ export async function createPlaybackFixture(service: Service, parent: string) {
   };
   const start = () => {
     if (timer) clearTimeout(timer);
+    run = store.db.run(run.id);
     offset = 0; eventCount = 0; startedAt = performance.now(); endedAt = 0;
     run.status = 'running'; run.pipeline!.phase = 'prose'; run.pipeline!.proseHash = undefined;
     run.pipeline!.epoch = id(); run.pipeline!.version++; run.pipeline!.narrative = { version: 1, epoch: run.pipeline!.epoch, events: [] };

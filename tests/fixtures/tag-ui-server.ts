@@ -48,6 +48,16 @@ const service: Service = new Service(
   },
   async (_profile, _system, messages, tools, _signal, delta, options): Promise<ModelResult> => {
     modelRequests++;
+    if (creationScenario === 'writing_desk') {
+      const last = String(messages.findLast(m => m.role === 'user')?.content ?? '');
+      const passage = _system.includes('按作者要求改写选区'), chapter = _system.includes('本章的完整正文候选');
+      const first = passage ? '她把灯芯拨低。' : chapter ? Array.from({ length: 38 }, (_, i) => '第' + (i + 1) + '盏灯下，青石阶上落着一枚湿漉漉的脚印。').join('\n\n') : '可以从灯影变化写起。';
+      const lastPart = passage ? '门外的人没有动。' : chapter ? '\n\n她终于听清了门外的脚步。' : '';
+      delta?.(first);
+      if (last.includes('等待')) await waitForChatProgress(_signal);
+      delta?.(lastPart);
+      return fakeResult(first + lastPart);
+    }
     if (creationScenario === 'writing_style') {
       await waitForChatProgress(_signal);
       return fakeResult(JSON.stringify(writingStyleReportFixture));
@@ -293,7 +303,8 @@ if (creationScenario === 'creative_v7' || creationScenario === 'quality_v7') {
   const fact = factSchema.parse({ id: 'fixture-door', subject: '阿宁', entityIds: ['aning'], predicate: '观察', value: '屋里只有时钟声', category: 'character', kind: 'belief', fromChapter: 1, revealedAt: 1, reviewStatus: 'accepted', knowledge: [{ who: 'aning', mode: 'seen', fromChapter: 1 }], evidence: [{ path: prosePath(1), hash: hash(prose.content), quote: '屋里静得只剩时钟的声音。' }] });
   store.commit([service.change(paths.roles, encodeFacts(store.readAccepted(paths.roles).content, [fact]))], store.db.project());
 }
-const playback = creationScenario === 'streaming_playback' ? await createPlaybackFixture(service, parent) : undefined;
+const playback = creationScenario === 'streaming_playback' || creationScenario === 'writing_desk' ? await createPlaybackFixture(service, parent,
+  creationScenario === 'writing_desk' ? '# 第一章　雨夜来客\n\n山门的灯亮了一夜。\n\n阿宁推开木门，屋檐上的雨刚好停了。\n\n“是谁？”她问。\n\n门槛边有一串脚印，停在门外。' : undefined) : undefined;
 if (creationScenario === 'quality_v7') {
   const store = service.store!, file = prosePath(1), after = store.readAccepted(file).content;
   const before = '# 第一章\n\n阿宁觉得屋里很安静，她心想也许没有人。';

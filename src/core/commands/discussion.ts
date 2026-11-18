@@ -10,6 +10,7 @@ import type { Service } from '../service';
 import { taskRunHash } from '../task-discussion';
 import { upgradesVolumeNaming } from '../volume-market-research';
 import { explicitlyRequestsEdit } from '../../shared/author-intent';
+import { manuscriptEditSchema } from '../../shared/manuscript-edit';
 import { fingerprint } from '../runtime/canonical';
 const str = (v: unknown) => z.string().min(1).parse(v);
 
@@ -18,6 +19,7 @@ export const discussionCommands = new Set<string>([
   'chat.create',
   'chat.update',
   'chat.read',
+  'chat.manuscript',
   'chat.page',
   'chat.stop',
   'chat.send',
@@ -75,6 +77,11 @@ export async function handleDiscussionCommand(
     c.updatedAt = now();
     return records.save('conversations', c);
   }
+  if (command === 'chat.manuscript') {
+    const turn = records.get('conversation_turns', str(a.id));
+    if (!turn.manuscript || turn.manuscript.projectId !== p.id) throw new Error('此请求没有本作品的正文候选');
+    return { target: turn.manuscript, message: records.get('conversation_messages', turn.messageId) };
+  }
   if (command === 'chat.read') {
     const key = str(a.id);
     return {
@@ -120,6 +127,9 @@ export async function handleDiscussionCommand(
       ).id;
     }
     const objectBinding = records.get('conversations', conversationId).objectBinding;
+    const manuscript = old?.manuscript ?? manuscriptEditSchema.optional().parse(a.manuscript);
+    if (manuscript && (manuscript.projectId !== p.id || objectBinding)) throw new Error('正文选区与当前作品不一致');
+    if (manuscript?.mode === 'passage' && !manuscript.original.length) throw new Error('请重新选择要改写的文字');
     if (objectBinding) workbenchDiscussionContext(s, objectBinding);
     const turn = chat.prepare(
       conversationId,
@@ -128,11 +138,11 @@ export async function handleDiscussionCommand(
       'discussion',
       undefined,
       (prepared) => {
-        if (objectBinding && explicitlyRequestsEdit(prepared.request))
+        if (!manuscript && objectBinding && explicitlyRequestsEdit(prepared.request))
           prepared.objectEdit = { bindingHash: fingerprint(objectBinding) };
         prepared.displayedError =
           old?.displayedError ?? (typeof a.displayedError === 'string' ? a.displayedError : undefined);
-        if ((command === 'run.discuss' && a.allowCandidateEdits === true) || old?.candidateEdit) {
+        if (!manuscript && ((command === 'run.discuss' && a.allowCandidateEdits === true) || old?.candidateEdit)) {
           const task = s.db.run(old?.candidateEdit?.runId ?? str(a.id));
           if (
             (!old?.candidateEdit || old.candidateEdit.runHash === taskRunHash(task)) &&
@@ -148,7 +158,8 @@ export async function handleDiscussionCommand(
         }
         records.save('conversation_turns', prepared);
         host.operations.complete(prepared.id);
-      }
+      },
+      manuscript
     );
     const session = host.projectSessionId;
     void host.track(

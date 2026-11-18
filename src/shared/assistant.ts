@@ -62,6 +62,7 @@ export interface ConversationMessage {
   citations: Citation[];
 }
 export interface ConversationTurn {
+  manuscript?: import('./manuscript-edit').ManuscriptEdit;
   historyReadVersion?: 1;
   historyReads?: { messageId: string; conversationId: string; hash: string }[];
   executorId?: 'legacy' | 'pi';

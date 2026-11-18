@@ -1,6 +1,7 @@
 import { useDialogs } from './AppDialogs';
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { LiveMarkdown } from './LiveMarkdown';
+import type { WritingComposer } from './WritingManuscript';
 import { invokeCommand } from '../shared/client';
 import { mergeRows, readChatUpdates } from '../shared/chat-history';
 import type { CommandOutput } from '../shared/contracts';
@@ -15,7 +16,8 @@ import { latestContext, type ContextUsage } from '../shared/context-meter';
 
 type ChatPage = CommandOutput<'chat.page'>;
 
-export function TaskDiscussion({ conversationId, projectSessionId, run, limits, profileId, busy, scroll, refresh, onRun, onNavigate, onContext }: {
+export function TaskDiscussion({ conversationId, projectSessionId, run, limits, profileId, busy, scroll, refresh, onRun, onNavigate, onContext, desk }: {
+  desk?: WritingComposer;
   onContext?: (runId: string, usage?: ContextUsage) => void;
   conversationId?: string;
   projectSessionId?: string;
@@ -127,14 +129,19 @@ export function TaskDiscussion({ conversationId, projectSessionId, run, limits, 
           {message.role === 'assistant' && <GenerationStatus variant="elapsed" activity={turn?.activity} running={message.status === 'running'} fallbackStart={message.createdAt}
             label={{ running: '', complete: '已完成', stopped: '已停止', unknown: '请求结果未知', failed: '未完成' }[message.status]} />}
         </small>
-        <LiveMarkdown label="任务对话" binding={{ session: projectSessionId, kind: 'chat', conversation: conversationId, id: message.role === 'user' ? message.id : message.turnId, text: message.content, running: message.status === 'running' }} citations={message.webSearch?.citations} fallback="本次没有返回回答" />
+        {desk && turn?.manuscript && message.role === 'assistant' ?
+          <button onClick={() => desk.show(turn.id, turn.manuscript!)}>在正文中查看候选</button> :
+          <LiveMarkdown label="任务对话" binding={{ session: projectSessionId, kind: 'chat', conversation: conversationId, id: message.role === 'user' ? message.id : message.turnId, text: message.content, running: message.status === 'running' }} citations={message.webSearch?.citations} fallback="本次没有返回回答" />}
         {message.role === 'assistant' && <>
           <GenerationStep activity={turn?.activity} running={message.status === 'running'} />
           <WebSearchEvidence state={message.webSearch} running={message.status === 'running'} />
           <ContextCompactions items={turn?.contextCompactions} activity={turn?.activity} running={message.status === 'running'} />
           {turn?.error && <p className="inline-warning">{requestErrorText(turn.error)}</p>}
           {turn && ['unknown', 'failed', 'stopped'].includes(message.status) && <button disabled={working || busy} onClick={async () => {
-            if (await dialogs.confirm('重新发送会产生新的模型请求和费用，是否继续？', { title: '重新发送这条消息？', confirmLabel: '确认重新发送', cancelLabel: '暂不发送' })) void act(async () => { await invokeCommand('chat.retry', { id: turn.id, profileId, confirmRetry: true }); });
+            if (await dialogs.confirm('重新发送会产生新的模型请求和费用，是否继续？', { title: '重新发送这条消息？', confirmLabel: '确认重新发送', cancelLabel: '暂不发送' })) void act(async () => {
+              const id = await invokeCommand('chat.retry', { id: turn.id, profileId, confirmRetry: true });
+              if (turn.manuscript) desk?.show(id, turn.manuscript);
+            });
           }}>重新发送这条消息</button>}
           {data.proposals.filter(proposal => proposal.turnId === message.turnId).map(proposal => {
             const newCandidate = proposal.resumeRunId === run.id && needsNewChapterCandidate(run, limits);

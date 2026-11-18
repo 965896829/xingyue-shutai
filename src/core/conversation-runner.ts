@@ -235,16 +235,18 @@ export class ConversationRunner {
     profileId: string,
     kind: 'discussion' | 'draft' = 'discussion',
     proposalId?: string,
-    onPrepared?: (turn: ConversationTurn) => void
+    onPrepared?: (turn: ConversationTurn) => void,
+    manuscript?: ConversationTurn['manuscript']
   ) {
     const conv = this.records.get('conversations', conversationId);
     if (conv.archived) throw new Error('请先恢复此聊天');
-    const profile = this.profile(profileId, !conv.runId),
+    const profile = this.profile(profileId, !conv.runId && !manuscript),
       turnId = id(),
       messageId = id();
     textArg(request, 120000);
     const turn: ConversationTurn = {
       historyReadVersion: 1,
+      ...(manuscript ? { manuscript } : {}),
       executorId: 'pi',
       executorVersion: piExecutorVersion,
       id: turnId,

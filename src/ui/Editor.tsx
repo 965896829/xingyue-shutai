@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
+import { Annotation, EditorState, Transaction } from '@codemirror/state';
+import { isolateHistory } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { MergeView } from '@codemirror/merge';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
@@ -53,16 +55,30 @@ const editorAppearance = [
     ])
   )
 ];
+const fromParent = Annotation.define<boolean>();
+
 export function Editor({
   value,
   onChange,
   onSelection,
+  onRange,
+  playback,
+  undoStep,
+  undoBase,
+  clearSelection,
+  label,
   highlight,
   readOnly = false
 }: {
   value: string;
   onChange?: (v: string) => void;
   onSelection?: (v: string) => void;
+  onRange?: (range: { from: number; to: number }) => void;
+  playback?: { active: boolean; follow: boolean; pause: () => void };
+  undoStep?: number;
+  undoBase?: string;
+  clearSelection?: number;
+  label?: string;
   readOnly?: boolean;
   highlight?: { start: number; end: number };
 }) {
@@ -72,6 +88,8 @@ export function Editor({
     select = useRef(onSelection);
   callback.current = onChange;
   select.current = onSelection;
+  const options = useRef({ onRange, playback }), previousUndo = useRef(undoStep);
+  options.current = { onRange, playback };
   useEffect(() => {
     view.current = new EditorView({
       parent: parent.current!,
@@ -81,27 +99,76 @@ export function Editor({
         markdown(),
         EditorView.lineWrapping,
         EditorView.editable.of(!readOnly),
+        EditorState.readOnly.of(readOnly),
+        EditorView.contentAttributes.of(label ? { 'aria-label': label, role: 'textbox', 'aria-multiline': 'true' } : {}),
         EditorView.updateListener.of((u) => {
-          if (u.docChanged) callback.current?.(u.state.doc.toString());
+          const external = u.transactions.some(t => t.annotation(fromParent));
+          if (u.docChanged && !external) callback.current?.(u.state.doc.toString());
+          if (options.current.onRange && (u.selectionSet || u.docChanged)) {
+            const { from, to } = u.state.selection.main;
+            options.current.onRange({ from, to });
+            if (u.selectionSet && !external && from !== to) options.current.playback?.pause();
+          }
           if (u.selectionSet)
             select.current?.(u.state.sliceDoc(u.state.selection.main.from, u.state.selection.main.to));
         }),
         editorAppearance
       ]
     });
-    return () => view.current?.destroy();
-  }, [readOnly]);
+    const scroller = view.current.scrollDOM;
+    let dragging = false;
+    const pause = () => { if (options.current.playback?.active) options.current.playback.pause(); };
+    const wheel = (event: WheelEvent) => { if (event.deltaY < 0) pause(); };
+    const pointer = () => { dragging = true; };
+    const release = () => { dragging = false; };
+    const scroll = () => { if (dragging && scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop > 8) pause(); };
+    const key = (event: KeyboardEvent) => { if (['ArrowUp', 'PageUp', 'Home'].includes(event.key)) pause(); };
+    scroller.addEventListener('wheel', wheel, { passive: true });
+    scroller.addEventListener('pointerdown', pointer);
+    window.addEventListener('pointerup', release);
+    scroller.addEventListener('scroll', scroll);
+    scroller.addEventListener('keydown', key);
+    return () => {
+      window.removeEventListener('pointerup', release);
+      scroller.removeEventListener('pointerdown', pointer);
+      scroller.removeEventListener('scroll', scroll);
+      scroller.removeEventListener('wheel', wheel);
+      scroller.removeEventListener('keydown', key);
+      view.current?.destroy();
+    };
+  }, [readOnly, label]);
   useLayoutEffect(() => {
     const v = view.current;
     if (!v) return;
+    const record = undoStep !== previousUndo.current;
+    previousUndo.current = undoStep;
+    if (record && undoBase !== undefined && v.state.doc.toString() !== undoBase) {
+      v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: undoBase },
+        annotations: [fromParent.of(true), Transaction.addToHistory.of(false)] });
+    }
     const previous = v.state.doc.toString();
     if (previous === value) return;
     // Preserve the already laid-out prefix, selection and history during streaming.
     let from = 0, oldEnd = previous.length, newEnd = value.length;
     while (from < oldEnd && from < newEnd && previous[from] === value[from]) from++;
     while (oldEnd > from && newEnd > from && previous[oldEnd - 1] === value[newEnd - 1]) { oldEnd--; newEnd--; }
-    v.dispatch({ changes: { from, to: oldEnd, insert: value.slice(from, newEnd) } });
-  }, [value]);
+    v.dispatch({ changes: { from, to: oldEnd, insert: value.slice(from, newEnd) },
+      annotations: [fromParent.of(true), record ? isolateHistory.of('full') : Transaction.addToHistory.of(false)] });
+  }, [value, undoStep, undoBase]);
+  useLayoutEffect(() => {
+    const v = view.current;
+    if (clearSelection && v && !v.state.selection.main.empty) {
+      v.dispatch({ selection: { anchor: v.state.selection.main.head }, annotations: fromParent.of(true) });
+    }
+  }, [clearSelection]);
+  useLayoutEffect(() => {
+    if (!playback?.active || !playback.follow) return;
+    const id = requestAnimationFrame(() => {
+      const el = view.current?.scrollDOM;
+      if (el && options.current.playback?.follow) el.scrollTop = el.scrollHeight;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [value, playback?.active, playback?.follow]);
   useEffect(() => {
     if (!highlight || !view.current) return;
     const chars = Array.from(value),

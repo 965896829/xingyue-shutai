@@ -1651,6 +1651,7 @@ export class Service {
       if (r.planning) throw new Error('结构化策划候选需在标签与策划中修改输入后重新审核');
       const at = r.changes.findIndex((c) => c.path === str(a.path));
       if (at < 0) throw new Error('候选不存在');
+      if (a.expectedHash && hash(r.changes[at].content) !== a.expectedHash) throw new Error('候选已更新，请核对最新正文后再保存。');
       r.changes[at].content = z.string().parse(a.content);
       if (r.pipeline && r.changes[at].path === prosePath(r.chapter)) {
         const previousProseHash = r.pipeline.proseHash;

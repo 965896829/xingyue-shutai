@@ -17,6 +17,7 @@ import type {
 } from '../shared/assistant';
 import { ProximitySidebar } from './ProximitySidebar';
 import { ChatComposer } from './ChatComposer';
+import { SelectionChip, type WritingComposer } from './WritingManuscript';
 import { brand } from '../shared/brand';
 import { requestErrorText } from '../shared/run-presentation';
 import { jumpToChatTarget } from './chat-navigation';
@@ -40,7 +41,8 @@ export function ChatWorkspace({
   onSettings,
   refresh,
   conversationId,
-  compact = false
+  compact = false,
+  desk
 }: {
   snapshot: Snapshot;
   profileId: string;
@@ -51,8 +53,10 @@ export function ChatWorkspace({
   refresh: () => Promise<void>;
   conversationId?: string;
   compact?: boolean;
+  desk?: WritingComposer;
 }) {
   const dialogs = useDialogs(snapshot.projectSessionId);
+  const [topicsOpen, setTopicsOpen] = useState(false);
   const [selected, select] = useState(''),
     [data, setData] = useState<ChatData>(),
     [inputs, setInputs] = useState<Record<string, string>>({}),
@@ -205,17 +209,21 @@ export function ChatWorkspace({
       setError('输入缓存空间不足，请将内容保存到本地文稿');
     }
   }
-  async function send() {
+  async function send(explicitWriting = false) {
     if (!currentText.trim() || modelBusy || busy) return;
     followReply.current = true;
-    if (
-      await call('chat.send', {
+    let manuscript;
+    try { manuscript = await desk?.target(currentText, explicitWriting); }
+    catch (e) { setError((e as Error).message); return; }
+    if (explicitWriting && !manuscript) return;
+    const id = await call('chat.send', {
         conversationId: selected,
         text: currentText.trim(),
         profileId,
-        referenceChats: refs
-      })
-    ) {
+        referenceChats: refs, manuscript
+      });
+    if (id) {
+      if (manuscript) desk?.show(id, manuscript);
       input('');
       scroll.current?.scrollTo({ top: scroll.current.scrollHeight });
     }
@@ -382,7 +390,7 @@ export function ChatWorkspace({
           </form>
         </div>
       )}
-      {!compact && <aside className="topic-list">
+      {!compact && (!desk || topicsOpen) && <aside className="topic-list">
         <div className="topic-heading">
           <b>主题聊天</b>
           <button
@@ -408,7 +416,7 @@ export function ChatWorkspace({
             <button
               key={c.id}
               className={`topic-item ${selected === c.id ? 'active' : ''}`}
-              onClick={() => select(c.id)}
+              onClick={() => { select(c.id); setTopicsOpen(false); }}
             >
               {c.title}
             </button>
@@ -431,6 +439,7 @@ export function ChatWorkspace({
       </aside>}
       <div className="assistant-conversation">
         <header className="assistant-heading">
+          {desk && <button className="desk-topic-toggle" aria-expanded={topicsOpen} onClick={() => setTopicsOpen(v => !v)}>主题</button>}
           <div>
             <h2>{view?.conversation.title ?? '创作讨论'}</h2>
             <small>第 {p.chapter} 章</small>
@@ -495,12 +504,13 @@ export function ChatWorkspace({
                     {m.role === 'assistant' && <GenerationStatus variant="elapsed" activity={turn?.activity} running={m.status === 'running'} fallbackStart={m.createdAt}
                       label={{ running: '', complete: '已完成', stopped: '已停止', unknown: '请求结果未知', failed: '未完成' }[m.status]} />}
                   </small>
-                  <LiveMarkdown
+                  {desk && turn?.manuscript && m.role === 'assistant' ?
+                    <button onClick={() => desk.show(turn.id, turn.manuscript!)}>在正文中查看{turn.manuscript.mode === 'passage' ? '选区改写' : '候选'}</button> : <LiveMarkdown
                     label={m.role === 'user' ? '你的消息' : '助手回答'}
                     allowImages
                     binding={{ session: snapshot.projectSessionId, kind: 'chat', conversation: selected, id: m.role === 'user' ? m.id : m.turnId, text: m.content, running: m.status === 'running' }}
                     citations={m.webSearch?.citations} fallback="没有返回正文"
-                  />
+                  />}
                   {m.role === 'assistant' && (
                     <>
                       <GenerationStep activity={turn?.activity} running={m.status === 'running'} />
@@ -590,7 +600,7 @@ export function ChatWorkspace({
                                 profileId,
                                 confirmRetry: true,
                                 referenceChats: refs
-                              });
+                              }).then(id => { if (id && turn.manuscript) desk?.show(id, turn.manuscript); });
                           }}
                         >
                           确认重新发送
@@ -610,6 +620,7 @@ export function ChatWorkspace({
           <p className="composer-note">已归档，可恢复后继续讨论。</p>
         ) : (
           <div className="chat-composer-area">
+            {desk && <SelectionChip desk={desk}/>}
             <ChatComposer
               contextUsage={latestContext(view?.turns ?? [])}
               conversationId={selected}
@@ -630,6 +641,7 @@ export function ChatWorkspace({
               referenceChats={refs}
               onReferencesChange={setRefs}
               onPropose={(kind) => void proposal(kind)}
+              onWriteManuscript={desk ? () => void send(true) : undefined}
             />
           </div>
         )}

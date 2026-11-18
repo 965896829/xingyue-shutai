@@ -38,6 +38,7 @@ interface Props {
   referenceChats: string[];
   onReferencesChange: (ids: string[]) => void;
   onPropose: (kind: 'stage' | 'draft' | 'revision') => void;
+  onWriteManuscript?: () => void;
 }
 
 export function ChatComposer(props: Props) {
@@ -157,6 +158,7 @@ export function ChatComposer(props: Props) {
         <textarea
           ref={textarea}
           aria-label="聊天消息"
+          placeholder={props.onWriteManuscript ? '和 AI 讨论，或告诉它你想怎样写…' : undefined}
           aria-describedby={`${uid}-hint`}
           rows={2}
           value={props.value}
@@ -231,6 +233,10 @@ export function ChatComposer(props: Props) {
                 开始创作
               </div>
               <div className="chat-composer-task-tools">
+                {props.onWriteManuscript && <button disabled={!props.canSend || modelPending}
+                  onClick={() => { setMenu(null); props.onWriteManuscript?.(); }}>
+                  <FilePenLine size={16} />写入正文
+                </button>}
                 <button disabled={!props.canPropose || modelPending} onClick={() => propose('stage')}>
                   <ListChecks size={16} />
                   生成当前阶段

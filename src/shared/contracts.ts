@@ -15,6 +15,7 @@ import { errorCodes } from './errors';
 import { reasoningEffortSchema } from './reasoning';
 import { narrativeDataSchema } from './narrative-curve';
 import { manuscriptViewSchema } from './manuscript-view';
+import { manuscriptEditSchema } from './manuscript-edit';
 import { creativeInputSchema } from './creative';
 import { qualityStateSchema, qualityMutationSchema, qualityStatsSchema, worldModelSchema } from './quality';
 import { designInputSchema, designEntrySchema } from './design';
@@ -155,7 +156,7 @@ export const commandContracts = {
   'terminal.cancel': define(empty, ok, 'write'),
   'run.accept': define(z.strictObject({ id: key, proposalHash: optionalText, warningReason: optionalText, startNext: flag, title: key.max(80).optional() }), z.object({ accepted: flag, alreadyAccepted: flag, nextRun: optionalText, nextError: optionalText, titleChanged: flag }), 'write'),
   'run.discard': define(identity, ok, 'write'),
-  'run.update': define(z.strictObject({ id: key, path: key, content: text }), schemas.runSchema, 'write'),
+  'run.update': define(z.strictObject({ id: key, path: key, content: text, expectedHash: key.optional() }), schemas.runSchema, 'write'),
   'run.revalidate': define(z.strictObject({ id: key, reviewSaved: flag }), schemas.runSchema, 'write'),
   'run.events': define(z.strictObject({ id: key, afterSeq: integer.optional(), limit: integer.min(1).max(500).optional() }), z.array(schemas.runEventSchema)),
   'run.page': define(z.strictObject({ before: integer.optional(), watermark: integer.optional(), limit: integer.min(1).max(200).optional() }), z.object({ items: z.array(schemas.runSchema), watermark: integer, nextBefore: integer.nullable() })),
@@ -212,10 +213,11 @@ export const commandContracts = {
   'chat.create': define(z.strictObject({ title: optionalText }), schemas.conversationSchema, 'write'),
   'chat.update': define(z.strictObject({ id: key, title: optionalText, archived: flag, online: flag }), schemas.conversationSchema, 'write'),
   'chat.read': define(identity, chatData),
+  'chat.manuscript': define(identity, z.object({ target: manuscriptEditSchema, message: schemas.conversationMessageSchema })),
   'chat.page': define(z.strictObject({ id: key, before: integer.optional(), watermark: integer.optional(), limit: integer.min(1).max(200).optional() }),
     chatData.extend({ watermark: integer, nextBefore: integer.nullable() })),
-  'chat.send': define(z.strictObject({ conversationId: key, text: key, profileId: optionalText, referenceChats: z.array(text).max(10).optional() }), text, 'write'),
-  'run.discuss': define(z.strictObject({ id: key, text: key.max(120000), profileId: optionalText, displayedError: text.max(4000).optional(), allowCandidateEdits: z.boolean().optional() }), text, 'write'),
+  'chat.send': define(z.strictObject({ conversationId: key, text: key, profileId: optionalText, referenceChats: z.array(text).max(10).optional(), manuscript: manuscriptEditSchema.optional() }), text, 'write'),
+  'run.discuss': define(z.strictObject({ id: key, text: key.max(120000), profileId: optionalText, displayedError: text.max(4000).optional(), allowCandidateEdits: z.boolean().optional(), manuscript: manuscriptEditSchema.optional() }), text, 'write'),
   'chat.retry': define(z.strictObject({ id: key, confirmRetry: z.literal(true, { error: '需要明确确认重新请求，可能产生新的费用' }), profileId: optionalText, referenceChats: z.array(text).max(10).optional() }), text, 'write'),
   'chat.stop': define(empty, ok, 'write'),
   'proposal.create': define(z.strictObject({ conversationId: key, profileId: key, proposal: action }), schemas.actionProposalSchema, 'write'),

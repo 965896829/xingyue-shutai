@@ -12,6 +12,10 @@ import { StoryLab } from './story-lab/StoryLab';
 import { useStreamSession, proseBinding, proseFile } from './useLiveStream';
 import { LiveMarkdown } from './LiveMarkdown';
 import { LiveProseEditor, LiveProseCount } from './LiveProseEditor';
+import { readWorkingDraft, SelectionChip, WritingManuscript, type WritingComposer, type WritingDeskHandle } from './WritingManuscript';
+import { DeskDivider, useDeskLayout } from './DeskDivider';
+import { manuscriptTarget, mergeManuscript, requestedChapter, requestsManuscript, type ManuscriptEdit } from '../shared/manuscript-edit';
+import './writing-desk.css';
 import { reasoningLabel } from '../shared/reasoning';
 import { invokeCommand } from '../shared/client';
 import { newProjectLocationError } from '../shared/project-location';
@@ -151,6 +155,10 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   const refreshSeq = useRef(0),
     eventCursor = useRef<EventCursor>({ seq: 0, waiting: false });
   const [workView, setWorkView] = useState<'chat' | 'tasks' | 'tags' | 'objects'>('chat');
+  const deskLayout = useDeskLayout();
+  const deskEditor = useRef<WritingDeskHandle>(null);
+  const [deskFile, setDeskFile] = useState(''), [deskCount, setDeskCount] = useState(0);
+  const [queuedReply, setQueuedReply] = useState<{ id: string; target: ManuscriptEdit }>();
   const [agentSettings, setAgentSettings] = useState(false);
   const [titleConfirmation, setTitleConfirmation] = useState<{ projectId: string; candidate: Run; startNext: boolean; warningReason: string } | null>(null);
   const [snapshot, setSnapshot] = useState(empty),
@@ -356,9 +364,48 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     discussionRun = run && (mode === 'stage' || run.mode === 'revision') ? run : undefined,
     dirty = doc && text !== doc.content;
   const taskBusy = busy || !!running || !!snapshot.chatBusy;
+  const writingLayout = !management && !!p && page === 'work' && (workView === 'chat' || workView === 'tasks');
+  const manuscriptPath = deskFile || proseFile(workView === 'tasks' && run?.pipeline && !run.accepted ? run.chapter : p?.chapter ?? 1);
+  const matchesPage = (item: Run) => !item.accepted && !['stale', 'discarded'].includes(item.status) &&
+    (item.basisRevision ?? item.baseRevision) === p?.revision &&
+    (item.pipeline && proseFile(item.chapter) === manuscriptPath || item.changes.some(c => c.path === manuscriptPath));
+  const manuscriptRun = p ? (running && matchesPage(running) ? running :
+    run && matchesPage(run) ? run : manuscriptDraft(visibleRuns, p, manuscriptPath)) : undefined;
+  const desk: WritingComposer = {
+    count: deskCount, clear: () => deskEditor.current?.clear(),
+    target: async (instruction, explicit) => {
+      if (!p || !projectKey) return;
+      const current = Number(manuscriptPath.match(/第(\d+)章/)?.[1]) || p.chapter;
+      const chapter = requestedChapter(instruction, current);
+      if (deskEditor.current && (deskCount || chapter === current)) return deskEditor.current.target(instruction, explicit);
+      if (!explicit && !requestsManuscript(instruction)) return;
+      const path = proseFile(chapter);
+      const candidate = manuscriptDraft(visibleRuns, p, path);
+      const hash = snapshot.documents.find(d => d.path === path)?.acceptedHash;
+      const source = (candidate?.changes.find(c => c.path === path)?.content ??
+        (hash ? (await invoke('document.read', { path, hash })).content : '')).replace(/\r\n?/g, '\n');
+      if (activeProjectKey.current !== projectKey) throw new Error('作品已切换，请在当前作品重新选择章节。');
+      const local = readWorkingDraft(projectKey, p.id, path, candidate?.id, source);
+      return manuscriptTarget(p.id, path, local ? mergeManuscript(local.base, local.text, source).text : source);
+    },
+    show: (id, target) => {
+      if (target.projectId !== p?.id || activeProjectKey.current !== projectKey) return;
+      if (target.path === manuscriptPath && deskEditor.current) deskEditor.current.show(id, target);
+      else { openManuscript(target.path); setQueuedReply({ id, target }); }
+    }
+  };
+  useEffect(() => {
+    if (queuedReply && deskEditor.current && queuedReply.target.projectId === p?.id && queuedReply.target.path === manuscriptPath) {
+      deskEditor.current.show(queuedReply.id, queuedReply.target); setQueuedReply(undefined);
+    }
+  }, [queuedReply, p?.id, manuscriptPath, editorOpen]);
   const projectKey = p ? `${p.id}:${encodeURIComponent(p.root.replaceAll('\\', '/').toLowerCase())}` : undefined;
   const activeProjectKey = useRef(projectKey);
   activeProjectKey.current = projectKey;
+  function openManuscript(path: string) {
+    setDeskFile(path); setEditorOpen(false);
+    try { localStorage.setItem('writing-desk:chapter:' + projectKey, path); } catch { /* Available in this window. */ }
+  }
   useEffect(() => {
     if (titleConfirmation && titleConfirmation.projectId !== p?.id) setTitleConfirmation(null);
   }, [p?.id, titleConfirmation?.projectId]);
@@ -404,6 +451,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     jumpToChatTarget(chatScroll.current, run ? taskSectionId(run.id, 'recovery') : 'chat-execution') || jumpToChatTarget(chatScroll.current, 'chat-execution');
   }
   useLayoutEffect(() => {
+    if (writingLayout) return;
     const active = visibleRuns.find((r) => r.status === 'running' && r.pipeline) ?? (documentRun?.pipeline ? documentRun : undefined);
     const prose = active?.changes.find((c) => c.path.startsWith('07_'));
     if (!active || !prose || dirty || !p || active.accepted) return;
@@ -432,6 +480,9 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     // Other authorized views can switch the active book. Keep cached edits bound
     // to their original project and never carry an editor into the new book.
     setDoc(null); setEditorOpen(false); setText(''); setSource(null); setManifest(null);
+    let previousChapter = '';
+    try { previousChapter = localStorage.getItem('writing-desk:chapter:' + projectKey) ?? ''; } catch { /* Use the project's current chapter. */ }
+    setDeskFile(/^07_正文章节\/第\d+章\.md$/.test(previousChapter) ? previousChapter : ''); setQueuedReply(undefined);
     setModal(null); setTitleConfirmation(null);
     const pending = snapshot.runs.find((r) => !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status));
     setSelectedRun(pending?.id ?? '');
@@ -439,6 +490,16 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     setRequest('');
     setWorkView(pending?.planning || pending?.naming || ((p?.tagEnabled || p?.creationWorkflow === 2) && p.stage === 'S01') ? 'tags' : pending || p?.stage === 'S01' || snapshot.runs.some(r => r.mode === 'stage') ? 'tasks' : 'chat');
   }, [projectKey]);
+  const activeProse = running?.pipeline?.phase === 'prose' ? running : undefined;
+  const followedRun = useRef('');
+  useEffect(() => {
+    const key = activeProse && projectKey + ':' + activeProse.id + ':' + activeProse.pipeline?.epoch;
+    if (!key) { followedRun.current = ''; return; }
+    if (writingLayout && workView === 'tasks' && key !== followedRun.current) {
+      followedRun.current = key;
+      openManuscript(proseFile(activeProse!.chapter));
+    }
+  }, [activeProse?.id, activeProse?.pipeline?.epoch, projectKey, workView, writingLayout]);
   useEffect(() => {
     if (!profileId || !snapshot.profiles.some((p) => p.id === profileId))
       setProfileId(
@@ -450,25 +511,33 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       );
   }, [snapshot.profiles, p?.id]);
   useEffect(() => {
-    if (doc) {
+    if (doc && editorOpen) {
       try {
         localStorage.setItem(`draft:${doc.projectKey}:${doc.runId ?? ''}:${doc.path}`, text);
       } catch {
         setError('本地草稿缓存空间不足，请立即保存草稿');
       }
     }
-  }, [text, doc?.runId, doc?.path, doc?.projectKey]);
-  async function openDoc(relative: string, r?: Run, openMode?: 'edit' | 'diff') {
+  }, [text, doc?.runId, doc?.path, doc?.projectKey, editorOpen]);
+  function editDocument(next: string) {
+    setText(next);
+    if (!writingLayout || !doc || !/^07_正文章节\/第\d+章\.md$/.test(doc.path)) return;
+    try {
+      localStorage.setItem('draft:' + doc.projectKey + ':manuscript:' + doc.path,
+        JSON.stringify({ base: doc.content.replace(/\r\n?/g, '\n'), text: next.replace(/\r\n?/g, '\n') }));
+    } catch { setError('本机草稿空间不足，请保存为候选。'); }
+  }
+  async function openDoc(relative: string, r?: Run, openMode?: 'edit' | 'diff', workingText?: string) {
     const projectId = p?.id;
     if (!projectId || !projectKey) return;
     if (r?.accepted) r = undefined;
-    if (dirty && !await dialogs.confirm('编辑内容已保存在本机草稿缓存中。切换文档？', { title: '切换文档？', confirmLabel: '切换文档', cancelLabel: '继续编辑' })) return;
+    if (editorOpen && dirty && !await dialogs.confirm('编辑内容已保存在本机草稿缓存中。切换文档？', { title: '切换文档？', confirmLabel: '切换文档', cancelLabel: '继续编辑' })) return;
     await act(async () => {
       let old = { content: '', hash: null as string | null };
       try {
         old = await invoke('document.read', { path: relative });
       } catch {
-        if (!r) throw new Error('无法读取文件');
+        if (!r && workingText === undefined) throw new Error('无法读取文件');
       }
       const candidate = r?.changes.find((c) => c.path === relative),
         value = candidate?.content ?? old.content;
@@ -501,7 +570,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         before: baseline,
         disk: old.content
       });
-      setText(draft ?? value);
+      setText(workingText ?? draft ?? value);
       setEditorOpen(true);
       setInspector('manuscript');
       setEditorTab(openMode ?? (r ? 'diff' : 'edit'));
@@ -551,6 +620,22 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   async function sendTaskMessage() {
     if (taskBusy) return;
     if (!profileId) { setError('请先选择模型'); return; }
+    let manuscript: ManuscriptEdit | undefined;
+    try { manuscript = writingLayout ? await desk.target(request) : undefined; }
+    catch (e) { setError((e as Error).message); return; }
+    const formalChapter = manuscript?.mode === 'chapter' && manuscript.path === proseFile(p?.chapter ?? 1) &&
+      p?.stage === 'S10' && (!discussionRun || !!discussionRun.pipeline);
+    if (manuscript && !formalChapter) {
+      if (!request.trim()) return;
+      const id = await act(async () => {
+        if (discussionRun) return invoke('run.discuss', { id: discussionRun.id, text: request.trim(), profileId, manuscript });
+        const conversation = snapshot.conversations?.find(c => !c.runId && !c.archived && !c.objectBinding)
+          ?? await invoke('chat.create', { title: '创作讨论' });
+        return invoke('chat.send', { conversationId: conversation.id, text: request.trim(), profileId, manuscript });
+      });
+      if (id) { desk.show(id, manuscript); setRequest(''); if (!discussionRun) setWorkView('chat'); }
+      return;
+    }
     if (!discussionRun) { await start(); return; }
     if (!request.trim() || busy || running || snapshot.chatBusy) return;
     const result = await act(() => invoke('run.discuss', { id: discussionRun.id, text: request.trim(), profileId, displayedError: error.slice(0, 4000), allowCandidateEdits: true }));
@@ -640,6 +725,9 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   const filteredDocs = useMemo(() => snapshot.documents.filter((d) => !query || d.path.includes(query)), [snapshot.documents, query]);
   const currentDocument = p ? currentStageDocument(p) : undefined;
   async function openProjectDocument(path: string) {
+    if (writingLayout && /^07_正文章节\/第\d+章\.md$/.test(path)) {
+      openManuscript(path); return;
+    }
     await openDoc(path, p ? manuscriptDraft(visibleRuns, p, path) : undefined, 'edit');
   }
   useEffect(() => {
@@ -653,6 +741,26 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   const displayedChanges = run?.pipeline && run.status === 'running' && run.pipeline.phase === 'prose' && !run.changes.some(change => change.path === proseFile(run.chapter))
     ? [...run.changes, { path: proseFile(run.chapter), content: '', baseHash: null }] : run?.changes ?? [];
   const displayedIssues = run ? visibleRunIssues(run) : [];
+  const workTabs = p && (
+    <div className="work-tabs">
+      <button className={workView === 'objects' ? 'active' : ''} onClick={() => setWorkView('objects')}>共创画布</button>
+      <QualityWorkbench key={`quality:${p.id}`} profileId={profileId} onRun={(id) => void openStartedRun(id)} />
+      <SkillLauncher
+        key={`skills:${p.id}`}
+        profileId={profileId}
+        onRun={(id) => void openStartedRun(id)}
+      />
+      <button className={workView === 'chat' ? 'active' : ''} onClick={() => { setWorkView('chat'); if (!management && deskLayout.collapsed) deskLayout.toggle(); }}>
+        创作讨论
+      </button>
+      <button className={workView === 'tasks' ? 'active' : ''} onClick={() => { setWorkView('tasks'); if (!management && deskLayout.collapsed) deskLayout.toggle(); }}>
+        创作任务
+      </button>
+      <button className={workView === 'tags' ? 'active' : ''} onClick={() => setWorkView('tags')}>
+        作品方案与书名
+      </button>
+    </div>
+  );
   const chatSections: ProximitySection[] = run
     ? [
         { id: 'chat-request', label: '你的任务', kind: 'title' },
@@ -672,7 +780,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     : [];
   return (
     <div
-      className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${focus && editorOpen && page === 'work' ? 'studio-focus' : ''}`}
+      className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${focus && editorOpen && page === 'work' && !writingLayout ? 'studio-focus' : ''}`}
     >
       {!management && <aside className="sidebar" aria-label="作品与功能导航">
         <div className="brand">
@@ -770,7 +878,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                 {!p.finished && p.stage >= 'S06' && <small>{p.stage < 'S09' ? activeBatchText(p) : `第 ${String(p.chapter).padStart(3, '0')} 章`}</small>}
               </strong>
             </div>
-            <ProjectFiles documents={filteredDocs} selected={doc?.path} current={currentDocument} onOpen={path => void openProjectDocument(path)} resetKey={`${projectKey}:${query}`} />
+            <ProjectFiles documents={filteredDocs} selected={writingLayout && !editorOpen ? manuscriptPath : doc?.path} current={currentDocument} onOpen={path => void openProjectDocument(path)} resetKey={`${projectKey}:${query}`} />
           </>
         ) : (
           <div className="sidebar-empty">
@@ -924,26 +1032,11 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         ) : page === 'cover' ? (
           <Cover key={p.id} profiles={snapshot.profiles} title={p.title} act={act} />
         ) : (
-          <div className={`workspace ${focus ? 'studio-focus' : ''}`}>
+          <div className={`workspace ${writingLayout ? 'writing-desk' + (deskLayout.collapsed ? ' desk-chat-collapsed' : '') : focus ? 'studio-focus' : ''}`}
+            style={writingLayout ? deskLayout.style : undefined}>
+            {writingLayout && workTabs}
             <div className="work-area">
-              <div className="work-tabs">
-                <button className={workView === 'objects' ? 'active' : ''} onClick={() => setWorkView('objects')}>共创画布</button>
-                <QualityWorkbench key={`quality:${p.id}`} profileId={profileId} onRun={(id) => void openStartedRun(id)} />
-                <SkillLauncher
-                  key={`skills:${p.id}`}
-                  profileId={profileId}
-                  onRun={(id) => void openStartedRun(id)}
-                />
-                <button className={workView === 'chat' ? 'active' : ''} onClick={() => setWorkView('chat')}>
-                  创作讨论
-                </button>
-                <button className={workView === 'tasks' ? 'active' : ''} onClick={() => setWorkView('tasks')}>
-                  创作任务
-                </button>
-                <button className={workView === 'tags' ? 'active' : ''} onClick={() => setWorkView('tags')}>
-                  作品方案与书名
-                </button>
-              </div>
+              {!writingLayout && workTabs}
               {workView === 'objects' ? (
                 <ObjectWorkbench key={p.id} snapshot={snapshot} profileId={profileId} setProfileId={setProfileId} refresh={refresh} onRun={id => void openStartedRun(id)} onSource={setSource} onDocument={relative => void openDoc(relative)} onSettings={() => setAgentSettings(true)} />
               ) : workView === 'tags' ? (
@@ -962,6 +1055,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
               ) : workView === 'chat' ? (
                 <ChatWorkspace
                   key={p.id}
+                  desk={writingLayout ? desk : undefined}
                   snapshot={snapshot}
                   profileId={profileId}
                   setProfileId={setProfileId}
@@ -1146,7 +1240,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 {displayedChanges.map((c, index) => (!run.pipeline || c.path.startsWith('07_正文章节/')) ? (
                                   <details key={c.path} id={taskFileId(run.id, c.path)} open={run.pipeline ? c.path.startsWith('07_正文章节/') : run.planning ? c.path.startsWith('01_') : index === 0}>
                                     <summary>{c.path.split('/').at(-1)?.replace(/\.md$/, '')}</summary>
-                                    {run.pipeline && c.path === proseFile(run.chapter) ? <LiveMarkdown
+                                    {writingLayout && run.pipeline && c.path === proseFile(run.chapter) ? <button onClick={() => openManuscript(c.path)}>查看正文手稿</button> : run.pipeline && c.path === proseFile(run.chapter) ? <LiveMarkdown
                                       className="markdown-preview" label={c.path.split('/').at(-1)?.replace(/\.md$/, '')}
                                       binding={proseBinding(snapshot.projectSessionId, run)} format="prose"
                                       onClick={event => handleMarkdownLink(event, url => { void act(() => invoke('app.openUrl', { url })); })}
@@ -1325,13 +1419,14 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             </details>
                           </article>
                           {error && <p className="inline-warning" role="alert">{requestErrorText(error)}</p>}
-                          <TaskDiscussion key={`${p.id}:${run.id}`} conversationId={snapshot.conversations?.find(conversation => conversation.runId === run.id && !conversation.archived)?.id} projectSessionId={snapshot.projectSessionId} run={run} limits={p.config} profileId={profileId} busy={taskBusy} scroll={chatScroll} refresh={refresh} onRun={setSelectedRun} onNavigate={navigateTask} onContext={receiveDiscussionContext} />
+                          <TaskDiscussion key={`${p.id}:${run.id}`} conversationId={snapshot.conversations?.find(conversation => conversation.runId === run.id && !conversation.archived)?.id} projectSessionId={snapshot.projectSessionId} run={run} limits={p.config} profileId={profileId} busy={taskBusy} scroll={chatScroll} refresh={refresh} onRun={setSelectedRun} onNavigate={navigateTask} onContext={receiveDiscussionContext} desk={writingLayout ? desk : undefined}/>
                         </>
                       )}
                       </div>
                     </div>
                   </div>
                   <div className="composer">
+                    {writingLayout && <SelectionChip desk={desk}/>}
                     <textarea
                       aria-label="写作任务"
                       placeholder={feedbackRun ? '直接告诉我怎么改；有疑问也可以在这里问。' : '输入创作要求或想讨论的问题…'}
@@ -1421,6 +1516,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
               )}
               {workView !== 'objects' && <NarrativePanel snapshot={snapshot} run={run} onSource={setSource} />}
             </div>
+            {writingLayout && !deskLayout.collapsed && <DeskDivider width={deskLayout.width} setWidth={deskLayout.setWidth}/>}
+            {writingLayout && !editorOpen && <WritingManuscript key={projectKey + ':' + manuscriptPath} ref={deskEditor}
+              snapshot={snapshot} path={manuscriptPath} run={manuscriptRun} storageKey={projectKey!}
+              collapsed={deskLayout.collapsed} onToggle={deskLayout.toggle} onSelection={setDeskCount} refresh={refresh}
+              onSaved={id => { if (activeProjectKey.current === projectKey) { setSelectedRun(id); setWorkView('tasks'); } }}
+              onDetails={value => { void openDoc(manuscriptPath, manuscriptRun, 'edit', value); }}/>}
             {editorOpen && workView !== 'objects' && (
               <aside className="editor-panel">
                 <nav className="inspector-tabs" aria-label="作品面板">
@@ -1440,8 +1541,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                       {label}
                     </button>
                   ))}
-                  <button aria-pressed={focus} onClick={() => setFocus(!focus)}>
-                    {focus ? '退出专注' : '专注'}
+                  <button aria-pressed={writingLayout ? deskLayout.collapsed : focus} onClick={writingLayout ? deskLayout.toggle : () => setFocus(!focus)}>
+                    {(writingLayout ? deskLayout.collapsed : focus) ? '退出专注' : '专注'}
                   </button>
                 </nav>
                 {inspector === 'characters' ? (
@@ -1535,7 +1636,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                         {editorTab === 'edit' ? (
                           liveDocumentRun ? <LiveProseEditor session={snapshot.projectSessionId} run={liveDocumentRun} onSelection={setSelection} /> : <Editor
                             value={text}
-                            onChange={setText}
+                            onChange={editDocument}
                             onSelection={setSelection}
                             readOnly={
                               doc.path === '02_项目配置/标签创作契约.md' ||
