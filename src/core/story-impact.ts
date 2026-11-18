@@ -1,7 +1,7 @@
 import type { Change, Fact, Issue, ProjectState, Run } from '../shared/types';
 import type { StoryImpact, StoryStateChange } from '../shared/continuity';
 import type { FileStore } from './storage';
-import { hash, paths } from './domain';
+import { hash, paths, prosePath } from './domain';
 import { chapterSpan, pastPlanText } from './context-slices';
 import { sameStoryText } from './memory-source';
 import { candidateChangesForCurrentSettings, currentSettingsSourceHash } from './runtime-settings';
@@ -21,23 +21,50 @@ export function revisedChapterImpact(store: FileStore, run: Run, changes: Change
   if (!run.revisionCore) return;
   const prose = changes.filter(c => /^07_/.test(c.path));
   if (!prose.length) return;
-  const affectedFacts = store.db.facts().filter(f => f.reviewStatus === 'accepted' && f.state !== 'superseded' &&
+  const facts = store.db.facts();
+  const affectedFacts = facts.filter(f => f.reviewStatus === 'accepted' && f.state !== 'superseded' &&
     f.evidence.some(e => prose.some(c => c.path === e.path && c.baseHash === e.hash &&
       (!c.content.includes(e.quote) || c.content.indexOf(e.quote) !== c.content.lastIndexOf(e.quote)))));
   const causal = states.length > 0 || affectedFacts.length > 0 || !!run.factRetractions?.length;
   const intent = run.request + ' ' + (store.db.run(run.revisionCore.sourceRunId)?.request ?? '');
   const kind = causal ? 'causal' : /措辞|比喻|文风|标点|只改表达|语气/.test(intent) ? 'expression' : 'scene';
   const via = new Map<string, string[]>();
-  const queue = causal ? [...new Set([...affectedFacts.map(f => f.id), ...states.flatMap(s => [s.factId, ...(s.previousFactId ? [s.previousFactId] : [])]),
-    ...(run.factRetractions ?? []).map(r => r.id), ...prose.map(c => c.path)])] : [];
-  for (const key of queue) via.set(key, []);
+  const semanticIds = new Set([...affectedFacts.map(f => f.id), ...states.flatMap(s => [s.factId, ...(s.previousFactId ? [s.previousFactId] : [])]),
+    ...(run.factRetractions ?? []).map(r => r.id)]);
+  const related = new Map<string, string[]>();
+  for (const fact of facts.filter(f => f.reviewStatus === 'accepted' && f.state !== 'superseded')) {
+    for (const key of fact.relatedIds) related.set(key, [...related.get(key) ?? [], fact.id]);
+  }
   const downstream = store.db.sql.prepare('SELECT DISTINCT dependent FROM dependencies WHERE source_path=?');
-  for (let i = 0; i < queue.length; i++) for (const row of downstream.all(queue[i])) {
-    const next = String(row.dependent);
-    if (!via.has(next)) { via.set(next, [...via.get(queue[i])!, queue[i]]); queue.push(next); }
+  for (const id of semanticIds) {
+    for (const linked of related.get(id) ?? []) semanticIds.add(linked);
+    for (const row of downstream.all(id)) {
+      const dependent = String(row.dependent);
+      if (!via.has(dependent)) via.set(dependent, [id]);
+    }
+  }
+  // A later chapter may have read its predecessor only for continuity. This is not
+  // evidence that every intervening chapter used a changed injury, item or promise.
+  const oldTerms = [...new Set([...affectedFacts.flatMap(f => [f.value, ...f.evidence.map(e => e.quote)]),
+    ...states.flatMap(s => s.before ?? [])])].filter(term => term.trim().length >= 2);
+  const ending = (text: string) => text.trimEnd().split(/\r?\n\s*\r?\n/).at(-1) ?? '';
+  for (const change of prose) {
+    if (!change.baseHash || kind === 'expression') continue;
+    if (ending(store.object(change.baseHash).toString('utf8')) !== ending(change.content)) {
+      const chapter = Number(change.path.match(/第(\d+)章/)?.[1]);
+      via.set(prosePath(chapter + 1), [change.path]);
+    }
+    if (!causal || !oldTerms.length) continue;
+    const readers = store.db.sql.prepare("SELECT DISTINCT dependent FROM dependencies WHERE source_path=? AND source_hash=? AND kind IN ('prose','plan')");
+    for (const row of readers.all(change.path, change.baseHash)) {
+      const file = String(row.dependent);
+      if (via.has(file) || !store.db.document(file)?.hash) continue;
+      const content = store.readAccepted(file).content;
+      if (oldTerms.some(term => content.includes(term))) via.set(file, [change.path]);
+    }
   }
   return { kind, via, entities: [...new Set([...affectedFacts.map(f => f.subject), ...states.map(s => s.subject)])],
-    promises: affectedFacts.filter(f => f.category === 'promise' || f.category === 'hook').map(f => f.subject) } as const;
+    promises: [...new Set([...affectedFacts, ...run.facts].filter(f => semanticIds.has(f.id) && (f.category === 'promise' || f.category === 'hook')).map(f => f.subject))] } as const;
 }
 
 export function changedStoryStates(before: Fact[], after: Fact[]): StoryStateChange[] {

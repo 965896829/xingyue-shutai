@@ -473,7 +473,7 @@ export async function handleAdoptionCommand(
         .filter(
           (f) =>
             !changed.includes(f) &&
-            (!revisionImpact || (revisionImpact.via.has(f) || revisionImpact.kind === 'scene' && f === prosePath(earliest + 1))) &&
+            (!revisionImpact || revisionImpact.via.has(f)) &&
             (!plotChapters ||
               (/^(06_|07_|08_)/.test(f) &&
                 plotChapters.some((n) => {

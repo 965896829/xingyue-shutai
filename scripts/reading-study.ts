@@ -21,7 +21,14 @@ const families = [
     premise: '夜班检修员检出一批报废轴承却发现签收单用的是自己的工号。班长要保住当夜的工资。车间只有纸质交接，无监控也无万能技术。',
     goals: ['截住第一班出厂货，被扣当班津贴。交接单多了一枚反向油印。', '上一班停工造成工资纠纷。班长交出旧手套，让检修员核对油印，却隐瞒了替人打卡。', '真签收人提前换班。二人选择交出自己的违规记录保住返工证据，留下待厂方处置的后果。'] }
 ];
-const fixtureSamples = ['她捻起对折的纸，把尖角对齐了才开口。', '他把满杯推回去，隔着桌边问了一句。', '她没有接那句话，伸手把椅子让出半个身位。'];
+const drySamples = ['她捻起对折的纸，把尖角对齐了才开口。', '他把满杯推回去，隔着桌边问了一句。', '她没有接那句话，伸手把椅子让出半个身位。'];
+const selected: { statement: string; samples: string[] } = live
+  ? JSON.parse(fs.readFileSync(process.env.STUDY_SAMPLES!, 'utf8').replace(/^\uFEFF/, ''))
+  : { statement: '人物难以回答时，让手上的事先发生。', samples: drySamples };
+assert.ok(typeof selected.statement === 'string' && selected.statement.trim().length > 0);
+assert.ok(Array.isArray(selected.samples) && selected.samples.length === 3 && selected.samples.every(s => typeof s === 'string' && s.trim() && Array.from(s).length <= 600));
+assert.equal(new Set(selected.samples).size, 3);
+const fixtureSamples = selected.samples;
 const arms = ['baseline', 'materials', 'characters', 'samples'] as const;
 type Arm = typeof arms[number];
 type Attempt = { arm: Arm; genre: string; chapter: number; status: string; requestHash: string; started: string; elapsedMs?: number; usage?: unknown; responseHash?: string };
@@ -63,10 +70,10 @@ function seedExpression(service: Service) {
     store.commit([service.change(file, before)], store.db.project()); store.commit([service.change(file, after)], store.db.project());
     const span = (quote: string) => ({ path: file, hash: hash(quote), start: 0, end: Array.from(quote).length, quote });
     const state = mutateQuality(store, readQuality(store).revision, { kind: 'evidence', evidence: { before: span(before), after: span(after),
-      scope, domain: 'expression', reason: '合成作者档案要求以手上动作承接难以回答的问题', editor: 'author' } });
+      scope, domain: 'expression', reason: selected.statement, editor: 'author' } });
     ids.push(state.evidence.at(-1)!.id);
   }
-  storeLearnedPreferences(store, 'fixture-learning', [{ statement: '人物难以回答时，让手上的事先发生。', scope, evidenceIds: ids, alternatives: [], exceptions: ['紧急处置时'] }]);
+  storeLearnedPreferences(store, 'fixture-learning', [{ statement: selected.statement, scope, evidenceIds: ids, alternatives: [], exceptions: ['紧急处置时'] }]);
   store.commit([service.change(voicePath, voiceDocument(store, [readQuality(store).preferences.at(-1)!.id]))], store.db.project());
 }
 async function main() {
@@ -76,7 +83,7 @@ async function main() {
   const profile = { ...p, tools: false, networkRecovery: { ...p.networkRecovery, maxRetries: 0, retryUnknown: false } } as SecretProfile;
   const reader = path.join(output, 'reading'), projects = path.join(output, 'projects'), wires = path.join(output, 'requests');
   for (const dir of [reader, projects, wires]) fs.mkdirSync(dir, { recursive: true });
-  write(path.join(output, 'conditions.json'), { mode: live ? 'live' : 'offline', baseline: process.env.STUDY_COMMIT, model: profile.model, outputLimit: profile.outputLimit, temperature: profile.temperature, inputPrice: profile.inputPrice, outputPrice: profile.outputPrice, families, fixtureSamples });
+  write(path.join(output, 'conditions.json'), { mode: live ? 'live' : 'offline', baseline: process.env.STUDY_COMMIT, model: profile.model, outputLimit: profile.outputLimit, temperature: profile.temperature, inputPrice: profile.inputPrice, outputPrice: profile.outputPrice, families, expression: selected });
   const mapping = families.map(shuffled);
   write(path.join(output, 'key.json'), mapping);
   const index = [live ? '# 连续三章匿名试读' : '# 离线流程演示（合成占位正文）', '按题材阅读同一署名下的连续三章。每章独立记录反馈，可选都不想读或并列。'];
@@ -98,7 +105,10 @@ async function main() {
           if (arm === 'materials') delete material.writingMaterials.characters;
           if (chapter > 1) assert.ok(material.sources.some((s: any) => s.path === prosePath(chapter - 1) && s.hash === hash(previous)));
           if (arm === 'samples') assert.ok(material.voicePreferences?.some((v: any) => v.samples?.some((e: any) => fixtureSamples.includes(e.text))));
-          if (arm === 'materials') system = originalSystem.slice(0, at + marker.length) + JSON.stringify(material);
+          if (arm !== 'samples') {
+            for (const preference of material.voicePreferences ?? []) delete preference.samples;
+            system = originalSystem.slice(0, at + marker.length) + JSON.stringify(material);
+          }
         }
         if (arm !== 'samples') assert.ok(!fixtureSamples.some(s => system.includes(s)));
         assert.equal(tools.length, 0);
@@ -120,11 +130,11 @@ async function main() {
       service.profiles = [profile];
       try {
         await service.invoke('project.create', { parent: projects, title: book.title, premise: book.premise, config: { defaultProfileId: profile.id, genre: book.genre,
-          constraints: book.premise, stageBudget: null, chapterWords: 1200, minWords: 900, maxWords: 1500 } });
+          constraints: book.premise, style: selected.statement, stageBudget: null, chapterWords: 1200, minWords: 900, maxWords: 1500 } });
         const store = service.store!, project = store.db.project(), outlines = book.goals.map((goal, i) => '## 第' + (i + 1) + '章\n' + goal);
         store.commit([service.change(batchPath(project.batches[0]), outlines.join('\n\n')), ...book.goals.map((goal, i) => service.change(detailPath(i + 1),
           '# 第' + (i + 1) + '章细纲\n' + goal + '\n## 场面1：交涉\n- 场景功能：对话\n- 焦点人物：' + book.hero + '\n- 交谈对象：' + book.other + '\n- 目标：' + goal + '\n- 对话意图：要求对方交出凭证。'))], project);
-        if (arm === 'samples') seedExpression(service);
+        if (arm !== 'baseline') seedExpression(service);
         for (chapter of numbers) {
           called = false;
           const chat = await service.invoke('chat.create', { title: '第' + chapter + '章' });

@@ -1,3 +1,4 @@
+import { revisedChapterImpact } from '../src/core/story-impact';
 import test from 'node:test';
 import { SkillRegistry } from '../src/core/skill-registry';
 import assert from 'node:assert/strict';
@@ -212,4 +213,31 @@ test('采用有来源的声音偏好不把既有正文误标为剧情待同步',
     assert.deepEqual(store.db.project().stale, stale);
     assert.equal(store.readAccepted(file).content, after);
   } finally { await service.drain(); }
+});
+
+test('旧章改伤势只标记使用过该事实的后文，并区分表达与章末场面变化', () => {
+  const { store, run } = refactorFixture();
+  try {
+    const ten = prosePath(10), eleven = prosePath(11), twelve = prosePath(12), fifteen = prosePath(15);
+    const original = '阿宁左手受伤。\n\n关上了窗。';
+    const works = [[ten, original], [eleven, '药师给阿宁的左手受伤处上药。'], [twelve, '车夫在渡口找错了人。'], [fifteen, '药师收回了包扎的布。']];
+    store.commit(works.map(([path, content]) => ({ path, content, baseHash: null })), store.db.project());
+    const injury = factSchema.parse({ id: 'wound', subject: '阿宁', predicate: '伤势', value: '左手受伤', kind: 'state', category: 'injury',
+      fromChapter: 10, revealedAt: 10, reviewStatus: 'accepted', entityIds: ['AN'], evidence: [{ path: ten, hash: hash(original), quote: '阿宁左手受伤。' }] });
+    store.db.replaceFacts([injury], store.db.project().revision);
+    const add = store.db.sql.prepare('INSERT OR IGNORE INTO dependencies VALUES(?,?,?,?)');
+    add.run(ten, hash(original), eleven, 'prose'); add.run(eleven, hash(works[1][1]), twelve, 'prose');
+    add.run(injury.id, hash(JSON.stringify(injury)), fifteen, 'prose');
+    run.revisionCore = { version: 1, sourceRunId: run.id, chapters: [10], proseHashes: { 10: hash(original) }, coverage: {}, reports: {}, phase: 'review' };
+    const impact = (content: string) => revisedChapterImpact(store, run, [{ path: ten, baseHash: hash(original), content }], [])!;
+    run.request = '把第十章左手的旧伤改成右手';
+    const changed = impact(original.replace('左手', '右手'));
+    assert.equal(changed.kind, 'causal');
+    assert.deepEqual([...changed.via.keys()].sort(), [eleven, fifteen].sort());
+    run.request = '只改表达，换一个比喻';
+    assert.equal(impact(original + '像合眼。').via.size, 0);
+    run.request = '改掉章末关窗的行动';
+    const scene = impact(original.replace('关上了窗', '他推开了门'));
+    assert.equal(scene.kind, 'scene'); assert.deepEqual([...scene.via.keys()], [eleven]);
+  } finally { store.close(); }
 });
