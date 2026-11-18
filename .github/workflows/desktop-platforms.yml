@@ -2,7 +2,7 @@ name: Windows and macOS preparation
 
 on:
   push:
-    branches: [codex/macos-0.4.97]
+    branches: [codex/macos-writing-desk-0.4.98]
   pull_request:
     branches: [main]
   workflow_dispatch:

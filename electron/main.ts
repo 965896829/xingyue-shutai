@@ -1,3 +1,4 @@
+declare const __WRITING_DESK_BUILD__: { branch: string; commit: string; time: string };
 import {
   app,
   BrowserWindow,
@@ -585,6 +586,8 @@ else {
     }
   });
   app.whenReady().then(() => {
+    app.setAboutPanelOptions({ applicationName: brand.name, applicationVersion: buildVersion,
+      version: buildVersion, copyright: [__WRITING_DESK_BUILD__.branch, __WRITING_DESK_BUILD__.commit, __WRITING_DESK_BUILD__.time].join(' · ') });
     const journalRoot = path.join(app.getPath('userData'), 'management-journal');
     fs.mkdirSync(journalRoot, { recursive: true });
     managementJournal = new FileStore(journalRoot);
@@ -670,10 +673,7 @@ else {
         { id: 'app', label: brand.name, submenu: [
           { id: 'return-home', label: '返回首页', click: () => win.webContents.send('wenxu:home-requested') },
           { type: 'separator' },
-          ...(process.platform === 'darwin' ? [
-            { role: 'about', label: `关于${brand.name}` },
-            { type: 'separator' }
-          ] satisfies MenuItemConstructorOptions[] : []),
+          { label: '关于星月书台', click: () => app.showAboutPanel() },
           { label: '打开网页管理后台', click: () => void dispatch('management.open', {}, {}, { source: 'desktop' }) },
           { label: '复制网页管理链接', click: () => void dispatch('management.link', {}, {}, { source: 'desktop' }).then(result => { if (result.ok) clipboard.writeText(String(result.result)); }) },
           { label: '断开所有网页连接', click: () => void dispatch('management.revoke', {}, {}, { source: 'desktop' }) },

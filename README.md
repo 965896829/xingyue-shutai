@@ -1,6 +1,6 @@
 # 星月书台 · 网文写作客户端
 
-本地创作客户端。本分支为基于 **0.4.97** 的 macOS 开发准备版，保留原创作流程和提示词。Windows 构建继续保留；Mac 新机器下载、开发、打包和作品迁移见 **[Mac mini 开发指南](docs/macos-development.md)**。Mac 交互功能仍需目标设备实机验收。
+星月书台的 0.4.98 跨平台开发分支。Mac mini 下载源码、准备环境、启动隔离开发配置和打包步骤见 [Mac mini 开发指南](docs/macos-development.md)。
 
 源码版本以 [package.json](package.json) 为准；源码、安装包和本机已安装程序是不同状态，构建成功不表示已经覆盖安装。
 

@@ -1,15 +1,15 @@
 # 从 Windows 迁到 Mac mini 开发
 
-本分支是 **0.4.97 的跨平台准备版 `0.4.97-macos.1`**，基于提交 `af432744ea3bc9e9bea26ec7ee1aa56b6f6f2788`。创作流程、作品格式和提示词保持该基线。后续实验室和对话式创作版本没有合入。
+本分支从写作工作台 0.4.98 的提交 `c43573c38e3f7aee56c63081fc97783b2f6826f5` 开始，包含三栏工作台、自由创作实验室和本次写作资料改造。开发包版本为 **0.4.98-macos.1**。
 
-源码分支：[`codex/macos-0.4.97`](https://github.com/965896829/xingyue-shutai/tree/codex/macos-0.4.97)。请下载此分支，仓库默认分支可能是另一个版本。
+源码分支：[`codex/macos-writing-desk-0.4.98`](https://github.com/965896829/xingyue-shutai/tree/codex/macos-writing-desk-0.4.98)。请下载此分支，仓库默认分支可能是另一个版本。
 
 ## 1. 下载源码
 
 推荐使用 Git，便于之后提交和同步：
 
 ```sh
-git clone --branch codex/macos-0.4.97 --single-branch https://github.com/965896829/xingyue-shutai.git
+git clone --branch codex/macos-writing-desk-0.4.98 --single-branch https://github.com/965896829/xingyue-shutai.git
 cd xingyue-shutai
 ```
 
@@ -90,7 +90,7 @@ GitHub 只保存源码，**下载仓库不会带回你的作品、模型配置�
 
 Mac 使用系统钥匙串保存密钥。开发版签名变化可能导致系统再次询问钥匙串访问权限，正式分发前需要稳定签名验证。参考 [Electron safeStorage](https://www.electronjs.org/docs/latest/api/safe-storage)。
 
-此分支保持 0.4.97 数据兼容边界；较新版本升级过格式的作品应先保留原件，不能承诺旧版可以打开。
+此分支沿用 0.4.98 的作品格式；较新版本升级过格式的作品应先保留原件，不能承诺旧版可以打开。
 
 ## 6. 自动检查与剩余实机验收
 
