@@ -1,7 +1,7 @@
 import type { TextSlice } from './context-slices';
 import { parseCharacterCards } from './manuscript-view';
 
-const labels = new Set(['说话风格', '做事风格', '语言习惯', '口吻', '对话风格', '语言风格']);
+const labels = new Set(['说话风格', '做事风格', '语言习惯', '口吻', '对话风格', '语言风格', '稳定欲望', '核心欲望', '价值取舍', '价值底线']);
 
 /** Only copy exact voice/behaviour lines for characters named by this task.
  * Secrets, future plot, state ledgers and embedded fact blocks are not voice rules. */

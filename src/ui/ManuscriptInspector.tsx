@@ -10,7 +10,7 @@ const fieldNames = ['稳定档案', '目标与情绪', '当前状态与限制', 
 const group = (label: string) => /后续|未来|爽点/.test(label) ? 3 : /目标|心情|情绪|动机/.test(label) ? 1 : /地点|伤势|物品|能力|限制|最后行动|当前状态|当前身份/.test(label) ? 2 : 0;
 const kindNames: Record<string, string> = { event: '正文事件', plan: '计划', author_constraint: '作者设定', world_rule: '世界规则', belief: '人物认知', inference: '推断', record_note: '资料说明' };
 const matchesCharacter = (entry: ProjectionEntry, character: ProjectionCharacter) => [character.name, character.id, ...character.aliases].some(name =>
-  name && [entry.title, entry.from, entry.to, ...entry.fields.filter(field => /角色|人物|持有|所属|对象/.test(field.label)).map(field => field.value)].some(text => text?.includes(name)));
+  name && (entry.entityIds?.includes(name) || [entry.title, entry.from, entry.to, ...entry.fields.filter(field => /角色|人物|持有|所属|对象/.test(field.label)).map(field => field.value)].some(text => text?.includes(name))));
 
 function Fields({ fields, onSource }: { fields: ProjectionField[]; onSource: Props['onSource'] }) {
   return <dl className="projection-fields">{fields.map((field, index) => <div key={`${field.label}:${index}`} className={field.previous ? 'changed' : ''}>
@@ -21,7 +21,9 @@ function Fields({ fields, onSource }: { fields: ProjectionField[]; onSource: Pro
 }
 function Entry({ entry, onSource }: { entry: ProjectionEntry; onSource: Props['onSource'] }) {
   return <article className={`projection-entry ${entry.track}`}><header><strong>{entry.title}</strong><span>{entry.track === 'draft' ? '本章草稿' : '已保存档案'}{entry.kind ? ` · ${kindNames[entry.kind] ?? entry.kind}` : ''}</span></header>
-    <Fields fields={entry.fields} onSource={onSource} /></article>;
+    <Fields fields={entry.fields} onSource={onSource} />
+    {!!entry.evidenceTrail?.length && <details><summary>章节证据与版本</summary>{entry.evidenceTrail.map((v,i) =>
+      <button key={i} onClick={() => onSource(v.source)}>第 {v.chapter} 章 · {v.label} · {v.source.hash.slice(0,8)}</button>)}</details>}</article>;
 }
 function ScopeHeader({ snapshot, draft, setDraft, available }: { snapshot: Snapshot; draft: boolean; setDraft: (value: boolean) => void; available?: boolean }) {
   return <div className="projection-scope"><div><strong>第 {String(snapshot.project?.chapter ?? 1).padStart(3, '0')} 章</strong><span>作者视图</span></div>
@@ -31,10 +33,13 @@ function ScopeHeader({ snapshot, draft, setDraft, available }: { snapshot: Snaps
 
 export function CharacterInspector({ snapshot, run, onSource }: Props) {
   const [selected, setSelected] = useState(''), [draft, setDraft] = useState(true);
-  const result = useManuscriptView(snapshot, run, draft), data = result?.data;
+  const [position, setPosition] = useState<number>();
+  const chapter = position ?? snapshot.project?.chapter ?? 1;
+  const result = useManuscriptView(snapshot, run, draft && chapter === snapshot.project?.chapter, chapter), data = result?.data;
   const character = data?.characters.find(character => character.id === selected) ?? data?.characters[0];
   const related = character ? data?.entries.filter(entry => matchesCharacter(entry, character)) ?? [] : [];
   return <div className="manuscript-inspector"><ScopeHeader snapshot={snapshot} draft={draft} setDraft={setDraft} available={data?.draftAvailable} />
+    <label>查看第 {chapter} 章时的人物状态<input type="range" min={1} max={Math.max(snapshot.project?.chapter ?? 1, ...Object.keys(snapshot.project?.chapters ?? {}).map(Number))} value={chapter} onChange={e => setPosition(Number(e.target.value))}/></label>
     {!data ? <p className="empty-state">{result?.error ? `人物资料读取失败：${result.error}` : '正在读取人物资料…'}</p> : !character ? <p className="empty-state">还没有可读取的人物档案。生成角色卡后会在这里自动展示。</p> : <>
       <label className="sr-only" htmlFor="inspector-character">人物</label><select id="inspector-character" value={character.id} onChange={event => setSelected(event.target.value)}>
         {data.characters.map(character => <option value={character.id} key={character.id}>{character.name}</option>)}
@@ -55,6 +60,7 @@ export function CharacterInspector({ snapshot, run, onSource }: Props) {
 }
 
 function RelationshipGraph({ entries, selected, onSelect, onSource }: { entries: ProjectionEntry[]; selected: string; onSelect: (value: string) => void; onSource: Props['onSource'] }) {
+  const [edge, setEdge] = useState<ProjectionEntry>();
   const id = useId().replace(/:/g, ''), all = [...new Set(entries.flatMap(entry => [entry.from!, entry.to!]))];
   const center = all.includes(selected) ? selected : all[0];
   const edges = entries.filter(entry => entry.from === center || entry.to === center).slice(0, 12);
@@ -64,10 +70,10 @@ function RelationshipGraph({ entries, selected, onSelect, onSource }: { entries:
     <svg viewBox="0 0 420 280" role="group" aria-label="人物有向关系图"><defs><marker id={`${id}-arrow`} markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 Z" /></marker></defs>
       {edges.map(entry => { const a = position(entry.from!), b = position(entry.to!), dx = b.x - a.x, dy = b.y - a.y, distance = Math.hypot(dx, dy) || 1;
         return <g key={entry.id} className={`relationship-edge ${entry.track}`}><line x1={a.x + dx / distance * 26} y1={a.y + dy / distance * 26} x2={b.x - dx / distance * 30} y2={b.y - dy / distance * 30} markerEnd={`url(#${id}-arrow)`} />
-          <line className="relationship-hit" x1={a.x} y1={a.y} x2={b.x} y2={b.y} role="button" tabIndex={0} aria-label={`${entry.title}，查看关系来源`} onClick={() => onSource(entry.source)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSource(entry.source); } }}><title>{entry.title}</title></line></g>; })}
+          <line className="relationship-hit" x1={a.x} y1={a.y} x2={b.x} y2={b.y} role="button" tabIndex={0} aria-label={`${entry.title}，查看关系来源`} onClick={() => setEdge(entry)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setEdge(entry); } }}><title>{entry.title}</title></line></g>; })}
       {nodes.map(name => { const p = position(name); return <g key={name} transform={`translate(${p.x},${p.y})`} className={name === center ? 'relationship-node selected' : 'relationship-node'} role="button" tabIndex={0} aria-label={`查看${name}的关系`} onClick={() => onSelect(name)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(name); } }}>
         <circle r="25" /><text textAnchor="middle" y="4">{name.replace(/[（(].*$/, '').slice(0, 6)}</text></g>; })}
-    </svg><p className="projection-note">箭头按档案 A→B 展示；虚线为草稿关系。仅展示所选人物的直接关系，不推断未记录的关系或信任数值。</p>
+    </svg>{edge && entries.some(e => e.id === edge.id) && <Entry entry={entries.find(e => e.id === edge.id)!} onSource={onSource}/>}<p className="projection-note">箭头按档案 A→B 展示；虚线为草稿关系。仅展示所选人物的直接关系，不推断未记录的关系或信任数值。</p>
     {edges.map(entry => <Entry key={entry.id} entry={entry} onSource={onSource} />)}</div>;
 }
 

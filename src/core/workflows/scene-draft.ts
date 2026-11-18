@@ -1,3 +1,4 @@
+import { characterMaterial } from '../character-material';
 import type { ModelResult, ProjectState, Run } from '../../shared/types';
 import { memoryScopeSchema } from '../../shared/studio';
 import { decodeNarrativeResponse, narrativeStreamInstruction } from '../../shared/narrative-events';
@@ -22,7 +23,9 @@ export async function writeScopedScenes(options: {
   const character = run.taskScope?.memory.characterId ?? project.config.viewpointCharacterId;
   if (!character) throw new Error('逐场生成需要先选择视角人物');
   const source = store.readAccepted(detailPath(run.chapter));
-  const scenes = source.content.split(/(?=^## 场面\s*\d+[：:])/m).filter(s => /^## 场面/.test(s));
+  const blocks = source.content.split(/(?=^## 场面\s*\d+[：:])/m);
+  const chapterBrief = /^## 场面/.test(blocks[0]) ? '' : blocks.shift()!;
+  const scenes = blocks.filter(s => /^## 场面/.test(s));
   const numbers = scenes.map(s => Number(s.match(/^## 场面\s*(\d+)/)![1]));
   if (!scenes.length || new Set(numbers).size !== scenes.length || numbers.some((n, i) => i > 0 && n <= numbers[i - 1]))
     throw new Error('逐场生成需要按故事顺序编号的场面细纲，请先整理本章细纲');
@@ -41,15 +44,17 @@ export async function writeScopedScenes(options: {
       throw new Error('逐场生成暂支持同一视角人物；本场焦点人物与所选人物不同');
     const recalled = retrieveMemory(store, character, scope);
     if (recalled.issues.length) throw new Error(`本场人物资料需要核对：${recalled.issues.join('；')}`);
+    const voice = taskVoicePreferences(store, { entityIds: [character], sceneIds: [material.scene],
+        sceneFunctions: material.sceneFunction ? [material.sceneFunction] : [],
+        addresseeIds: material.addressees?.split(/[、,，]/), relationshipIds: material.relationship ? [material.relationship] : [], scope, visibleQuotes: recalled.facts.flatMap(f => f.fact.evidence.map(e => e.quote)) });
     const input = {
-      scope, scene: scene.replace(/^.*下一章.*(?:\r?\n|$)/gm, ''),
+      scope, chapterBrief, outlineVersion: { path: detailPath(run.chapter), hash: source.hash }, scene: scene.replace(/^.*下一章.*(?:\r?\n|$)/gm, ''),
       authority: '本场细纲是获准展开的计划，未发生前不作为事实；表达指导不提供人物经历。未提供未来场面、原始设定全文或其他视角历史。',
       targetWords: Math.max(100, Math.round(project.config.chapterWords / scenes.length)),
       authorRequest: run.request, authorConstraints: project.config.constraints,
       narrator: { pov: project.config.pov, style: project.config.style },
-      expressionGuidance: taskVoicePreferences(store, { entityIds: [character], sceneIds: [material.scene],
-        sceneFunctions: material.sceneFunction ? [material.sceneFunction] : [],
-        addresseeIds: material.addressees?.split(/[、,，]/), relationshipIds: material.relationship ? [material.relationship] : [] }),
+      expressionGuidance: voice,
+      characterMaterial: characterMaterial(store, run.chapter, character, recalled.facts.map(f => f.fact), [material], voice, false),
       facts: recalled.facts.filter(({ fact }) => fact.kind !== 'expression_sample').map(({ fact }) => ({
         id: fact.id, kind: fact.kind, subject: fact.subject, predicate: fact.predicate, value: fact.value,
         sources: fact.evidence.map(e => ({ path: e.path, hash: e.hash }))

@@ -1,3 +1,4 @@
+import { characterMaterial } from './character-material';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { FileStore } from './storage';
@@ -138,6 +139,8 @@ export function compileCreative(store: FileStore, root: string, raw: unknown, br
     const parent = input.parentRunId ? store.db.run(input.parentRunId) : undefined;
     if (parent && (parent.creative?.input.operation !== 'rehearse' || parent.creative.input.chapter > input.chapter || parent.status !== 'complete' || parent.creative.snapshotId !== snapshot.id || !parent.creative.result?.turn)) throw new Error('上一回合已失效、超出当前故事位置或缺少可见行动，请重新开始试演');
     if (parent) parentResultHash = fingerprint(parent.creative!.result!.turn);
+    const voice = taskVoicePreferences(store, { entityIds: [input.characterId], sceneIds: ['第' + input.chapter + '章'], sceneFunctions: ['对话'], scope,
+      visibleQuotes: eligible.flatMap(f => f.evidence.map(e => e.quote)) });
     modelPayload = {
       character: identity.name,
       characterId: input.characterId,
@@ -146,7 +149,8 @@ export function compileCreative(store: FileStore, root: string, raw: unknown, br
         instruction: '人物可依据自己的私有信息选择、隐瞒或试探；尚未向读者揭示的信息不得直接写进对白、行动描写或不确定性说明。' },
       chapter: input.chapter,
       observations: input.observations,
-      expressionGuidance: taskVoicePreferences(store, { entityIds: [input.characterId], sceneIds: [`第${input.chapter}章`], sceneFunctions: ['对话'], scope }),
+      expressionGuidance: voice,
+      characterMaterial: characterMaterial(store, input.chapter, input.characterId, eligible, [], voice, false),
       ...(parent ? { visibleInteractionHistory: [{ speaker: '上一位行动者', speech: parent.creative!.result!.turn!.speech, action: parent.creative!.result!.turn!.action }] } : {}),
       beliefs: eligible.map((fact, index) => ({
         source: `observation-${index + 1}`,

@@ -17,6 +17,29 @@ export function isFuturePlan(file: string, fromChapter: number) {
 
 const stateValue = (fact: Fact) => fact.value + (fact.state === 'resolved' ? '（已解决）' : '');
 
+export function revisedChapterImpact(store: FileStore, run: Run, changes: Change[], states: StoryStateChange[]) {
+  if (!run.revisionCore) return;
+  const prose = changes.filter(c => /^07_/.test(c.path));
+  if (!prose.length) return;
+  const affectedFacts = store.db.facts().filter(f => f.reviewStatus === 'accepted' && f.state !== 'superseded' &&
+    f.evidence.some(e => prose.some(c => c.path === e.path && c.baseHash === e.hash &&
+      (!c.content.includes(e.quote) || c.content.indexOf(e.quote) !== c.content.lastIndexOf(e.quote)))));
+  const causal = states.length > 0 || affectedFacts.length > 0 || !!run.factRetractions?.length;
+  const intent = run.request + ' ' + (store.db.run(run.revisionCore.sourceRunId)?.request ?? '');
+  const kind = causal ? 'causal' : /措辞|比喻|文风|标点|只改表达|语气/.test(intent) ? 'expression' : 'scene';
+  const via = new Map<string, string[]>();
+  const queue = causal ? [...new Set([...affectedFacts.map(f => f.id), ...states.flatMap(s => [s.factId, ...(s.previousFactId ? [s.previousFactId] : [])]),
+    ...(run.factRetractions ?? []).map(r => r.id), ...prose.map(c => c.path)])] : [];
+  for (const key of queue) via.set(key, []);
+  const downstream = store.db.sql.prepare('SELECT DISTINCT dependent FROM dependencies WHERE source_path=?');
+  for (let i = 0; i < queue.length; i++) for (const row of downstream.all(queue[i])) {
+    const next = String(row.dependent);
+    if (!via.has(next)) { via.set(next, [...via.get(queue[i])!, queue[i]]); queue.push(next); }
+  }
+  return { kind, via, entities: [...new Set([...affectedFacts.map(f => f.subject), ...states.map(s => s.subject)])],
+    promises: affectedFacts.filter(f => f.category === 'promise' || f.category === 'hook').map(f => f.subject) } as const;
+}
+
 export function changedStoryStates(before: Fact[], after: Fact[]): StoryStateChange[] {
   const byId = new Map(before.map(fact => [fact.id, fact]));
   const groups = new Map<string, Fact[]>();

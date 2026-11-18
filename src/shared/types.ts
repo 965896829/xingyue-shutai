@@ -48,8 +48,8 @@ export const configSchema = z
       })
       .default({ writing: '', extraction: '', review: '' }),
     preview: z
-      .object({ enabled: z.boolean().default(true), maxCalls: z.number().int().min(0).max(30).default(8) })
-      .default({ enabled: true, maxCalls: 8 }),
+      .object({ enabled: z.boolean().default(false), maxCalls: z.number().int().min(0).max(30).default(8) })
+      .default({ enabled: false, maxCalls: 8 }),
     viewpointCharacterId: z.string().default(''),
     proseMode: z.enum(['chapter', 'scene']).default('chapter'),
     maxRounds: z.number().int().min(1).max(100).default(12),
@@ -250,6 +250,7 @@ export const factSchema = z
     worldId: z.string().default('main'),
     timelineId: z.string().default('main'),
     relatedIds: z.array(z.string()).default([]),
+    promiseWindow: z.object({ from: z.number().int().positive(), through: z.number().int().positive() }).refine(r => r.through >= r.from).optional(),
     replacementReason: z.string().default(''),
     acceptedAt: z.string().optional(),
     acceptedRunId: z.string().optional(),
@@ -290,6 +291,7 @@ export interface ContextManifest {
   readPlan?: import('./context-reading').ContextReadPlan;
   writingMaterials?: import('./scene-material').WritingMaterials;
   qualityReadHash?: string;
+  voiceSelection?: { entityIds: string[]; sceneFunctions: string[]; sceneIds: string[]; addresseeIds?: string[]; relationshipIds?: string[]; scope?: import('./studio').MemoryScope };
   voicePreferences?: { scope: import('./quality').VoiceScope; statement: string; exceptions: string[]; samples?: { kind: 'expression_sample'; text: string; source: { path: string; hash: string }; instruction: string }[] }[];
   factReadDependency?: import('./workflow').FactReadDependency;
   projectId?: string;

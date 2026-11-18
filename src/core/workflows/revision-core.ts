@@ -1,3 +1,5 @@
+import { isLedger, ledgerMaterial, ledgerChange } from '../ledger-material';
+import { changeSubmissionSchema, patchDocument } from '../runtime/source-reuse';
 import { z } from 'zod';
 import { creationPolicy, professionalMethod } from '../creation-policy';
 import type { AgentRunner } from '../runner';
@@ -54,22 +56,36 @@ export function revisionMaterials(store: FileStore, run: Run, chapter: number) {
   const characters = requiredCharacterCoverage(store, scoped);
   const selection = { query: prose, chapter, entityIds: characters.map(character => character.entityId), sourcePaths: [prosePath(chapter)], textSearch: false };
   const facts = store.db.factsForTask(run.taskScope?.memory ?? { worldId: 'main', timelineId: 'main' }, selection);
-  const dependencies = new Set(facts.flatMap(fact => fact.evidence.map(evidence => evidence.path)));
-  const documents = [...memoryPaths, updatePath(chapter)].flatMap(path => {
+  const documents = [...memoryPaths, updatePath(chapter)].map(path => {
     const changed = run.changes.find(change => change.path === path);
     const content = changed?.content ?? (store.db.document(path)?.hash ? store.readAccepted(path).content : '');
-    if (content.length > 2000 && path !== updatePath(chapter) && !changed && !dependencies.has(path) &&
-        !characters.some(character => content.includes(character.name) || content.includes(character.entityId))) return [];
-    return [{ path, content }];
+    const slice = isLedger(path) ? ledgerMaterial(content, chapter, characters.map(c => c.name),
+      facts.flatMap(f => f.evidence.filter(e => e.path === path).map(e => e.quote))) : undefined;
+    return { path, sourceHash: hash(content), content: slice?.content ?? content, mode: slice ? 'excerpt' : 'full' };
   });
-  // Full selected documents are retained because this operation replaces files.
-  // The gateway rejects an oversized request; an excerpt must never replace a ledger.
   return { characters, facts, documents, selection };
+}
+const revisionDocument = z.object({ path: z.string(), content: z.string().min(1).optional(), patch: changeSubmissionSchema.shape.patch }).strict();
+function mergeRevisionDocuments(store: FileStore, run: Run, docs: z.infer<typeof revisionDocument>[]) {
+  return docs.map(doc => {
+    if (!isLedger(doc.path) && !/^08_章后更新\/第\d+章记忆更新\.md$/.test(doc.path)) throw new Error('记忆修改超出允许范围');
+    const source = run.changes.find(c => c.path === doc.path)?.content ??
+      (store.db.document(doc.path)?.hash ? store.readAccepted(doc.path).content : '');
+    if (doc.patch && doc.content === undefined) return { path: doc.path, content: patchDocument(source, doc.patch) };
+    if (!doc.patch && doc.content && (!isLedger(doc.path) || !source || doc.content.startsWith(source))) return { path: doc.path, content: doc.content };
+    throw new Error('已有台账需提供来源版本和增量 patch，旧记录将由宿主保留');
+  });
+}
+function revisionExcerpt(store: FileStore, run: Run, change: Run['changes'][number]) {
+  if (!isLedger(change.path)) return change;
+  const previous = change.baseHash ? store.object(change.baseHash).toString('utf8') : '';
+  const excerpt = ledgerMaterial(change.content, run.chapter, run.facts.map(f => f.subject));
+  return { path: change.path, sourceHash: hash(change.content), content: excerpt.content, changed: ledgerChange(previous, change.content).after, mode: 'excerpt' };
 }
 export function applyRevisionMemoryRepair(store: FileStore, run: Run, raw: unknown) {
   const core = run.revisionCore!;
   const result = z.object({
-    documents: z.array(z.object({ path: z.string(), content: z.string().min(1) }).strict()),
+    documents: z.array(revisionDocument).transform(docs => mergeRevisionDocuments(store, run, docs)),
     facts: z.array(factSchema),
     coverages: z.array(z.object({ chapter: z.number().int(), coverage: chapterCoverageSchema }).strict())
   }).strict().parse(raw);
@@ -119,10 +135,10 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
       const { documents } = materials;
       const allowed = documents.map(document => document.path);
       const input = { chapter, prose: { ...prose, hash: core.proseHashes[chapter] }, requiredCharacters: materials.characters, currentFacts: materials.facts, candidateFacts: run.facts, documents,
-        formatRequirements: validateCandidate(run.stage, { ...project, chapter }, documents.map(d => ({ ...d, baseHash: null })), host.skillRoot, 'revision').filter(i => i.severity === 'error').map(i => ({ path: i.path, code: i.code, message: i.message })),
+        formatRequirements: validateCandidate(run.stage, { ...project, chapter }, documents.filter(d => d.mode === 'full').map(d => ({ ...d, baseHash: null })), host.skillRoot, 'revision').filter(i => i.severity === 'error').map(i => ({ path: i.path, code: i.code, message: i.message })),
         schemas: { fact: z.toJSONSchema(factSchema), coverage: z.toJSONSchema(chapterCoverageSchema) } };
-      const { result, nextFacts, coverage } = await request(`revision-extract-${chapter}`, creationPolicy(host.skillRoot, 'memory-delta.extract').content + '\n根据修订后正文批量提取人物与核心记忆。只返回 JSON {documents:[{path,content}],facts:[],coverage:...}。documents 只允许已给路径，包含本章记忆更新；facts 与 coverage 按给定 schema。错误旧事实按合同处理 supersedes 或撤回，覆盖全部出场人物。', input, value => {
-      const result = z.object({ documents: z.array(z.object({ path: z.string(), content: z.string().min(1) }).strict()).min(1), facts: z.array(factSchema), coverage: chapterCoverageSchema }).strict().parse(value);
+      const { result, nextFacts, coverage } = await request(`revision-extract-${chapter}`, creationPolicy(host.skillRoot, 'memory-delta.extract').content + '\n根据修订后正文批量提取人物与核心记忆。只返回 JSON {documents:[{path,content或patch}],facts:[],coverage:...}。已有台账仅返回 patch {sourceHash,edits:[{before,after}],append}，章后更新可以使用 content。documents 只允许已给路径，包含本章记忆更新；facts 与 coverage 按给定 schema。错误旧事实按合同处理 supersedes 或撤回，覆盖全部出场人物。', input, value => {
+      const result = z.object({ documents: z.array(revisionDocument).min(1).transform(docs => mergeRevisionDocuments(host.store, run, docs)), facts: z.array(factSchema), coverage: chapterCoverageSchema }).strict().parse(value);
       if (new Set(result.documents.map(d => d.path)).size !== result.documents.length || result.documents.some(d => !allowed.includes(d.path)) || !result.documents.some(d => d.path === updatePath(chapter))) throw new Error('修订记忆输出范围不完整或越界');
       if (new Set(result.facts.map(f => f.id)).size !== result.facts.length || result.facts.some(f => run.facts.some(prior => prior.id === f.id && fingerprint(prior) !== fingerprint(f)))) throw new Error('跨章事实标识冲突，请为新事实使用独立标识');
       const nextFacts = [...run.facts.filter(f => !result.facts.some(next => next.id === f.id)), ...result.facts];
@@ -164,9 +180,9 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
     const errors = core.chapters.flatMap(chapter => validateCandidate(run.stage, { ...project, chapter }, memory, host.skillRoot, 'revision')).filter(i => i.severity === 'error');
     if (!errors.length) break;
     const targets = [...new Set(errors.flatMap(i => i.path ? [i.path] : []))];
-    const input = { documents: memory.filter(c => targets.includes(c.path)), errors: [...new Set(errors.map(i => `${i.path}: ${i.message}`))], facts: run.facts, prose: run.changes.filter(c => c.path.startsWith('07_')), instruction: '仅修正列出的文档格式。保留明确事实与人物标识，不发明人格、经历或事件。不要改变正文、facts 或 coverage。叙事状态与候选采纳状态分开：关系极性只用 positive/neutral/negative/ambiguous；伏笔状态只用已埋/推进中/已回收/已废弃。未知关系或伏笔不伪造表格数据行，只保留表头；信任度未知填未评估。' };
-    const fixed = await request(`revision-format-${attempt + 1}`, professionalMethod(host.skillRoot, 'format-repair').content + '\n只返回 JSON {documents:[{path,content}]}，包含每个待修复文件的完整 Markdown。', input, value => {
-    const fixed = z.object({ documents: z.array(z.object({ path: z.string(), content: z.string().min(1) }).strict()) }).strict().parse(value);
+    const input = { documents: memory.filter(c => targets.includes(c.path)).map(c => revisionExcerpt(host.store, run, c)), errors: [...new Set(errors.map(i => `${i.path}: ${i.message}`))], facts: run.facts, prose: run.changes.filter(c => c.path.startsWith('07_')), instruction: '仅修正列出的文档格式。保留明确事实与人物标识，不发明人格、经历或事件。不要改变正文、facts 或 coverage。叙事状态与候选采纳状态分开：关系极性只用 positive/neutral/negative/ambiguous；伏笔状态只用已埋/推进中/已回收/已废弃。未知关系或伏笔不伪造表格数据行，只保留表头；信任度未知填未评估。' };
+    const fixed = await request(`revision-format-${attempt + 1}`, professionalMethod(host.skillRoot, 'format-repair').content + '\n只返回 JSON {documents:[{path,content或patch}]}，已有台账只提交相同 sourceHash 的局部 patch，新建章后更新可用 content。', input, value => {
+    const fixed = z.object({ documents: z.array(revisionDocument).transform(docs => mergeRevisionDocuments(host.store, run, docs)) }).strict().parse(value);
     if (new Set(fixed.documents.map(d => d.path)).size !== targets.length || fixed.documents.some(d => !targets.includes(d.path))) throw new Error('记忆格式修复越界或缺少文档');
     return fixed;
     });
@@ -179,10 +195,10 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
   await host.auditMemory(run, project, profile, signal);
   for (let attempt = run.repairAttempts?.revision_memory ?? 0; run.memoryReview?.issues.length && attempt < 2; attempt++) {
     const input = { chapters: core.chapters, prose: run.changes.filter(c => c.path.startsWith('07_')), proseHashes: core.proseHashes,
-      documents: run.changes.filter(c => memoryPaths.some(path => path === c.path) || core.chapters.some(chapter => c.path === updatePath(chapter))),
+      documents: run.changes.filter(c => memoryPaths.some(path => path === c.path) || core.chapters.some(chapter => c.path === updatePath(chapter))).map(c => revisionExcerpt(host.store, run, c)),
       facts: run.facts, currentFacts: [...new Map(core.chapters.flatMap(chapter => revisionMaterials(host.store, run, chapter).facts).map(fact => [fact.id, fact])).values()], coverage: core.coverage, review: run.memoryReview,
       schemas: { fact: z.toJSONSchema(factSchema), coverage: z.toJSONSchema(chapterCoverageSchema) } };
-    const repaired = await request(`revision-memory-repair-${attempt + 1}`, professionalMethod(host.skillRoot, 'memory').content + '\n' + professionalMethod(host.skillRoot, 'memory-repair').content + '\n根据独立核对指出的问题定向修复记忆和人物覆盖，绝对不能改写正文。只返回 JSON {documents:[{path,content}],facts:[],coverages:[{chapter,coverage}]}。facts 返回完整候选事实，未被审核否定的既有候选事实须逐字段保留；缺少的人物允许无变化、依据不足、仅提及，不强制新增事实。coverages 覆盖每个修订章节，含未具名但出场的人员，使用来源可追溯的稳定标识。documents 仅返回需修正的记忆台账及章后更新，不返回正文或审稿。不得声称另一份不存在的记录已完成核对。', input, value => {
+    const repaired = await request(`revision-memory-repair-${attempt + 1}`, professionalMethod(host.skillRoot, 'memory').content + '\n' + professionalMethod(host.skillRoot, 'memory-repair').content + '\n根据独立核对指出的问题定向修复记忆和人物覆盖，绝对不能改写正文。只返回 JSON {documents:[{path,content或patch}],facts:[],coverages:[{chapter,coverage}]}。facts 返回完整候选事实，未被审核否定的既有候选事实须逐字段保留；缺少的人物允许无变化、依据不足、仅提及，不强制新增事实。coverages 覆盖每个修订章节，含未具名但出场的人员，使用来源可追溯的稳定标识。已有台账仅返回 sourceHash 对应的 patch，章后更新可用 content。documents 仅返回需修正的记忆台账及章后更新，不返回正文或审稿。不得声称另一份不存在的记录已完成核对。', input, value => {
       const candidate = structuredClone(run);
       applyRevisionMemoryRepair(host.store, candidate, value);
       return candidate;

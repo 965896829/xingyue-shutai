@@ -24,6 +24,7 @@ export interface SceneMaterial {
 }
 export interface WritingMaterials {
   version: number;
+  characters?: ReturnType<typeof import('../core/character-material').characterMaterial>[];
   authorPreferences: string;
   narrator: { instruction: string; scenes: { scene: string; narration?: string }[] };
   focalExperience: { scenes: SceneMaterial[]; currentStateIds: string[]; experienceIds: string[]; beliefIds: string[] };

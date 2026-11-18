@@ -150,6 +150,11 @@ export function materializeChanges(store: FileStore, run: Run, project: ProjectS
     } else grouped.push(change);
   }
   return grouped.map(change => {
+    if (change.content !== undefined && run.manifest?.sources.some(s => s.path === change.path && s.mode === 'excerpt') &&
+        change.path.startsWith('04_') && (run.pipeline?.phase === 'memory' || run.stage === 'S11')) {
+      const preserved = run.changes.find(c => c.path === change.path)?.content ?? store.readAccepted(change.path).content;
+      if (!change.content.startsWith(preserved)) throw new Error('已有台账请用 patch 精确更新，未修改记录将由宿主保留');
+    }
     if (change.patch) {
       const planningFile = run.mode === 'stage' && !run.pipeline && /^S0[1-9]$/.test(run.stage) && stageOutputs(run.stage, project).includes(change.path);
       const reviewFile = run.mode === 'stage' && run.stage === 'S10' && run.pipeline?.phase === 'review' && change.path === qualityPath(run.chapter);

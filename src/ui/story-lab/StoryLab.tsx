@@ -1,3 +1,4 @@
+import { labMaterialBlocks, visibleLabMaterial } from '../../shared/lab-material';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus, ArrowLeft, ArrowUp, Square, Sparkles, Settings, ChevronDown, Zap } from 'lucide-react';
 import { invokeCommand as invoke } from '../../shared/client';
@@ -7,7 +8,6 @@ import {
   labHeadings,
   labMaterialHeadings,
   labProseAction,
-  labProseSections,
   labReferenceVersion,
   labSections,
   type LabContext,
@@ -85,6 +85,7 @@ export function StoryLab({
     [outputLimit, setOutputLimit] = useState(16384);
   const [instruction, setInstruction] = useState(''),
     [action, setAction] = useState<LabGenerate['action']>('discuss');
+  const [proseMode, setProseMode] = useState<LabGenerate['proseMode']>();
   const [scope, setScope] = useState<'full' | 'core'>('full'),
     [viewId, setViewId] = useState(''),
     [selection, setSelection] = useState<LabSelection>();
@@ -100,6 +101,7 @@ export function StoryLab({
     composerRef = useRef<HTMLTextAreaElement>(null),
     settingsRef = useRef<HTMLDetailsElement>(null),
     optionsRef = useRef<HTMLDetailsElement>(null);
+  const stamp = useRef('');
   const currentId = useRef(selectedId);
   currentId.current = selectedId;
   const busyRef = useRef(false),
@@ -108,13 +110,13 @@ export function StoryLab({
   const model = models.find((p) => p.id === (detail?.session.profileId ?? profileId));
   const version = detail?.versions.find((v) => v.id === viewId) ?? detail?.versions.at(-1);
   const running = detail?.requests.find((r) => r.status === 'running');
-  const unknown = detail?.requests.some(
+  const unknown = detail?.hasUnknown || detail?.requests.some(
     (r) => r.status === 'unknown' || (r.status === 'cancelled' && r.usage.cost === null)
   );
   const contextVersion = detail && (action !== 'blueprint' || instruction.trim()) ? labReferenceVersion(detail, action, viewId) : undefined;
   const headings = action === 'continue' && version?.id === contextVersion?.id ? [] : labMaterialHeadings(contextVersion?.content ?? '');
   const defaultIndexes = contextVersion?.kind === 'blueprint' && labProseAction(action, contextVersion, version)
-    ? labProseSections(headings) : headings.map((_, i) => i);
+    ? [...new Set(labMaterialBlocks(contextVersion.content, contextVersion.materialRules).filter(b => visibleLabMaterial(b.rule, (proseMode === 'next' || /下一章|紧接/.test(instruction)) ? (detail?.versions.find(v => v.id === detail.session.currentProseId)?.operation?.chapter ?? 1) + 1 : 1)).map(b => b.rule.section))] : headings.map((_, i) => i);
   const checkedIndexes = sectionIndexes ?? defaultIndexes;
   const latestUserIndex =
     detail?.messages.reduce((last, message, index) => (message.role === 'user' ? index : last), 0) ?? 0;
@@ -181,9 +183,33 @@ export function StoryLab({
   const refresh = useCallback(async (id: string) => {
     const seq = ++refreshSeq.current;
     const result = await invoke('lab.read', { sessionId: id });
-    if (currentId.current === id && seq === refreshSeq.current) setDetail(result);
+    if (currentId.current === id && seq === refreshSeq.current) { stamp.current = result.stamp ?? ''; setDetail(result); }
     return result;
   }, []);
+  useEffect(() => {
+    if (!selectedId || !version || version.content) return;
+    let visible = true;
+    void invoke('lab.version', { sessionId: selectedId, id: version.id }).then(full => {
+      if (visible) setDetail(state => state?.session.id === selectedId ? { ...state, versions: state.versions.map(v => v.id === full.id ? full : v) } : state);
+    }).catch(e => setError(String(e)));
+    return () => { visible = false; };
+  }, [selectedId, version?.id, version?.content]);
+  async function olderHistory() {
+    if (!detail?.older) return;
+    const previous = await invoke('lab.read', { sessionId: selectedId, before: detail.older });
+    setDetail(state => {
+      if (!state || state.session.id !== previous.session.id) return state;
+      const append = <T extends { id: string }>(left: T[], right: T[]) => [...new Map([...left, ...right].map(v => [v.id, v])).values()].sort((a,b) => {
+        const time = (v: T) => 'createdAt' in v ? String(v.createdAt) : 'startedAt' in v ? String(v.startedAt) : '';
+        return time(a).localeCompare(time(b));
+      });
+      return { ...state, older: previous.older, versions: append(previous.versions, state.versions), requests: append(previous.requests, state.requests), messages: append(previous.messages, state.messages) };
+    });
+  }
+  async function requestBody(id: string) {
+    const full = await invoke('lab.request', { sessionId: selectedId, id });
+    setDetail(state => state?.session.id === full.sessionId ? { ...state, requests: state.requests.map(r => r.id === id ? full : r) } : state);
+  }
   async function perform<T>(fn: () => Promise<T>): Promise<T | undefined> {
     if (busyRef.current) return;
     busyRef.current = true;
@@ -223,6 +249,7 @@ export function StoryLab({
     }
     setDetail(undefined);
     setAction('discuss');
+    setProseMode(undefined);
     setViewId('');
     setSelection(undefined);
     setPreview(undefined);
@@ -238,7 +265,9 @@ export function StoryLab({
     void refresh(selectedId).catch((e) => setError(e.message));
     // Reconciliation survives dropped events, a renderer reload, or worker restart. It never reissues a generation.
     const timer = setInterval(() => {
-      void refresh(selectedId).catch((e) => setError(e.message));
+      void invoke('lab.stamp', { sessionId: selectedId }).then(value => {
+        if (currentId.current === selectedId && value !== stamp.current) return refresh(selectedId);
+      }).catch((e) => setError(e.message));
     }, 4000);
     return () => clearInterval(timer);
   }, [active, selectedId, refresh]);
@@ -327,7 +356,9 @@ export function StoryLab({
       instruction: first ? '' : instruction,
       baseVersionId: reference?.id ?? null,
       sourceVersionId: requestedAction === 'continue' ? version?.id : undefined,
-      selection: requestedAction === 'revise' ? selection : undefined,
+      proseMode: requestedAction === 'prose' ? proseMode : undefined,
+      previousProseId: requestedAction === 'prose' ? state.session.currentProseId ?? undefined : undefined,
+      selection: requestedAction === 'revise' || requestedAction === 'expand' ? selection : undefined,
       sectionIndexes: first ? undefined : sectionIndexes,
       recentMessageIds: first ? undefined : recentIds,
       concealed: first ? '' : concealed,
@@ -825,6 +856,7 @@ export function StoryLab({
                             </details>
                             <details>
                               <summary>请求记录 · {detail.requests.length} 次操作</summary>
+                              {detail.older && <button onClick={() => void perform(olderHistory)}>加载更早记录</button>}
                               {detail.requests.map((r) => (
                                 <article className="lab-request" key={r.id}>
                                   <b>
@@ -854,7 +886,7 @@ export function StoryLab({
                                       <pre>{JSON.stringify(r.failure, null, 2)}</pre>
                                     </details>
                                   )}
-                                  <details>
+                                  <details onToggle={e => { if (e.currentTarget.open && !r.context.system) void requestBody(r.id).catch(err => setError(String(err))); }}>
                                     <summary>本次完整输入与原始回答</summary>
                                     <pre>
                                       {r.context.system +
@@ -896,7 +928,8 @@ export function StoryLab({
                               ))}
                             </select>
                           </label>
-                          {version ? (
+                          {detail.older && <button onClick={() => void perform(olderHistory)}>加载更早的版本和对话</button>}
+                          {version?.content ? (
                             <LabEditor
                               key={version.id}
                               detail={detail}
@@ -915,12 +948,12 @@ export function StoryLab({
                                 void perform(() => updateSettings({ pins: [...detail.session.pins, text] }))
                               }
                               onExport={(format, copy) => void perform(() => exportContent(format, copy))}
-                              onEdit={async (content) => {
+                              onEdit={async (content, materialRules) => {
                                 const result = await perform(async () => {
                                   const next = await invoke('lab.edit', {
                                     sessionId: detail.session.id,
                                     baseVersionId: version.id,
-                                    content,
+                                    content, materialRules,
                                     title: `${version.title} · 手改`,
                                     expectedRevision: detail.session.revision
                                   });
@@ -995,7 +1028,7 @@ export function StoryLab({
             )}
             {action === 'continue' && (
               <p className="muted">
-                继续当前查看的「{version?.title ?? '请选择版本'}」，新内容追加为独立片段。
+                继续「{version?.title ?? '请选择版本'}」的原始任务，从已保存片段末尾接写。
               </p>
             )}
             {unknown && (
@@ -1040,6 +1073,10 @@ export function StoryLab({
                         ))}
                       </select>
                     </label>
+                    {action === 'prose' && <label>正文操作<select value={proseMode ?? ''} onChange={e => setProseMode((e.target.value || undefined) as LabGenerate['proseMode'])}>
+                      <option value="">按本轮要求</option><option value="first">写第一章</option><option value="next">接着写下一章</option>
+                      <option value="rewrite">重写当前正文</option><option value="independent">独立试写场景</option>
+                    </select></label>}
                     {action === 'blueprint' && (
                       <label>
                         生成范围
@@ -1060,6 +1097,7 @@ export function StoryLab({
                       <button
                         onClick={() => {
                           setAction('prose');
+                          setProseMode('first');
                           setDraft('用当前选定方案试写第一章，遵守单章字数范围。');
                           focusComposer();
                         }}

@@ -18,7 +18,21 @@ export function assertSpan(store: FileStore, source: z.infer<typeof sourceSpanSc
 }
 export function evidenceUsable(store: FileStore, evidence: QualityState['evidence'][number]) {
   if (evidence.state !== 'active') return false;
-  try { assertSpan(store, evidence.before); assertSpan(store, evidence.after, true); return true; } catch { return false; }
+  try {
+    assertSpan(store, evidence.before);
+    const source = evidence.after;
+    if (evidence.editor !== 'author' || !['expression', 'narrative_focus'].includes(evidence.domain) ||
+        store.db.document(source.path)?.hash === source.hash) { assertSpan(store, source, true); return true; }
+    assertSpan(store, source);
+    if (!source.quote || pendingSource(store.db.project(), source.path) || store.inspect(source.path)?.status !== 'accepted') return false;
+    const current = store.readAccepted(source.path).content;
+    const original = store.read(source.path, source.hash).content;
+    const unique = (value: string, needle: string) => value.includes(needle) && value.indexOf(needle) === value.lastIndexOf(needle);
+    if (unique(original, source.quote) && unique(current, source.quote)) return true;
+    const points = Array.from(original);
+    const anchored = points.slice(Math.max(0, source.start - 40), source.end + 40).join('');
+    return unique(original, anchored) && unique(current, anchored);
+  } catch { return false; }
 }
 export function readQuality(store: FileStore): QualityState {
   const state = qualityStateSchema.parse(store.db.get(stateKey) ?? { version: 1, revision: 0, evidence: [], preferences: [], patterns: [], experiments: [], presentations: [], observations: [] });
@@ -156,6 +170,7 @@ export function voiceSlice(store: FileStore, scope: VoiceScope) {
     .map(({ statement, exceptions }) => ({ statement, exceptions }));
 }
 export interface VoiceSelection {
+  visibleQuotes?: string[];
   entityIds: string[];
   sceneFunctions: string[];
   sceneIds: string[];
@@ -174,7 +189,7 @@ export function voiceScopeMatches(scope: VoiceScope, selection: VoiceSelection) 
   if (scope.exceptAddresseeIds?.some(id => selection.addresseeIds?.includes(id))) return false;
   return true;
 }
-export function taskVoicePreferences(store: FileStore, query: string | VoiceSelection, entityIds: string[] = []) {
+export function taskVoicePreferences(store: FileStore, query: string | VoiceSelection, entityIds: string[] = [], reads?: string[]) {
   if (!store.db.document(voicePath)?.hash) return [];
   const content = store.readAccepted(voicePath).content, match = content.match(/```json\s*([\s\S]*?)```/);
   if (!match) return [];
@@ -187,9 +202,14 @@ export function taskVoicePreferences(store: FileStore, query: string | VoiceSele
       state.preferences.some(current => current.id === p.id && current.state === 'proposal' && fingerprint(current) === fingerprint(p)) &&
       p.evidenceIds.every(key => state.evidence.some(e => e.id === key && evidenceUsable(store, e))))
       .slice(0, 12).map(p => {
-        const samples = selection.scope?.viewpoint === 'author' ? p.evidenceIds.flatMap(key => {
+        reads?.push(fingerprint({ preference: p, evidence: p.evidenceIds.map(id => {
+          const evidence = state.evidence.find(e => e.id === id)!;
+          return [id, evidence.version, evidence.state, evidence.after];
+        }) }));
+        const samples = selection.scope?.viewpoint === 'author' || selection.visibleQuotes?.length ? p.evidenceIds.flatMap(key => {
           const evidence = state.evidence.find(e => e.id === key)!;
-          if (!remainingSamples || evidence.editor !== 'author' || !['expression', 'narrative_focus'].includes(evidence.domain) || evidence.scope.sceneFunction === '未分类') return [];
+          if (selection.scope?.viewpoint !== 'author' && !selection.visibleQuotes?.some(q => q.includes(evidence.after.quote))) return [];
+          if (!remainingSamples || evidence.editor !== 'author' || !['expression', 'narrative_focus'].includes(evidence.domain) || !evidence.after.quote || evidence.scope.sceneFunction === '未分类') return [];
           remainingSamples--;
           return [{ kind: 'expression_sample' as const, text: Array.from(evidence.after.quote).slice(0, 600).join(''), source: { path: evidence.after.path, hash: evidence.after.hash }, instruction: '只参考表达与详略，不继承样例中的人物、物品或情节事实。' }];
         }) : [];

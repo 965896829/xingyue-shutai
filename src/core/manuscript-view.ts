@@ -92,7 +92,9 @@ function mergeFields(old: ProjectionField[], next: ProjectionField[]) {
 function factEntry(fact: Fact, track: 'saved' | 'draft'): ProjectionEntry {
   const evidence = fact.evidence[0];
   return { id: `fact-${fact.id}`, category: fact.category === 'character' ? 'fact' : fact.category, title: fact.subject,
-    track, source: evidence, chapter: `第 ${fact.fromChapter} 章`, storyTime: fact.storyTime || '未注明', kind: fact.kind,
+    track, source: evidence, entityIds: fact.entityIds,
+    evidenceTrail: fact.evidence.map(source => ({ chapter: Number(source.path.match(/第(\d+)章/)?.[1] ?? fact.fromChapter), label: fact.predicate, source })),
+    chapter: `第 ${fact.fromChapter} 章`, storyTime: fact.storyTime || '未注明', kind: fact.kind,
     fields: [{ label: fact.predicate, value: fact.value, track, source: evidence }] };
 }
 
@@ -128,16 +130,48 @@ export function readManuscriptView(store: FileStore, chapter: number, runId?: st
   const snapshot = store.db.head();
   if (snapshot) {
     const scope = memoryScopeSchema.parse({ chapter }), all = store.db.facts(), conflicts = conflictingFacts(all.filter(fact => visibleFact(fact, scope)));
+    const historical = chapter !== project.chapter;
+    if (historical) {
+      // Current Markdown cards can contain later injuries or knowledge. Historical state comes from time-bound records.
+      view.characters = view.characters.map(c => ({ ...c, fields: [] }));
+      view.entries = [];
+    }
     const accepted = all.filter(fact => visibleFact(fact, scope) && !conflicts.has(fact.id) && fact.evidence.length && fact.evidence.every(e => sourceValid(store, e, snapshot.documents, chapter, project)));
     const pending = includeDraft && candidate ? candidate.facts.filter(fact => !['retracted', 'disputed'].includes(fact.reviewStatus) && !['superseded', 'disputed'].includes(fact.state) && fact.worldId === 'main' && fact.timelineId === 'main' && fact.fromChapter <= chapter && (fact.toChapter === null || fact.toChapter >= chapter) && fact.evidence.length &&
       fact.evidence.every(e => { const change = candidate.changes.find(change => change.path === e.path && hash(change.content) === e.hash);
         return change ? !!e.quote && (e.start !== undefined && e.end !== undefined ? Array.from(change.content).slice(e.start, e.end).join('') === e.quote : change.content.includes(e.quote)) : sourceValid(store, e, snapshot.documents, chapter, project); })) : [];
     const ids = new Set(pending.flatMap(fact => [fact.id, ...(fact.supersedes ? [fact.supersedes] : [])]));
     for (const [facts, track] of [[accepted.filter(fact => !ids.has(fact.id)), 'saved'], [pending, 'draft']] as const) for (const fact of facts) {
-      view.entries.push(factEntry(fact, track));
+      const entry = factEntry(fact, track);
+      const seen = new Set([fact.id]);
+      let previous = fact.supersedes;
+      while (previous && !seen.has(previous)) {
+        seen.add(previous);
+        const old = all.find(f => f.id === previous && f.worldId === fact.worldId && f.timelineId === fact.timelineId && f.fromChapter <= chapter);
+        if (!old) break;
+        for (const source of old.evidence.filter(e => sourceValid(store, e, snapshot.documents, chapter, project)))
+          entry.evidenceTrail!.unshift({ chapter: old.fromChapter, label: old.predicate, source });
+        previous = old.supersedes;
+      }
+      if (['promise','hook'].includes(fact.category)) {
+        if (fact.promiseWindow) entry.fields.push({ label: '预期兑现窗口', value: '第 ' + fact.promiseWindow.from + '—' + fact.promiseWindow.through + ' 章', track, source: fact.evidence[0] });
+        entry.fields.push({ label: '兑现状态', value: fact.state === 'resolved' ? '已兑现' : fact.supersedes ? '已推进' : '已提出', track, source: fact.evidence[0] });
+      }
+      if (fact.kind === 'world_rule') {
+        const applications = accepted.filter(other => other.id !== fact.id && other.kind !== 'plan' && other.relatedIds.includes(fact.id));
+        for (const usage of applications) for (const source of usage.evidence.filter(e => e.path.startsWith('07_')))
+          entry.evidenceTrail!.push({ chapter: usage.fromChapter, label: usage.predicate, source });
+      }
+      view.entries.push(entry);
       if (fact.category === 'character' && !view.characters.some(character => character.name === fact.subject || fact.entityIds.includes(character.id)))
         view.characters.push({ id: fact.entityIds[0] || `fact-${fact.id}`, name: fact.subject, aliases: fact.aliases, source: fact.evidence[0], track, fields: [] });
     }
+  }
+  for (const entry of view.entries.filter(e => e.from && e.to)) {
+    const ids = [entry.from!, entry.to!].map(name => view.characters.find(c => c.name === name || c.aliases.includes(name))?.id ?? name);
+    const matches = view.entries.filter(e => e !== entry && e.category === 'relation' && e.evidenceTrail &&
+      ids.every((id, i) => e.entityIds?.includes(id) || [e.title, ...e.fields.map(f => f.value)].some(text => text.includes(i === 0 ? entry.from! : entry.to!))));
+    entry.evidenceTrail = matches.flatMap(e => e.evidenceTrail!).sort((a,b) => a.chapter - b.chapter);
   }
   for (const character of view.characters) for (const value of character.fields.filter(value => /当前目标|后续可用冲突|承诺/.test(value.label))) {
     view.entries.push({ id: `goal-${character.id}-${value.label}`, category: 'promise', title: character.name, kind: 'plan', source: value.source, track: value.track, fields: [value] });

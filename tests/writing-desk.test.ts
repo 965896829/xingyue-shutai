@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import path from 'node:path';
 import { Service } from '../src/core/service';
-import { hash, prosePath } from '../src/core/domain';
+import { batchPath, rhythmPath, hash, prosePath } from '../src/core/domain';
 import { fakeProfile, fakeResult, isolatedRoot } from './fixtures/refactor';
 import { manuscriptEditSchema, manuscriptTarget, mergeManuscript, replaceManuscriptPassage, requestedChapter, requestsManuscript } from '../src/shared/manuscript-edit';
 
@@ -75,5 +75,41 @@ test('正文改写绑定作品和章节，保留正式稿，旧候选无法覆�
     await service.invoke('run.update', { id: manualId, path: prosePath(2), content: '新候选', expectedHash: hash('旧候选') });
     await assert.rejects(service.invoke('run.update', { id: manualId, path: prosePath(2), content: '过期写入', expectedHash: hash('旧候选') }), /候选已更新/);
     assert.equal(store.db.run(manualId).changes[0].content, '新候选');
+  } finally { await service.drain(); }
+});
+
+test('进度第五章时，实际出站分别使用第31和第2章的批次及前章版本，缺纲请求停在本机', async () => {
+  const wires: { system: string; input: string }[] = [];
+  const service = new Service(path.resolve('resources/skill'), () => {}, async (_p, system, messages) => {
+    wires.push({ system, input: messages.at(-1)!.content }); return fakeResult('合成正文候选。');
+  });
+  service.profiles = [structuredClone(fakeProfile)];
+  try {
+    await service.invoke('project.create', { parent: isolatedRoot('target-batch'), title: '合成章节', premise: '渡河', config: { defaultProfileId: fakeProfile.id } });
+    const store = service.store!, project = store.db.project(); project.chapter = 5; project.revision++;
+    const first = project.batches[0], second = { ...first, id: 'unregistered', start: 31, end: 60 };
+    store.commit([service.change(batchPath(first), '## 第2章\n归还旧桨。'), service.change(rhythmPath(first), '## 第2章\n第二章减速。'),
+      service.change(batchPath(second), '## 第31章\n渡过冰河。'), service.change(rhythmPath(second), '## 第31章\n第三十一章加速。'),
+      service.change(prosePath(1), '上一章拿起木桨。'), service.change(prosePath(30), '冰河开始解冻。')], project);
+    const chat = await service.invoke('chat.create', { title: '核对批次' });
+    async function send(chapter: number, freeTrial?: true) {
+      const id = await service.invoke('chat.send', { conversationId: chat.id, text: '写第' + chapter + '章', manuscript: { ...manuscriptTarget(project.id, prosePath(chapter), ''), freeTrial } });
+      for (let i = 0; i < 1000; i++) {
+        const reply = await service.invoke('chat.manuscript', { id });
+        if (reply.message.status !== 'running') return reply;
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+      throw new Error('未收到离线回执');
+    }
+    for (const [chapter, need, skip] of [[31, '渡过冰河。', '归还旧桨。'], [2, '归还旧桨。', '渡过冰河。']] as const) {
+      assert.equal((await send(chapter)).message.status, 'complete');
+      const wire = wires.at(-1)!;
+      assert.ok(wire.system.includes(need) && !wire.system.includes(skip));
+      assert.ok(wire.system.includes(chapter === 31 ? '冰河开始解冻。' : '上一章拿起木桨。'));
+      assert.deepEqual(JSON.parse(wire.input).batch, chapter === 31 ? [31,60] : [1,30]);
+      assert.equal(store.db.project().chapter, 5);
+    }
+    await send(62); assert.equal(wires.length, 2);
+    assert.equal((await send(62, true)).message.status, 'complete'); assert.equal(wires.length, 3);
   } finally { await service.drain(); }
 });

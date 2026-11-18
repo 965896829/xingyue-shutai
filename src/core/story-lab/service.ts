@@ -1,3 +1,4 @@
+import { inheritedLabRules, labMaterialBlocks } from '../../shared/lab-material';
 import type { z } from 'zod';
 import type { SecretProfile, AppEvent } from '../../shared/types';
 import {
@@ -15,6 +16,7 @@ import { invokeModel, RequestError } from '../provider';
 import { callModel, attempts } from '../runtime/model-gateway';
 import { fingerprint } from '../runtime/canonical';
 import { errorPayload } from '../../shared/errors';
+import { describeOperation } from './operation';
 import { LabStore } from './store';
 import { buildLabContext, labProfile } from './context';
 
@@ -73,6 +75,13 @@ export class StoryLabService {
     const session = this.store.session(input.sessionId),
       base = this.store.version(session.id, input.baseVersionId);
     this.store.checkRevision(session, input.expectedRevision);
+    if (input.materialRules) {
+      const blocks = labMaterialBlocks(input.content);
+      if (blocks.length !== input.materialRules.length || blocks.some((b, i) => {
+        const r = input.materialRules![i];
+        return r.offset !== b.rule.offset || r.section !== b.rule.section || r.throughChapter !== undefined && r.throughChapter < r.fromChapter;
+      })) throw new Error('资料边界与当前段落或章节范围不一致');
+    }
     const version: LabVersion = {
       ...base,
       id: crypto.randomUUID(),
@@ -81,7 +90,9 @@ export class StoryLabService {
       baseVersionId: base.id,
       requestId: null,
       source: 'edit',
-      partial: false,
+      partial: base.partial,
+      materialRules: input.materialRules ?? (base.kind === 'blueprint' && !base.partial ? inheritedLabRules(input.content, base) : undefined),
+      operation: base.operation && { ...base.operation, ...(base.kind === 'prose' && !base.partial ? { proseParentId: base.id } : {}) },
       createdAt: new Date().toISOString()
     };
     this.store.journal.db.transaction(() => {
@@ -95,10 +106,8 @@ export class StoryLabService {
     const session = this.store.session(input.sessionId),
       version = this.store.version(session.id, input.versionId);
     this.store.checkRevision(session, input.expectedRevision);
-    const request = version.requestId ? this.store.get('requests', version.requestId) : undefined;
-    const changedPlan =
-      version.kind === 'prose' && request && request.input.baseVersionId !== session.currentVersionId;
-    if ((labStale(session, version) || changedPlan) && !input.reviewedStale)
+    if (version.partial) throw new Error('该版本是未完成片段，请先继续原操作。');
+    if (labStale(session, version) && !input.reviewedStale)
       throw new Error('候选基于较早版本，请查看差异后明确采用；不会覆盖较新内容。');
     if (version.kind === 'discussion')
       throw new Error('讨论回答不能直接作为整份方案，请使用局部修改或保存为方案候选');
@@ -121,9 +130,8 @@ export class StoryLabService {
     }
     if (this.active.has(input.sessionId))
       throw new Error('本实验正在生成，请等待或停止；其他实验可独立运行。');
-    const prior = this.store.all('requests', input.sessionId);
     if (
-      prior.some((r) => r.status === 'unknown' || (r.status === 'cancelled' && r.usage.cost === null)) &&
+      this.store.hasUnknown(input.sessionId) &&
       !input.acknowledgeUnknown
     )
       throw new Error('此前存在结果或费用未知的请求；继续会产生新的请求，请先确认。');
@@ -137,6 +145,7 @@ export class StoryLabService {
       action: input.action,
       input,
       inputHash,
+      operation: describeOperation(this.store, input, session.currentProseId),
       status: 'running',
       context,
       model: {

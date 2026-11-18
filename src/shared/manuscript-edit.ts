@@ -7,7 +7,9 @@ export const manuscriptEditSchema = z.strictObject({
   from: z.number().int().nonnegative(),
   original: z.string().max(120000),
   before: z.string().max(160),
-  after: z.string().max(160)
+  after: z.string().max(160),
+  freeTrial: z.literal(true).optional(),
+  suppliedOutline: z.string().trim().min(1).max(30000).optional()
 });
 
 export type ManuscriptEdit = z.infer<typeof manuscriptEditSchema>;

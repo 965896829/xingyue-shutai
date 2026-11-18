@@ -6,7 +6,8 @@ export const projectionFieldSchema = z.object({ label: z.string(), value: z.stri
 export const projectionCharacterSchema = z.object({ id: z.string(), name: z.string(), aliases: z.array(z.string()), fields: z.array(projectionFieldSchema), source: projectionSourceSchema, track });
 export const projectionCategories = ['relation', 'timeline', 'hook', 'promise', 'item', 'injury', 'knowledge', 'term', 'behavior', 'fact'] as const;
 export const projectionEntrySchema = z.object({ id: z.string(), category: z.enum(projectionCategories), title: z.string(), fields: z.array(projectionFieldSchema), source: projectionSourceSchema, track,
-  from: z.string().optional(), to: z.string().optional(), chapter: z.string().optional(), storyTime: z.string().optional(), kind: z.string().optional() });
+  evidenceTrail: z.array(z.object({ chapter: z.number().int(), label: z.string(), source: projectionSourceSchema })).optional(),
+  entityIds: z.array(z.string()).optional(), from: z.string().optional(), to: z.string().optional(), chapter: z.string().optional(), storyTime: z.string().optional(), kind: z.string().optional() });
 export const manuscriptViewSchema = z.object({ projectId: z.string(), revision: z.number(), chapter: z.number(), runId: z.string().optional(), draftAvailable: z.boolean(),
   characters: z.array(projectionCharacterSchema), entries: z.array(projectionEntrySchema), unavailable: z.array(z.string()) });
 export type ProjectionField = z.infer<typeof projectionFieldSchema>;

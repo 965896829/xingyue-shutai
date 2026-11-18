@@ -1,3 +1,5 @@
+import { labMaterialBlocks } from '../../shared/lab-material';
+import type { LabMaterialRule } from '../../shared/story-lab';
 import { useRef, useState } from 'react';
 import { MarkdownContent } from '../MarkdownContent';
 import { labHeadings, labStale, type LabDetail, type LabVersion } from '../../shared/story-lab';
@@ -21,7 +23,7 @@ export function LabEditor({
   detail: LabDetail;
   version: LabVersion;
   busy: boolean;
-  onEdit: (content: string) => Promise<void>;
+  onEdit: (content: string, rules?: LabMaterialRule[]) => Promise<void>;
   onSelectVersion: (reviewed: boolean) => Promise<void>;
   onSelection: (selection: LabSelection) => void;
   onRevise: (selection: LabSelection) => void;
@@ -46,13 +48,13 @@ export function LabEditor({
   const currentId =
     version.kind === 'prose' ? detail.session.currentProseId : detail.session.currentVersionId;
   const current = detail.versions.find((v) => v.id === currentId);
-  const request = detail.requests.find((r) => r.id === version.requestId);
-  const stale =
-    labStale(detail.session, version) ||
-    (version.kind === 'prose' &&
-      !!request &&
-      request.input.baseVersionId !== detail.session.currentVersionId);
+  const stale = labStale(detail.session, version);
   const headings = labHeadings(version.content);
+  const blocks = labMaterialBlocks(version.content, version.materialRules);
+  const [rules, setRules] = useState(() => blocks.map(b => b.rule));
+  const [block, setBlock] = useState(0);
+  const rule = rules[block];
+  const changeRule = (patch: Partial<LabMaterialRule>) => setRules(prev => prev.map((r, i) => i === block ? { ...r, ...patch } : r));
   const dirty = content !== version.content;
   function choose(value: LabSelection) {
     setSelection(value);
@@ -120,12 +122,21 @@ export function LabEditor({
       {version.kind !== 'discussion' && (
         <button
           className="primary"
-          disabled={busy || dirty || currentId === version.id || (!!stale && !reviewed)}
+          disabled={busy || dirty || version.partial || currentId === version.id || (!!stale && !reviewed)}
           onClick={() => void onSelectVersion(reviewed)}
         >
           选为当前{version.kind === 'prose' ? '试稿' : '方案'}
         </button>
       )}
+      {version.kind === 'blueprint' && !version.partial && rule && <details><summary>正文取材与揭示边界</summary>
+        <label>段落<select value={block} onChange={e => setBlock(Number(e.target.value))}>{blocks.map((b, i) => <option key={b.rule.offset} value={i}>{b.label} · {b.text.slice(0, 34)}</option>)}</select></label>
+        <label>资料类别<select value={rule.category} onChange={e => changeRule({ category: e.target.value as LabMaterialRule['category'] })}>
+          {Object.entries({ setting: '公开设定', character: '人物', voice: '表达', plan: '计划', secret: '秘密' }).map(([v,n]) => <option key={v} value={v}>{n}</option>)}</select></label>
+        <label>起始章<input type="number" min="1" value={rule.fromChapter} onChange={e => changeRule({ fromChapter: Number(e.target.value) || 1 })}/></label>
+        <label>截止章<input type="number" min={rule.fromChapter} placeholder="不限" value={rule.throughChapter ?? ''} onChange={e => changeRule({ throughChapter: Number(e.target.value) || undefined })}/></label>
+        <label>最早揭示章<input type="number" min="1" placeholder="暂不揭示" value={rule.revealAt ?? ''} onChange={e => changeRule({ revealAt: Number(e.target.value) || null })}/></label>
+        <button disabled={busy || dirty} onClick={() => void onEdit(version.content, rules).catch(e => setError(String(e)))}>保存边界为新候选</button>
+      </details>}
       {!!headings.length && (
         <details className="lab-toc">
           <summary>方案目录 · {headings.length} 个标题（点击选择原文范围）</summary>

@@ -14,6 +14,8 @@ import { LiveMarkdown } from './LiveMarkdown';
 import { LiveProseEditor, LiveProseCount } from './LiveProseEditor';
 import { readWorkingDraft, SelectionChip, WritingManuscript, type WritingComposer, type WritingDeskHandle } from './WritingManuscript';
 import { DeskDivider, useDeskLayout } from './DeskDivider';
+import { writingTarget } from '../shared/writing-target';
+import { hasChapterPlan, hasOutlineContent } from '../shared/chapter-range';
 import { manuscriptTarget, mergeManuscript, requestedChapter, requestsManuscript, type ManuscriptEdit } from '../shared/manuscript-edit';
 import './writing-desk.css';
 import { reasoningLabel } from '../shared/reasoning';
@@ -375,12 +377,26 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   const manuscriptRun = p ? (running && matchesPage(running) ? running :
     run && matchesPage(run) ? run : manuscriptDraft(visibleRuns, p, manuscriptPath)) : undefined;
   const desk: WritingComposer = {
-    count: deskCount, clear: () => deskEditor.current?.clear(),
+    materials: setManifest, count: deskCount, clear: () => deskEditor.current?.clear(),
     target: async (instruction, explicit) => {
       if (!p || !projectKey) return;
       const current = Number(manuscriptPath.match(/第(\d+)章/)?.[1]) || p.chapter;
       const chapter = requestedChapter(instruction, current);
-      if (deskEditor.current && (deskCount || chapter === current)) return deskEditor.current.target(instruction, explicit);
+      async function bindPlan(edit?: ManuscriptEdit) {
+        if (!edit || edit.mode === 'passage') return edit;
+        const target = writingTarget(p!, Number(edit.path.match(/第(\d+)章/)![1]), snapshot.documents.filter(d => d.acceptedHash).map(d => d.path));
+        for (const file of [target.outline, target.batchOutline]) {
+          const doc = snapshot.documents.find(d => d.path === file && d.status === 'accepted' && d.acceptedHash);
+          if (doc) {
+            const { content } = await invoke('document.read', { path: file, hash: doc.acceptedHash! });
+            if (file === target.outline ? hasOutlineContent(content) : hasChapterPlan(content, target.chapter)) return edit;
+          }
+        }
+        const outline = await dialogs.prompt('可填写本章安排，或留空后继续自由试写。', { title: '第' + target.chapter + '章 · 缺少本章细纲', inputLabel: '补充本章细纲', confirmLabel: '按此选择继续' });
+        if (outline == null || activeProjectKey.current !== projectKey) throw new Error('已取消本次写作。');
+        return outline.trim() ? { ...edit, suppliedOutline: outline.trim() } : { ...edit, freeTrial: true as const };
+      }
+      if (deskEditor.current && (deskCount || chapter === current)) return bindPlan(deskEditor.current.target(instruction, explicit));
       if (!explicit && !requestsManuscript(instruction)) return;
       const path = proseFile(chapter);
       const candidate = manuscriptDraft(visibleRuns, p, path);
@@ -389,7 +405,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         (hash ? (await invoke('document.read', { path, hash })).content : '')).replace(/\r\n?/g, '\n');
       if (activeProjectKey.current !== projectKey) throw new Error('作品已切换，请在当前作品重新选择章节。');
       const local = readWorkingDraft(projectKey, p.id, path, candidate?.id, source);
-      return manuscriptTarget(p.id, path, local ? mergeManuscript(local.base, local.text, source).text : source);
+      return bindPlan(manuscriptTarget(p.id, path, local ? mergeManuscript(local.base, local.text, source).text : source));
     },
     show: (id, target) => {
       if (target.projectId !== p?.id || activeProjectKey.current !== projectKey) return;
@@ -633,7 +649,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     let manuscript: ManuscriptEdit | undefined;
     try { manuscript = writingLayout ? await desk.target(request) : undefined; }
     catch (e) { setError((e as Error).message); return; }
-    const formalChapter = manuscript?.mode === 'chapter' && manuscript.path === proseFile(p?.chapter ?? 1) &&
+    const formalChapter = manuscript?.mode === 'chapter' && !manuscript.freeTrial && !manuscript.suppliedOutline && manuscript.path === proseFile(p?.chapter ?? 1) &&
       p?.stage === 'S10' && (!discussionRun || !!discussionRun.pipeline);
     if (manuscript && !formalChapter) {
       if (!request.trim()) return;
@@ -1438,6 +1454,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                               </div>
                               </details>
                             )}
+                            {!!run.steps?.some(step => step.phase.startsWith('assessment:')) && <details><summary>高级评估 · {run.steps.filter(step => step.phase.startsWith('assessment:')).length} 次调用</summary>
+                              {run.steps.filter(step => step.phase.startsWith('assessment:')).map((step,i) => <p key={i}>{step.phase} · {step.usage.cost === null ? '费用未知' : step.usage.cost + ' ' + step.usage.currency}</p>)}</details>}
                             {showTaskDetails && <details className="usage" id="chat-usage"><summary>运行记录</summary>
                               {run.rounds} 轮调用 · {run.toolCount} 次工具 ·{' '}
                               {run.usage.cost === null
@@ -1871,12 +1889,20 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       )}
       {manifest && (
         <Modal
-          title="本次召回资料"
+          title="本轮写作资料"
           subtitle={`项目版本 ${manifest.projectRevision} · 保守输入估计 ${manifest.estimatedTokens.toLocaleString()} / ${manifest.availableTokens.toLocaleString()}`}
           onClose={() => setManifest(null)}
           wide
         >
           <div className="modal-body">
+            <section><strong>第 {manifest.chapter} 章</strong>
+              <p>批次细纲与节奏　{manifest.sources.filter(s => /第\d+-\d+章/.test(s.path)).map(s => s.path.split('/').at(-1) + ' · ' + s.hash.slice(0, 8)).join('，') || '本轮未使用'}</p>
+              <p>前章正文　{manifest.sources.filter(s => s.path.startsWith('07_')).map(s => s.path.split('/').at(-1) + ' · ' + s.hash.slice(0, 8)).join('，') || '本轮未使用'}</p>
+              <p>涉及人物　{manifest.entityIds?.join('、') || '尚未识别'}　·　{manifest.voicePreferences?.length ?? 0} 条表达偏好</p>
+              {manifest.voicePreferences?.map((v,i) => <details key={i}><summary>{v.scope.kind === 'book' ? '全书叙述' : v.scope.target || '局部表达'} · {v.statement}</summary>
+                {v.samples?.map((s,j) => <button key={j} onClick={() => setSource({ ...s.source, quote: s.text })}>{s.text} · {s.source.hash.slice(0,8)}</button>)}</details>)}
+              {!!manifest.disputedFacts?.length && <p>待核实　{manifest.disputedFacts.map(f => f.subject + ' · ' + f.predicate).join('，')}</p>}
+            </section>
             {manifest.readPlan && <details>
               <summary>必读清单 · {manifest.readPlan.sources.length} 份资料 · {manifest.readPlan.facts.length} 条关键事实</summary>
               {manifest.readPlan.verified && <p>最近一次发送前核验通过 · {new Date(manifest.readPlan.verified.at).toLocaleString()}</p>}
@@ -2157,10 +2183,10 @@ function ProjectSettings({
               checked={c.preview.enabled}
               onChange={(e) => field('preview', { ...c.preview, enabled: e.target.checked })}
             />
-            实时评估
+            高级节奏评估（额外模型调用，按当前连接计费）
           </label>
           <label>
-            每章预览次数
+            每章过程评估上限（另有规划与成稿各一次）
             <input
               type="number"
               min={0}

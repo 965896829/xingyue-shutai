@@ -2,6 +2,16 @@ import { z } from 'zod';
 
 const id = z.string().uuid();
 const text = z.string().max(1_000_000);
+const labRangeSchema = z.strictObject({ start: z.number().int().nonnegative(), end: z.number().int().nonnegative(), text });
+export const labMaterialRuleSchema = z.object({ section: z.number().int().nonnegative(), offset: z.number().int().nonnegative(), category: z.enum(['setting', 'character', 'voice', 'plan', 'secret']),
+  fromChapter: z.number().int().positive(), throughChapter: z.number().int().positive().optional(), revealAt: z.number().int().positive().nullable() });
+const labOperationSchema = z.object({
+  rootRequestId: id, action: z.enum(['blueprint', 'discuss', 'revise', 'expand', 'prose']),
+  category: z.enum(['full', 'volume', 'chapter', 'insert', 'replace', 'prose', 'discussion']), instruction: z.string(),
+  scope: z.enum(['full', 'core']), segment: z.literal('tail').optional(), baseId: id.nullable(), planId: id.nullable(), proseParentId: id.nullable(),
+  selected: labRangeSchema.optional(), chapter: z.number().int().positive().optional(),
+  proseMode: z.enum(['first', 'rewrite', 'next', 'independent']).optional()
+});
 export const labActionSchema = z.enum(['blueprint', 'discuss', 'revise', 'expand', 'prose', 'continue']);
 export const labKindSchema = z.enum(['blueprint', 'prose', 'discussion']);
 export const labRequirementsSchema = z.strictObject({
@@ -35,7 +45,9 @@ export const labVersionSchema = z.object({
   requestId: id.nullable(),
   createdAt: z.string(),
   source: z.enum(['model', 'edit']),
-  partial: z.boolean()
+  partial: z.boolean(),
+  operation: labOperationSchema.optional(),
+  materialRules: z.array(labMaterialRuleSchema).optional()
 });
 export const labMessageSchema = z.object({
   id,
@@ -59,6 +71,9 @@ export const labGenerateSchema = z.strictObject({
   instruction: z.string().max(30_000).default(''),
   baseVersionId: id.nullable(),
   sourceVersionId: id.optional(),
+  proseMode: z.enum(['first', 'rewrite', 'next', 'independent']).optional(),
+  previousProseId: id.optional(),
+  targetChapter: z.number().int().positive().optional(),
   selection: labSelectionSchema.optional(),
   sectionIndexes: z.array(z.number().int().nonnegative()).max(100).optional(),
   recentMessageIds: z.array(id).max(20).optional(),
@@ -109,6 +124,7 @@ export const labRequestSchema = z.object({
   sessionId: id,
   action: labActionSchema,
   inputHash: z.string(),
+  operation: labOperationSchema.optional(),
   input: labGenerateSchema,
   status: z.enum(['running', 'complete', 'length', 'cancelled', 'unknown', 'not_sent', 'filtered']),
   context: labContextSchema,
@@ -140,7 +156,10 @@ export const labRequestSchema = z.object({
   startedAt: z.string(),
   endedAt: z.string().optional()
 });
+export const labCursorSchema = z.object({ versions: z.number().int().nonnegative(), messages: z.number().int().nonnegative(), requests: z.number().int().nonnegative() });
+export type LabCursor = z.infer<typeof labCursorSchema>;
 export const labDetailSchema = z.object({
+  older: labCursorSchema.optional(), stamp: z.string().optional(), hasUnknown: z.boolean().optional(),
   session: labSessionSchema,
   versions: z.array(labVersionSchema),
   messages: z.array(labMessageSchema),
@@ -163,6 +182,7 @@ export const labEditSchema = z.strictObject({
   sessionId: id,
   baseVersionId: id,
   content: text.min(1),
+  materialRules: z.array(labMaterialRuleSchema).max(500).optional(),
   title: z.string().max(120),
   expectedRevision: z.number().int()
 });
@@ -180,6 +200,8 @@ export const labExportSchema = z.strictObject({
 });
 export type LabSession = z.infer<typeof labSessionSchema>;
 export type LabVersion = z.infer<typeof labVersionSchema>;
+export type LabOperation = z.infer<typeof labOperationSchema>;
+export type LabMaterialRule = z.infer<typeof labMaterialRuleSchema>;
 export type LabMessage = z.infer<typeof labMessageSchema>;
 export type LabRequest = z.infer<typeof labRequestSchema>;
 export type LabGenerate = z.infer<typeof labGenerateSchema>;
@@ -286,5 +308,8 @@ export function labMaterialHeadings(content: string): LabHeading[] {
 }
 export function labStale(session: LabSession, version: LabVersion) {
   const current = version.kind === 'prose' ? session.currentProseId : session.currentVersionId;
+  if (version.id === current) return false;
+  if (version.kind === 'prose' && version.operation && (version.operation.planId !== session.currentVersionId ||
+      version.operation.proseParentId !== current)) return true;
   return version.id !== current && version.baseVersionId !== current;
 }

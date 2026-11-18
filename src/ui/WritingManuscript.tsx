@@ -13,6 +13,7 @@ export interface WritingDeskHandle {
   clear(): void;
 }
 export interface WritingComposer {
+  materials?(manifest: NonNullable<Run['manifest']>): void;
   target(instruction: string, explicit?: boolean): Promise<ManuscriptEdit | undefined>;
   show(id: string, target: ManuscriptEdit): void;
   count: number;

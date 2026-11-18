@@ -1,3 +1,4 @@
+import { labCursorSchema } from '../shared/story-lab';
 import fs from 'node:fs';
 import { WritingStyleRecommender } from './writing-style';
 import { StoryLabService } from './story-lab/service';
@@ -761,7 +762,10 @@ export class Service {
     if (command.startsWith('lab.')) {
       const lab = this.lab();
       if (command === 'lab.list') return lab.store.all('sessions').reverse();
-      if (command === 'lab.read') return lab.store.detail(str(a.sessionId));
+      if (command === 'lab.stamp') return lab.store.stamp(str(a.sessionId));
+      if (command === 'lab.version') return lab.store.version(str(a.sessionId), str(a.id));
+      if (command === 'lab.request') return lab.store.request(str(a.sessionId), str(a.id));
+      if (command === 'lab.read') return lab.store.detail(str(a.sessionId), labCursorSchema.optional().parse(a.before));
       if (command === 'lab.create') return lab.create(labCreateSchema.parse(a));
       if (command === 'lab.update') return lab.update(labUpdateSchema.parse(a));
       if (command === 'lab.edit') return lab.edit(labEditSchema.parse(a));
@@ -1071,7 +1075,7 @@ export class Service {
           .parse(a.limit ?? 100)
       );
     if (creationCommands.has(command)) return handleCreationCommand(this, command, a, idle);
-    if (command === 'manuscript.read') return readManuscriptView(s, p.chapter, typeof a.runId === 'string' ? a.runId : undefined, a.includeDraft !== false);
+    if (command === 'manuscript.read') return readManuscriptView(s, typeof a.chapter === 'number' ? a.chapter : p.chapter, typeof a.runId === 'string' ? a.runId : undefined, a.includeDraft !== false);
     if (command === 'studio.read') return { ...this.studio(), entities: syncEntities(s) };
     if (command === 'embedding.reindex') {
       void this.track(this.scheduler.run(id(), ['index'], 1, () => this.index!.rebuild())).catch((e) => this.emit({ type: 'error', text: (e as Error).message }));

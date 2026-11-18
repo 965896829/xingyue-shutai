@@ -7,7 +7,6 @@ import {
 import { withTaskReasoning } from '../../shared/reasoning';
 import { type ProjectState, type Run, type SecretProfile, type ToolDefinition } from '../../shared/types';
 import { assertControllerRules, automaticRepairLimit, modelTaskEnvelope } from '../agent-control';
-import { countInput } from '../context-budget';
 import { contextChanged, contextPayload, fitContext } from '../context-compiler';
 import {
   countWords,
@@ -36,7 +35,6 @@ import { setRunStatus } from '../runtime/run-state';
 import { sourceReuseInstructions } from '../runtime/source-reuse';
 import { runTaskLoop } from '../runtime/task-loop';
 import { systemPrompt } from '../skill';
-import { fileHash, safePath } from '../storage';
 import { recordUsage, requestGuard, syncUsage } from '../telemetry';
 import { validateCandidate } from '../validation';
 import { chapterCoverageInstruction, requiredCharacterCoverage } from '../chapter-memory';
@@ -371,31 +369,6 @@ export async function driveChapterWorkflow(
     bindExpressionRules(r, expression.binding);
     const system = `${systemPrompt(host.skillRoot, p, stage, naming, skillId, { outputMode: phase })}\n本阶段为 ${phase}。${phase === 'memory' ? '记忆与正文一起待作者确认。证据 hash 使用候选哈希；同步字段填待提交。' : `质量报告路径：${qualityPath(r.chapter)}。`}实际字数 ${countWords(prose.content)}；候选哈希 ${pipeline.proseHash}。${expression.prompt}${phase === 'memory' ? sharedRuleBlock('source-reuse', sourceReuseInstructions) : ''}`;
     if (!r.messages.length || !restoredPhase) {
-      if (phase === 'memory') {
-        // The Skill requires current ledgers before updating them. Supply each
-        // exact full version once instead of forcing a model round to re-read
-        // excerpts, and bind these sources to the same external-change guard.
-        for (const file of memoryPaths) {
-          const doc = host.store.readAccepted(file);
-          if (fileHash(safePath(host.store.root, file)) !== doc.hash)
-            throw new Error(`记忆资料有未确认的外部变化：${file}`);
-          r.manifest!.sources = r.manifest!.sources.filter((source) => source.path !== file);
-          r.manifest!.sources.push({
-            path: file,
-            hash: doc.hash,
-            content: doc.content,
-            ranges: [{ start: 0, end: Array.from(doc.content).length }],
-            mode: 'full',
-            required: true,
-            reason: '章后提取必读的完整当前记忆，未变内容须保留',
-            layer: 'summary',
-            category: 'derived_summary',
-            sourceSnapshotId: r.manifest!.snapshotId
-          });
-        }
-        r.manifest!.estimatedTokens = countInput(profile, contextPayload(r.manifest!)).tokens;
-        host.save(r);
-      }
       preloadOutputTargets(host.store, r, p, r.manifest!);
       bindContextReadPlan(r.manifest!);
     }
@@ -406,7 +379,7 @@ export async function driveChapterWorkflow(
         ...chapterNamingContext(r),
         ...modelTaskEnvelope(host.store, host.skillRoot, r, phase),
         ...contextPayload(r.manifest!, p, phase),
-        task: phase === 'review' ? '独立审阅当前正文，只提交质量报告。' : '依据最终正文提取记忆，只提交必要资料变化与事实。',
+        task: phase === 'review' ? '独立审阅当前正文，只提交质量报告。' : '依据最终正文提取本章增量。已有台账用 patch.sourceHash 和精确行或 append，未变文件省略。章后更新提交本章内容，事实附本版正文原句。',
         prose: { ...prose, hash: pipeline.proseHash },
         ...(phase === 'memory' && pipeline.coverageVersion === 1
           ? {
@@ -415,7 +388,7 @@ export async function driveChapterWorkflow(
             }
           : {}),
         existingCandidates: r.changes.filter(
-          (c) => c.path !== prose.path && (phase !== 'memory' || c.path !== qualityPath(r.chapter))
+          (c) => c.path !== prose.path && !memoryPaths.some(file => file === c.path) && (phase !== 'memory' || c.path !== qualityPath(r.chapter))
         ),
         repairScope: repairContext(r),
         expectedOutputs: phase === 'memory' ? stageOutputs('S11', p) : [qualityPath(r.chapter)]

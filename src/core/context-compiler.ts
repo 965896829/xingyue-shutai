@@ -1,3 +1,6 @@
+import { writingTarget } from '../shared/writing-target';
+import { isLedger, ledgerMaterial } from './ledger-material';
+import { hasChapterPlan } from '../shared/chapter-range';
 import type { ContextManifest, ContextSource, DocumentInfo, Fact, Profile, ProjectState, StageId } from '../shared/types';
 import { memoryScopeSchema, type MemoryScope } from '../shared/studio';
 import { FileStore, fileHash, safePath } from './storage';
@@ -113,6 +116,10 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     availableTokens: 0, createdAt: now(), omitted: [], assemblyVersion: '4.0-context-compiler'
   };
   const formal = purpose === 'stage' || purpose === 'revision';
+  if (!p.batches.some(b => b.start <= p.chapter && p.chapter <= b.end)) {
+    const target = writingTarget(p, p.chapter, Object.keys(snapshot.documents));
+    p = { ...p, batches: [...p.batches, target.batch] };
+  }
   const planned = formal ? requiredInputs(stage, p) : [paths.config, paths.style, ...(stage >= 'S04' ? [paths.world] : []), ...(purpose === 'draft' && stage >= 'S09' ? [paths.volumes, paths.outline, batchPath(activeBatch(p)), rhythmPath(activeBatch(p)), taskPath(p.chapter), detailPath(p.chapter), ...(p.chapter > 1 ? [prosePath(p.chapter - 1)] : [])] : [])];
   // S09 uses the current chapter's plan and entry/exit neighbors. Character
   // records still supply the first chapter's baseline before prose facts exist.
@@ -137,7 +144,12 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     catch (error) { if (!options.allowConflicts) throw error; m.conflicts.push((error as Error).message); continue; }
     let slice = { content: source.content, ranges: source.ranges ?? [{ start: 0, end: Array.from(source.content).length }], omitted: !!source.ranges };
     let reason = authorRule ? '作者必守规则，不代表人物已知' : '当前任务必读';
-    if (stage === 'S09' && file === batchPath(activeBatch(p))) {
+    if (isLedger(file) && stage >= 'S05') {
+      slice = ledgerMaterial(source.content, p.chapter);
+      reason = '台账版本与本章记录；人物事实及其证据按当前任务检索';
+    } else if (purpose === 'draft' && file === batchPath(activeBatch(p)) && !hasChapterPlan(source.content, p.chapter)) {
+      m.omitted!.push({ path: file, reason: '缺少本章细纲，未装入其他章节' }); continue;
+    } else if (stage === 'S09' && file === batchPath(activeBatch(p))) {
       slice = chapterSlice(source.content, Math.max(activeBatch(p).start, p.chapter - 1), Math.min(activeBatch(p).end, p.chapter + 1));
       if (slice.omitted) reason = '全局说明、本章及相邻承接计划；完整来源仍绑定同一版本';
     }
@@ -170,15 +182,17 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   for (const f of candidates) if ([f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))) for (const entity of f.entityIds) entities.add(entity);
   const usable = candidates.filter(f => (related(f, query, entities) || ['world_rule', 'author_constraint'].includes(f.kind)) && f.evidence.every(e => validSource(e) && status.get(e.path)?.status === 'accepted'));
   m.entityIds = [...entities].sort();
-  if (store.db.document(voicePath)?.hash) {
+  {
     const plans = m.sources.filter(source => source.layer === 'chapter_plan').map(source => source.content).join('\n');
     const scenes = sceneMaterials(m.sources);
     const sceneFunctions = [...plans.matchAll(/(?:场景功能|章节类型|场景类型)[：:]\s*([^\r\n]+)/g)].flatMap(match => match[1].split(/[、,，；;\/]/).map(value => value.trim()));
-    m.voicePreferences = taskVoicePreferences(store, { entityIds: scope.characterId ? [scope.characterId] : m.entityIds,
+    m.voiceSelection = { entityIds: scope.characterId ? [scope.characterId] : m.entityIds,
       sceneFunctions, sceneIds: [`第${p.chapter}章`, ...[...plans.matchAll(/^#{2,4}\s+(.+)$/gm)].map(match => match[1].trim())],
       addresseeIds: scenes.flatMap(s => s.addressees?.split(/[、,，]/).map(v => v.trim()) ?? []),
-      relationshipIds: scenes.flatMap(s => s.relationship ? [s.relationship] : []), scope });
-    m.qualityReadHash = fingerprint({ records: store.db.get('creative-quality-v1'), voice: store.db.document(voicePath)?.hash });
+      relationshipIds: scenes.flatMap(s => s.relationship ? [s.relationship] : []), scope };
+    const used: string[] = [];
+    m.voicePreferences = taskVoicePreferences(store, m.voiceSelection, [], used);
+    m.qualityReadHash = fingerprint(used);
   }
   if (stage === 'S10' && purpose !== 'discussion' && scope.viewpoint === 'author' && !m.sources.some(source => source.path === paths.roles)) {
     const card = status.get(paths.roles);
@@ -247,7 +261,6 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   }
   if (['S09', 'S10'].includes(stage) && purpose !== 'discussion') {
     m.writingMaterials = writingMaterials(store, m);
-    m.qualityReadHash = fingerprint({ records: store.db.get('creative-quality-v1'), voice: store.db.document(voicePath)?.hash });
   }
   m.selectionTrace = { version: 1, candidates: all.length, facts: [...new Map([...m.hardConstraints ?? [], ...m.retrievedFacts ?? []].map(fact => [fact.id, fact])).values()].map(fact => ({
     id: fact.id, kind: fact.kind, required: m.requiredFactIds!.includes(fact.id) || hardIds.has(fact.id),
@@ -262,7 +275,12 @@ export function assembleContext(store: FileStore, p: ProjectState, stage: StageI
 }
 
 export function contextChanged(store: FileStore, manifest: ContextManifest) {
-  if (manifest.qualityReadHash && manifest.qualityReadHash !== fingerprint({ records: store.db.get('creative-quality-v1'), voice: store.db.document(voicePath)?.hash })) return true;
+  if (manifest.voiceSelection) {
+    const used: string[] = [];
+    taskVoicePreferences(store, manifest.voiceSelection, [], used);
+    if (manifest.qualityReadHash !== fingerprint(used)) return true;
+    if (manifest.writingMaterials && fingerprint(writingMaterials(store, { ...manifest, referenceSources: [] }).historicalMechanisms) !== fingerprint(manifest.writingMaterials.historicalMechanisms)) return true;
+  } else if (manifest.qualityReadHash && manifest.qualityReadHash !== fingerprint({ records: store.db.get('creative-quality-v1'), voice: store.db.document(voicePath)?.hash })) return true;
   if (manifest.factReadDependency && factReadSetChanged(store, manifest.factReadDependency)) return true;
   if (manifest.snapshotId && store.db.get('headSnapshot') !== manifest.snapshotId &&
       !compatibleSettingsSnapshot(store, manifest.snapshotId)) return true;

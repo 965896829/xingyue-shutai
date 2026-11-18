@@ -1,7 +1,10 @@
+import { labMaterialBlocks, visibleLabMaterial } from '../../shared/lab-material';
+import { professionalMethod } from '../creation-policy';
+import { describeOperation } from './operation';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { SecretProfile } from '../../shared/types';
-import { labMaterialHeadings, labProseAction, labProseSections, type LabGenerate, type LabContext } from '../../shared/story-lab';
+import { labMaterialHeadings, labProseAction, type LabGenerate, type LabContext } from '../../shared/story-lab';
 import { assertRequestFits } from '../context-budget';
 import { requestBody } from '../provider';
 import { fingerprint } from '../runtime/canonical';
@@ -27,9 +30,15 @@ export function buildLabContext(
   profile: SecretProfile
 ): LabContext {
   const session = store.session(input.sessionId);
-  const base = input.baseVersionId ? store.version(session.id, input.baseVersionId) :
-    input.action === 'discuss' ? store.all('versions', session.id).findLast(v => v.kind !== 'discussion') : undefined;
+  let base = input.baseVersionId ? store.version(session.id, input.baseVersionId) :
+    input.action === 'discuss' ? store.latestVersion(session.id) : undefined;
   const source = input.sourceVersionId ? store.version(session.id, input.sourceVersionId) : undefined;
+  const operation = describeOperation(store, input, session.currentProseId);
+  if (input.action === 'continue') {
+    if (!source?.partial && !(source?.operation?.action === 'blueprint' && source.operation.scope === 'core'))
+      throw new Error('请选择未完成的片段，或继续核心构想第9—17项。');
+    base = operation.baseId ? store.version(session.id, operation.baseId) : undefined;
+  }
   if (input.action !== 'blueprint' && !input.instruction.trim())
     throw new Error('请说明这次要讨论、修改、展开或试写什么');
   if (input.action === 'revise') {
@@ -46,8 +55,8 @@ export function buildLabContext(
   const prose = labProseAction(input.action, base, source);
   const system = [
     read('system.md'),
-    ...(input.action === 'blueprint' ? [read('blueprint.md')] : []),
-    ...(prose ? [read('prose.md')] : [])
+    ...(operation.action === 'blueprint' ? [read('blueprint.md')] : []),
+    ...(prose ? [professionalMethod(skillRoot, 'prose').content, read('prose.md')] : [])
   ].join('\n\n');
   const sources = ['作者原始要求', ...(session.pins.length ? ['明确保留点'] : [])];
   const parts = [
@@ -57,7 +66,9 @@ export function buildLabContext(
   if (base && base.id !== source?.id && (input.action !== 'blueprint' || input.instruction.trim())) {
     const headings = labMaterialHeadings(base.content);
     // A first-chapter draft selects only early-story material by default. The author can change the selection.
-    const indexes = input.sectionIndexes ?? (prose && base.kind === 'blueprint' ? labProseSections(headings) : undefined);
+    const visible = prose && base.kind === 'blueprint' ? labMaterialBlocks(base.content, base.materialRules)
+      .filter(item => visibleLabMaterial(item.rule, operation.chapter ?? 1)) : undefined;
+    const indexes = input.sectionIndexes ?? (visible && [...new Set(visible.map(item => item.rule.section))]);
     if (indexes !== undefined) {
       if (!indexes.length && !input.selection)
         throw new Error('请在本次资料中选择相关部分，或选中需要试写的文字；未自动装入远期路线和结局。');
@@ -67,7 +78,11 @@ export function buildLabContext(
         if (!heading) throw new Error('资料目录已改变，请重新选择');
         // Context checkboxes select the text up to the next heading, not an entire
         // parent subtree that might also contain the ending or discarded material.
-        excerpts.push(base.content.slice(heading.start, headings[index + 1]?.start ?? base.content.length));
+        if (visible) {
+          const lines = visible.filter(item => item.rule.section === index);
+          if (!lines.length) continue;
+          excerpts.push(heading.title + '\n' + lines.map(item => item.text).join('') + '\n');
+        } else excerpts.push(base.content.slice(heading.start, headings[index + 1]?.start ?? base.content.length));
         sources.push(`${base.title} · ${heading.title}`);
       }
       if (excerpts.length) parts.push(`方案资料（版本 ${base.id}）：\n${excerpts.join('')}`);
@@ -77,6 +92,12 @@ export function buildLabContext(
     }
   }
   if (input.action === 'prose' && !base) throw new Error('请先选定实验室方案，再试写正文');
+  if (operation.action === 'prose' && operation.proseParentId && ['next', 'rewrite'].includes(operation.proseMode ?? '')) {
+    const prior = store.version(session.id, operation.proseParentId);
+    parts.push('承接正文版本 ' + prior.id + ' · 第' + (prior.operation?.chapter ?? 1) + '章。根据原文核对持有物、伤势、承诺、未完行动与章末悬念。\n' + prior.content);
+    sources.push('前章正文 · ' + prior.id);
+  }
+  if (operation.selected && input.action === 'continue') parts.push('原始选区 ' + operation.selected.start + '—' + operation.selected.end + '：\n' + operation.selected.text);
   if (input.selection) {
     parts.push(`当前选中原文：\n${input.selection.text}`);
     sources.push('作者选中的原文');
@@ -86,13 +107,13 @@ export function buildLabContext(
     sources.push('不提前揭示的信息');
   }
   {
-    const messages = store.all('messages', session.id);
+
     const selected =
       input.recentMessageIds === undefined
-        ? messages.filter((m) => m.action === 'discuss').slice(-6)
+        ? store.discussions(session.id)
         : input.recentMessageIds.map((id) => {
-            const message = messages.find((m) => m.id === id);
-            if (!message) throw new Error('讨论消息不属于此实验');
+            const message = store.get('messages', id);
+            if (!message || message.sessionId !== session.id) throw new Error('讨论消息不属于此实验');
             return message;
           });
     if (selected.length) {
@@ -104,13 +125,14 @@ export function buildLabContext(
     }
   }
   if (input.action === 'continue') {
+    parts.push('原始任务：' + JSON.stringify(operation), operation.segment === 'tail' ? '已写核心构想第1—8项，按原模板完成第9—17项；从保存位置接续。' : '准确接续原片段最后一个字符。');
     parts.push(
       `已生成内容（完整保留，只追加新片段）：\n${source!.content}`,
       `中断位置：原文末尾，第 ${source!.content.length} 个字符。`
     );
     sources.push(`继续来源 ${source!.title} · ${source!.id}`);
   }
-  const operation = {
+  const directive = {
     blueprint:
       input.blueprintScope === 'core'
         ? '本次生成核心构想：目录第1—8项。长篇展开将在作者主动继续后另行生成，不提前省略核心设计。'
@@ -122,7 +144,7 @@ export function buildLabContext(
     prose: '完成作者指定的小说正文，只交付正文。',
     continue: '从中断处接着写，仅输出新片段，不重写、复述或补抄前文，继续范围服从作者本轮要求。'
   }[input.action];
-  parts.push(`本次操作：${operation}\n作者本轮要求：${input.instruction}`);
+  parts.push(`本次操作：${directive}\n作者本轮要求：${input.instruction}`);
   const user = parts.join('\n\n');
   const sizing = assertRequestFits(
     profile,

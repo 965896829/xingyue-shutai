@@ -32,6 +32,7 @@ for (const mode of ['chapter', 'scene'] as const) test(`正常生成按钮的 S0
       return fakeResult(JSON.stringify(input.plans ? { memory, plans } : memory));
     }
     if (!tools.length) {
+      for (const marker of ['左手旧伤仍在', '紧张不直说恐惧', '不可揭示师父身份']) assert.ok(JSON.stringify(input).includes(marker), marker);
       assert.ok(system.includes(professionalMethod(root, 'prose').content), '当前共享正文方法完整进入首稿请求');
       assert.match(system, /流式/);
       if (mode === 'scene') {
@@ -56,10 +57,10 @@ for (const mode of ['chapter', 'scene'] as const) test(`正常生成按钮的 S0
       assert.equal(input.writingMaterials, undefined, '提取只依据最终正文，不携带首稿体验计划');
       assert.equal(input.voicePreferences, undefined, '提取不携带表达样例');
       assert.ok(input.sources.every((source: any) => !/^(05_|06_)/.test(source.path)), '场景计划不进入已发生事件提取');
-      assert.ok(input.sources.some((source: any) => source.path.startsWith('04_')), '实际更新的核心台账仍完整提供');
+      assert.ok(input.sources.some((source: any) => source.path.startsWith('04_')), '实际更新的核心台账仍绑定对应版本');
       assert.match(system, /最终正文|指定正文版本/);
     }
-    const changes = files.map(file => service.change(file, fixture(p, file, service) + (file === detailPath(1) ? '\n## 场面99：谈赊账\n- 场景功能：对话\n- 焦点人物：阿宁\n- 当前关切：保住诊所的赊账资格\n- 个人意义：明天仍能继续治疗\n- 主观判断：医生可能认为自己失信\n- 交流对象：医生\n- 当前关系：医患\n- 对话意图：让医生同意分期付款\n- 叙述处理：写足提出要求后的交锋，压缩路途\n' : '')));
+    const changes = files.map(file => service.change(file, (file === detailPath(1) ? fixture(p, file, service).replace(/^(## 场面)/m, '全章承接：左手旧伤仍在。声音：紧张不直说恐惧。边界：不可揭示师父身份。\n$1') : fixture(p, file, service)) + (file === detailPath(1) ? '\n## 场面99：谈赊账\n- 场景功能：对话\n- 焦点人物：阿宁\n- 当前关切：保住诊所的赊账资格\n- 个人意义：明天仍能继续治疗\n- 主观判断：医生可能认为自己失信\n- 交流对象：医生\n- 当前关系：医患\n- 对话意图：让医生同意分期付款\n- 叙述处理：写足提出要求后的交锋，压缩路途\n' : '')));
     return { ...fakeResult(''), stop: 'tools' as const, calls: [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes, ...(run.pipeline?.phase === 'memory' ? { facts: [], complete: true, coverage: fixtureCoverage(service, run) } : {}) }) }] };
   });
   service.profiles = [model];

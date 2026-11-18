@@ -1,3 +1,4 @@
+import { writingTarget } from '../shared/writing-target';
 import { createHash, randomUUID } from 'node:crypto';
 import { extractProseBody } from './prose-body';
 import {
@@ -27,7 +28,7 @@ export function makeBatch(start: number, c: ProjectConfig): Batch {
   };
 }
 export const activeBatch = (p: ProjectState) =>
-  p.batches.find((b) => p.chapter >= b.start && p.chapter <= b.end) ?? p.batches.at(-1)!;
+  p.batches.find((b) => p.chapter >= b.start && p.chapter <= b.end) ?? writingTarget(p, p.chapter, []).batch;
 export function stageKey(stage: StageId, chapter: number, b: Batch) {
   return `${stage}:${stage < 'S06' ? 'global' : stage < 'S09' ? b.id : chapter}`;
 }

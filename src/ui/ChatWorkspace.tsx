@@ -527,6 +527,7 @@ export function ChatWorkspace({
                       <GenerationStep activity={turn?.activity} running={m.status === 'running'} />
                       <WebSearchEvidence state={m.webSearch} running={m.status === 'running'} />
                       <ContextCompactions items={turn?.contextCompactions} activity={turn?.activity} running={m.status === 'running'} />
+          {turn?.manuscript && turn.manifest && desk?.materials && <button onClick={() => desk.materials?.(turn.manifest!)}>本轮写作资料</button>}
                       {turn?.error && <p className="inline-warning">{requestErrorText(turn.error)}</p>}
                       {turn?.calls
                         .filter((c) => ['public_search', 'extract_pages'].includes(c.name))

@@ -1,23 +1,17 @@
 import type { ProjectState, Run } from '../shared/types';
 import type { FileStore } from './storage';
-import { estimatedChapters } from './domain';
+import { writingTarget } from '../shared/writing-target';
 import { writingScope } from './memory-studio';
 
-export function targetBatch(project: ProjectState, chapter: number) {
-  if (!Number.isSafeInteger(chapter) || chapter < 1) throw new Error('目标章节无效');
-  const recorded = project.batches.find(batch => batch.start <= chapter && batch.end >= chapter);
-  if (recorded) return recorded;
-  const prior = project.batches.filter(batch => batch.end < chapter).sort((a, b) => b.end - a.end)[0];
-  const base = prior ? prior.end + 1 : 1;
-  const start = base + Math.floor((chapter - base) / project.config.batchSize) * project.config.batchSize;
-  const end = Math.min(estimatedChapters(project.config), start + project.config.batchSize - 1);
-  if (end < chapter) throw new Error('目标章节超出当前作品计划范围，请先调整篇幅');
-  return { id: `target-${start}-${end}`, start, end, sizeAtCreation: project.config.batchSize };
+export function targetBatch(project: ProjectState, chapter: number, documents: string[] = []) {
+  return writingTarget(project, chapter, documents, false).batch;
 }
 
 /** A task view never moves the author's saved writing progress. */
 export function projectForRun(project: ProjectState, run: Pick<Run, 'chapter' | 'stage' | 'taskScope'>): ProjectState {
-  const batch = targetBatch(project, run.chapter);
+  const bound = run.taskScope?.batch;
+  const registered = project.batches.find(b => b.start <= run.chapter && run.chapter <= b.end);
+  const batch = registered ?? (bound && bound.start <= run.chapter && run.chapter <= bound.end ? bound : targetBatch(project, run.chapter));
   if (run.taskScope && (run.taskScope.memory.chapter !== run.chapter ||
       run.taskScope.memory.projectId !== project.id || run.taskScope.branchId !== 'main' ||
       run.taskScope.batch.start !== batch.start || run.taskScope.batch.end !== batch.end))
@@ -27,7 +21,7 @@ export function projectForRun(project: ProjectState, run: Pick<Run, 'chapter' | 
 }
 
 export function bindTaskScope(store: FileStore, run: Run) {
-  const project = store.db.project(), batch = targetBatch(project, run.chapter);
+  const project = store.db.project(), batch = targetBatch(project, run.chapter, store.db.acceptedDocuments().map(d => d.path));
   run.batch = { ...batch };
   run.taskScope = { version: 1, branchId: 'main', sourceSnapshotId: run.baseSnapshotId,
     sourceRevision: run.baseRevision, batch: { ...batch },

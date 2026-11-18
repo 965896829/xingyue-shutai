@@ -217,7 +217,7 @@ test('continuation includes requirements, selected plan, prior text and interrup
     );
     assert.equal(
       s.lab.store.version(s.session.id, next.versionId!).content,
-      blueprint + '\n\n\n后来雨停了。'
+      blueprint + '\n后来雨停了。'
     );
     assert.equal(next.response, '\n后来雨停了。');
     assert.equal(call, 2);
@@ -610,5 +610,62 @@ test('讨论与纠偏引用本次实验的候选，并保留本轮要求；试�
     const onlyRules = s.lab.preview({ ...prose, sectionIndexes: [2] });
     assert.match(onlyRules.user, /河中呼名不可回应/);
     assert.doesNotMatch(onlyRules.user, /受箓者必须救人/);
+  } finally { await s.lab.close(); }
+});
+
+test('补写、局部中断、重启恢复和下一章使用相应的正文及方案版本', async () => {
+  const plan = '# 主角\n阿宁替人撑渡。\n## 世界核心与隐藏真相\n公开规则：船离水必沉。\n隐藏真相：星台是谁建的。\n## 第一卷\n旧路线。\n## 第二卷\n后卷原句。\n';
+  const prose = '阿宁用最后的铜钱买了红伞，左手受伤，对师弟撒了谎。';
+  const returns = [plan, '新路线：先找船。', prose, '阿宁拿起红', '伞。', '他空着钱袋上船。'];
+  const wires: string[] = [];
+  const caller: typeof invokeModel = async (_p, _system, messages) => {
+    const index = wires.push(messages[0].content) - 1;
+    return { ...fakeResult(returns[index]), stop: index === 3 ? 'length' : 'complete' };
+  };
+  const s = setup(caller); let lab = s.lab;
+  const select = (versionId: string) => lab.select({ sessionId: s.session.id, versionId,
+    expectedRevision: lab.store.session(s.session.id).revision, reviewedStale: false });
+  const make = (data: Partial<LabGenerate>) => generate(lab, input(s.session.id, data));
+  try {
+    const whole = await make({}); select(whole.versionId!);
+    const expansion = await make({ action: 'expand', baseVersionId: whole.versionId, instruction: '补充第一卷' });
+    select(expansion.versionId!);
+    const merged = lab.store.version(s.session.id, expansion.versionId!).content;
+    assert.ok(merged.startsWith(plan.slice(0, plan.indexOf('## 第二卷'))) && merged.endsWith('## 第二卷\n后卷原句。\n') && merged.includes('新路线：先找船。'));
+    const first = await make({ action: 'prose', baseVersionId: expansion.versionId, proseMode: 'first', instruction: '写第一章' });
+    select(first.versionId!); assert.match(wires[2], /船离水必沉/); assert.doesNotMatch(wires[2], /星台是谁建的|后卷原句/);
+    const start = prose.indexOf('买了红伞'), end = start + 4;
+    const partial = await make({ action: 'revise', baseVersionId: first.versionId, instruction: '改这句',
+      selection: { start, end, text: prose.slice(start, end) } });
+    assert.equal(lab.store.version(s.session.id, partial.versionId!).content, '阿宁拿起红');
+    assert.throws(() => select(partial.versionId!), /未完成/);
+    await lab.close(); lab = new StoryLabService(s.root, path.resolve('resources/skill'), () => [s.profile], () => {}, caller);
+    const resumed = await make({ action: 'continue', baseVersionId: expansion.versionId, sourceVersionId: partial.versionId!, instruction: '接着写' });
+    select(resumed.versionId!);
+    const updated = lab.store.version(s.session.id, resumed.versionId!).content;
+    assert.equal(updated, prose.slice(0,start) + '阿宁拿起红伞。' + prose.slice(end));
+    await make({ action: 'prose', baseVersionId: expansion.versionId, instruction: '紧接第一章写第二章' });
+    assert.ok(wires[5].includes(updated) && wires[5].includes(resumed.versionId!));
+    const solo = lab.preview(input(s.session.id, { action: 'prose', baseVersionId: expansion.versionId, proseMode: 'independent', instruction: '独立试写场景' }));
+    assert.ok(!solo.user.includes(updated));
+  } finally { await lab.close(); }
+});
+
+test('表格中截断逐字接续；核心构想接回原模板，完成后不重复展开尾段', async () => {
+  const outputs = ['# 主角\n阿宁。\n| 路线 |', ' 代价 |\n', '## 结局方向\n回到渡口。'];
+  const wires: string[] = [];
+  const s = setup(async (_p, system, messages) => {
+    const i = wires.push(system + messages[0].content) - 1;
+    return { ...fakeResult(outputs[i]), stop: i === 0 ? 'length' : 'complete' };
+  });
+  try {
+    const first = await generate(s.lab, input(s.session.id, { blueprintScope: 'core' }));
+    const resume = (versionId: string) => input(s.session.id, { action: 'continue', baseVersionId: null, sourceVersionId: versionId, instruction: '继续' });
+    const core = await generate(s.lab, resume(first.versionId!));
+    assert.equal(s.lab.store.version(s.session.id, core.versionId!).content, outputs[0] + outputs[1]);
+    const end = await generate(s.lab, resume(core.versionId!));
+    assert.match(wires[2], /9—17项/); assert.match(wires[2], /17\. 下一步创作/);
+    assert.equal(s.lab.store.version(s.session.id,end.versionId!).content, outputs.join(''));
+    assert.throws(() => s.lab.preview(resume(end.versionId!)), /未完成/);
   } finally { await s.lab.close(); }
 });

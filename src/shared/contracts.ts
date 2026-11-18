@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { labSessionSchema, labDetailSchema, labCreateSchema, labUpdateSchema, labEditSchema, labSelectSchema, labGenerateSchema, labContextSchema, labRequestSchema, labExportSchema } from './story-lab';
+import { labCursorSchema, labVersionSchema, labSessionSchema, labDetailSchema, labCreateSchema, labUpdateSchema, labEditSchema, labSelectSchema, labGenerateSchema, labContextSchema, labRequestSchema, labExportSchema } from './story-lab';
 import { skillExecutionSchema } from './skill-contract';
 import { writingStyleRequestSchema, writingStyleReportSchema } from './writing-style';
 import { bookProfileSchema, bookProfileStateSchema, publishingSnapshotSchema } from './publishing';
@@ -61,7 +61,10 @@ function define<I extends z.ZodType, O extends z.ZodType>(input: I, output: O, a
 
 export const commandContracts = {
   'lab.list': define(empty, z.array(labSessionSchema), 'read', 'global'),
-  'lab.read': define(z.strictObject({ sessionId: z.string().uuid() }), labDetailSchema, 'read', 'global'),
+  'lab.stamp': define(z.strictObject({ sessionId: z.string().uuid() }), z.string(), 'read', 'global'),
+  'lab.version': define(z.strictObject({ sessionId: z.string().uuid(), id: z.string().uuid() }), labVersionSchema, 'read', 'global'),
+  'lab.request': define(z.strictObject({ sessionId: z.string().uuid(), id: z.string().uuid() }), labRequestSchema, 'read', 'global'),
+  'lab.read': define(z.strictObject({ sessionId: z.string().uuid(), before: labCursorSchema.optional() }), labDetailSchema, 'read', 'global'),
   'lab.create': define(labCreateSchema, labDetailSchema, 'write', 'global'),
   'lab.update': define(labUpdateSchema, labDetailSchema, 'write', 'global'),
   'lab.edit': define(labEditSchema, labDetailSchema, 'write', 'global'),
@@ -141,7 +144,7 @@ export const commandContracts = {
   'project.importDocument': define(z.strictObject({ file: key }), z.object({ name: text, content: text, warnings: z.array(text), hash: text.regex(/^[a-f0-9]{64}$/) }), 'read', 'global'),
   'document.read': define(z.strictObject({ path: key, hash: optionalText, disk: flag }), document),
   'narrative.read': define(z.strictObject({ chapter: integer.min(1).max(100000), runId: optionalText, scope: z.enum(['batch', 'book']).optional() }), narrativeDataSchema),
-  'manuscript.read': define(z.strictObject({ runId: optionalText, includeDraft: z.boolean().optional() }), manuscriptViewSchema),
+  'manuscript.read': define(z.strictObject({ chapter: z.number().int().positive().optional(), runId: optionalText, includeDraft: z.boolean().optional() }), manuscriptViewSchema),
   'document.save': define(z.strictObject({ path: key, content: text, baseHash: text.nullable() }), text, 'write'),
   'document.restore': define(z.strictObject({ path: key, hash: key, baseHash: text.nullable() }), text, 'write'),
   'document.history': define(z.strictObject({ path: key }), z.array(z.object({ hash: text, createdAt: text, tx: text }))),

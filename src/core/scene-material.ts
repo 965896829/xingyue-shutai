@@ -1,3 +1,4 @@
+import { characterMaterial } from './character-material';
 import type { ContextManifest, ContextSource, Fact } from '../shared/types';
 import type { FileStore } from './storage';
 import { readQuality } from './quality';
@@ -55,7 +56,9 @@ export function writingMaterials(store: FileStore, manifest: ContextManifest): W
     (manifest.referenceSources ??= []).push({ path: file, hash: doc.hash, reason: 'mechanism-comparison' });
   }
   return {
-    version: 1, authorPreferences: 'voicePreferences 中的已确认适用偏好',
+    version: 1, characters: [...new Set([...(manifest.entityIds ?? []), ...scenes.flatMap(s => s.focalCharacter ?? [])])]
+      .map(name => characterMaterial(store, manifest.chapter, name, facts, scenes, manifest.voicePreferences ?? [], manifest.scope?.viewpoint === 'author')),
+    authorPreferences: 'voicePreferences 中的已确认适用偏好',
     narrator: { instruction: '作者当前明确要求优先，继承已确认声音；人物所知和表达指导分别使用。', scenes: scenes.map(({ scene, narration }) => ({ scene, narration })) },
     focalExperience: { scenes, currentStateIds: ids(f => f.kind === 'state' || ['injury', 'item', 'relation'].includes(f.category) && f.kind === 'event'),
       experienceIds: ids(f => f.kind === 'event'), beliefIds: ids(f => f.kind === 'belief') },

@@ -1,3 +1,4 @@
+import { isLedger, ledgerChange, ledgerMaterial } from './ledger-material';
 import { z } from 'zod';
 import type { Fact, Run, Issue } from '../shared/types';
 import type { FileStore } from './storage';
@@ -56,6 +57,14 @@ export function memoryReviewInput(store: FileStore, run: Run) {
         hash(content) === currentSettingsSourceHash(store, run.baseSnapshotId, { path, hash: expected }))
       content = store.object(expected).toString('utf8');
     const previousHash = change?.baseHash;
+    if (isLedger(path)) {
+      const quotes = items.flatMap(i => i.fact?.evidence.filter(e => e.path === path).map(e => e.quote) ?? []);
+      const previous = previousHash ? store.object(previousHash).toString('utf8') : '';
+      const delta = ledgerChange(previous, change ? content : previous);
+      const material = ledgerMaterial(content, Math.max(...chapters), [], quotes);
+      return { path, hash: hash(content), content: [material.content, delta.after].filter(Boolean).join('\n'),
+        ...(previousHash ? { previous: { hash: previousHash, content: delta.before } } : {}) };
+    }
     return { path, hash: hash(content), content,
       ...(previousHash && changedMemory.some(c => c.path === path) ? { previous: { hash: previousHash, content: store.object(previousHash).toString('utf8') } } : {}) };
   });

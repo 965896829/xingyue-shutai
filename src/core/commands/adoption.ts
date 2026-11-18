@@ -1,3 +1,4 @@
+import { revisedChapterImpact } from '../story-impact';
 import { z } from 'zod';
 import { approvedCreation } from '../../shared/creation';
 import { type Assessment } from '../../shared/studio';
@@ -230,7 +231,7 @@ export async function handleAdoptionCommand(
         if (
           !change ||
           evidence.hash !== s.db.document(evidence.path)?.hash ||
-          substantiveChanges.includes(evidence.path)
+          (substantiveChanges.includes(evidence.path) && !(r.revisionCore?.phase === 'ready' && change.path.startsWith('07_')))
         )
           continue;
         const offset = change.content.indexOf(evidence.quote);
@@ -465,12 +466,14 @@ export async function handleAdoptionCommand(
             ? r.workbench.reorder.before.filter((n, i) => n !== r.workbench!.reorder!.after[i])
             : null;
       const placeholders = initialFiles(p, host.skillRoot, '');
+      const revisionImpact = revisedChapterImpact(s, r, changes, storyStates);
       const affected = s.db
         .acceptedDocuments()
         .map((d) => d.path)
         .filter(
           (f) =>
             !changed.includes(f) &&
+            (!revisionImpact || (revisionImpact.via.has(f) || revisionImpact.kind === 'scene' && f === prosePath(earliest + 1))) &&
             (!plotChapters ||
               (/^(06_|07_|08_)/.test(f) &&
                 plotChapters.some((n) => {
@@ -514,20 +517,22 @@ export async function handleAdoptionCommand(
             storyStates,
             affected.map((file) => ({
               path: file,
-              reason: '既有设定或正文发生修订，需核对关联影响',
-              via: changed
+              reason: revisionImpact?.kind === 'causal' ? '依赖已变化的事实或来源章节' : revisionImpact ? '下一章承接本场结尾' : '既有设定或正文发生修订，需核对关联影响',
+              via: revisionImpact?.via.get(file) ?? changed
             })),
             r.continuity ?? { mode: 'retcon', fromChapter: Number.isFinite(earliest) ? earliest : 1 }
           )
         );
       for (const n of Object.keys(next.chapters))
-        if (!Number.isFinite(earliest) || Number(n) >= earliest) {
+        if (revisionImpact ? affected.includes(prosePath(Number(n))) : !Number.isFinite(earliest) || Number(n) >= earliest) {
           const state = next.chapters[n];
           if (state !== 'stale') (next.chapterStatesBeforeReview ??= {})[n] = state;
           next.chapters[n] = 'stale';
         }
       finishImpactReview(next);
-      const record = `\n\n## ${now()} ${r.request}\n\n- 起因：${r.request}\n- 修改章节或规则：${changed.join('、')}\n- 旧事实：以本次基础版本原文为准；${changes.map((c) => `${c.path} @ ${c.baseHash ?? '新文件'}`).join('；')}\n- 新事实：见本次已接受候选；来源任务 ${r.id}\n- 影响起点：${Number.isFinite(earliest) ? `第${earliest}章` : '涉及设定与后续资料'}\n- 已检查文件：${changed.join('、')}\n- 已同步文件：${changed.join('、')}\n- 无需修改及原因：待逐项核对后填写\n- 待核对：${next.stale.join('、') || '无'}\n- 状态：${next.stale.length ? '处理中' : '已闭环'}\n`;
+      const classification = revisionImpact ? '\n- 修改类型：' + ({ expression: '表达', scene: '局部场景', causal: '因果状态' }[revisionImpact.kind]) +
+        '\n- 相关人物：' + (revisionImpact.entities.join('、') || '无已证实状态变化') + '\n- 相关承诺：' + (revisionImpact.promises.join('、') || '无已证实变化') : '';
+      const record = `\n\n## ${now()} ${r.request}${classification}\n\n- 起因：${r.request}\n- 修改章节或规则：${changed.join('、')}\n- 旧事实：以本次基础版本原文为准；${changes.map((c) => `${c.path} @ ${c.baseHash ?? '新文件'}`).join('；')}\n- 新事实：见本次已接受候选；来源任务 ${r.id}\n- 影响起点：${Number.isFinite(earliest) ? `第${earliest}章` : '涉及设定与后续资料'}\n- 已检查文件：${changed.join('、')}\n- 已同步文件：${changed.join('、')}\n- 无需修改及原因：待逐项核对后填写\n- 待核对：${next.stale.join('、') || '无'}\n- 状态：${next.stale.length ? '处理中' : '已闭环'}\n`;
       changes = changes.filter((c) => c.path !== paths.impact);
       changes.push(host.change(paths.impact, s.read(paths.impact).content + record));
     }

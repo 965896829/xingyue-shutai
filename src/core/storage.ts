@@ -890,6 +890,11 @@ export class FileStore {
           .run(c.path, new TextDecoder().decode(raw));
         this.db.sql.prepare('INSERT INTO document_fts_rows VALUES(?,?,?) ON CONFLICT(path) DO UPDATE SET hash=excluded.hash,fts_rowid=excluded.fts_rowid').run(c.path, c.newHash, indexedRow.lastInsertRowid);
         indexProse(this.db.sql, c.path, c.newHash, raw.toString('utf8'));
+        const chapter = c.path.match(/^07_正文章节\/第(\d+)章\.md$/)?.[1];
+        if (j.run && chapter) {
+          const coverage = j.run.revisionCore?.coverage[Number(chapter)] ?? j.run.chapterCoverage;
+          if (coverage?.proseHash === c.newHash) this.db.set('accepted-coverage:' + Number(chapter), coverage);
+        }
         if (j.run) captureCommittedEdit(this, c.path, c.baseHash, c.newHash, j.run.mode === 'manual' || j.run.revisionCore && this.db.run(j.run.revisionCore.sourceRunId).mode === 'manual' ? 'author' : 'model', j.run.chapter);
       }
       this.db.set('project', j.project);

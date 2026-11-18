@@ -161,6 +161,14 @@ export function TitleWorkspace({
           {!sourceRunId && p.titleBinding?.needsReview ? ' · 待核对' : ''}
         </p>
       )}
+      {selected && plan && <details className="title-style-reference"><summary>入口承诺与后续兑现</summary>
+        <p><strong>{selected.candidate.title}</strong>　{selected.candidate.readerPromise}</p>
+        {(['opening','stage','long_term','ongoing'] as const).map(stage => {
+          const claims = plan.statements.filter(c => c.payoffStage === stage);
+          return claims.length ? <section key={stage}><strong>{{opening:'开篇的具体场面',stage:'阶段与首卷回报',long_term:'后续发展',ongoing:'持续推进'}[stage]}</strong>
+            {claims.map(c => <p key={c.id}>{c.text}{selected.candidate.supportingClaimIds.includes(c.id) && '（书名依据）'}</p>)}</section> : null;
+        })}
+      </details>}
       {error && (
         <p className="creation-action-error" role="alert">
           {error}
