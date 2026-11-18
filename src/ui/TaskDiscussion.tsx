@@ -137,7 +137,7 @@ export function TaskDiscussion({ conversationId, projectSessionId, run, limits, 
           <GenerationStep activity={turn?.activity} running={message.status === 'running'} />
           <WebSearchEvidence state={message.webSearch} running={message.status === 'running'} />
           <ContextCompactions items={turn?.contextCompactions} activity={turn?.activity} running={message.status === 'running'} />
-          {turn?.manuscript && turn.manifest && desk?.materials && <button onClick={() => desk.materials?.(turn.manifest!)}>本轮写作资料</button>}
+          {turn?.manuscript && turn.manifest && desk?.materials && <button onClick={() => desk.materials?.(turn.manifest!, turn.manuscript!)}>本轮写作资料</button>}
           {turn?.error && <p className="inline-warning">{requestErrorText(turn.error)}</p>}
           {turn && ['unknown', 'failed', 'stopped'].includes(message.status) && <button disabled={working || busy} onClick={async () => {
             if (await dialogs.confirm('重新发送会产生新的模型请求和费用，是否继续？', { title: '重新发送这条消息？', confirmLabel: '确认重新发送', cancelLabel: '暂不发送' })) void act(async () => {

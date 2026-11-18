@@ -198,7 +198,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     [selection, setSelection] = useState(''),
     [editorTab, setEditorTab] = useState('edit'),
     [histories, setHistories] = useState<{ hash: string; createdAt: string }[]>([]),
-    [manifest, setManifest] = useState<ContextManifest | null>(null);
+    [manifest, setManifest] = useState<(ContextManifest & { outlineInput?: Pick<ManuscriptEdit, 'suppliedOutline' | 'freeTrial'> }) | null>(null);
   const historyRequest = useRef(0);
   useEffect(() => { historyRequest.current++; setHistories([]); }, [doc?.path, doc?.runId, snapshot.projectSessionId]);
   async function loadDocumentHistory(path: string) {
@@ -377,7 +377,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   const manuscriptRun = p ? (running && matchesPage(running) ? running :
     run && matchesPage(run) ? run : manuscriptDraft(visibleRuns, p, manuscriptPath)) : undefined;
   const desk: WritingComposer = {
-    materials: setManifest, count: deskCount, clear: () => deskEditor.current?.clear(),
+    materials: (data, target) => setManifest({ ...data, outlineInput: { suppliedOutline: target.suppliedOutline, freeTrial: target.freeTrial } }), count: deskCount, clear: () => deskEditor.current?.clear(),
     target: async (instruction, explicit) => {
       if (!p || !projectKey) return;
       const current = Number(manuscriptPath.match(/第(\d+)章/)?.[1]) || p.chapter;
@@ -1895,10 +1895,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           wide
         >
           <div className="modal-body">
-            <section><strong>第 {manifest.chapter} 章</strong>
+            <section><strong>第 {manifest.chapter} 章{manifest.writingBatch && ` · 第 ${manifest.writingBatch.start}—${manifest.writingBatch.end} 章批次`}</strong>
               <p>批次细纲与节奏　{manifest.sources.filter(s => /第\d+-\d+章/.test(s.path)).map(s => s.path.split('/').at(-1) + ' · ' + s.hash.slice(0, 8)).join('，') || '本轮未使用'}</p>
-              <p>前章正文　{manifest.sources.filter(s => s.path.startsWith('07_')).map(s => s.path.split('/').at(-1) + ' · ' + s.hash.slice(0, 8)).join('，') || '本轮未使用'}</p>
-              <p>涉及人物　{manifest.entityIds?.join('、') || '尚未识别'}　·　{manifest.voicePreferences?.length ?? 0} 条表达偏好</p>
+              {manifest.outlineInput?.suppliedOutline && <details open><summary>本轮补充的细纲</summary><p>{manifest.outlineInput.suppliedOutline}</p></details>}
+              {manifest.outlineInput?.freeTrial && <p>本章由作者选择自由试写。</p>}
+              <p>前章正文　{manifest.sources.filter(s => s.path === proseFile(manifest.chapter - 1)).map(s => s.path.split('/').at(-1) + ' · ' + s.hash.slice(0, 8)).join('，') || '本轮未使用'}</p>
+              <p>涉及人物　{[...new Set([...(manifest.entityIds ?? []), ...(manifest.writingMaterials?.characters ?? []).map(c => c.character)])].join('、') || '尚未识别'}　·　{manifest.voicePreferences?.length ?? 0} 条表达偏好</p>
               {manifest.voicePreferences?.map((v,i) => <details key={i}><summary>{v.scope.kind === 'book' ? '全书叙述' : v.scope.target || '局部表达'} · {v.statement}</summary>
                 {v.samples?.map((s,j) => <button key={j} onClick={() => setSource({ ...s.source, quote: s.text })}>{s.text} · {s.source.hash.slice(0,8)}</button>)}</details>)}
               {!!manifest.disputedFacts?.length && <p>待核实　{manifest.disputedFacts.map(f => f.subject + ' · ' + f.predicate).join('，')}</p>}

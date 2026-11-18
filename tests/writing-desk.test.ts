@@ -32,6 +32,10 @@ test('流式追加与作者编辑可以合并，冲突保留作者的手稿', ()
 });
 test('明确的写作指令绑定指定章节，提问留在对话里', () => {
   assert.equal(requestsManuscript('请写第一章，雨夜开场'), true);
+  assert.equal(requestsManuscript('按前章结尾写第二章，保留门外的脚印。'), true);
+  assert.equal(requestedChapter('请按前章结尾写第二章', 5), 2);
+  assert.equal(requestsManuscript('不要按前章结尾写第二章'), false);
+  assert.equal(requestsManuscript('按前章结尾写第二章合适吗？'), false);
   assert.equal(requestedChapter('帮我写第二十一章，五百字', 4), 21);
   assert.equal(requestedChapter('写第003章', 1), 3);
   assert.equal(requestedChapter('续写下一章', 2), 3);

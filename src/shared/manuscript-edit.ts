@@ -67,7 +67,9 @@ export function mergeManuscript(base: string, local: string, incoming: string) {
 function writingDirective(instruction: string) {
   const text = instruction.trim();
   if (/[?？]\s*$/.test(text)) return;
-  return text.match(/^(?:(?:请|帮我|给我|直接|现在|先|开始|继续)\s*)*(?:写|续写|撰写|重写|生成|试写|扩写)(?:一下|一版|一段|出)?\s*(第([零〇一二两三四五六七八九十百千\d]+)章|本章|这[一]?章|下一章|正文|章节正文)/);
+  const command = text.replace(/^(?:请|帮我|给我|直接|现在|先|开始|继续|\s)+/, '')
+    .replace(/^(?:按照?|根据|接着|紧接)(?:上章|前章|上一章|本章|现有|当前|已有|给定)(?:的)?(?:结尾|细纲|大纲|安排|原文|剧情|要求)[，,、\s]*/, '');
+  return command.match(/^(?:(?:请|帮我|给我|直接|现在|先|开始|继续)\s*)*(?:写|续写|撰写|重写|生成|试写|扩写)(?:一下|一版|一段|出)?\s*(第([零〇一二两三四五六七八九十百千\d]+)章|本章|这[一]?章|下一章|正文|章节正文)/);
 }
 export function requestsManuscript(instruction: string) {
   return !!writingDirective(instruction);
