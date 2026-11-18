@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { SecretProfile } from '../../shared/types';
-import { labHeadings, type LabGenerate, type LabContext } from '../../shared/story-lab';
+import { labMaterialHeadings, labProseAction, labProseSections, type LabGenerate, type LabContext } from '../../shared/story-lab';
 import { assertRequestFits } from '../context-budget';
 import { requestBody } from '../provider';
 import { fingerprint } from '../runtime/canonical';
@@ -27,7 +27,8 @@ export function buildLabContext(
   profile: SecretProfile
 ): LabContext {
   const session = store.session(input.sessionId);
-  const base = input.baseVersionId ? store.version(session.id, input.baseVersionId) : undefined;
+  const base = input.baseVersionId ? store.version(session.id, input.baseVersionId) :
+    input.action === 'discuss' ? store.all('versions', session.id).findLast(v => v.kind !== 'discussion') : undefined;
   const source = input.sourceVersionId ? store.version(session.id, input.sourceVersionId) : undefined;
   if (input.action !== 'blueprint' && !input.instruction.trim())
     throw new Error('请说明这次要讨论、修改、展开或试写什么');
@@ -42,10 +43,7 @@ export function buildLabContext(
   }
   if (input.action === 'continue' && !source) throw new Error('请选择需要继续的生成版本');
   const read = (file: string) => fs.readFileSync(path.join(skillRoot, 'story-lab', file), 'utf8');
-  const prose =
-    input.action === 'prose' ||
-    (input.action === 'continue' && source?.kind === 'prose') ||
-    (input.action === 'revise' && base?.kind === 'prose');
+  const prose = labProseAction(input.action, base, source);
   const system = [
     read('system.md'),
     ...(input.action === 'blueprint' ? [read('blueprint.md')] : []),
@@ -56,31 +54,25 @@ export function buildLabContext(
     `作者原始要求：\n${JSON.stringify(session.requirements, null, 2)}`,
     ...(session.pins.length ? [`明确保留点：\n${session.pins.join('\n')}`] : [])
   ];
-  if (input.action !== 'blueprint' && base) {
-    const headings = labHeadings(base.content);
+  if (base && base.id !== source?.id && (input.action !== 'blueprint' || input.instruction.trim())) {
+    const headings = labMaterialHeadings(base.content);
     // A first-chapter draft selects only early-story material by default. The author can change the selection.
-    const indexes =
-      input.sectionIndexes ??
-      (prose
-        ? headings.flatMap((h, i) =>
-            /核心设定|主角|独特优势|核心人物|群像|开篇|人物表现|文风|作品声音/.test(h.title) ? [i] : []
-          )
-        : undefined);
+    const indexes = input.sectionIndexes ?? (prose && base.kind === 'blueprint' ? labProseSections(headings) : undefined);
     if (indexes !== undefined) {
       if (!indexes.length && !input.selection)
         throw new Error('请在本次资料中选择相关部分，或选中需要试写的文字；未自动装入远期路线和结局。');
-      for (const index of [...new Set(indexes)]) {
+      const excerpts: string[] = [];
+      for (const index of [...new Set(indexes)].sort((a, b) => a - b)) {
         const heading = headings[index];
         if (!heading) throw new Error('资料目录已改变，请重新选择');
         // Context checkboxes select the text up to the next heading, not an entire
         // parent subtree that might also contain the ending or discarded material.
-        parts.push(
-          `方案资料（版本 ${base.id}）：\n${base.content.slice(heading.start, headings[index + 1]?.start ?? base.content.length)}`
-        );
+        excerpts.push(base.content.slice(heading.start, headings[index + 1]?.start ?? base.content.length));
         sources.push(`${base.title} · ${heading.title}`);
       }
+      if (excerpts.length) parts.push(`方案资料（版本 ${base.id}）：\n${excerpts.join('')}`);
     } else {
-      parts.push(`当前方案（版本 ${base.id}）：\n${base.content}`);
+      parts.push(`本轮参考候选（版本 ${base.id}）：\n${base.content}`);
       sources.push(`${base.title} · 完整版本 ${base.id}`);
     }
   }
@@ -93,7 +85,7 @@ export function buildLabContext(
     parts.push(`本场不应提前揭示的信息：\n${input.concealed}`);
     sources.push('不提前揭示的信息');
   }
-  if (input.action !== 'blueprint') {
+  {
     const messages = store.all('messages', session.id);
     const selected =
       input.recentMessageIds === undefined
@@ -114,7 +106,7 @@ export function buildLabContext(
   if (input.action === 'continue') {
     parts.push(
       `已生成内容（完整保留，只追加新片段）：\n${source!.content}`,
-      `中断位置：原文末尾，第 ${source!.content.length} 个字符；末尾原文：\n${source!.content.slice(-800)}`
+      `中断位置：原文末尾，第 ${source!.content.length} 个字符。`
     );
     sources.push(`继续来源 ${source!.title} · ${source!.id}`);
   }
@@ -141,7 +133,7 @@ export function buildLabContext(
     system,
     user,
     sources,
-    baseVersionId: input.baseVersionId,
+    baseVersionId: base?.id ?? null,
     estimatedInput: sizing.tokens,
     availableInput: sizing.availableInput,
     outputLimit: profile.outputLimit,

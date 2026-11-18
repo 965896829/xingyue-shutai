@@ -152,7 +152,7 @@ export class LabStore {
               ? source!.id
               : input.action === 'prose'
                 ? request.baseProseVersionId
-                : input.baseVersionId,
+                : request.context.baseVersionId,
           requestId: request.id,
           createdAt: request.endedAt!,
           source: 'model',

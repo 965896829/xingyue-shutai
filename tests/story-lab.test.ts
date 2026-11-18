@@ -582,3 +582,33 @@ test('Markdown navigation keeps raw text, ignores fenced headings, and commands 
   assert.throws(() => parseInput('lab.generate', { ...input(crypto.randomUUID()), maxRequests: 2 }));
   assert.throws(() => parseInput('lab.export', { sessionId: crypto.randomUUID(), path: 'C:/secret' }));
 });
+
+test('讨论与纠偏引用本次实验的候选，并保留本轮要求；试写按实际层级取材', async () => {
+  const original = [
+    '# 河上书', '## 一句话核心设定', '### 桥上三条禁令', '河中呼名不可回应。',
+    '## 世界核心与隐藏真相', '### 世界核心', '山河以神职授箓。', '### 隐藏真相', '河底最终秘密。',
+    '## 成长体系', '### 渡箓的代价', '受箓者必须救人。', '## 开篇事件', '桥下有人求救。',
+    '## 结局方向', '### 主角的真实身份', '终章才揭示的身份。'
+  ].join('\n');
+  const s = setup(async () => fakeResult(original));
+  try {
+    const first = await generate(s.lab, input(s.session.id));
+    const request = (action: LabGenerate['action'], instruction: string, baseVersionId: string | null = first.versionId) =>
+      input(s.session.id, { action, instruction, baseVersionId });
+    const discuss = s.lab.preview(request('discuss', '刚才的方案为什么偏题？', null));
+    assert.equal(discuss.baseVersionId, first.versionId);
+    assert.ok(discuss.user.includes(original));
+    assert.equal(s.lab.store.session(s.session.id).currentVersionId, null);
+    const correction = '把两难写进破局，不用祭祀查案。';
+    const corrected = s.lab.preview(request('blueprint', correction));
+    assert.ok(corrected.user.includes(correction) && corrected.user.includes(original));
+    const prose = request('prose', '试写第一章');
+    const context = s.lab.preview(prose);
+    for (const text of ['河中呼名不可回应。', '山河以神职授箓。', '受箓者必须救人。', '桥下有人求救。'])
+      assert.equal(context.user.split(text).length, 2);
+    assert.doesNotMatch(context.user, /河底最终秘密|终章才揭示的身份/);
+    const onlyRules = s.lab.preview({ ...prose, sectionIndexes: [2] });
+    assert.match(onlyRules.user, /河中呼名不可回应/);
+    assert.doesNotMatch(onlyRules.user, /受箓者必须救人/);
+  } finally { await s.lab.close(); }
+});

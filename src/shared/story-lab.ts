@@ -220,6 +220,44 @@ export interface LabHeading {
   end: number;
   level: number;
 }
+
+export function labProseAction(action: LabGenerate['action'], base?: LabVersion, source?: LabVersion) {
+  return action === 'prose' || (action === 'revise' && base?.kind === 'prose') ||
+    (action === 'continue' && source?.kind === 'prose');
+}
+
+// Each checkbox corresponds to the text directly after that heading. Child
+// headings inherit their parent's relevance, but a spoiler excludes its subtree.
+export function labProseSections(headings: LabHeading[]): number[] {
+  const stack: { level: number; relevant: boolean; spoiler: boolean }[] = [];
+  const selected: number[] = [];
+  for (const [index, heading] of headings.entries()) {
+    while (stack.length && stack[stack.length - 1].level >= heading.level) stack.pop();
+    const parent = stack.at(-1);
+    const topic = /核心设定|核心创意|核心机制|题材|世界核心|世界观|世界设定|规则|主角|独特优势|能力|成长体系|力量体系|长期故事机制|核心人物|主要人物|人物关系|群像|开篇|首章|人物表现|文风|作品声音/.test(heading.title);
+    const ending = /结局|远期|终局|卷末|幕后真相|最终真相|隐藏真相|剧透|全书路线|长篇路线|第[一二三四五六七八九十\d]+卷/.test(heading.title);
+    // The standard outline combines the public world and its secret under one heading.
+    const mixedWorld = /世界核心与隐藏真相/.test(heading.title);
+    const spoiler = !!parent?.spoiler || (ending && !mixedWorld);
+    const relevant = !!parent?.relevant || topic;
+    if (relevant && !spoiler && !mixedWorld) selected.push(index);
+    stack.push({ level: heading.level, relevant, spoiler });
+  }
+  return selected;
+}
+
+export function labReferenceVersion(detail: LabDetail, action: LabGenerate['action'], viewId: string) {
+  const versions = detail.versions;
+  const viewed = versions.find(v => v.id === viewId);
+  const adopted = versions.find(v => v.id === detail.session.currentVersionId);
+  if (action === 'revise') return viewed ?? versions.at(-1);
+  if (action === 'discuss')
+    return (viewed && viewed.kind !== 'discussion' ? viewed : undefined) ??
+      versions.findLast(v => v.kind !== 'discussion');
+  if (action === 'blueprint' || action === 'expand')
+    return (viewed?.kind === 'blueprint' ? viewed : undefined) ?? adopted ?? versions.findLast(v => v.kind === 'blueprint');
+  return adopted;
+}
 /** Navigation is optional metadata. Offsets always refer to the original, unmodified Markdown. */
 export function labHeadings(content: string): LabHeading[] {
   const headings: LabHeading[] = [];
@@ -241,6 +279,10 @@ export function labHeadings(content: string): LabHeading[] {
     headings[i].end =
       headings.slice(i + 1).find((h) => h.level <= headings[i].level)?.start ?? content.length;
   return headings;
+}
+export function labMaterialHeadings(content: string): LabHeading[] {
+  const headings = labHeadings(content);
+  return headings.length || !content ? headings : [{ title: '完整原文', level: 1, start: 0, end: content.length }];
 }
 export function labStale(session: LabSession, version: LabVersion) {
   const current = version.kind === 'prose' ? session.currentProseId : session.currentVersionId;

@@ -5,6 +5,10 @@ import {
   labGenerateSchema,
   labRequirementsSchema,
   labHeadings,
+  labMaterialHeadings,
+  labProseAction,
+  labProseSections,
+  labReferenceVersion,
   labSections,
   type LabContext,
   type LabDetail,
@@ -103,13 +107,15 @@ export function StoryLab({
   const models = profiles.filter((p) => p.enabled && p.protocol !== 'images');
   const model = models.find((p) => p.id === (detail?.session.profileId ?? profileId));
   const version = detail?.versions.find((v) => v.id === viewId) ?? detail?.versions.at(-1);
-  const plan = detail?.versions.find((v) => v.id === detail.session.currentVersionId);
   const running = detail?.requests.find((r) => r.status === 'running');
   const unknown = detail?.requests.some(
     (r) => r.status === 'unknown' || (r.status === 'cancelled' && r.usage.cost === null)
   );
-  const contextVersion = action === 'revise' ? version : plan;
-  const headings = labHeadings(contextVersion?.content ?? '');
+  const contextVersion = detail && (action !== 'blueprint' || instruction.trim()) ? labReferenceVersion(detail, action, viewId) : undefined;
+  const headings = action === 'continue' && version?.id === contextVersion?.id ? [] : labMaterialHeadings(contextVersion?.content ?? '');
+  const defaultIndexes = contextVersion?.kind === 'blueprint' && labProseAction(action, contextVersion, version)
+    ? labProseSections(headings) : headings.map((_, i) => i);
+  const checkedIndexes = sectionIndexes ?? defaultIndexes;
   const latestUserIndex =
     detail?.messages.reduce((last, message, index) => (message.role === 'user' ? index : last), 0) ?? 0;
   function openDocument(id?: string) {
@@ -216,6 +222,7 @@ export function StoryLab({
       return;
     }
     setDetail(undefined);
+    setAction('discuss');
     setViewId('');
     setSelection(undefined);
     setPreview(undefined);
@@ -270,23 +277,13 @@ export function StoryLab({
   );
   useEffect(() => {
     setPreview(undefined);
-  }, [instruction, action, scope, selection, sectionIndexes, recentIds, concealed, detail?.session.revision]);
+  }, [instruction, action, scope, selection, sectionIndexes, recentIds, concealed, detail?.session.revision, contextVersion?.id, version?.id]);
   useEffect(() => {
     setSelection(undefined);
-    setSectionIndexes(undefined);
   }, [version?.id]);
   useEffect(() => {
-    if (!viewId && detail?.session.id === selectedId && detail.versions.length)
-      setViewId(detail.versions.at(-1)!.id);
-  }, [viewId, detail?.versions.length, selectedId]);
-  useEffect(() => {
-    if (action !== 'prose' && !(action === 'continue' && version?.kind === 'prose')) return;
-    setSectionIndexes(
-      headings.flatMap((h, i) =>
-        /核心设定|主角|独特优势|核心人物|群像|开篇|人物表现|文风|作品声音/.test(h.title) ? [i] : []
-      )
-    );
-  }, [action, plan?.id, version?.id]);
+    setSectionIndexes(undefined);
+  }, [contextVersion?.id, action]);
   function setDraft(text: string) {
     setInstruction(text);
     try {
@@ -319,18 +316,21 @@ export function StoryLab({
     await replaceDetail(created);
     return created;
   }
-  function inputFor(state: LabDetail, requestedAction = action): LabGenerate {
+  function inputFor(state: LabDetail, first = false): LabGenerate {
+    const requestedAction = first ? 'blueprint' : action;
+    const reference = first || (requestedAction === 'blueprint' && !instruction.trim()) ? undefined :
+      labReferenceVersion(state, requestedAction, viewId);
     return labGenerateSchema.parse({
       sessionId: state.session.id,
       requestId: crypto.randomUUID(),
       action: requestedAction,
-      instruction: requestedAction === 'blueprint' ? '' : instruction,
-      baseVersionId: requestedAction === 'revise' ? (version?.id ?? null) : state.session.currentVersionId,
+      instruction: first ? '' : instruction,
+      baseVersionId: reference?.id ?? null,
       sourceVersionId: requestedAction === 'continue' ? version?.id : undefined,
       selection: requestedAction === 'revise' ? selection : undefined,
-      sectionIndexes,
-      recentMessageIds: recentIds,
-      concealed,
+      sectionIndexes: first ? undefined : sectionIndexes,
+      recentMessageIds: first ? undefined : recentIds,
+      concealed: first ? '' : concealed,
       blueprintScope: scope,
       acknowledgeUnknown,
       maxRequests: 1
@@ -338,7 +338,7 @@ export function StoryLab({
   }
   async function generate(first = false) {
     const state = detail ?? (await create());
-    const input = inputFor(state, first ? 'blueprint' : action);
+    const input = inputFor(state, first);
     setPreview(await invoke('lab.preview', input));
     await invoke('lab.generate', input);
     setAcknowledgeUnknown(false);
@@ -696,7 +696,7 @@ export function StoryLab({
                               <summary>本次使用了哪些内容</summary>
                               <p>
                                 作者原始要求、明确保留点
-                                {plan ? `、当前选定方案「${plan.title}」` : '；尚未选定方案'}。
+                                {contextVersion ? `、${contextVersion.id === detail.session.currentVersionId ? '已采用方案' : '本轮参考候选'}「${contextVersion.title}」` : ''}。
                               </p>
                               {!!headings.length && (
                                 <fieldset>
@@ -705,9 +705,9 @@ export function StoryLab({
                                     <label className="lab-check" key={h.start}>
                                       <input
                                         type="checkbox"
-                                        checked={sectionIndexes === undefined || sectionIndexes.includes(i)}
+                                        checked={checkedIndexes.includes(i)}
                                         onChange={(e) => {
-                                          const indexes = sectionIndexes ?? headings.map((_, index) => index);
+                                          const indexes = checkedIndexes;
                                           setSectionIndexes(
                                             e.target.checked
                                               ? [...indexes, i]
@@ -963,7 +963,7 @@ export function StoryLab({
                                       <button
                                         onClick={() => {
                                           setAction('expand');
-                                          setDraft(`补充或展开「${title}」，沿用当前选定方案。`);
+                                          setDraft(`补充或展开这份构想的「${title}」。`);
                                           focusComposer();
                                         }}
                                       >
