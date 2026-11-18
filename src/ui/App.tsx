@@ -157,6 +157,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     eventCursor = useRef<EventCursor>({ seq: 0, waiting: false });
   const [workView, setWorkView] = useState<'chat' | 'tasks' | 'tags' | 'objects'>('chat');
   const deskLayout = useDeskLayout();
+  const [taskDetailsOpen, setTaskDetailsOpen] = useState(false);
   const deskEditor = useRef<WritingDeskHandle>(null);
   const [deskFile, setDeskFile] = useState(''), [deskCount, setDeskCount] = useState(0);
   const [queuedReply, setQueuedReply] = useState<{ id: string; target: ManuscriptEdit }>();
@@ -366,6 +367,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     dirty = doc && text !== doc.content;
   const taskBusy = busy || !!running || !!snapshot.chatBusy;
   const writingLayout = !management && !!p && page === 'work' && (workView === 'chat' || workView === 'tasks');
+  const showTaskDetails = !writingLayout || taskDetailsOpen;
   const manuscriptPath = deskFile || proseFile(workView === 'tasks' && run?.pipeline && !run.accepted ? run.chapter : p?.chapter ?? 1);
   const matchesPage = (item: Run) => !item.accepted && !['stale', 'discarded'].includes(item.status) &&
     (item.basisRevision ?? item.baseRevision) === p?.revision &&
@@ -401,6 +403,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     }
   }, [queuedReply, p?.id, manuscriptPath, editorOpen]);
   const projectKey = p ? `${p.id}:${encodeURIComponent(p.root.replaceAll('\\', '/').toLowerCase())}` : undefined;
+  useEffect(() => setTaskDetailsOpen(false), [projectKey, workView]);
   const activeProjectKey = useRef(projectKey);
   activeProjectKey.current = projectKey;
   function openManuscript(path: string) {
@@ -447,9 +450,15 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       if (href === `#${taskSectionId(run.id, 'model-settings')}`) { setModal('settings'); return; }
     }
     const target = href.startsWith('#') ? href.slice(1) : '';
-    if (target && jumpToChatTarget(chatScroll.current, target)) return;
-    setNotice('这处问题已更新或解决，已定位到当前任务。');
-    jumpToChatTarget(chatScroll.current, run ? taskSectionId(run.id, 'recovery') : 'chat-execution') || jumpToChatTarget(chatScroll.current, 'chat-execution');
+    const jump = () => {
+      if (target && jumpToChatTarget(chatScroll.current, target)) return;
+      setNotice('这处问题已更新或解决，已定位到当前任务。');
+      jumpToChatTarget(chatScroll.current, run ? taskSectionId(run.id, 'recovery') : 'chat-execution') || jumpToChatTarget(chatScroll.current, 'chat-execution');
+    };
+    if (writingLayout && !taskDetailsOpen && !(target && chatScroll.current?.contains(document.getElementById(target)))) {
+      setTaskDetailsOpen(true);
+      requestAnimationFrame(jump);
+    } else jump();
   }
   useLayoutEffect(() => {
     if (writingLayout) return;
@@ -1062,6 +1071,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                 <ChatWorkspace
                   key={p.id}
                   desk={writingLayout ? desk : undefined}
+                  topicTools={writingLayout ? <NarrativePanel snapshot={snapshot} run={run} onSource={setSource} /> : undefined}
                   snapshot={snapshot}
                   profileId={profileId}
                   setProfileId={setProfileId}
@@ -1072,7 +1082,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                 />
               ) : (
                 <section className="conversation">
-                  <div className="workflow-heading">
+                  {writingLayout && <header className="desk-rail-heading">
+                    <h2><Sparkles size={15} aria-hidden="true" />{names[p.stage]}</h2>
+                    <button type="button" aria-label="任务详情" aria-expanded={taskDetailsOpen}
+                      onClick={() => setTaskDetailsOpen(open => !open)}><Layers size={14} />{taskDetailsOpen ? '收起详情' : '任务详情'}</button>
+                  </header>}
+                  {showTaskDetails && <div className="workflow-heading">
                     <div>
                       <h1>
                         {names[p.stage]}
@@ -1102,8 +1117,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                         <Settings size={16} />
                       </button>
                     </div>
-                  </div>
-                  <div id="writing-stages" className="stage-strip" hidden={!flowExpanded}>
+                  </div>}
+                  <div id="writing-stages" className="stage-strip" hidden={!showTaskDetails || !flowExpanded}>
                     {stageIds.map((s, i) => (
                       <div
                         key={s}
@@ -1132,12 +1147,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                       </button>
                     </div>
                   )}
-                  <div className={`chat-layout ${run ? 'with-navigation' : ''}`}>
-                    <ProximitySidebar
+                  <div className={`chat-layout ${run && !writingLayout ? 'with-navigation' : ''}`}>
+                    {!writingLayout && <ProximitySidebar
                       key={run?.id ?? 'empty'}
                       sections={chatSections}
                       scrollRef={chatScroll}
-                    />
+                    />}
                     <div className="chat-scroll" ref={chatScroll}>
                       <div className="chat-content">
                       {(!run || (run.accepted && !pendingStage)) && (
@@ -1145,7 +1160,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                           <div className="assistant-mark">
                             <Sparkles size={20} />
                           </div>
-                          <h2>下一步：{names[p.stage]}</h2>
+                          {!writingLayout && <h2>下一步：{names[p.stage]}</h2>}
                           <button className="primary" disabled={busy || !!running || snapshot.chatBusy || !profileId} onClick={() => void start('stage')}>
                             开始{names[p.stage]}
                           </button>
@@ -1154,7 +1169,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                       )}
                       {run && (
                         <>
-                          <div className="run-selector">
+                          {showTaskDetails && <div className="run-selector">
                             <select
                               aria-label="选择历史任务"
                               onFocus={() => void loadRunHistory()}
@@ -1175,7 +1190,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             >
                               <Terminal size={16} />
                             </button>
-                          </div>
+                          </div>}
                           <div className="user-message" id="chat-request">
                             <small>你的任务</small>
                             <p>{run.request}</p>
@@ -1189,7 +1204,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 <b>{brand.name}</b>
                                 <GenerationStatus variant="elapsed" activity={run.activity} running={run.status === 'running'} label={run.creative && run.status === 'complete' ? '已完成' : status[run.status]} fallbackStart={run.createdAt} />
                               </div>
-                              {run.manifest && (
+                              {showTaskDetails && run.manifest && (
                                 <details>
                                   <summary>参考资料</summary>
                                 <button className="context-card" onClick={() => setManifest(run.manifest)}>
@@ -1212,13 +1227,14 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 binding={{ session: snapshot.projectSessionId, kind: 'runs', id: run.id, text: run.responseText, running: run.status === 'running' }} />
                             )}
                             <GenerationStep activity={run.activity} running={run.status === 'running'} />
+                            {showTaskDetails && <>
                             <WebSearchEvidence state={run.webSearch} running={run.status === 'running'} />
                             <VolumeMarketEvidence research={run.volumeNaming?.research} />
                             <ContextCompactions items={run.contextCompactions} activity={run.activity} running={run.status === 'running'} />
                             {run.documentDrafts?.map(draft => <details key={draft.path} className="saved-document-draft">
                               <summary>已保存草稿 · {draft.path} · {draft.chunks} 段 / {draft.content.length} 字符</summary>
                               <MarkdownContent content={draft.content} label={draft.path.split('/').at(-1)?.replace(/\.md$/, '')} />
-                            </details>)}
+                            </details>)}</>}
                             {run.error && <p className="inline-warning" role="alert" id={taskErrorId(run)}>{requestErrorText(run.error)}{' '}<a href={taskHelpLink(run).href} onClick={event => { event.preventDefault(); navigateTask(event.currentTarget.getAttribute('href')!); }}>{taskHelpLink(run).label}</a></p>}
                             {!run.accepted && run.changes.length > 0 && ['unknown', 'paused'].includes(run.status) && (
                               <details>
@@ -1240,7 +1256,10 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                               </button>
                               </details>
                             )}
-                            {displayedChanges.length > 0 && (
+                            {!showTaskDetails && displayedChanges.length > 0 && (
+                              <button className="desk-inline-action" onClick={() => navigateTask('#chat-candidates')}><FileText size={14} />查看候选文稿</button>
+                            )}
+                            {showTaskDetails && displayedChanges.length > 0 && (
                               <div className="candidate-list" id="chat-candidates">
                                 <div className="section-label">本次生成的文稿 · {displayedChanges.length} 个文件</div>
                                 {displayedChanges.map((c, index) => (!run.pipeline || c.path.startsWith('07_正文章节/')) ? (
@@ -1270,7 +1289,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 ))}
                               </div>
                             )}
-                            {run.facts.length > 0 && (
+                            {showTaskDetails && run.facts.length > 0 && (
                               <details id="chat-facts">
                                 <summary>{run.facts.length} 条候选记忆 · 接受时同步</summary>
                                 {run.facts.map((f) => (
@@ -1280,7 +1299,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 ))}
                               </details>
                             )}
-                            {displayedIssues.length > 0 && (
+                            {displayedIssues.length > 0 && (showTaskDetails || displayedIssues.some(i => i.severity === 'error')) && (
                               <details id="chat-issues" open={displayedIssues.some((i) => i.severity === 'error')}>
                                 <summary>
                                   {displayedIssues.some(i => i.severity === 'error') ? `${displayedIssues.filter(i => i.severity === 'error').length} 项内容待完善` : `${displayedIssues.filter(i => i.severity === 'warning').length} 条内容建议`}
@@ -1302,7 +1321,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 ))}
                               </details>
                             )}
-                            {timeline && (
+                            {showTaskDetails && timeline && (
                               <div className="event-list" id="chat-events">
                                 {snapshot.events
                                   .filter((e) => e.runId === run.id)
@@ -1393,7 +1412,10 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 </div>
                               </div>
                             )}
-                            {!run.accepted && !['running', 'discarded'].includes(run.status) && (
+                            {!showTaskDetails && !run.accepted && ['unknown', 'paused', 'failed', 'stale'].includes(run.status) && (
+                              <button className="desk-inline-action" onClick={() => navigateTask(`#${taskSectionId(run.id, 'recovery')}`)}>处理当前任务 <ChevronRight size={14}/></button>
+                            )}
+                            {showTaskDetails && !run.accepted && !['running', 'discarded'].includes(run.status) && (
                               <details id={taskSectionId(run.id, 'recovery')} open={['unknown', 'paused', 'failed', 'stale'].includes(run.status)}>
                                 <summary>任务恢复与其他操作</summary>
                               <div className="button-row subdued">
@@ -1416,16 +1438,16 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                               </div>
                               </details>
                             )}
-                            <details className="usage" id="chat-usage"><summary>运行记录</summary>
+                            {showTaskDetails && <details className="usage" id="chat-usage"><summary>运行记录</summary>
                               {run.rounds} 轮调用 · {run.toolCount} 次工具 ·{' '}
                               {run.usage.cost === null
                                 ? '费用未知'
                                 : `估算 ${run.usage.currency} ${run.usage.cost.toFixed(4)}`}{' '}
                               · 输入 {run.usage.input ?? '未知'} / 输出 {run.usage.output ?? '未知'}
-                            </details>
+                            </details>}
                           </article>
                           {error && <p className="inline-warning" role="alert">{requestErrorText(error)}</p>}
-                          <TaskDiscussion key={`${p.id}:${run.id}`} conversationId={snapshot.conversations?.find(conversation => conversation.runId === run.id && !conversation.archived)?.id} projectSessionId={snapshot.projectSessionId} run={run} limits={p.config} profileId={profileId} busy={taskBusy} scroll={chatScroll} refresh={refresh} onRun={setSelectedRun} onNavigate={navigateTask} onContext={receiveDiscussionContext} desk={writingLayout ? desk : undefined}/>
+                          <TaskDiscussion key={`${p.id}:${run.id}`} conversationId={snapshot.conversations?.find(conversation => conversation.runId === run.id && !conversation.archived)?.id} projectSessionId={snapshot.projectSessionId} run={run} limits={p.config} profileId={profileId} busy={taskBusy} scroll={chatScroll} refresh={refresh} onRun={setSelectedRun} onNavigate={navigateTask} onContext={receiveDiscussionContext} desk={writingLayout ? desk : undefined} showRelated={showTaskDetails}/>
                         </>
                       )}
                       </div>
@@ -1520,7 +1542,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                   </div>
                 </section>
               )}
-              {workView !== 'objects' && <NarrativePanel snapshot={snapshot} run={run} onSource={setSource} />}
+              {workView !== 'objects' && (!writingLayout || workView === 'tasks' && taskDetailsOpen) && <NarrativePanel snapshot={snapshot} run={run} onSource={setSource} />}
             </div>
             {writingLayout && !deskLayout.collapsed && <DeskDivider width={deskLayout.width} setWidth={deskLayout.setWidth}/>}
             {writingLayout && !editorOpen && <WritingManuscript key={projectKey + ':' + manuscriptPath} ref={deskEditor}

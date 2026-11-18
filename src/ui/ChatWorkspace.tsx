@@ -5,8 +5,8 @@ import { LiveMarkdown } from './LiveMarkdown';
 import { reasoningLabel } from '../shared/reasoning';
 import { mergeRows as merge, readChatUpdates } from '../shared/chat-history';
 import type { CommandInput, CommandOutput } from '../shared/contracts';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Plus, Archive, RotateCcw, Sparkles, FileText } from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Plus, Archive, RotateCcw, Sparkles, FileText, MessagesSquare } from 'lucide-react';
 import type { Command, Snapshot } from '../shared/types';
 import type {
   Conversation,
@@ -42,7 +42,7 @@ export function ChatWorkspace({
   refresh,
   conversationId,
   compact = false,
-  desk
+  desk, topicTools
 }: {
   snapshot: Snapshot;
   profileId: string;
@@ -54,9 +54,24 @@ export function ChatWorkspace({
   conversationId?: string;
   compact?: boolean;
   desk?: WritingComposer;
+  topicTools?: ReactNode;
 }) {
   const dialogs = useDialogs(snapshot.projectSessionId);
   const [topicsOpen, setTopicsOpen] = useState(false);
+  const topicToggle = useRef<HTMLButtonElement>(null);
+  const composerArea = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!topicsOpen) return;
+    function outside(event: PointerEvent) {
+      if (event.target instanceof Element && !event.target.closest('.topic-list, .desk-topic-toggle')) setTopicsOpen(false);
+    }
+    function escape(event: KeyboardEvent) {
+      if (event.key === 'Escape') { setTopicsOpen(false); topicToggle.current?.focus(); }
+    }
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };
+  }, [topicsOpen]);
   const [selected, select] = useState(''),
     [data, setData] = useState<ChatData>(),
     [inputs, setInputs] = useState<Record<string, string>>({}),
@@ -338,6 +353,26 @@ export function ChatWorkspace({
         </div>
       </section>
     ));
+  async function newTopic() {
+    const title = await ask('聊天主题', '新的创作讨论');
+    if (!title) return;
+    const conversation = await call('chat.create', { title });
+    if (conversation) { select(conversation.id); setArchived(false); setTopicsOpen(false); }
+  }
+  function suggest(text: string) {
+    input(text);
+    composerArea.current?.querySelector('textarea')?.focus();
+  }
+  const topicActions = <div className="button-row">
+    <button aria-label="重命名聊天" disabled={!view || busy || !!modelBusy} onClick={async () => {
+      const title = await ask('新的聊天标题', view?.conversation.title);
+      if (title) void call('chat.update', { id: selected, title });
+    }}>重命名</button>
+    <button aria-label={view?.conversation.archived ? '恢复聊天' : '归档聊天'} disabled={!view || busy || !!modelBusy}
+      onClick={() => void call('chat.update', { id: selected, archived: !view?.conversation.archived })}>
+      {view?.conversation.archived ? <RotateCcw size={15} /> : <Archive size={15} />}
+    </button>
+  </div>;
   return (
     <section
       className={`assistant-workspace${compact ? ' object-chat' : ''}`}
@@ -390,22 +425,13 @@ export function ChatWorkspace({
           </form>
         </div>
       )}
-      {!compact && (!desk || topicsOpen) && <aside className="topic-list">
+      {!compact && (!desk || topicsOpen) && <aside className="topic-list" aria-label="对话列表">
         <div className="topic-heading">
           <b>主题聊天</b>
           <button
             className="icon"
             aria-label="新建主题聊天"
-            onClick={async () => {
-              const title = await ask('聊天主题', '新的创作讨论');
-              if (title) {
-                const c = await call('chat.create', { title });
-                if (c) {
-                  select(c.id);
-                  setArchived(false);
-                }
-              }
-            }}
+            onClick={() => void newTopic()}
           >
             <Plus size={16} />
           </button>
@@ -425,6 +451,7 @@ export function ChatWorkspace({
           {archived ? '返回正在使用的聊天' : '查看已归档聊天'}
         </button>
         <div className="topic-footer">
+          {desk && topicActions}
           <button onClick={() => onRun()}>历史任务与阶段执行</button>
           <button
             onClick={async () => {
@@ -435,44 +462,28 @@ export function ChatWorkspace({
             自由草稿
           </button>
           <button onClick={onSettings}>智能体角色与联网</button>
+          {topicTools}
         </div>
       </aside>}
       <div className="assistant-conversation">
-        <header className="assistant-heading">
-          {desk && <button className="desk-topic-toggle" aria-expanded={topicsOpen} onClick={() => setTopicsOpen(v => !v)}>主题</button>}
+        {desk ? <header className="desk-rail-heading">
+          <button ref={topicToggle} type="button" className="desk-topic-toggle" aria-label="对话列表" title="对话列表"
+            aria-expanded={topicsOpen} onClick={() => setTopicsOpen(v => !v)}><MessagesSquare size={15}/><span>{view?.conversation.title ?? '创作讨论'}</span></button>
+          <button type="button" onClick={() => void newTopic()}><Plus size={14}/>新建对话</button>
+        </header> : <header className="assistant-heading">
           <div>
             <h2>{view?.conversation.title ?? '创作讨论'}</h2>
             <small>第 {p.chapter} 章</small>
           </div>
-          <div className="button-row">
-            <button
-              aria-label="重命名聊天"
-              disabled={!view || busy || !!modelBusy}
-              onClick={async () => {
-                const title = await ask('新的聊天标题', view?.conversation.title);
-                if (title) void call('chat.update', { id: selected, title });
-              }}
-            >
-              重命名
-            </button>
-            <button
-              aria-label={view?.conversation.archived ? '恢复聊天' : '归档聊天'}
-              disabled={!view || busy || !!modelBusy}
-              onClick={() =>
-                void call('chat.update', { id: selected, archived: !view?.conversation.archived })
-              }
-            >
-              {view?.conversation.archived ? <RotateCcw size={15} /> : <Archive size={15} />}
-            </button>
-          </div>
-        </header>
+          {topicActions}
+        </header>}
         {error && (
           <p className="inline-warning" role="alert">
             {error}
           </p>
         )}
-        <div className="chat-layout with-navigation">
-          <ProximitySidebar
+        <div className={desk ? 'chat-layout' : 'chat-layout with-navigation'}>
+          {!desk && <ProximitySidebar
             key={selected}
             scrollRef={scroll}
             sections={(view?.messages ?? []).map((m) => ({
@@ -480,13 +491,13 @@ export function ChatWorkspace({
               label: `${m.role === 'user' ? '你的消息' : `${brand.name}回答`}：${m.content.slice(0, 20)}`,
               kind: 'section'
             }))}
-          />
+          />}
           <div className="chat-scroll" ref={scroll}>
             <div className="chat-content">
             {!view?.messages.length && (
               <div className="assistant-welcome">
-                <Sparkles size={28} />
-                <h2>从你的故事聊起</h2>
+                <Sparkles size={desk ? 21 : 28} />
+                {desk ? <p>想写什么，或想怎样改这一章？</p> : <h2>从你的故事聊起</h2>}
               </div>
             )}
             {view?.conversation.summary && (
@@ -619,7 +630,11 @@ export function ChatWorkspace({
         {view?.conversation.archived ? (
           <p className="composer-note">已归档，可恢复后继续讨论。</p>
         ) : (
-          <div className="chat-composer-area">
+          <div className="chat-composer-area" ref={composerArea}>
+            {desk && !currentText && view && !modelBusy && <div className="desk-quick-actions">
+              <button onClick={() => suggest('和我讨论这一章接下来可以怎样发展。')}>讨论本章</button>
+              <button onClick={() => suggest(desk.count ? '润色选中的这段正文，保留原意。' : '帮我写这一章的正文。')}>{desk.count ? '润色选区' : '写本章'}</button>
+            </div>}
             {desk && <SelectionChip desk={desk}/>}
             <ChatComposer
               contextUsage={latestContext(view?.turns ?? [])}

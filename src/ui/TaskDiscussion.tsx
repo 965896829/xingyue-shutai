@@ -16,8 +16,9 @@ import { latestContext, type ContextUsage } from '../shared/context-meter';
 
 type ChatPage = CommandOutput<'chat.page'>;
 
-export function TaskDiscussion({ conversationId, projectSessionId, run, limits, profileId, busy, scroll, refresh, onRun, onNavigate, onContext, desk }: {
+export function TaskDiscussion({ conversationId, projectSessionId, run, limits, profileId, busy, scroll, refresh, onRun, onNavigate, onContext, desk, showRelated = true }: {
   desk?: WritingComposer;
+  showRelated?: boolean;
   onContext?: (runId: string, usage?: ContextUsage) => void;
   conversationId?: string;
   projectSessionId?: string;
@@ -167,6 +168,6 @@ export function TaskDiscussion({ conversationId, projectSessionId, run, limits, 
         </>}
       </article>;
     })}
-    {problems.length > 0 && <details><summary>相关内容与记录</summary><nav aria-label="问题索引" className="button-row">{problems.map(problem => <a key={problem.href} href={problem.href}>{problem.label}</a>)}</nav></details>}
+    {showRelated && problems.length > 0 && <details><summary>相关内容与记录</summary><nav aria-label="问题索引" className="button-row">{problems.map(problem => <a key={problem.href} href={problem.href}>{problem.label}</a>)}</nav></details>}
   </div>;
 }

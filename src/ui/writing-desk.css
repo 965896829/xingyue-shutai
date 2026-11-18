@@ -51,19 +51,19 @@
 .writing-desk > .work-area { grid-column: 3; grid-row: 2; min-height: 0; position: relative; --chat-gutter: 12px; }
 .workspace.writing-desk.desk-chat-collapsed { grid-template-columns: minmax(0, 1fr); }
 .desk-chat-collapsed > .work-area { display: none; }
-.writing-desk .work-area .conversation { min-width: 0; padding-top: 6px; }
+.writing-desk .work-area .conversation { min-width: 0; padding: 0; }
 .writing-desk > .work-tabs { grid-column: 1 / -1; grid-row: 1; padding: 4px 12px; gap: 4px; flex-wrap: nowrap; min-width: 0; overflow-x: auto; }
 .writing-desk .work-tabs > * { flex-shrink: 0; }
 .writing-desk .work-area .workflow-heading, .writing-desk .work-area .chat-content,
 .writing-desk .work-area .assistant-heading { width: 100%; max-width: none; padding-left: 12px; padding-right: 12px; }
-.writing-desk .work-area .workflow-heading { flex-wrap: wrap; gap: 4px; }
-.writing-desk .work-area .composer { width: calc(100% - 16px); margin-left: 8px; margin-right: 8px; }
+.writing-desk .work-area .workflow-heading { flex-wrap: wrap; gap: 4px; margin: 0; padding-block: 8px; }
+.writing-desk .work-area .composer { width: calc(100% - 20px); margin: 4px 10px 10px; }
 .writing-desk .work-area .chat-composer-area { padding: 4px 10px 10px; }
 .writing-desk .work-area .chat-composer-area .chat-composer { width: 100%; margin: 0; }
 .writing-desk .work-area .composer-toolbar { flex-wrap: wrap; }
 .writing-desk .work-area .assistant-workspace { position: relative; }
-.writing-desk .work-area .topic-list { position: absolute; z-index: 5; top: 43px; bottom: 4px; left: 4px; width: min(220px, 90%);
-  border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.writing-desk .work-area .topic-list { position: absolute; z-index: 5; top: 42px; left: 8px; width: min(265px, 90%); max-height: calc(100% - 56px);
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel); box-shadow: 0 8px 24px var(--shadow); }
 .writing-desk .work-area .assistant-heading { flex-wrap: wrap; gap: 4px; }
 .writing-desk .work-area .assistant-heading h2 { font-size: 15px; }
 .desk-selection { margin: 4px 8px; }
@@ -73,6 +73,62 @@
 .desk-candidate strong { font-size: 13px; }
 .desk-candidate-text { min-height: 0; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; line-height: 1.75; }
 .desk-manuscript .inline-warning { margin: 4px 12px; }
+.writing-desk .desk-rail-heading {
+  flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-height: 42px; padding: 5px 12px; border-bottom: 1px solid var(--line);
+}
+.writing-desk .work-area .conversation > .desk-rail-heading { width: 100%; max-width: none; margin: 0; }
+.desk-rail-heading h2, .desk-rail-heading > button, .desk-inline-action {
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.writing-desk .desk-rail-heading h2, .writing-desk .desk-rail-heading .desk-topic-toggle {
+  min-width: 0; margin: 0; color: var(--ink); font-size: 13px; font-weight: 600;
+}
+.desk-rail-heading .desk-topic-toggle span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desk-rail-heading svg { flex-shrink: 0; color: var(--muted); }
+.writing-desk .desk-rail-heading > button {
+  min-height: 30px; border: 0; background: transparent; padding: 4px 6px;
+  font-size: 12px; color: var(--muted); white-space: nowrap;
+}
+.writing-desk .desk-rail-heading > button:hover, .writing-desk .desk-rail-heading > button[aria-expanded="true"] {
+  background: var(--raised); color: var(--ink);
+}
+.writing-desk .work-area .chat-layout { --chat-gutter: 0px; }
+.writing-desk .work-area .chat-layout .chat-scroll { padding: 12px 0; scrollbar-gutter: auto; }
+.writing-desk .work-area .chat-content { padding-inline: 14px; }
+.writing-desk .work-area .chat-content:has(> .assistant-welcome:only-child),
+.writing-desk .work-area .chat-content:has(> .start-card:only-child) { height: 100%; display: grid; place-items: center; }
+.writing-desk .work-area :is(.assistant-welcome, .start-card) { margin: 0; padding: 16px; text-align: center; color: var(--muted); }
+.writing-desk .work-area .assistant-welcome > p { margin: 9px 0 0; font-size: 13px; }
+.writing-desk .work-area .start-card .assistant-mark { margin: 0 auto 8px; }
+.writing-desk .work-area :is(.user-message, .conversation-message.user) {
+  width: fit-content; max-width: 88%; margin: 6px 0 16px auto; padding: 8px 12px; border-radius: 12px 12px 3px 12px;
+}
+.writing-desk .work-area :is(.assistant-message, .conversation-message.assistant) {
+  margin: 0 0 16px; padding: 0; border: 0;
+}
+.writing-desk .work-area .assistant-label { gap: 5px; margin-bottom: 5px; }
+.writing-desk .work-area .assistant-mark { width: 18px; height: 20px; }
+.writing-desk .work-area .composer, .writing-desk .work-area .chat-composer-area .chat-composer {
+  padding: 6px 8px; background: var(--composer-bg); border: 1px solid var(--line); border-radius: 12px; box-shadow: none;
+}
+.writing-desk .work-area .composer:focus-within { border-color: var(--accent-line); }
+.writing-desk .work-area .composer textarea {
+  height: 42px; min-height: 42px; padding: 4px 5px; font-size: 13px; line-height: 1.55; overflow-y: auto;
+}
+.writing-desk .work-area :is(.composer-toolbar, .chat-composer-toolbar) { gap: 4px; margin: 0; padding: 0; }
+.writing-desk .work-area .composer .composer-extra-tools { margin: 0; padding: 0; border: 0; }
+.writing-desk .work-area .composer .composer-extra-tools > summary {
+  display: grid; place-items: center; padding: 0; margin: 0; width: 32px; height: 32px; line-height: 1;
+}
+.writing-desk .work-area .approval-box { margin: 10px 0 6px; padding: 10px; }
+.writing-desk .work-area .composer-toolbar::before, .writing-desk .work-area .chat-composer-toolbar::before { display: none; }
+.desk-quick-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+.writing-desk .desk-quick-actions > button, .writing-desk .desk-inline-action {
+  min-height: 26px; padding: 3px 8px; color: var(--soft); border: 1px solid var(--line);
+  background: transparent; border-radius: 6px; font-size: 12px;
+}
+.writing-desk .desk-quick-actions > button:hover, .writing-desk .desk-inline-action:hover { background: var(--raised); }
 @media (max-width: 900px) {
   .workspace.writing-desk { grid-template-columns: minmax(0, 1fr) 6px min(var(--desk-chat-width), 43%); }
   .desk-doc-tools { padding: 4px; }
