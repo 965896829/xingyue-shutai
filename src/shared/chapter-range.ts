@@ -1,6 +1,7 @@
-function numberOf(text: string) {
+export function parseChapterNumber(text: string) {
   if (/^\d+$/.test(text)) return Number(text);
   const digits: Record<string, number> = { 零: 0, 〇: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  if (/^[零〇一二两三四五六七八九]+$/.test(text)) return Number([...text].map(char => digits[char]).join(''));
   const units: Record<string, number> = { 十: 10, 百: 100, 千: 1000, 万: 10000 };
   let total = 0, value = 0;
   for (const char of text) {
@@ -16,7 +17,7 @@ export function chapterSpan(text: string, bare = false): [number, number] | unde
   const match = text.match(new RegExp(`第?\\s*(${numeral})\\s*章?\\s*[—–\\-~～至到]\\s*第?\\s*(${numeral})\\s*章`))
     ?? text.match(new RegExp(`第\\s*(${numeral})\\s*章`))
     ?? (bare ? text.trim().match(new RegExp(`^第?\\s*(${numeral})(?:\\s*章?\\s*[—–\\-~～至到]\\s*第?\\s*(${numeral}))?\\s*章?$`)) : null);
-  return match ? [numberOf(match[1]), numberOf(match[2] ?? match[1])] : undefined;
+  return match ? [parseChapterNumber(match[1]), parseChapterNumber(match[2] ?? match[1])] : undefined;
 }
 
 export function hasOutlineContent(text: string) {

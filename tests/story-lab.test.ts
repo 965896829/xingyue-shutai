@@ -628,7 +628,7 @@ test('补写、局部中断、重启恢复和下一章使用相应的正文及�
   const make = (data: Partial<LabGenerate>) => generate(lab, input(s.session.id, data));
   try {
     const whole = await make({}); select(whole.versionId!);
-    const expansion = await make({ action: 'expand', baseVersionId: whole.versionId, instruction: '补充第一卷' });
+    const expansion = await make({ action: 'expand', baseVersionId: whole.versionId, instruction: '补充第1卷的主角路线' });
     select(expansion.versionId!);
     const merged = lab.store.version(s.session.id, expansion.versionId!).content;
     assert.ok(merged.startsWith(plan.slice(0, plan.indexOf('## 第二卷'))) && merged.endsWith('## 第二卷\n后卷原句。\n') && merged.includes('新路线：先找船。'));
@@ -652,6 +652,36 @@ test('补写、局部中断、重启恢复和下一章使用相应的正文及�
       prose: { before: prose, start, end, partial: partial.versionId, adopted: resumed.versionId, content: updated }, requests: wires }, null, 2));
     assert.ok(!solo.user.includes(updated));
   } finally { await lab.close(); }
+});
+
+test('按卷章编号定位补充，重号需要明确位置，新增部分有自己的标题', async () => {
+  const plan = ['# 渡口', '## 第一卷 北岸', '### 第一章 潮生', '桥下起雾。', '## 第 ２ 卷 南岸',
+    '### 第001章 夜航', '港口已空。', '## 尾声', '众人归家。', ''].join('\r\n');
+  const replies = [plan, '斗篷打湿。', '## 第三章 灯起\r\n船灯亮了。', '另起航路。'];
+  let calls = 0;
+  const s = setup(async () => fakeResult(replies[calls++]));
+  const adopt = (versionId: string) => s.lab.select({ sessionId: s.session.id, versionId,
+    expectedRevision: s.lab.store.session(s.session.id).revision, reviewedStale: false });
+  const supplement = (instruction: string) => input(s.session.id, { action: 'expand', instruction,
+    baseVersionId: s.lab.store.session(s.session.id).currentVersionId });
+  const apply = async (instruction: string) => {
+    const result = await generate(s.lab, supplement(instruction));
+    assert.equal(result.status, 'complete');
+    adopt(result.versionId!);
+    return s.lab.store.version(s.session.id, result.versionId!).content;
+  };
+  try {
+    adopt((await generate(s.lab, input(s.session.id))).versionId!);
+    assert.throws(() => s.lab.start(supplement('补充第1章')), /完整标题/);
+    assert.equal(calls, 1);
+    const nested = await apply('补充第二卷第一章');
+    assert.equal(nested, plan.replace('港口已空。', '港口已空。\r\n\r\n斗篷打湿。\r\n'));
+    const newChapter = await apply('补充第1卷的第003章');
+    assert.equal(newChapter, nested.replace('桥下起雾。', '桥下起雾。\r\n\r\n### 第三章 灯起\r\n船灯亮了。\r\n'));
+    const newVolume = await apply('补充第三卷');
+    assert.equal(newVolume, newChapter + '\r\n# 第3卷\r\n\r\n另起航路。');
+    assert.equal(calls, replies.length);
+  } finally { await s.lab.close(); }
 });
 
 test('表格中截断逐字接续；核心构想接回原模板，完成后不重复展开尾段', async () => {

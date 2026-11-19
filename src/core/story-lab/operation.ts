@@ -1,6 +1,38 @@
 import { labHeadings, type LabGenerate, type LabOperation, type LabVersion } from '../../shared/story-lab';
-import { chapterSpan } from '../../shared/chapter-range';
+import { chapterSpan, numeral, parseChapterNumber } from '../../shared/chapter-range';
 import type { LabStore } from './store';
+
+const sectionNumber = new RegExp(`第\\s*(${numeral})\\s*([卷章])`, 'g');
+function normalizeSectionNumbers(text: string) {
+  return text.normalize('NFKC').replace(sectionNumber, (_, number: string, unit: string) => `第${parseChapterNumber(number)}${unit}`);
+}
+
+function expansionTarget(content: string, command: string): { end: number; newHeading?: LabOperation['newHeading'] } {
+  const headings = labHeadings(content).map(h => ({ ...h, name: normalizeSectionNumbers(h.title) }));
+  const numbers = [...new Set(command.match(/第\d+[卷章]/g))];
+  const volume = numbers.find(n => n.endsWith('卷'));
+  const chapter = numbers.find(n => n.endsWith('章'));
+  const target = chapter ?? volume;
+  const ambiguous = () => new Error('请写明要补充的卷章完整标题，或在方案里选中要修改的原文。');
+  if (numbers.some(number => number !== volume && number !== chapter)) throw ambiguous();
+
+  const volumes = volume ? headings.filter(h => h.name.includes(volume)) : [];
+  const candidates = target ? headings.filter(h => h.name.includes(target) && (!volume || !chapter ||
+    volumes.some(v => v.start <= h.start && h.start < v.end))) : headings;
+  const named = candidates.filter(h => command.includes(h.name));
+  const matches = named.length ? named : target ? candidates : [];
+  if (matches.length === 1) return { end: matches[0].end };
+  if (matches.length > 1) throw ambiguous();
+
+  // A missing numbered section needs its own heading so it cannot become the last volume's body.
+  const quoted = command.match(/「([^」\r\n]+)」/)?.[1];
+  if (chapter && volume && volumes.length > 1) throw ambiguous();
+  const parent = chapter && volume ? volumes[0] : undefined;
+  const nested = parent && parent.level < 6;
+  const numberedTitle = nested ? chapter : [volume, chapter].filter(Boolean).join(' ');
+  const title = quoted && (!target || quoted.includes(target)) ? quoted : numberedTitle;
+  return title ? { end: nested ? parent.end : content.length, newHeading: { title, level: nested ? parent.level + 1 : 1 } } : { end: content.length };
+}
 
 export function describeOperation(store: LabStore, input: LabGenerate, adoptedProse: string | null): LabOperation {
   const read = (id?: string | null) => id ? store.version(input.sessionId, id) : undefined;
@@ -19,11 +51,9 @@ export function describeOperation(store: LabStore, input: LabGenerate, adoptedPr
   const previous = input.action === 'prose' && ['next', 'rewrite'].includes(proseMode) ? read(input.previousProseId ?? adoptedProse) : undefined;
   if (input.action === 'prose' && ['next', 'rewrite'].includes(proseMode) && (!previous || previous.kind !== 'prose' || previous.partial))
     throw new Error('请先选择完整的前章正文版本，或选择独立试写。');
-  const headings = input.action === 'expand' && base ? labHeadings(base.content) : [];
-  const name = input.instruction.match(/第[零〇一二两三四五六七八九十百千\d]+[卷章]/)?.[0];
-  const heading = headings.find(h => input.instruction.includes(h.title)) ?? (name && headings.find(h => h.title.includes(name)));
-  const insertion = heading ? heading.end : base?.content.length ?? 0;
-  const selected = input.selection ?? (input.action === 'expand' && base ? { start: insertion, end: insertion, text: '' } : undefined);
+  const expansionCommand = input.action === 'expand' ? normalizeSectionNumbers(input.instruction) : '';
+  const expansion = input.action === 'expand' && base && !input.selection ? expansionTarget(base.content, expansionCommand) : undefined;
+  const selected = input.selection ?? (expansion && { start: expansion.end, end: expansion.end, text: '' });
   if (selected && (!base || selected.end < selected.start || selected.end > base.content.length || base.content.slice(selected.start, selected.end) !== selected.text))
     throw new Error('选区与基准版本不一致，请重新选择原文');
   if (input.action === 'expand' && (!base || base.partial || base.kind !== 'blueprint')) throw new Error('请先选择完整方案作为补充位置');
@@ -31,10 +61,11 @@ export function describeOperation(store: LabStore, input: LabGenerate, adoptedPr
     proseMode === 'rewrite' ? previous?.operation?.chapter ?? 1 : chapterSpan(input.instruction)?.[0] ?? 1);
   return { rootRequestId: input.requestId, action: input.action, instruction: input.instruction, scope: input.blueprintScope,
     category: input.action === 'prose' ? 'prose' : input.action === 'discuss' ? 'discussion' : input.action === 'revise' ? 'replace' :
-      input.action === 'expand' ? (name?.endsWith('卷') ? 'volume' : name?.endsWith('章') ? 'chapter' : 'insert') : 'full',
+      input.action === 'expand' ? (/第\d+章/.test(expansionCommand) ? 'chapter' : /第\d+卷/.test(expansionCommand) ? 'volume' : 'insert') : 'full',
     baseId: base?.id ?? null, planId: base?.kind === 'prose' ? base.operation?.planId ?? null : base?.id ?? null,
     proseParentId: base?.kind === 'prose' ? base.id : previous?.id ?? adoptedProse,
-    selected, chapter: input.action === 'revise' ? base?.operation?.chapter : chapter, proseMode: input.action === 'prose' ? proseMode : undefined };
+    selected, ...(expansion?.newHeading && { newHeading: expansion.newHeading }),
+    chapter: input.action === 'revise' ? base?.operation?.chapter : chapter, proseMode: input.action === 'prose' ? proseMode : undefined };
 }
 
 export function mergeLabFragment(operation: LabOperation, base: LabVersion | undefined, raw: string) {
@@ -44,11 +75,20 @@ export function mergeLabFragment(operation: LabOperation, base: LabVersion | und
   if (operation.action !== 'expand' || start !== end) return base.content.slice(0, start) + raw + base.content.slice(end);
   const before = base.content.slice(0, start), after = base.content.slice(end);
   const newline = base.content.includes('\r\n') ? '\r\n' : '\n';
+  let fragment = raw;
+  if (operation.newHeading) {
+    const { title, level } = operation.newHeading;
+    const first = labHeadings(raw)[0];
+    const marker = '#'.repeat(level);
+    fragment = first && !raw.slice(0, first.start).trim() && normalizeSectionNumbers(first.title).includes(normalizeSectionNumbers(title))
+      ? raw.slice(0, first.start) + raw.slice(first.start).replace(/^#{1,6}/, marker)
+      : `${marker} ${title}${newline}${newline}${raw}`;
+  }
   const separator = (left: string, right: string) => {
     if (!left || !right) return '';
     const breaks = (left.match(/(?:\r?\n)+$/)?.[0] ?? '') + (right.match(/^(?:\r?\n)+/)?.[0] ?? '');
     const count = breaks.match(/\n/g)?.length ?? 0;
     return newline.repeat(Math.max(0, 2 - count));
   };
-  return before + separator(before, raw) + raw + separator(raw, after) + after;
+  return before + separator(before, fragment) + fragment + separator(fragment, after) + after;
 }

@@ -9,7 +9,8 @@ const labOperationSchema = z.object({
   rootRequestId: id, action: z.enum(['blueprint', 'discuss', 'revise', 'expand', 'prose']),
   category: z.enum(['full', 'volume', 'chapter', 'insert', 'replace', 'prose', 'discussion']), instruction: z.string(),
   scope: z.enum(['full', 'core']), segment: z.literal('tail').optional(), baseId: id.nullable(), planId: id.nullable(), proseParentId: id.nullable(),
-  selected: labRangeSchema.optional(), chapter: z.number().int().positive().optional(),
+  selected: labRangeSchema.optional(), newHeading: z.object({ title: z.string(), level: z.number().int().min(1).max(6) }).optional(),
+  chapter: z.number().int().positive().optional(),
   proseMode: z.enum(['first', 'rewrite', 'next', 'independent']).optional()
 });
 export const labActionSchema = z.enum(['blueprint', 'discuss', 'revise', 'expand', 'prose', 'continue']);
