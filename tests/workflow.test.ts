@@ -213,6 +213,14 @@ for (const restartWithSettings of [false, true]) test(`S01—S11 全流程、正
       stages++;
       if (p.stage === 'S10') {
         assert.equal(service.store!.db.project().chapters[p.chapter], 'complete');
+        if (restartWithSettings && p.chapter === 1) {
+          const manuscript = service.store!.readAccepted(prosePath(1));
+          const source = await service.invoke('project.backup', { directory: fs.mkdtempSync(path.join(os.tmpdir(), 'xingyue-chapter-backup-')) });
+          const restored = await service.invoke('project.restoreBackup', { source, parent: fs.mkdtempSync(path.join(os.tmpdir(), 'xingyue-chapter-restore-')) });
+          await service.invoke('project.open', { root: restored });
+          assert.deepEqual(service.store!.readAccepted(prosePath(1)), manuscript);
+          assert.equal(service.store!.db.project().chapters[1], 'complete');
+        }
         if (!service.store!.db.project().finished) assert.notEqual(service.store!.db.project().stage, 'S11');
       }
       if (stages > 20) throw new Error('流程没有结束');

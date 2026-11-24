@@ -9,10 +9,12 @@ const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
-const child = spawn(require('electron'), [path.join(root, 'scripts/export-brand.cjs')], {
+const args = process.argv.slice(2);
+if (args.length && (args.length !== 1 || args[0] !== '--with-ico'))
+  throw new Error('用法：node scripts/create-icon.mjs [--with-ico]');
+const child = spawn(require('electron'), [path.join(root, 'scripts/export-brand.cjs'), ...args], {
   cwd: root,
   env,
-  windowsHide: true,
   stdio: 'inherit'
 });
 child.on('error', (error) => {

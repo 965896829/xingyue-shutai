@@ -1,7 +1,7 @@
 import { isLedger, ledgerMaterial } from '../ledger-material';
 import type { ContextManifest, Run, ProjectState } from '../../shared/types';
 import { stageOutputs } from '../domain';
-import { FileStore, fileHash, safePath } from '../storage';
+import { FileStore } from '../storage';
 
 /** Reading a known output scaffold is a local operation, not a model decision.
  * Keep the original hash in the manifest so every request still detects edits.
@@ -15,7 +15,7 @@ export function preloadOutputTargets(store: FileStore, run: Run, project: Projec
     const memory = isLedger(file) && (run.pipeline?.phase === 'memory' || run.stage === 'S11');
     if (prior?.mode === 'full' && !memory) continue;
     const doc = store.db.document(file);
-    const disk = fileHash(safePath(store.root, file));
+    const disk = store.workingHash(file);
     if (!doc && disk === null) continue;
     if (!doc?.hash || doc.hash !== disk || store.inspect(file)?.status !== 'accepted')
       throw new Error(`目标文件有未确认的外部变化：${file}`);

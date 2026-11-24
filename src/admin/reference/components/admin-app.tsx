@@ -1,10 +1,10 @@
 import { useManagement } from '../../ManagementContext';
 import { Availability, PageBoundary } from '../../Availability';
-import { ClientModule, localViews } from '../../ClientModule';
+import { localViews } from '../../client-views';
 import { LocalPage, localPageKeys } from '../../LocalPages';
 "use client";
 import { CloudPlatformPage } from "./cloud-platform-form";
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import Link from "@reference/router-link";
 import { usePathname, useRouter } from "@reference/router";
 import {
@@ -87,6 +87,8 @@ const icons: Record<string, typeof Sparkles> = {
   finance: Wallet,
   system: Settings2,
 };
+const ClientModule = lazy(() => import('../../ClientModule').then(module => ({ default: module.ClientModule })));
+
 export function AdminApp() {
   const [client] = useState(
     () =>
@@ -252,6 +254,9 @@ function Workspace() {
           pathname,
         )),
   );
+  const localKey = !original && page && localViews[page.key] ? page.key : '';
+  const [lastLocalKey, setLastLocalKey] = useState('');
+  useEffect(() => { if (localKey) setLastLocalKey(localKey); }, [localKey]);
   useEffect(() => {
     if (page)
       setExpanded((old) =>
@@ -496,7 +501,11 @@ function Workspace() {
               }
             />
           )}
-          <ClientModule pageKey={original ? '' : page?.key ?? ''} snapshot={management.snapshot} />
+          {(localKey || lastLocalKey) && <div hidden={!localKey}>
+            <Suspense fallback={<p role="status">正在打开工作台…</p>}>
+              <ClientModule pageKey={localKey || lastLocalKey} snapshot={management.snapshot} />
+            </Suspense>
+          </div>}
         </main>
         {management.expired && <div className="local-expired" role="alert"><h2>网页授权已失效</h2><p>请从客户端重新打开网页管理后台。未提交的输入暂时保留。</p><button className="button primary" onClick={() => location.reload()}>重新检查授权</button></div>}
         <footer className="workspace-footer">

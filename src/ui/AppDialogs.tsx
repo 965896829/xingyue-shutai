@@ -4,6 +4,8 @@ import { X } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import './dialogs.css';
 
+export type Act = <T>(fn: () => Promise<T>, success?: string) => Promise<T | undefined>;
+
 type DialogOptions = {
   title?: string;
   confirmLabel?: string;

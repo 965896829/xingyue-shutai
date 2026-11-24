@@ -10,7 +10,7 @@ import { connectionId, connectionFields, modelFields, providerGroups } from '../
 import { applyModelLimits, officialModelLimits } from '../shared/model-limits';
 import { DeleteButton } from './DeleteButton';
 
-type Act = <T>(fn: () => Promise<T>, success?: string) => Promise<T | undefined>;
+import type { Act } from './AppDialogs';
 const invoke: Invoke = (command, args) =>
   invokeCommand(command, args);
 const fresh = (): Profile => ({
@@ -444,7 +444,6 @@ export function ProviderSettings({
           >
             <fieldset className="provider-fields" disabled={working}>
               <div className="provider-section-title">
-                <span>01</span>
                 <h3>供应商连接</h3>
                 {dirty && <small>未保存</small>}
               </div>
@@ -487,7 +486,7 @@ export function ProviderSettings({
                       : 'http://127.0.0.1:8080/v1'
                   }
                 />
-                <small>填写接口根地址，不是管理后台网址，也不需要填写 /models。</small>
+                <small>填写供应商提供的 API 根地址，例如以 /v1 结尾的地址。</small>
               </label>
               <label>
                 API Key{' '}
@@ -507,11 +506,10 @@ export function ProviderSettings({
                 <small>
                   {p.hasKey
                     ? '已保存密钥不会在界面回显。改变根地址后需重新填写密钥。'
-                    : '密钥由 Windows 加密保存在本机。'}
+                    : '密钥由系统加密后保存在本机。'}
                 </small>
               </label>
               <div className="provider-section-title">
-                <span>02</span>
                 <h3>选择模型</h3>
                 <small>
                   已选 {selected.length} 个{loadState === 'ready' ? ` · ${catalog.models.length} 个可选` : ''}
@@ -685,7 +683,6 @@ export function ProviderSettings({
                 </label>
               </details>
               <div className="provider-section-title">
-                <span>03</span>
                 <h3>单个模型参数与测试</h3>
               </div>
               <label>

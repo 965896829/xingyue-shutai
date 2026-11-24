@@ -8,17 +8,17 @@
 
 | 文件 | 已看到的实现 | 客户端处理 |
 | --- | --- | --- |
-| [平台预设](D:/aiwangzhan/novel-platform/apps/admin/src/lib/platform-presets.json) | 供应商名、基础地址、协议、native_protocols、compatible | 作为初始表单参考；标记为预设，不是能力认证 |
-| [平台表单](D:/aiwangzhan/novel-platform/apps/admin/src/components/platform-form.tsx:428) | 选择厂商填入协议/地址；收集变量、账号、模型映射、脚本、超时 | 简化为作者能理解的连接与模型配置；高级项折叠 |
-| [参考供应商目录](D:/aiwangzhan/novel-platform/contracts/reference-providers.json) | 官方、兼容、图像视频音乐等多类模板 | 首版文字与封面选用相关部分，不将目录所有能力都搬入需求 |
-| [平台运行配置](D:/aiwangzhan/novel-platform/services/api/app/platform_configuration.py:1) | 多账号、变量、加密秘密、真实模型映射、协议别名、认证头 | 保留配置/运行投影分离；租户/组织/会员权限不直接搬入本地 |
-| [原生协议](D:/aiwangzhan/novel-platform/services/api/app/provider_protocols.py:1) | 四类文字协议请求、文本/工具解析、原生结果续轮、模型目录分页 | 最有价值的协议契约参考；需补严格终止原因、流式和兼容测试 |
-| [个人 API 预设](D:/aiwangzhan/novel-platform/services/api/app/personal_api_providers.py:1) | 国内厂商兼容地址、Gemini 原生、参数差异 | 预设与参数策略拆开；不要对所有同类模型硬塞 temperature |
-| [网关](D:/aiwangzhan/novel-platform/services/api/app/gateway.py:26) | 请求前权限/预算/上下文；重试和路由；工具循环；请求/用量记录 | 复用设计而非搬入整套 SaaS 计费数据库 |
-| [HTTP](D:/aiwangzhan/novel-platform/services/api/app/provider_http.py:1) | TLS 校验、连接池、认证/Cookie 状态隔离、无内容耗时日志 | 保留安全连接和错误分类；桌面代理设置重新验收 |
-| [Codex 桥接](D:/aiwangzhan/novel-platform/services/api/app/codex_runtime.py:1) | 私有 loopback token、App Server 线程/轮次、工具代理、流式事件、中断 | 可选 Runner 的实物参考；当前 eligible 有 Responses 条件 |
+| [平台预设](../src/admin/reference/lib/platform-presets.json) | 供应商名、基础地址、协议、native_protocols、compatible | 作为初始表单参考；标记为预设，不是能力认证 |
+| [平台表单](../src/admin/reference/components/platform-form.tsx) | 选择厂商填入协议/地址；收集变量、账号、模型映射、脚本、超时 | 简化为作者能理解的连接与模型配置；高级项折叠 |
+| 《参考供应商目录》（历史资料 `aiwangzhan/novel-platform/contracts/reference-providers.json`） | 官方、兼容、图像视频音乐等多类模板 | 首版文字与封面选用相关部分，不将目录所有能力都搬入需求 |
+| 《平台运行配置》（历史资料 `aiwangzhan/novel-platform/services/api/app/platform_configuration.py:1`） | 多账号、变量、加密秘密、真实模型映射、协议别名、认证头 | 保留配置/运行投影分离；租户/组织/会员权限不直接搬入本地 |
+| 《原生协议》（历史资料 `aiwangzhan/novel-platform/services/api/app/provider_protocols.py:1`） | 四类文字协议请求、文本/工具解析、原生结果续轮、模型目录分页 | 最有价值的协议契约参考；需补严格终止原因、流式和兼容测试 |
+| 《个人 API 预设》（历史资料 `aiwangzhan/novel-platform/services/api/app/personal_api_providers.py:1`） | 国内厂商兼容地址、Gemini 原生、参数差异 | 预设与参数策略拆开；不要对所有同类模型硬塞 temperature |
+| 《网关》（历史资料 `aiwangzhan/novel-platform/services/api/app/gateway.py:26`） | 请求前权限/预算/上下文；重试和路由；工具循环；请求/用量记录 | 复用设计而非搬入整套 SaaS 计费数据库 |
+| 《HTTP》（历史资料 `aiwangzhan/novel-platform/services/api/app/provider_http.py:1`） | TLS 校验、连接池、认证/Cookie 状态隔离、无内容耗时日志 | 保留安全连接和错误分类；桌面代理设置重新验收 |
+| 《Codex 桥接》（历史资料 `aiwangzhan/novel-platform/services/api/app/codex_runtime.py:1`） | 私有 loopback token、App Server 线程/轮次、工具代理、流式事件、中断 | 可选 Runner 的实物参考；当前 eligible 有 Responses 条件 |
 
-完整源文件哈希另存 [API 参考清单](../analysis-2026-10-06/api-reference-manifest.json)。测试文件存在相关用例，但本次仅查看其范围和名称，没有运行网站测试，不将“有测试文件”等同于“测试通过”。
+完整源文件哈希另存 《API 参考清单》（历史资料 `analysis-2026-10-06/api-reference-manifest.json`）。测试文件存在相关用例，但本次仅查看其范围和名称，没有运行网站测试，不将“有测试文件”等同于“测试通过”。
 
 ## 2. 四种协议不能只换 URL
 

@@ -1,5 +1,6 @@
 import { ReviewObservations } from './ReviewObservations';
 import { useEffect, useRef, useState } from 'react';
+import { AudioLines, BookOpenCheck, Columns2, GitBranch, Globe2, NotebookText, Route, PanelsTopLeft } from 'lucide-react';
 import { invokeCommand } from '../shared/client';
 import type { CommandOutput } from '../shared/contracts';
 import type { QualityState, QualityMutation, VoiceScope, WorldModel } from '../shared/quality';
@@ -173,7 +174,7 @@ export function QualityWorkbench({ profileId, onRun }: { profileId: string; onRu
   );
   return (
     <>
-      <button onClick={() => setOpen(true)}>创作工作台</button>
+      <button aria-haspopup="dialog" onClick={() => setOpen(true)}><PanelsTopLeft size={14} />创作工作台</button>
       {open && (
         <div className="scrim">
           <section
@@ -190,22 +191,22 @@ export function QualityWorkbench({ profileId, onRun }: { profileId: string; onRu
               </button>
             </header>
             <nav className="quality-tabs" aria-label="工作台视图">
-              {[
-                ['voice', '声音'],
-                ['evidence', '编辑记录'],
-                ['compare', '对比试读'],
-                ['patterns', '剧情解法'],
-                ['world', '世界模块'],
-                ['branches', '分支'],
-                ['reading', '阅读轨迹']
-              ].map(([id, label]) => (
+              {([
+                ['voice', '声音', AudioLines],
+                ['evidence', '编辑记录', NotebookText],
+                ['compare', '对比试读', Columns2],
+                ['patterns', '剧情解法', Route],
+                ['world', '世界模块', Globe2],
+                ['branches', '分支', GitBranch],
+                ['reading', '阅读轨迹', BookOpenCheck]
+              ] as const).map(([id, label, Icon]) => (
                 <button
                   key={id}
                   aria-pressed={tab === id}
                   className={tab === id ? 'active' : ''}
                   onClick={() => setTab(id)}
                 >
-                  {label}
+                  <Icon size={15} aria-hidden="true" />{label}
                 </button>
               ))}
             </nav>

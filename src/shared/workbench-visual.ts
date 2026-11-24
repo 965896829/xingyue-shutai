@@ -36,6 +36,7 @@ export const plotNodeSchema = z.strictObject({
   parentId: key.nullable(),
   level: z.enum(['project', 'volume', 'chapter', 'scene']),
   title: key,
+  summary: text.optional(),
   chapter: chapter.optional(),
   endChapter: chapter.optional(),
   track: z.enum(['saved', 'plan']),

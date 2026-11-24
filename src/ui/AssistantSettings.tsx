@@ -65,19 +65,23 @@ export function AssistantSettings({ onClose, profiles = [], initialSection = 'ed
             ×
           </button>
         </header>
-        <div className="editor-tabs">
+        <div className="assistant-settings-layout">
+        <nav className="settings-sections" aria-label="创作助手设置分类">
+          <small>连接</small>
+          <button aria-pressed={selected === 'search'} className={selected === 'search' ? 'active' : ''} onClick={() => select('search')}>
+            联网搜索
+          </button>
+          <button aria-pressed={selected === 'embedding'} className={selected === 'embedding' ? 'active' : ''} onClick={() => select('embedding')}>
+            语义检索
+          </button>
+          {!!data?.roles.some(role => !role.archived) && <small>创作角色</small>}
           {data?.roles.filter(r => !r.archived).map((r) => (
-            <button key={r.id} className={selected === r.id ? 'active' : ''} onClick={() => select(r.id)}>
+            <button key={r.id} aria-pressed={selected === r.id} className={selected === r.id ? 'active' : ''} onClick={() => select(r.id)}>
               {r.title}
             </button>
           ))}
-          <button className={selected === 'search' ? 'active' : ''} onClick={() => select('search')}>
-            联网搜索
-          </button>
-          <button className={selected === 'embedding' ? 'active' : ''} onClick={() => select('embedding')}>
-            语义检索
-          </button>
-        </div>
+        </nav>
+        <div className="assistant-settings-content">
         {error && (
           <p role="alert" className="inline-warning">
             {error}
@@ -422,6 +426,7 @@ export function AssistantSettings({ onClose, profiles = [], initialSection = 'ed
         ) : (
           <p>正在读取设置…</p>
         )}
+        </div></div>
       </section>
     </div>
   );

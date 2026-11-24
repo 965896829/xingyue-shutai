@@ -1,3 +1,4 @@
+import { authorMarkdown } from '../shared/author-markdown';
 import { useDialogs } from './AppDialogs';
 import { invokeCommand } from '../shared/client';
 import { GenerationStatus, GenerationStep } from './GenerationStatus';
@@ -109,7 +110,7 @@ export function ChatWorkspace({
       const result = await invokeCommand('draft.read', { id });
       const cacheKey = `draft:${p.id}:free:${id}`;
       const cached = useCache ? JSON.parse(localStorage.getItem(cacheKey) ?? 'null') : null;
-      setDraft(cached ? { ...result, content: cached.content, currentHash: cached.baseHash } : result);
+      setDraft(cached ? { ...result, content: authorMarkdown(cached.content), currentHash: cached.baseHash } : result);
       if (!useCache) localStorage.removeItem(cacheKey);
     } catch (e) {
       setError((e as Error).message);

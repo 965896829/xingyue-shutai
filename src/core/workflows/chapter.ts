@@ -5,7 +5,7 @@ import {
   narrativeStreamInstruction
 } from '../../shared/narrative-events';
 import { withTaskReasoning } from '../../shared/reasoning';
-import { type ProjectState, type Run, type SecretProfile, type ToolDefinition } from '../../shared/types';
+import { modelRoundLimit, type ProjectState, type Run, type SecretProfile, type ToolDefinition } from '../../shared/types';
 import { assertControllerRules, automaticRepairLimit, modelTaskEnvelope } from '../agent-control';
 import { contextChanged, contextPayload, fitContext } from '../context-compiler';
 import {
@@ -30,6 +30,7 @@ import { compatibleRunBase } from '../runtime-settings';
 import { repairContext } from '../runtime/candidate-repair';
 import { preloadOutputTargets } from '../runtime/context-preload';
 import { callModel } from '../runtime/model-gateway';
+import { checkpointProseReceipt, finishProseReceipt, receivedProse, streamProseCheckpoint } from '../runtime/prose-checkpoint';
 import { sharedRuleBlock } from '../runtime/prompt-cache';
 import { setRunStatus } from '../runtime/run-state';
 import { sourceReuseInstructions } from '../runtime/source-reuse';
@@ -145,14 +146,18 @@ export async function driveChapterWorkflow(
   ) => {
     if (signal.aborted) throw new RequestError('作者已停止执行', false);
     assertControllerRules(host.skillRoot, r.agentRulesHash!);
-    if (r.rounds >= p.config.maxRounds)
-      throw new ApplicationError('ROUND_LIMIT', '已达到本任务轮数上限。可审阅内容或在设置提高上限后继续。');
     if (expressionFingerprint(host.skillRoot, host.store.db.project().config) !== expressionVersion)
       throw new Error('表达规则已改变，请重新组装上下文');
     if (host.profiles().find((v) => v.id === profile.id)?.version !== profile.version)
       throw new Error('模型配置在运行期间改变');
     if (!compatibleRunBase(host.store, r) || contextChanged(host.store, r.manifest!))
       throw new Error('任务依据已改变');
+    if (purpose === 'prose') {
+      const saved = receivedProse(host.store, r);
+      if (saved) return saved;
+    }
+    if (r.rounds >= modelRoundLimit(p.config.maxRounds))
+      throw new ApplicationError('ROUND_LIMIT', '已达到本任务轮数上限。可审阅内容或在设置提高上限后继续。');
     syncUsage(host.store, r);
     host.telemetry.foregroundReserved = requestGuard(
       profile,
@@ -177,16 +182,16 @@ export async function driveChapterWorkflow(
       tools,
       signal,
       delta,
-      { ...host.cacheOptions(r, profile), onActivity: (phase) => host.activity(r, phase) }
+      { ...host.cacheOptions(r, profile), onActivity: (phase) => host.activity(r, phase) },
+      purpose === 'prose' ? (ref, result) => checkpointProseReceipt(host.store, r, profile, ref, result) : undefined
     ).finally(() => {
       host.telemetry.foregroundReserved = 0;
     });
-    host.store.db.set(`inflight:${r.id}`, false);
-    recordUsage(host.store, r, result.usage, {
-      phase: pipeline.phase,
-      profileId: profile.id,
-      profileVersion: profile.version,
-      usage: result.usage
+    if (purpose !== 'prose') host.store.db.transaction(() => {
+      recordUsage(host.store, r, result.usage, {
+        phase: pipeline.phase, profileId: profile.id, profileVersion: profile.version, usage: result.usage
+      });
+      host.store.db.set(`inflight:${r.id}`, false);
     });
     assertControllerRules(host.skillRoot, r.agentRulesHash!);
     if (signal.aborted) throw new RequestError('作者已停止执行', false);
@@ -203,8 +208,7 @@ export async function driveChapterWorkflow(
         detailPath(r.chapter)
       );
     const file = prosePath(r.chapter);
-    let draft = '',
-      lastFlush = 0;
+    let draft = '';
     const expression = expressionPack(host.skillRoot, p.config, 'prose');
     bindExpressionRules(r, expression.binding);
     const system = `${systemPrompt(host.skillRoot, p, 'S10', naming, undefined, { outputMode: 'prose', chapterNamingVersion: r.chapterNaming?.version })}\n正文候选由宿主保存，再安排独立校验。${expression.prompt}\n${narrativeStreamInstruction}`;
@@ -220,6 +224,7 @@ export async function driveChapterWorkflow(
         if (written) return;
         const repair = r.repairAttempts?.prose ?? 0;
         draft = '';
+        const persistDelta = streamProseCheckpoint(host.store, r);
         let decoded: ReturnType<typeof decodeNarrativeResponse> | undefined,
           activated = false;
         const activate = () => {
@@ -265,6 +270,7 @@ export async function driveChapterWorkflow(
                   baseHash: host.store.db.document(file)?.hash ?? null
                 };
                 r.changes = [...r.changes.filter((x) => x.path !== file), c];
+                persistDelta(draft);
                 host.emit({
                   type: 'prose-delta',
                   resource: 'runs',
@@ -277,10 +283,6 @@ export async function driveChapterWorkflow(
                   textOffset: draft.length - text.length
                 });
                 if (p.config.preview.enabled) host.telemetry.checkpoint(r, draft, reviewer);
-                if (Date.now() - lastFlush > 800) {
-                  host.store.db.saveRun(r);
-                  lastFlush = Date.now();
-                }
               },
               (event) => {
                 pipeline.narrative!.events = [...pipeline.narrative!.events, event];
@@ -332,15 +334,13 @@ export async function driveChapterWorkflow(
               written = true;
               return false;
             }
-            host.save(r);
             if (repair >= automaticRepairLimit) {
               setRunStatus(r, 'needs_repair');
-              host.save(r);
-              return false;
+            } else {
+              (r.repairAttempts ??= {}).prose = repair + 1;
             }
-            (r.repairAttempts ??= {}).prose = repair + 1;
-            host.save(r);
-            return true;
+            host.store.db.transaction(() => { finishProseReceipt(host.store, r); host.save(r); });
+            return repair < automaticRepairLimit;
           }
         };
       }
@@ -356,7 +356,7 @@ export async function driveChapterWorkflow(
     r.sourceProseHash = pipeline.proseHash;
     pipeline.phase = 'review';
     r.messages = [];
-    host.save(r);
+    host.store.db.transaction(() => { finishProseReceipt(host.store, r); host.save(r); });
   }
   const prose = r.changes.find((c) => c.path === prosePath(r.chapter));
   if (!prose || hash(prose.content) !== pipeline.proseHash) throw new Error('候选正文与核对版本不一致');

@@ -1,7 +1,7 @@
 import http, { type IncomingMessage, type ServerResponse } from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import {
   commandContracts,
@@ -42,7 +42,7 @@ interface Session {
   csrf: string;
   expiresAt: number;
   grants: Set<string>;
-  waits: Set<string>;
+  waits: Map<string, string>;
   streams: Set<ServerResponse>;
   requests: number;
 }
@@ -101,6 +101,7 @@ export class LocalManagementServer {
       clientId: this.options.client.id,
       name: this.options.client.name,
       version: this.options.client.version,
+      os: process.platform === 'darwin' ? 'macOS' : process.platform === 'win32' ? 'Windows' : process.platform,
       running: !!this.origin,
       url: this.origin,
       startedAt: this.startedAt,
@@ -185,7 +186,8 @@ export class LocalManagementServer {
   }
   private drop(session: Session) {
     this.sessions.delete(session.id);
-    for (const waitId of session.waits) this.options.client.cancelWait(waitId);
+    for (const waitId of session.waits.values()) this.options.client.cancelWait(waitId);
+    session.waits.clear();
     for (const res of session.streams) {
       res.write('event: expired\ndata: {}\n\n');
       res.end();
@@ -312,7 +314,7 @@ export class LocalManagementServer {
         csrf: token(),
         expiresAt: Date.now() + (this.options.sessionMs ?? 8 * 3600_000),
         grants: new Set(),
-        waits: new Set(),
+        waits: new Map(),
         streams: new Set(),
         requests: 0
       };
@@ -375,7 +377,8 @@ export class LocalManagementServer {
     }
     if (route === 'cancel-wait' && write) {
       const { waitId } = z.strictObject({ waitId: z.string().uuid() }).parse(await this.body(req));
-      if (session.waits.has(waitId)) this.options.client.cancelWait(waitId);
+      const hostWait = session.waits.get(waitId);
+      if (hostWait) this.options.client.cancelWait(hostWait);
       return json(res, { ok: true });
     }
     if (route === 'files' && !write) {
@@ -454,15 +457,22 @@ export class LocalManagementServer {
       const waitId = input.context.waitId;
       if (waitId && session.waits.has(waitId)) throw new HttpError(409, '重复等待编号');
       session.requests++;
-      if (waitId) session.waits.add(waitId);
+      const context = { ...input.context };
+      if (waitId) {
+        context.waitId = randomUUID();
+        session.waits.set(waitId, context.waitId);
+      }
       const disconnected = () => {
-        if (!res.writableEnded && waitId) this.options.client.cancelWait(waitId);
+        if (!res.writableEnded && waitId) {
+          const hostWait = session.waits.get(waitId);
+          if (hostWait) this.options.client.cancelWait(hostWait);
+        }
       };
       res.on('close', disconnected);
       try {
         return json(
           res,
-          await this.options.client.invoke(input.command, input.args, input.context, {
+          await this.options.client.invoke(input.command, input.args, context, {
             source: 'browser',
             fileGrants: session.grants
           })

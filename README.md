@@ -1,6 +1,6 @@
 # 星月书台 · 网文写作客户端
 
-星月书台的 0.4.98 跨平台开发分支。Mac mini 下载源码、准备环境、启动隔离开发配置和打包步骤见 [Mac mini 开发指南](docs/macos-development.md)。
+星月书台在 Mac 上开发和验收，客户端面向 macOS 和 Windows。环境准备、隔离开发和本机打包步骤见 [Mac 开发指南](docs/macos-development.md)。
 
 源码版本以 [package.json](package.json) 为准；源码、安装包和本机已安装程序是不同状态，构建成功不表示已经覆盖安装。
 
@@ -28,22 +28,22 @@
 
 需要 Node.js 24.x（至少 24.11.1），版本范围见 `engines`，nvm 用户可使用 `.nvmrc`。
 
-```powershell
+```sh
 npm ci
 npm run doctor
 npm run dev:isolated
 ```
 
-```powershell
+```sh
 npm run check
 npm test
 npm run build
 npm start
 ```
 
-Windows 安装包使用 `npm run dist`，输出到 `release/`；可运行目录为 `release/win-unpacked/`，其中的程序和资源需要一起保留。编译、离线回归和打包不需要模型 API Key；安装包未配置代码签名证书。
+在 Mac 上，`npm run pack` 生成可直接打开的应用，`npm run dist` 生成当前芯片对应的 DMG 和 ZIP，输出到 `release/`。这两个开发包使用本机临时签名。公开分发时用 `npm run dist:signed` 生成独立的签名、公证产物。
 
-Mac 在本机使用 `npm run pack:mac` / `npm run dist:mac`，按原生 CPU 架构生成开发包，采用 ad-hoc 签名，尚未配置 Developer ID 和公证。首次调试用 `dev:isolated`；`npm run dev` 和 `npm start` 使用正常配置目录。
+常规持续集成在两种 Mac 芯片上运行。准备 Windows 发行时，可手动启用 Windows x64 原生验收。现有用户的升级标识保存在发布配置中。[桌面构建工作流](.github/workflows/desktop-platforms.yml)
 
 本地管理后台由客户端开启，沿用客户端授权与业务接口。开发验证应使用独立的 `WENXU_DATA_DIR` 和临时作品目录，不使用作者正在创作的作品。
 

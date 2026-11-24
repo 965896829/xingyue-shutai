@@ -315,6 +315,7 @@ export function readPlot(
       parentId: 'project',
       level: 'volume',
       title: volume.title,
+      summary: volume.values?.['阶段功能']?.slice(0, 12000),
       chapter: volume.from,
       endChapter: volume.to,
       sources: [volume.source],

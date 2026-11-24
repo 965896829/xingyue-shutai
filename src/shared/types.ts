@@ -52,7 +52,7 @@ export const configSchema = z
       .default({ enabled: false, maxCalls: 8 }),
     viewpointCharacterId: z.string().default(''),
     proseMode: z.enum(['chapter', 'scene']).default('chapter'),
-    maxRounds: z.number().int().min(1).max(100).default(12),
+    maxRounds: z.number().int().min(0).max(100).default(12),
     maxTools: z.number().int().min(1).max(500).default(64),
     stageBudget: z.number().nonnegative().nullable().default(null),
     terminalPolicy: z.enum(['ask', 'disabled']).default('ask'),
@@ -64,6 +64,11 @@ export const configSchema = z
     '章长必须位于最少与最多字数之间'
   );
 export type ProjectConfig = z.infer<typeof configSchema>;
+
+/** Zero is the stored opt-in to unlimited rounds. Keep infinity out of JSON snapshots. */
+export function modelRoundLimit(maxRounds: number = 12) {
+  return maxRounds === 0 ? Infinity : maxRounds;
+}
 export const protocolSchema = z.enum(['chat', 'responses', 'anthropic', 'gemini', 'images']);
 export type Protocol = z.infer<typeof protocolSchema>;
 export const modelLimitsSchema = z

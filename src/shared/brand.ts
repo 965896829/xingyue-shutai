@@ -10,6 +10,6 @@ export const brand = {
 } as const;
 
 export const windowThemes = {
-  dark: { mode: 'dark', background: '#111522', foreground: '#f3f0ea' },
-  light: { mode: 'light', background: '#fbf9f5', foreground: '#263049' }
+  dark: { mode: 'dark', background: '#1b1c20', foreground: '#eeeff3' },
+  light: { mode: 'light', background: '#ffffff', foreground: '#24252b' }
 } as const;

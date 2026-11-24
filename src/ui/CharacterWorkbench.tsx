@@ -185,7 +185,7 @@ export function CharacterWorkbench({
                 <li key={item.id}>
                   <header>
                     <b>第 {item.chapter} 章</b>
-                    <span>{item.storyTime || '故事时间未记录'}</span>
+                    {item.storyTime && <span>{item.storyTime}</span>}
                   </header>
                   <h4>{item.label}</h4>
                   <p>{item.value}</p>

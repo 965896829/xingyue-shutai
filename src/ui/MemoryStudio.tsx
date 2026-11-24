@@ -1,9 +1,10 @@
+import { authorMarkdown } from '../shared/author-markdown';
 import { useDialogs } from './AppDialogs';
 import { invokeCommand } from '../shared/client';
 import { useEffect, useRef, useState } from 'react';
 import type { Fact, Snapshot } from '../shared/types';
 import type { SourceRef, MemoryScope } from '../shared/studio';
-import { Editor } from './Editor';
+import { Editor } from './LazyEditor';
 import { useDialog } from './useDialog';
 import { commandContracts } from '../shared/contracts';
 import type { CommandOutput } from '../shared/contracts';
@@ -45,7 +46,13 @@ export function SourceDialog({ source, onClose }: { source: SourceRef; onClose: 
     let active = true;
     void invokeCommand('memory.trace', { ...source })
       .then((v) => {
-        if (active) setData(v);
+        if (!active) return;
+        const content = authorMarkdown(v.content);
+        // Evidence offsets address the canonical version. Never highlight unrelated text in a projection.
+        if (content === v.content) { setData(v); return; }
+        const at = content.indexOf(v.quote);
+        const start = at >= 0 && at === content.lastIndexOf(v.quote) ? Array.from(content.slice(0, at)).length : undefined;
+        setData({ ...v, content, start, end: start === undefined ? undefined : start + Array.from(v.quote).length });
       })
       .catch((e) => {
         if (active) setError(e.message);
@@ -75,7 +82,7 @@ export function SourceDialog({ source, onClose }: { source: SourceRef; onClose: 
         {error ? (
           <p role="alert">{error}</p>
         ) : data ? (
-          <Editor value={data.content} readOnly highlight={{ start: data.start!, end: data.end! }} />
+          <Editor value={data.content} readOnly highlight={data.start === undefined ? undefined : { start: data.start, end: data.end! }} />
         ) : (
           <p className="empty-state">读取中…</p>
         )}
@@ -92,6 +99,9 @@ export function FactCard({
   onSource: (v: SourceRef) => void;
   compact?: boolean;
 }) {
+  const knownTo = fact.knowledge.filter(k => k.mode !== 'unknown')
+    .map(k => fact.entityIds.includes(k.who) ? fact.subject : k.who).join('、');
+  const hasDetails = fact.evidence.length > 0 || fact.subjectiveResponse || fact.storyTime || knownTo;
   return (
     <article className={`memory-fact ${compact ? 'compact' : ''}`}>
       <div className="memory-fact-title">
@@ -111,8 +121,8 @@ export function FactCard({
           第 {fact.fromChapter} 章{fact.toChapter !== null ? `—${fact.toChapter}` : ''}
         </span>
       </div>
-      <details>
-        <summary>证据 · {fact.evidence.length}</summary>
+      {hasDetails && <details>
+        <summary>{fact.evidence.length ? `证据 · ${fact.evidence.length}` : '记录详情'}</summary>
         {fact.subjectiveResponse && <p>{[fact.subjectiveResponse.trigger, fact.subjectiveResponse.interpretation, fact.subjectiveResponse.emotionOrIntent, fact.subjectiveResponse.actionEffect].filter(Boolean).join(' → ')}</p>}
         {fact.evidence.map((e, i) => (
           <button className="evidence-quote" key={i} onClick={() => onSource(e)}>
@@ -120,18 +130,11 @@ export function FactCard({
             <span>查看原文 ↗</span>
           </button>
         ))}
-        <dl>
-          <dt>时间</dt>
-          <dd>{fact.storyTime || '未知'}</dd>
-          <dt>知情人物</dt>
-          <dd>
-            {fact.knowledge
-              .filter((k) => k.mode !== 'unknown')
-              .map((k) => (fact.entityIds.includes(k.who) ? fact.subject : k.who))
-              .join('、') || '未知'}
-          </dd>
-        </dl>
-      </details>
+        {(fact.storyTime || knownTo) && <dl>
+          {fact.storyTime && <><dt>时间</dt><dd>{fact.storyTime}</dd></>}
+          {knownTo && <><dt>知情人物</dt><dd>{knownTo}</dd></>}
+        </dl>}
+      </details>}
     </article>
   );
 }
@@ -148,22 +151,22 @@ export function MemoryStudio({
   onRun: (id: string) => void;
   profileId?: string;
 }) {
-  const p = snapshot.project!,
-    [query, setQuery] = useState(''),
+  const p = snapshot.project!;
+  const firstUnwritten = Object.keys(p.chapters).reduce((next, n) => Math.max(next, Number(n) + 1), Math.max(p.chapter, 1));
+  const [query, setQuery] = useState(''),
     [chapter, setChapter] = useState(p.chapter),
     [mode, setMode] = useState<'current' | 'historical'>('current'),
     [version, setVersion] = useState(''),
     [viewpoint, setViewpoint] = useState<MemoryScope['viewpoint']>('author'),
     [characterId, setCharacterId] = useState(''),
     [filter, setFilter] = useState('all'),
-    [result, setResult] = useState<any>(),
+    [response, setResponse] = useState<{ scopeKey: string; data: CommandOutput<'memory.list'> }>(),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
     [correction, setCorrection] = useState(''),
     [correctionKind, setCorrectionKind] = useState('plan'),
-    [fromChapter, setFromChapter] = useState(Math.max(p.chapter, 1, ...Object.keys(p.chapters).map(n => Number(n) + 1)));
+    [fromChapter, setFromChapter] = useState(firstUnwritten);
   const dialogs = useDialogs(snapshot.projectSessionId);
-  const firstUnwritten = Math.max(p.chapter, 1, ...Object.keys(p.chapters).map(n => Number(n) + 1));
   useEffect(() => { setFromChapter(value => Math.max(value, firstUnwritten)); }, [firstUnwritten]);
   const seq = useRef(0);
   const [snapshotHistory, setSnapshotHistory] = useState<CommandOutput<'snapshot.list'>>([]);
@@ -188,8 +191,14 @@ export function MemoryStudio({
     viewpoint,
     ...(viewpoint === 'character' ? { characterId } : {})
   };
+  const scopeKey = JSON.stringify([snapshot.projectSessionId, snapshot.studio?.snapshot?.id, scope, filter]);
+  const result = response?.scopeKey === scopeKey ? response.data : undefined;
+  const currentAuthor = mode === 'current' && viewpoint === 'author' && chapter >= p.chapter;
+  const missingScope = viewpoint === 'character' && !characterId ? '请选择视角人物'
+    : mode === 'historical' && !version ? '请选择历史快照' : '';
   async function search(append = false) {
     const n = ++seq.current;
+    if (missingScope) { setBusy(false); setError(''); return; }
     setBusy(true);
     setError('');
     try {
@@ -198,7 +207,7 @@ export function MemoryStudio({
         : await invokeCommand('memory.list', commandContracts['memory.list'].input.parse({
             scope, category: filter, offset: append ? (result?.facts?.length ?? 0) : 0
           }));
-      if (n === seq.current) setResult(append ? { ...v, facts: [...(result?.facts ?? []), ...v.facts] } : v);
+      if (n === seq.current) setResponse({ scopeKey, data: append ? { ...v, facts: [...(result?.facts ?? []), ...v.facts] } : v });
     } catch (e) {
       if (n === seq.current) setError((e as Error).message);
     } finally {
@@ -207,9 +216,10 @@ export function MemoryStudio({
   }
   useEffect(() => {
     void search();
-  }, [snapshot.studio?.snapshot?.id, chapter, mode, version, viewpoint, characterId, filter]);
+    return () => { seq.current++; };
+  }, [scopeKey]);
   const facts: Fact[] = (result?.facts ?? [])
-    .map((x: any) => x.fact)
+    .map(x => x.fact)
     .filter(
       (f: Fact) => filter === 'all' || f.category === filter || (filter === 'obligations' && f.mandatory)
     );
@@ -228,17 +238,18 @@ export function MemoryStudio({
     <div className="memory-studio">
       <header className="studio-heading">
         <div>
-          <span className="eyebrow">MEMORY</span>
           <h1>故事记忆</h1>
         </div>
         <span className="studio-count">{result?.total ?? facts.length} 条记录</span>
       </header>
-      {!!p.storyImpacts?.length && (
+      {currentAuthor && !!p.storyImpacts?.length && (
         <section className="story-impact-panel" aria-label="故事变化与后续计划">
-          <h2>先同步变化，再继续创作</h2>
-          <p>以下资料仍需核对。同步会生成修订候选，你确认后才会保存。</p>
+          <header>
+            <div><h2>待核对的后续计划</h2><p>核对后可预览并确认修订。</p></div>
+            <button disabled={busy} onClick={() => void synchronize()}>核对并同步后续计划</button>
+          </header>
           {p.storyImpacts.map(impact => (
-            <details key={impact.id} open>
+            <details key={impact.id}>
               <summary>{impact.scope.mode === 'forward' ? `第 ${impact.scope.fromChapter} 章起的后续计划` : '已有故事的关联修订'} · {impact.targets.length} 项</summary>
               {impact.scope.mode === 'forward' && <p>保留已有正文及生效章节之前的章节设计。</p>}
               <p>{impact.reason}</p>
@@ -252,7 +263,6 @@ export function MemoryStudio({
               </details>
             </details>
           ))}
-          <button className="primary" disabled={busy} onClick={() => void synchronize()}>核对并同步后续计划</button>
         </section>
       )}
       <form
@@ -360,7 +370,7 @@ export function MemoryStudio({
       ) : (
         <div className="studio-empty">
           <span>◇</span>
-          <p>{query ? '未找到相关记录' : '暂无可用记忆'}</p>
+          <p>{missingScope || (busy ? '正在读取记忆…' : query ? '未找到相关记录' : '暂无可用记忆')}</p>
         </div>
       )}
       {result?.hasMore && !query.trim() && (
@@ -368,13 +378,13 @@ export function MemoryStudio({
           加载更多
         </button>
       )}
-      {result?.disputes?.length > 0 && <section><h2>待核验的争议记录</h2><div className="memory-card-grid">
+      {!!result?.disputes?.length && <section><h2>待核验的争议记录</h2><div className="memory-card-grid">
         {result.disputes.map((f: Fact) => <FactCard key={f.id} fact={f} onSource={onSource} />)}
       </div></section>}
-      {result?.documents?.length > 0 && (
+      {!!result?.documents.length && (
         <section className="memory-passages">
           <h3>相关原文</h3>
-          {result.documents.map((d: any) => (
+          {result.documents.map(d => (
             <button
               key={d.path}
               onClick={() =>
@@ -390,7 +400,7 @@ export function MemoryStudio({
       <details className="studio-details">
         <summary>检索详情</summary>
         <div className="ledger-coverage">
-          {result?.coverage?.map((c: any) => (
+          {result?.coverage?.map(c => (
             <span key={c.ledger} data-status={c.status}>
               {ledgerNames[c.ledger]} ·{' '}
               {c.status === 'covered' ? c.count : c.status === 'missing' ? '待核对' : '无适用记录'}
@@ -404,7 +414,7 @@ export function MemoryStudio({
               ? '语义检索暂不可用，已使用本地检索'
               : '本地检索'}
         </p>
-        <div className="button-row">
+        {currentAuthor && <div className="button-row">
           <button
             onClick={() =>
               void invokeCommand('embedding.reindex')
@@ -425,8 +435,8 @@ export function MemoryStudio({
           >
             核对并同步记忆
           </button>
-        </div>
-        {snapshot.studio?.index && (
+        </div>}
+        {currentAuthor && snapshot.studio?.index && (
           <p>
             {snapshot.studio.index.count} 个片段 ·{' '}
             {snapshot.studio.index.status === 'ready'
@@ -440,7 +450,7 @@ export function MemoryStudio({
           <p key={s}>{s}</p>
         ))}
       </details>
-      <details className="studio-details">
+      {currentAuthor && <details className="studio-details">
         <summary>提出修正</summary>
         <form
           onSubmit={(e) => {
@@ -480,8 +490,8 @@ export function MemoryStudio({
           />
           <button disabled={busy || !correction.trim() || correctionKind === 'plan' && (!Number.isInteger(fromChapter) || fromChapter < firstUnwritten)}>生成修正候选</button>
         </form>
-      </details>
-      {!!p.stale.length && (
+      </details>}
+      {currentAuthor && !!p.stale.length && (
         <details className="studio-details">
           <summary>待核对 · {p.stale.length}</summary>
           {p.stale.map((file) => (

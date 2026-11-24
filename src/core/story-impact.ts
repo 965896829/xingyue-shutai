@@ -120,6 +120,14 @@ export function makeStoryImpact(p: ProjectState, run: Run, changes: Change[], st
     sources: [...sources].map(([path, hash]) => ({ path, hash })), targets };
 }
 
+export function finishImpactReview(p: ProjectState) {
+  if (p.stale.length) return;
+  for (const [chapter, state] of Object.entries(p.chapterStatesBeforeReview ?? {})) {
+    if (p.chapters[chapter] === 'stale') p.chapters[chapter] = state;
+  }
+  delete p.chapterStatesBeforeReview;
+}
+
 export function resolveStoryImpacts(p: ProjectState, files: string[]) {
   p.storyImpacts = (p.storyImpacts ?? []).map(impact => ({ ...impact, targets: impact.targets.filter(target => !files.includes(target.path)) }))
     .filter(impact => impact.targets.length);

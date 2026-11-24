@@ -16,6 +16,7 @@ import {
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { needsWorkerCredentials } from './worker-credentials';
 import { z } from 'zod';
 import { storageFileName } from '../src/shared/file-names';
 import { validateReasoning } from '../src/shared/reasoning';
@@ -85,10 +86,19 @@ let shutdownPromise: Promise<void> | undefined;
 let resolveShutdown: (() => void) | undefined;
 let shutdownComplete = false;
 let settingsNotice = '';
+const decryptedKeys = new Map<string, string>();
 function decryptKey(value: string) {
   if (!value) return '';
-  try { return safeStorage.decryptString(Buffer.from(value, 'base64')); }
-  catch { settingsNotice = '密钥解密失败，原加密配置保留；请在模型设置中重新填写 Key'; return ''; }
+  const cached = decryptedKeys.get(value);
+  if (cached !== undefined) return cached;
+  const key = safeStorage.decryptString(Buffer.from(value, 'base64'));
+  decryptedKeys.set(value, key);
+  return key;
+}
+function encryptKey(key: string) {
+  const encrypted = safeStorage.encryptString(key).toString('base64');
+  decryptedKeys.set(encrypted, key);
+  return encrypted;
 }
 let stateFile = '';
 let appearanceFile = '';
@@ -157,25 +167,45 @@ if (!app.isPackaged && process.env.WENXU_DEBUG_PORT)
 function saveSettings() {
   atomicWrite(stateFile, JSON.stringify(settings, null, 2));
 }
-function profiles(includeDisabled = false): SecretProfile[] {
+function profiles(): SecretProfile[] {
   return settings.profiles
-    .filter((p) => includeDisabled || p.enabled !== false)
+    .filter((p) => p.enabled !== false)
     .map(({ encryptedKey, ...p }) => ({
       ...p,
-      apiKey: decryptKey(encryptedKey)
+      apiKey: decryptedKeys.get(encryptedKey) ?? ''
     }));
 }
 function sync(type: 'initialize' | 'configuration' = 'configuration') {
+  const stored = new Set([...settings.profiles.map(p => p.encryptedKey), assistantSettings.embeddingSecret(), assistantSettings.secret()]);
+  for (const encrypted of decryptedKeys.keys()) if (!stored.has(encrypted)) decryptedKeys.delete(encrypted);
   worker.postMessage({
     type, protocolVersion, buildVersion, workerGeneration: supervisor.generation,
     profiles: profiles(), recent: settings.recent,
     assistant: {
       roles: assistantSettings.roles(), search: assistantSettings.settings().search,
       embedding: assistantSettings.settings().embedding,
-      embeddingKey: decryptKey(assistantSettings.embeddingSecret()),
-      searchKey: decryptKey(assistantSettings.secret())
+      embeddingKey: decryptedKeys.get(assistantSettings.embeddingSecret()) ?? '',
+      searchKey: decryptedKeys.get(assistantSettings.secret()) ?? ''
     }
   });
+}
+function prepareWorkerCredentials() {
+  const keys = [
+    ...settings.profiles.filter(p => p.enabled !== false).map(p => p.encryptedKey),
+    assistantSettings.embeddingSecret(), assistantSettings.secret()
+  ];
+  const missing = [...new Set(keys)].filter(key => key && !decryptedKeys.has(key));
+  if (!missing.length) return;
+  let failed = false;
+  for (const key of missing) {
+    try { decryptKey(key); } catch { failed = true; }
+  }
+  sync();
+  if (failed) {
+    const message = '系统未能解锁已保存的密钥。可继续编辑文稿，使用模型时请重试并允许系统访问。';
+    if (!keys.some(key => decryptedKeys.has(key))) throw new Error(message);
+    emitAppEvent({ type: 'error', text: message });
+  }
 }
 function startWorker() {
   const generation = supervisor.start();
@@ -246,6 +276,7 @@ async function rpc<C extends Command>(command: C, args: Record<string, unknown>)
   const context = requestContext.getStore();
   const requestId = randomUUID();
   if (context?.signal?.aborted) throw new ApplicationError('CANCEL_REQUESTED', '已取消等待响应');
+  if (needsWorkerCredentials(command, args)) prepareWorkerCredentials();
   const result = pending.create(requestId, Math.min(context?.timeoutMs ?? commandContracts[command].timeout, commandContracts[command].timeout), context?.signal);
   try {
     worker.postMessage({ protocolVersion, requestId, operationId: context?.operationId,
@@ -307,7 +338,7 @@ async function handle(command: Command, a: Record<string, unknown>) {
     if (key && !safeStorage.isEncryptionAvailable()) throw new Error('系统密钥加密不可用');
     assistantSettings.saveEmbedding(
       settings,
-      a.clearKey === true ? '' : key ? safeStorage.encryptString(key).toString('base64') : undefined
+      a.clearKey === true ? '' : key ? encryptKey(key) : undefined
     );
     sync();
     return assistantSettings.settings();
@@ -335,7 +366,7 @@ async function handle(command: Command, a: Record<string, unknown>) {
     if (key && !safeStorage.isEncryptionAvailable()) throw new Error('系统密钥加密不可用，不能保存 Key');
     assistantSettings.saveSearch(
       search,
-      a.clearKey === true ? '' : key ? safeStorage.encryptString(key).toString('base64') : undefined
+      a.clearKey === true ? '' : key ? encryptKey(key) : undefined
     );
     sync();
     return assistantSettings.settings();
@@ -347,7 +378,7 @@ async function handle(command: Command, a: Record<string, unknown>) {
       settings.profiles,
       a.connection,
       a.models,
-      key ? safeStorage.encryptString(key).toString('base64') : undefined,
+      key ? encryptKey(key) : undefined,
       (p) => trustedModelLimits(p, modelLimitsCache.get(limitsCacheKey(p, p.model))),
       a.expectedProfiles as Record<string, { version: number; enabled: boolean }> | undefined
     );
@@ -437,7 +468,7 @@ async function handle(command: Command, a: Record<string, unknown>) {
     profile.capabilities = executionChanged ? {} : old!.capabilities;
     const saved = {
       ...profile,
-      encryptedKey: key ? safeStorage.encryptString(key).toString('base64') : (old?.encryptedKey ?? '')
+      encryptedKey: key ? encryptKey(key) : (old?.encryptedKey ?? '')
     };
     settings.profiles = [...settings.profiles.filter((v) => v.id !== profile.id), saved];
     saveSettings();
@@ -453,7 +484,14 @@ async function handle(command: Command, a: Record<string, unknown>) {
     return true;
   }
   if (command === 'profiles.models') {
-    const old = profiles(true).find((p) => p.id === a.id);
+    const saved = settings.profiles.find(p => p.id === a.id);
+    let old: SecretProfile | undefined;
+    if (saved) {
+      const { encryptedKey, ...profile } = saved;
+      const wasCached = decryptedKeys.has(encryptedKey);
+      old = { ...profile, apiKey: typeof a.apiKey === 'string' && a.apiKey.trim() ? '' : decryptKey(encryptedKey) };
+      if (!wasCached && old.apiKey) sync();
+    }
     if (!a.connection && !old) throw new Error('请先填写供应商连接');
     const draft = a.connection ? { ...z.record(z.string(), z.unknown()).parse(a.connection), id: a.id } : old;
     const connection = resolveCatalogConnection(draft, a.apiKey, old);
@@ -560,10 +598,8 @@ async function dispatch(command: Command, args: unknown, rawContext: unknown, ca
     if (contract.scope === 'global' && contract.access !== 'read' && !command.startsWith('lab.')) emitAppEvent({ type: 'snapshot', workerGeneration: supervisor.generation });
     return { ok: true, result, projectSessionId, workerGeneration: supervisor.generation };
   } catch (error) {
-    const payload = errorPayload(error, [
-      ...settings.profiles.map(profile => decryptKey(profile.encryptedKey)),
-      ...(assistantSettings ? [decryptKey(assistantSettings.secret()), decryptKey(assistantSettings.embeddingSecret())] : [])
-    ]);
+    const suppliedKey = (args as { apiKey?: unknown } | null)?.apiKey;
+    const payload = errorPayload(error, [...decryptedKeys.values(), ...(typeof suppliedKey === 'string' ? [suppliedKey] : [])]);
     failure = payload.code;
     return { ok: false, error: payload, projectSessionId, workerGeneration: supervisor.generation };
   } finally {
@@ -579,12 +615,14 @@ async function dispatch(command: Command, args: unknown, rawContext: unknown, ca
 }
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
-  app.on('second-instance', () => {
-    if (win) {
-      if (win.isMinimized()) win.restore();
-      win.focus();
-    }
-  });
+  function showMainWindow() {
+    if (!win || win.isDestroyed()) return;
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  }
+  app.on('second-instance', showMainWindow);
+  app.on('activate', showMainWindow);
   app.whenReady().then(() => {
     app.setAboutPanelOptions({ applicationName: brand.name, applicationVersion: buildVersion,
       version: buildVersion, copyright: [__WRITING_DESK_BUILD__.branch, __WRITING_DESK_BUILD__.commit, __WRITING_DESK_BUILD__.time].join(' · ') });

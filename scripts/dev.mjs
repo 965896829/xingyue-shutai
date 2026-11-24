@@ -19,7 +19,7 @@ const env = {
   NODE_TLS_REJECT_UNAUTHORIZED: '1'
 };
 delete env.ELECTRON_RUN_AS_NODE;
-const child = spawn(electron, ['.'], { stdio: 'inherit', env, windowsHide: true });
+const child = spawn(electron, ['.'], { stdio: 'inherit', env });
 child.on('error', async (error) => {
   console.error(`Electron 启动失败：${error.message}。请运行 npm run doctor。`);
   await server.close();

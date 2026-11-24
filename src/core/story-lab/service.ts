@@ -36,12 +36,13 @@ export class StoryLabService {
   ) {
     this.store = new LabStore(root);
   }
-  private profile(sessionId: string) {
+  private profile(sessionId: string, previewOnly = false) {
     const session = this.store.session(sessionId),
       profile = this.profiles().find(
         (p) => p.id === session.profileId && p.enabled && p.protocol !== 'images'
       );
-    if (!profile?.apiKey) throw new Error('请在模型设置中配置可用连接，再选择实验室模型');
+    if (!profile || !(profile.apiKey || (previewOnly && profile.hasKey)))
+      throw new Error('请在模型设置中配置可用连接，再选择实验室模型');
     return labProfile(profile, session.outputLimit);
   }
   create(input: z.infer<typeof labCreateSchema>) {
@@ -117,7 +118,7 @@ export class StoryLabService {
     return this.store.detail(session.id);
   }
   preview(input: LabGenerate) {
-    return buildLabContext(this.store, this.skillRoot, input, this.profile(input.sessionId));
+    return buildLabContext(this.store, this.skillRoot, input, this.profile(input.sessionId, true));
   }
   start(input: LabGenerate): LabRequest {
     if (this.draining) throw new Error('实验室正在关闭');

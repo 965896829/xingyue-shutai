@@ -1,5 +1,5 @@
 import { runTaskLoop } from './runtime/task-loop';
-import type { ModelResult } from '../shared/types';
+import { modelRoundLimit, type ModelResult } from '../shared/types';
 import { z } from 'zod';
 import { compatibleRunBase } from './runtime-settings';
 import {
@@ -250,8 +250,8 @@ export async function driveTitleNaming(args: {
     assertControllerRules(root, rules.hash);
     if (namingRulesHash(root, store.db.project(), t) !== skillHash) throw new Error('命名规则已更新');
     if (signal.aborted) throw new RequestError('作者已停止命名', false);
-    if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools)
-      throw new ApplicationError(r.rounds >= p.config.maxRounds ? 'ROUND_LIMIT' : 'TOOL_LIMIT', '命名与审核预算已用完，已有候选已保留');
+    if (r.rounds >= modelRoundLimit(p.config.maxRounds) || r.toolCount >= p.config.maxTools)
+      throw new ApplicationError(r.rounds >= modelRoundLimit(p.config.maxRounds) ? 'ROUND_LIMIT' : 'TOOL_LIMIT', '命名与审核预算已用完，已有候选已保留');
     const reviewing = t.phase === 'reviewing',
       profile = withTaskReasoning(reviewing ? reviewer : writer, r);
     if (profiles().find((v) => v.id === profile.id)?.version !== profile.version)
@@ -262,8 +262,8 @@ export async function driveTitleNaming(args: {
         search: args.search, caller, signal, save, event, onActivity: args.onActivity });
       namingBinding(store, r);
       if (signal.aborted) throw new RequestError('作者已停止命名', false);
-      if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools)
-        throw new ApplicationError(r.rounds >= p.config.maxRounds ? 'ROUND_LIMIT' : 'TOOL_LIMIT', '命名预算已用完，已保存联网资料');
+      if (r.rounds >= modelRoundLimit(p.config.maxRounds) || r.toolCount >= p.config.maxTools)
+        throw new ApplicationError(r.rounds >= modelRoundLimit(p.config.maxRounds) ? 'ROUND_LIMIT' : 'TOOL_LIMIT', '命名预算已用完，已保存联网资料');
     }
     const name = reviewing ? 'submit_title_review' : 'submit_title_candidates';
     const expectedCount = titleCandidateCount(t);

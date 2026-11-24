@@ -4,7 +4,7 @@ import { isLedger, ledgerMaterial } from './ledger-material';
 import { hasChapterPlan } from '../shared/chapter-range';
 import type { ContextManifest, ContextSource, DocumentInfo, Fact, Profile, ProjectState, StageId } from '../shared/types';
 import { memoryScopeSchema, type MemoryScope } from '../shared/studio';
-import { FileStore, fileHash, safePath } from './storage';
+import { FileStore } from './storage';
 import { hash, id, now, paths, requiredInputs, prosePath, updatePath, taskPath, detailPath, activeBatch, batchPath, rhythmPath } from './domain';
 import { contractPath } from './tags';
 import { approvedCreation } from '../shared/creation';
@@ -302,5 +302,5 @@ export function contextChanged(store: FileStore, manifest: ContextManifest) {
   if (manifest.snapshotId && store.db.get('headSnapshot') !== manifest.snapshotId &&
       !compatibleSettingsSnapshot(store, manifest.snapshotId)) return true;
   return contextDependencies(manifest).some(s =>
-    fileHash(safePath(store.root, s.path)) !== currentSettingsSourceHash(store, manifest.snapshotId, s));
+    store.workingHash(s.path) !== currentSettingsSourceHash(store, manifest.snapshotId, s));
 }

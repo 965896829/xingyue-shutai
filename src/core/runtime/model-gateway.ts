@@ -1,5 +1,5 @@
 import type { FileStore } from '../storage';
-import type { ModelResult, Run, Usage } from '../../shared/types';
+import { modelRoundLimit, type ModelResult, type Run, type Usage } from '../../shared/types';
 import { invokeModel, requestBody, RequestError, type RequestDiagnostic } from '../provider';
 import { ApplicationError } from '../../shared/errors';
 import { fingerprint } from './canonical';
@@ -62,7 +62,7 @@ export async function callExternal<T>(
   store: FileStore, owner: AttemptOwner, purpose: string,
   config: { provider: string; model: string; version: number; identity: unknown; pricing: unknown; currency: string },
   request: unknown, reserved: bigint | null, signal: AbortSignal,
-  send: () => Promise<T>, usage: (result: T) => Usage
+  send: () => Promise<T>, usage: (result: T) => Usage, onReceipt?: (ref: string, result: T) => void
 ): Promise<T> {
   if (signal.aborted) throw new RequestError('请求尚未发送，任务已停止', false);
   const budget = store.db.project()?.config.stageBudget ?? null;
@@ -108,6 +108,7 @@ export async function callExternal<T>(
     attempt.completedAt = new Date().toISOString();
     store.db.transaction(() => {
       save(store, attempt);
+      onReceipt?.(attempt.responseRef!, result);
       store.db.event(owner.id, 'attempt-result', '远端请求结果已持久化', { attemptId: attempt.id, usageState: attempt.usageState, responseRef: attempt.responseRef });
     });
     return result;
@@ -128,12 +129,12 @@ export async function callExternal<T>(
 
 export async function callModel(
   store: FileStore, owner: AttemptOwner, purpose: string,
-  caller: typeof invokeModel, ...args: Parameters<typeof invokeModel>
+  caller: typeof invokeModel, ...input: [...Parameters<typeof invokeModel>, onReceipt?: (ref: string, result: ModelResult) => void]
 ): Promise<ModelResult> {
-  const [profile, system, messages, tools, signal, , options] = args;
+  const [profile, system, messages, tools, signal, delta, options, onReceipt] = input;
+  const args: Parameters<typeof invokeModel> = [profile, system, messages, tools, signal, delta, options];
   const bound = withTaskReasoning(profile, owner);
   args[0] = bound;
-  const delta = args[5];
   const isolated = ('creative' in owner ? (owner as Run).creative : undefined) ??
     (purpose.startsWith('scene-prose:') || ('manifest' in owner && (owner as Run).manifest?.scope?.viewpoint === 'character')
       ? { audienceHash: fingerprint({ purpose, scope: (owner as Run).manifest?.scope, snapshot: (owner as Run).manifest?.snapshotId }), rulesHash: fingerprint(system) } : undefined);
@@ -182,7 +183,7 @@ export async function callModel(
       }, body, reserved, signal, async () => {
         options?.onActivity?.('waiting');
         return caller(...args);
-      }, (result) => result.usage);
+      }, (result) => result.usage, onReceipt);
       for (const call of result.calls) {
         const normalized = normalizeToolArguments(call.arguments);
         if (normalized !== call.arguments) {
@@ -202,7 +203,7 @@ export async function callModel(
       const uncertain = error instanceof RequestError && error.uncertain;
       // An unknown bill cannot be squeezed into a hard monetary budget.
       if (uncertain && store.db.project()?.config.stageBudget != null) throw error;
-      const limit = store.db.project()?.config.maxRounds ?? 12;
+      const limit = modelRoundLimit(store.db.project()?.config.maxRounds);
       const calls = owner.rounds ?? ((owner.budgets?.length ?? 0) + (owner.networkRetries ?? 0));
       if (calls >= limit) throw error;
       const delayMs = recoveryDelay(retry + 1, (error as RequestError).diagnostic?.retryAfterMs);
@@ -217,7 +218,7 @@ export async function callModel(
         if (uncertain) throw error;
         throw new RequestError('已停止连接恢复，当前候选和任务记录已保留', false, { source: 'client', code: 'CANCELLED' });
       }
-      if (calls >= (store.db.project()?.config.maxRounds ?? 12)) throw error;
+      if (calls >= modelRoundLimit(store.db.project()?.config.maxRounds)) throw error;
       owner.networkRetries = (owner.networkRetries ?? 0) + 1;
       if (owner.rounds !== undefined) owner.rounds++;
       // Persist counters before a retry can leave this process. Restart never replays it.

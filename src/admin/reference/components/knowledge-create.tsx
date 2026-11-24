@@ -239,7 +239,7 @@ export function KnowledgeCreate() {
               </button>
             </p>
             <p className="ref-field-help">
-              支持多文件上传，也可以使用 Ctrl+V 粘贴
+              支持选择多个文件，也可以直接粘贴
             </p>
             <div className="knowledge-filetypes">
               {["PDF", "DOCX", "TXT", "MD", "XLSX", "CSV", "HTML", "JSON"].map(

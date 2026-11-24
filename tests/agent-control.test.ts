@@ -690,6 +690,33 @@ test('调高上限自动就地恢复完整候选，重复重查兼容旧界面�
   } finally { await service.drain(); }
 });
 
+test('选择不限轮数后可从累计超过一百轮的位置继续，完整候选仍进入审阅', async () => {
+  let calls = 0, service: Service;
+  const fixture = await setup(async () => {
+    if (++calls === 1) {
+      const project = service.store!.db.project();
+      return reply('', stageOutputs('S02', project).map(file => service.change(file, documentFixture(project, file, service))));
+    }
+    assert.equal(calls, 2);
+    return reply('项目配置已经准备好。');
+  });
+  service = fixture.service;
+  try {
+    const store = service.store!;
+    await service.invoke('project.configure', { config: { ...store.db.project().config, maxRounds: 0 } });
+    const run = service.makeRun('stage', '继续当前项目配置');
+    run.rounds = 105;
+    store.db.saveRun(run);
+    await service.runner!.drive(run.id);
+    const done = store.db.run(run.id);
+    assert.equal(done.status, 'awaiting_review', done.error ?? '');
+    assert.equal(done.rounds, 105 + calls);
+    assert.ok(calls > 0);
+    assert.equal(done.accepted, false);
+    assert.equal(store.db.project().config.maxTools, 64);
+  } finally { await service.drain(); }
+});
+
 test('最后一轮提交完整候选即进入审阅，不为结束任务再请求一次模型', async () => {
   let calls = 0, service: Service;
   const created = await setup(async () => {

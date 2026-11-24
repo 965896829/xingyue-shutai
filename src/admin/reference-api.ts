@@ -58,7 +58,7 @@ export async function recordRows(kind: string, snapshot?: Snapshot): Promise<Dat
   if (['pricing', 'runtime-policies'].includes(kind)) return profiles.map(p => ({ ...modelRow(p), data: kind === 'pricing' ? { model: p.model, resource_type: p.protocol === 'images' ? 'image' : 'text', unit: 'million_tokens', input_rate: p.inputPrice, output_rate: p.outputPrice, currency: p.currency, description: '客户端成本估算单价，不是平台收费规则' } : { model: p.model, timeout: p.timeoutSeconds, description: '流式按连续无生成进展计时；非流式按整次请求计时', concurrency: 1 } }));
   if (kind === 'skills') return (await invokeCommand('skills.list')).map(skill => ({ id: skill.id, name: skill.title, status: 'active', version: 1, created_at: '', data: { description: skill.description, instructions: skill.contract, version: skill.sha256.slice(0, 12), stage: skill.stage, source: '安装包', category: skill.stage, tools: skill.tools, path: skill.path, builtin: true } }));
   if (kind === 'knowledge') return s.documents.map(d => ({ id: d.path, name: d.path, status: 'active', version: 1, created_at: '', data: { description: '当前作品正式资料', scope: 'project', project_id: s.project?.id, purpose: 'reference', retrieval_mode: 'lexical' } }));
-  if (kind === 'desktop-devices') return [{ id: session.client.clientId, name: session.client.name, status: 'active', version: 1, created_at: session.client.startedAt ?? '', data: { client_type: '星月书台', device_id: session.client.clientId, client_version: session.client.version, os: 'Windows', device_code: session.client.clientId, user_id: '本机作者', session_id: `${session.client.sessions} 个网页会话` } }];
+  if (kind === 'desktop-devices') return [{ id: session.client.clientId, name: session.client.name, status: 'active', version: 1, created_at: session.client.startedAt ?? '', data: { client_type: '星月书台', device_id: session.client.clientId, client_version: session.client.version, os: session.client.os ?? '未知', device_code: session.client.clientId, user_id: '本机作者', session_id: `${session.client.sessions} 个网页会话` } }];
   return [];
 }
 function paged(items: DataRecord[], params: URLSearchParams) {
@@ -192,7 +192,7 @@ export async function referenceRequest(path: string, options: RequestInit = {}):
     const s = await invokeCommand('app.snapshot');
     return { adopted_characters: null, confirmed_chapters: s.project ? Object.values(s.project.chapters).filter(x => x === 'complete').length : 0, credits_per_1000_adopted_characters: null, editing_active_minutes: null, adopted_patch_proposals: s.runs.filter(r => r.accepted && r.mode === 'revision').length, pending_reconciliation: s.runs.filter(r => r.status === 'unknown').length, supplier_costs: [], unconfigured_supplier_requests: s.runs.filter(r => r.usage.cost === null).length, note: '章节数来自当前作品；历史费用、人工编辑时长和平台算力指标未汇总。' };
   }
-  if (route === '/admin/system/themes') return { items: [], default: { name: '原管理后台', accent: '#d4ef68', background: '#161616', surface: '#202020', radius: 9, font: 'Arial, Microsoft YaHei, sans-serif', blocks: [] } };
+  if (route === '/admin/system/themes') return { items: [], default: { name: '原管理后台', accent: '#d4ef68', background: '#161616', surface: '#202020', radius: 9, font: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif', blocks: [] } };
   if (route === '/notifications') {
     const s = await invokeCommand('app.snapshot');
       const all = s.runs.filter(r => ['complete', 'awaiting_review', 'needs_repair', 'failed', 'unknown', 'paused', 'awaiting_input', 'awaiting_permission'].includes(r.status)).map(r => {

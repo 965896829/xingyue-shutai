@@ -1,5 +1,5 @@
 import { focusInstruction, promptProfileVersion } from './prompt-profile';
-import { spawn,type ChildProcess } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 import { designPrompt, designResource, assertDesign, designContext } from './design-operations';
 import { z } from 'zod';
@@ -14,6 +14,7 @@ import { recoveryDecision,setFailure } from '../shared/recovery';
 import { pendingOutputCodes,retryNeedsConfirmation,visibleRunIssues } from '../shared/run-presentation';
 import type { MemoryScope } from '../shared/studio';
 import {
+  modelRoundLimit,
 type AppEvent,
 type ProjectState,
 type Run,
@@ -75,7 +76,7 @@ import { isPublishingConfigChange } from './publishing';
 import { assertWorkbenchCandidate } from './workbench-candidates';
 import { driveRevisionCore, revisionCoreIssues, requiresRevisionCore } from './workflows/revision-core';
 import { SkillRegistry,skillAllowsPath,stageSkills } from './skill-registry';
-import { FileStore,fileHash,safePath } from './storage';
+import { FileStore,safePath } from './storage';
 import { continuityIssues } from './story-impact';
 import { planningRulesHash } from './tag-planning';
 import { contractPath,planningBinding,planningIssues,tagContext,tagFactIssues } from './tags';
@@ -224,7 +225,7 @@ export class AgentRunner {
   readonly telemetry: NarrativeTelemetry;
   controller: AbortController | null = null;
   private activeRun: Run | null = null;
-  child: ChildProcess | null = null;
+  private stopTerminal?: () => void;
   constructor(
     readonly store: FileStore,
     readonly skillRoot: string,
@@ -251,11 +252,7 @@ export class AgentRunner {
   stop() {
     this.controller?.abort();
     void this.telemetry.stop();
-    if (this.child?.pid) {
-      if (process.platform === 'win32')
-        spawn('taskkill', ['/PID', String(this.child.pid), '/T', '/F'], { windowsHide: true });
-      else this.child.kill('SIGTERM');
-    }
+    this.stopTerminal?.();
   }
   requestControl(runId: string, action: 'pause' | 'cancel') {
     const run = this.activeRun?.id === runId ? this.activeRun : this.store.db.run(runId);
@@ -462,7 +459,7 @@ export class AgentRunner {
       if (!this.taskRulesMatch(r, p, currentSkillHash))
         throw new Error('任务规则或工具契约发生变化，请重新组装上下文');
       if (r.skillHash && r.skillHash !== currentSkillHash && r.messages.length)
-        r.messages.push({ role: 'user', content: `作者仅调整了任务执行参数，已有故事与候选保持不变。当前累计已调用 ${r.rounds} 轮，最新上限：${JSON.stringify({ maxRounds: p.config.maxRounds, maxTools: p.config.maxTools, stageBudget: p.config.stageBudget })}。继续原任务，候选仍需作者审阅。` });
+        r.messages.push({ role: 'user', content: `作者仅调整了任务执行参数，已有故事与候选保持不变。当前累计已调用 ${r.rounds} 轮，最新上限：${JSON.stringify({ maxRounds: p.config.maxRounds || '不限', maxTools: p.config.maxTools, stageBudget: p.config.stageBudget })}。继续原任务，候选仍需作者审阅。` });
       r.skillHash = currentSkillHash;
       if (!r.messages.length) {
         r.messages.push({
@@ -508,7 +505,7 @@ export class AgentRunner {
       await runTaskLoop({ executorId: r.executorId, signal,
         event: event => { if (event.type === 'turn_end') this.store.db.event(r.id, 'pi-turn', '本轮已完成，继续条件由当前阶段产物决定', { round: r.rounds }); },
         next: async () => {
-        if (r.rounds >= p.config.maxRounds) return;
+        if (r.rounds >= modelRoundLimit(p.config.maxRounds)) return;
         if (signal.aborted) throw new RequestError('作者已停止执行', false);
         assertControllerRules(this.skillRoot, r.agentRulesHash!);
         if (expressionFingerprint(this.skillRoot, this.store.db.project().config) !== expression.fingerprint)
@@ -616,7 +613,7 @@ export class AgentRunner {
             }
           }
           if (this.recoverReadyCandidate(r, p, 'checkpoint')) return false;
-          if ((r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools) && this.recoverReadyCandidate(r, p, 'budget')) return false;
+          if ((r.rounds >= modelRoundLimit(p.config.maxRounds) || r.toolCount >= p.config.maxTools) && this.recoverReadyCandidate(r, p, 'budget')) return false;
         } else {
           if (r.documentDrafts?.length) {
             r.messages.push({ role: 'user', content: JSON.stringify({ instruction: '草稿已分段保存但尚未结束。继续追加下一段，全部完成后 final:true；不要重复已保存内容。', documentDrafts: draftSummary(r) }) });
@@ -639,26 +636,29 @@ export class AgentRunner {
       r.error = '已达到本任务轮数上限。可审阅候选或在设置提高上限后继续。';
       this.save(r);
     } catch (e) {
-      setRunStatus(r, e instanceof RequestError && e.uncertain ? 'unknown' : 'paused');
-      if (r.status === 'unknown') {
-        r.usage.cost = null;
-        r.usage.input = null;
-        r.usage.output = null;
-        recordUsage(this.store, r, r.usage, {
-          phase: `${r.pipeline?.phase ?? r.stage}:unknown`,
-          profileId: profile.id,
-          profileVersion: profile.version,
-          usage: r.usage
-        });
-      }
-      const failure = classifyFailure(e);
-      if (r.documentDrafts?.length) {
-        const chunks = r.documentDrafts.reduce((sum, draft) => sum + draft.chunks, 0);
-        failure.message += ` 已保存 ${chunks} 段草稿，恢复任务时从已保存位置继续。`;
-      }
-      setFailure(r, failure);
-      this.event(r, 'error', r.error ?? '任务未完成');
-      this.save(r);
+      this.store.db.transaction(() => {
+        setRunStatus(r, e instanceof RequestError && e.uncertain ? 'unknown' : 'paused');
+        if (r.status === 'unknown') {
+          r.usage.cost = null;
+          r.usage.input = null;
+          r.usage.output = null;
+          recordUsage(this.store, r, r.usage, {
+            phase: `${r.pipeline?.phase ?? r.stage}:unknown`,
+            profileId: profile.id,
+            profileVersion: profile.version,
+            usage: r.usage
+          });
+        }
+        const failure = classifyFailure(e);
+        if (r.documentDrafts?.length) {
+          const chunks = r.documentDrafts.reduce((sum, draft) => sum + draft.chunks, 0);
+          failure.message += ` 已保存 ${chunks} 段草稿，恢复任务时从已保存位置继续。`;
+        }
+        setFailure(r, failure);
+        this.event(r, 'error', r.error ?? '任务未完成');
+        this.save(r);
+        this.store.db.set(`inflight:${r.id}`, false);
+      });
     } finally {
       try {
         await this.telemetry.stop();
@@ -667,7 +667,6 @@ export class AgentRunner {
       } finally {
         this.controller = null;
         this.activeRun = null;
-        this.child = null;
       }
     }
   }
@@ -720,7 +719,7 @@ export class AgentRunner {
         if (checked.changes.some(change => !stageOutputs(r.stage, p).includes(change.path) || !skillAllowsPath(r.skillId, change.path))) return false;
         if (checked.changes.some(change => (r.candidateWrites?.[change.path] ?? 0) >= 3 && r.changes.find(old => old.path === change.path)?.content !== change.content)) return false;
       }
-      if (candidateChangesForCurrentSettings(this.store, checked).some(change => fileHash(safePath(this.store.root, change.path)) !== change.baseHash)) return false;
+      if (candidateChangesForCurrentSettings(this.store, checked).some(change => this.store.workingHash(change.path) !== change.baseHash)) return false;
       this.check(checked, p);
       if (checked.issues.some(issue => issue.severity === 'error')) return false;
     } catch { return false; }
@@ -743,8 +742,8 @@ export class AgentRunner {
     if (issues.some(issue => issue.code === 'revision_core_required')) return false;
     const errors = issues.filter(issue => issue.severity === 'error');
     if (!errors.length) { r.repairScope = undefined; return false; }
-    if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools || (r.repairAttempts?.[phase] ?? 0) >= automaticRepairLimit) {
-      setFailure(r, classifyFailure(new ApplicationError(r.rounds >= p.config.maxRounds ? 'ROUND_LIMIT' : r.toolCount >= p.config.maxTools ? 'TOOL_LIMIT' : 'REPAIR_EXHAUSTED', '自动修复已暂停，候选和具体问题已保留。可核对后恢复任务。')));
+    if (r.rounds >= modelRoundLimit(p.config.maxRounds) || r.toolCount >= p.config.maxTools || (r.repairAttempts?.[phase] ?? 0) >= automaticRepairLimit) {
+      setFailure(r, classifyFailure(new ApplicationError(r.rounds >= modelRoundLimit(p.config.maxRounds) ? 'ROUND_LIMIT' : r.toolCount >= p.config.maxTools ? 'TOOL_LIMIT' : 'REPAIR_EXHAUSTED', '自动修复已暂停，候选和具体问题已保留。可核对后恢复任务。')));
       return false;
     }
     r.repairScope = planCandidateRepair(r, errors, phase);
@@ -975,8 +974,8 @@ export class AgentRunner {
     if (!errors.some(proseFinding) || errors.some(i => !proseFinding(i))) return false;
     const report = r.changes.find(c => c.path === reportPath);
     if (!report || !r.pipeline.proseHash) return false;
-    if ((r.repairAttempts?.prose ?? 0) >= automaticRepairLimit || r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools) {
-      setFailure(r, classifyFailure(new ApplicationError(r.rounds >= p.config.maxRounds ? 'ROUND_LIMIT' : r.toolCount >= p.config.maxTools ? 'TOOL_LIMIT' : 'REPAIR_EXHAUSTED', '正文审核要求继续修订，已保存原候选和审核意见。请核对后恢复任务。')));
+    if ((r.repairAttempts?.prose ?? 0) >= automaticRepairLimit || r.rounds >= modelRoundLimit(p.config.maxRounds) || r.toolCount >= p.config.maxTools) {
+      setFailure(r, classifyFailure(new ApplicationError(r.rounds >= modelRoundLimit(p.config.maxRounds) ? 'ROUND_LIMIT' : r.toolCount >= p.config.maxTools ? 'TOOL_LIMIT' : 'REPAIR_EXHAUSTED', '正文审核要求继续修订，已保存原候选和审核意见。请核对后恢复任务。')));
       setRunStatus(r, 'needs_repair'); this.save(r); return true;
     }
     r.proseReviewFeedback = { review: structuredClone(report), proseHash: r.pipeline.proseHash };
@@ -1018,7 +1017,7 @@ export class AgentRunner {
       if (this.profiles().find(item => item.id === profile.id)?.version !== profile.version)
         throw new Error('模型配置已改变，请重新核对');
       const files = [...new Set([...(r.memoryRepair?.paths ?? []), ...(r.memoryRepair?.sources ?? []), ...r.facts.flatMap(fact => fact.evidence.map(e => e.path))])];
-      if (files.some(path => fileHash(safePath(this.store.root, path)) !== (this.store.db.document(path)?.hash ?? null)))
+      if (files.some(path => this.store.workingHash(path) !== (this.store.db.document(path)?.hash ?? null)))
         throw new Error('原文存在未确认的外部改动，已暂停记忆核对');
     };
     verify();
@@ -1035,7 +1034,7 @@ export class AgentRunner {
         return result.text as string;
       }
     }
-    if (r.rounds >= p.config.maxRounds) throw new Error('本次核对已达到请求次数上限，进度已保存；提高任务上限后可继续');
+    if (r.rounds >= modelRoundLimit(p.config.maxRounds)) throw new Error('本次核对已达到请求次数上限，进度已保存；提高任务上限后可继续');
     const { system, messages } = this.memoryRequest(r, p, phase, instruction, input, continuation);
     syncUsage(this.store, r);
     requestGuard(profile, system, messages, [], r, p.config.stageBudget, this.telemetry.reserved);
@@ -1220,7 +1219,7 @@ export class AgentRunner {
         else if (c) result = { ...c, hash: hash(c.content), status: 'candidate', source: 'candidate', candidateAvailable: true };
         else {
           const doc = this.store.db.document(v.path);
-          const diskHash = fileHash(safePath(this.store.root, v.path));
+          const diskHash = this.store.workingHash(v.path);
           if (!doc?.hash && diskHash === null)
             throw new Error(`文件尚未创建：${v.path}。请使用当前资料包与本阶段允许的产物路径；缺少文件不代表作者修改过文件。`);
           if (!doc?.hash)
@@ -1288,7 +1287,7 @@ export class AgentRunner {
             )
           )
             throw new Error(`路径不属于已批准阶段：${c.path}`);
-          if (fileHash(safePath(this.store.root, c.path)) !== c.baseHash)
+          if (this.store.workingHash(c.path) !== c.baseHash)
             throw new Error(`版本已改变：${c.path}`);
           if (completed.some(done => done.path === c.path) && (r.candidateWrites?.[c.path] ?? 0) >= 3 && r.changes.find(old => old.path === c.path)?.content !== c.content)
             throw new ApplicationError('REPAIR_EXHAUSTED', '自动修复已达两次，候选已保留，可核对后恢复任务');
@@ -1429,9 +1428,11 @@ export class AgentRunner {
   }
   terminal(script: string, signal: AbortSignal): Promise<unknown> {
     return new Promise((resolve, reject) => {
+      if (signal.aborted) return reject(new Error('终端任务已停止'));
+      const windows = process.platform === 'win32';
       const child = spawn(
-        process.platform === 'win32' ? 'powershell.exe' : 'sh',
-        process.platform === 'win32'
+        windows ? 'powershell.exe' : '/bin/sh',
+        windows
           ? [
               '-NoLogo',
               '-NoProfile',
@@ -1449,17 +1450,34 @@ export class AgentRunner {
         {
           cwd: this.store.root,
           windowsHide: true,
+          detached: !windows,
           env: {
-            SystemRoot: process.env.SystemRoot,
+            ...(windows
+              ? { SystemRoot: process.env.SystemRoot, TEMP: process.env.TEMP, TMP: process.env.TMP, USERPROFILE: process.env.USERPROFILE }
+              : { HOME: process.env.HOME, TMPDIR: process.env.TMPDIR, LANG: process.env.LANG, LC_CTYPE: process.env.LC_CTYPE }),
             PATH: process.env.PATH,
-            TEMP: process.env.TEMP,
-            TMP: process.env.TMP,
-            USERPROFILE: process.env.USERPROFILE,
             NODE_TLS_REJECT_UNAUTHORIZED: '1'
           }
         }
       );
-      this.child = child;
+      let stopping = false;
+      let forceStop: NodeJS.Timeout | undefined;
+      const signalGroup = (how: NodeJS.Signals) => {
+        try { process.kill(-child.pid!, how); }
+        catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') reject(error); }
+      };
+      const stop = () => {
+        if (stopping || !child.pid) return;
+        stopping = true;
+        if (windows) {
+          spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true })
+            .once('error', () => child.kill());
+        } else {
+          signalGroup('SIGTERM');
+          forceStop = setTimeout(() => signalGroup('SIGKILL'), 1500).unref();
+        }
+      };
+      this.stopTerminal = stop;
       let output = '';
       const stdoutDecoder = new StringDecoder('utf8'),
         stderrDecoder = new StringDecoder('utf8');
@@ -1469,15 +1487,15 @@ export class AgentRunner {
       child.stdout?.on('data', (b) => add(stdoutDecoder.write(b)));
       child.stderr?.on('data', (b) => add(stderrDecoder.write(b)));
       const timer = setTimeout(() => this.stop(), 120000);
-      const stop = () => this.stop();
       signal.addEventListener('abort', stop, { once: true });
       child.on('error', reject);
       child.on('close', (code) => {
         clearTimeout(timer);
+        clearTimeout(forceStop);
         add(stdoutDecoder.end());
         add(stderrDecoder.end());
         signal.removeEventListener('abort', stop);
-        this.child = null;
+        if (this.stopTerminal === stop) this.stopTerminal = undefined;
         resolve({ code, output, truncated: output.length >= 500_000 });
       });
     });

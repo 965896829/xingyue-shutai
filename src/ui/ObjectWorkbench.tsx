@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Users, Network, ListTree, Globe2, Search, SlidersHorizontal, RotateCw, ArrowLeft } from 'lucide-react';
 import type { Snapshot } from '../shared/types';
 import type { MemoryScope, SourceRef } from '../shared/studio';
 import type { WorkbenchBinding, WorkbenchField, WorkbenchObject, WorkbenchView } from '../shared/workbench';
@@ -19,6 +20,7 @@ const groups = [
   ['world', '世界']
 ] as const;
 type Group = (typeof groups)[number][0];
+const groupIcons = { character: Users, relation: Network, plot: ListTree, world: Globe2 };
 const groupOf = (o: WorkbenchObject): Group =>
   o.kind === 'character'
     ? 'character'
@@ -42,6 +44,11 @@ const kindNames: Record<string, string> = {
   character: '人物',
   plot: '剧情'
 };
+
+function displayFieldValue(value: string) {
+  const text = value.replace(/(?:[；;]\s*)?稳定标识\s+CH\d+\s*/g, '').replace(/^[；;]/, '').trim();
+  return /^(?:未设定|未记录|未填写|待补充)[。.]?$/.test(text) ? '' : text;
+}
 
 function ObjectRelations({
   objects,
@@ -222,6 +229,9 @@ export function ObjectWorkbench({
     [candidateNonce, setCandidateNonce] = useState(0),
     [candidateId, setCandidateId] = useState<string>();
   const [allFields, setAllFields] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const canvas = useRef<HTMLDivElement>(null);
+  const filterId = useId();
   const [projectedObject, setProjectedObject] = useState<WorkbenchObject>();
   const scopeKey = JSON.stringify(scope);
   const selectionKey = `workbench-selection:${project.id}`;
@@ -281,7 +291,18 @@ export function ObjectWorkbench({
   const object =
     visible.find((o) => o.id === selected) ??
     (projectedObject?.id === selected && groupOf(projectedObject) === group ? projectedObject : undefined) ??
-    visible[0];
+    (group === 'plot' ? undefined : visible[0]);
+  const plotDetail = group === 'plot' && object && object.id !== projectedObject?.id &&
+    !data?.plot?.nodes.some(node => node.id === object.id);
+  const fields = (object?.fields ?? [])
+    .filter(field => !/^(?:ID|标识|编号|人物编号|人物标识|实体ID)$/i.test(field.label))
+    .map(field => ({ field, text: displayFieldValue(field.value) }));
+  const primaryFields = fields.filter(({ field, text }) => text && (group === 'character'
+    ? /身份|目标|状态|关系|本卷|伤势|位置|所在/.test(field.label)
+    : plotDetail || !['plot', 'world'].includes(group)));
+  useLayoutEffect(() => {
+    canvas.current?.scrollTo({ top: 0 });
+  }, [group, selected, scopeKey]);
   const binding: WorkbenchBinding | undefined =
     data && object
       ? { projectId: data.projectId, snapshotId: data.snapshotId, objectId: object.id, scope: data.scope }
@@ -350,7 +371,32 @@ export function ObjectWorkbench({
   ];
   return (
     <section className="object-workbench" aria-label="共创画布">
-      <div className="object-toolbar">
+      <header className="canvas-toolbar">
+        <nav className="object-groups" aria-label="画布分类">
+          {groups.map(([id, title]) => {
+            const Icon = groupIcons[id];
+            return <button key={id} aria-pressed={group === id} onClick={() => {
+              if (id === 'plot') setSelected('project');
+              setGroup(id);
+              setEditing(undefined);
+              setQuery('');
+              setLimit(80);
+              setDiscussionField(undefined);
+              setAllFields(false);
+            }}><Icon size={15} aria-hidden="true" />{title}</button>;
+          })}
+        </nav>
+        <div className="canvas-scope">
+          <button aria-expanded={filtersOpen} aria-controls={filterId} onClick={() => setFiltersOpen(!filtersOpen)}>
+            <SlidersHorizontal size={15} aria-hidden="true" />筛选
+            <small>第 {scope.chapter} 章 · {{ author: '作者', reader: '读者', character: '人物' }[scope.viewpoint]}{scope.mode === 'historical' ? ' · 历史只读' : ''}</small>
+          </button>
+          <button className="icon" aria-label="刷新共创画布" title="刷新共创画布" disabled={loading} onClick={() => setNonce((n) => n + 1)}>
+            <RotateCw size={15} />
+          </button>
+        </div>
+      </header>
+      <div className="object-toolbar" id={filterId} hidden={!filtersOpen}>
         <label>
           截至章节
           <input
@@ -411,9 +457,6 @@ export function ObjectWorkbench({
             </select>
           </label>
         )}
-        <button aria-label="刷新共创画布" disabled={loading} onClick={() => setNonce((n) => n + 1)}>
-          刷新
-        </button>
         {data && (
           <span className="object-version">
             第 {data.revision} 版{scope.mode === 'historical' ? ' · 历史只读' : ''}
@@ -427,25 +470,8 @@ export function ObjectWorkbench({
       )}
       <div className={`object-layout${chatOpen && conversationId ? ' with-discussion' : ''}`}>
         <nav className="object-navigation" aria-label="创作对象">
-          <div className="object-groups">
-            {groups.map(([id, title]) => (
-              <button
-                key={id}
-                aria-pressed={group === id}
-                className={group === id ? 'active' : ''}
-                onClick={() => {
-                  setGroup(id);
-                  setEditing(undefined);
-                  setQuery('');
-                  setLimit(80);
-                  setDiscussionField(undefined);
-                  setAllFields(false);
-                }}
-              >
-                {title}
-              </button>
-            ))}
-          </div>
+          <div className="object-index-heading"><strong>对象目录</strong><small>{visible.length}</small></div>
+          <label className="index-search"><Search size={14} aria-hidden="true" />
           <input
             type="search"
             placeholder="查找对象"
@@ -456,6 +482,7 @@ export function ObjectWorkbench({
               setLimit(80);
             }}
           />
+          </label>
           <div className="object-list">
             {visible.slice(0, limit).map((o) => (
               <button
@@ -472,12 +499,14 @@ export function ObjectWorkbench({
               </button>
             ))}
           </div>
+          {query && !visible.length && <small role="status">没有匹配的对象</small>}
           {visible.length > limit && (
             <button onClick={() => setLimit((n) => n + 80)}>显示更多 · 共 {visible.length} 项</button>
           )}
         </nav>
-        <div className="object-canvas">
-          {!loading && data?.plot && scopeBinding && group === 'plot' && (
+        <div className="object-canvas" ref={canvas}>
+          {plotDetail && <button className="canvas-back" onClick={() => { setSelected('project'); setQuery(''); setEditing(undefined); setDiscussionField(undefined); setAllFields(false); }}><ArrowLeft size={14} />返回分卷大纲</button>}
+          {!loading && data?.plot && scopeBinding && group === 'plot' && !plotDetail && (
             <PlotWorkbench
               view={data.plot}
               binding={scopeBinding}
@@ -505,7 +534,11 @@ export function ObjectWorkbench({
             group === 'world' || group === 'plot' ? null : <p className="empty-state">当前范围没有可用记录</p>
           ) : (
             <>
-              <header className="object-heading">
+              {group === 'plot' && !plotDetail ? <header className="plot-detail-actions">
+                <button disabled={acting || !data?.editable} onClick={() => void act(() => discuss())}>
+                  {object.id === 'project' ? '讨论这部作品' : '讨论当前大纲'}
+                </button>
+              </header> : <header className="object-heading">
                 <div>
                   <small>
                     {kindNames[object.kind]}
@@ -516,7 +549,7 @@ export function ObjectWorkbench({
                 <button disabled={acting || !data?.editable} onClick={() => void act(() => discuss())}>
                   讨论此对象
                 </button>
-              </header>
+              </header>}
               {object.kind === 'character' && binding && data && (
                 <CharacterWorkbench
                   binding={binding}
@@ -530,23 +563,14 @@ export function ObjectWorkbench({
               {group === 'relation' && (
                 <ObjectRelations objects={data?.objects ?? []} selected={object} onSelect={selectObject} />
               )}
-              {object.chapter && (
+              {object.chapter && (group !== 'plot' || plotDetail) && (
                 <div className="object-story-time">
                   <span>{object.chapter}</span>
-                  <span>{object.storyTime || '故事时间未记录'}</span>
+                  {object.storyTime && <span>{object.storyTime}</span>}
                 </div>
               )}
               <div className="object-fields">
-                {object.fields
-                  .filter((field) => !/^(?:ID|标识|编号|人物编号|人物标识|实体ID)$/i.test(field.label))
-                  .filter(
-                    (field) =>
-                      allFields ||
-                      (group === 'character'
-                        ? /身份|目标|状态|关系|本卷|伤势|位置|所在/.test(field.label)
-                        : !['plot', 'world'].includes(group))
-                  )
-                  .map((field) => (
+                {(allFields ? fields : primaryFields).map(({ field, text }) => (
                     <article key={field.id} className="object-field">
                       <header>
                         <h3>{field.label}</h3>
@@ -590,14 +614,7 @@ export function ObjectWorkbench({
                             </button>
                           </div>
                         </form>
-                      ) : (
-                        <p className="object-value">
-                          {field.value
-                            .replace(/(?:[；;]\s*)?稳定标识\s+CH\d+\s*/g, '')
-                            .replace(/^[；;]/, '')
-                            .trim() || '未记录'}
-                        </p>
-                      )}
+                      ) : text && <p className="object-value">{text}</p>}
                       <div className="object-actions">
                         <button onClick={() => onSource(field.source)}>来源</button>
                         <button
@@ -615,7 +632,7 @@ export function ObjectWorkbench({
                                 setValue(field.value);
                               }}
                             >
-                              修改
+                              {text ? '修改' : '填写'}
                             </button>
                             <button
                               disabled={acting}
@@ -639,7 +656,7 @@ export function ObjectWorkbench({
                     </article>
                   ))}
               </div>
-              {!!object.fields.length && (
+              {fields.length > primaryFields.length && (
                 <button className="object-more-fields" onClick={() => setAllFields((v) => !v)}>
                   {allFields ? '收起详情' : group === 'character' ? '全部资料与来源' : '字段与来源'}
                 </button>

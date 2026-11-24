@@ -3,7 +3,7 @@ import { workbenchDiscussionContext, resolveWorkbenchObject } from '../workbench
 import { bindWorkbenchCandidate } from '../workbench-candidates';
 import { retryNeedsConfirmation } from '../../shared/run-presentation';
 import { needsNewChapterCandidate } from '../../shared/task-revision';
-import { type Command } from '../../shared/types';
+import { modelRoundLimit, type Command } from '../../shared/types';
 import { hash, now, prosePath, stageNames } from '../domain';
 import { prepareAuthorRevision } from '../runtime/run-recovery';
 import type { Service } from '../service';
@@ -45,7 +45,8 @@ type Host = Pick<
   | 'operations'
   | 'projectSessionId'
   | 'track'
-  | 'scheduler'
+  | 'scheduleExecution'
+  | 'cancelQueued'
   | 'executor'
   | 'store'
   | 'draining'
@@ -99,7 +100,7 @@ export async function handleDiscussionCommand(
       typeof a.limit === 'number' ? a.limit : 100
     );
   if (command === 'chat.stop') {
-    chat.stop();
+    if (!host.cancelQueued('conversation')) chat.stop();
     return true;
   }
   if (command === 'chat.send' || command === 'chat.retry' || command === 'run.discuss') {
@@ -157,16 +158,14 @@ export async function handleDiscussionCommand(
             prepared.candidateEdit = { runId: task.id, runHash: taskRunHash(task) };
         }
         records.save('conversation_turns', prepared);
+        s.db.set('queuedForeground', { id: prepared.id, kind: 'conversation' });
         host.operations.complete(prepared.id);
       },
       manuscript
     );
     const session = host.projectSessionId;
     void host.track(
-      host.scheduler
-        .run(turn.id, ['foreground'], 10, () =>
-          host.executor!.execute({ id: turn.id, kind: 'conversation', referenceChats: allowed })
-        )
+      host.scheduleExecution({ id: turn.id, kind: 'conversation', referenceChats: allowed })
         .then(async () => {
           if (host.store !== s || host.projectSessionId !== session || host.draining) return;
           const finished = records.get('conversation_turns', turn.id);
@@ -243,7 +242,7 @@ export async function handleDiscussionCommand(
         checkpointVersion: current.checkpointVersion ?? 1
       });
       const newCandidate = needsNewChapterCandidate(current, p.config);
-      if (!newCandidate && (current.rounds >= p.config.maxRounds || current.toolCount >= p.config.maxTools))
+      if (!newCandidate && (current.rounds >= modelRoundLimit(p.config.maxRounds) || current.toolCount >= p.config.maxTools))
         throw new Error('已达到当前任务调用上限，请先在运行设置中调整限额');
       const instruction = `${proposal.request}\n范围：${proposal.scope}`;
       records.transaction(() => {
@@ -272,14 +271,11 @@ export async function handleDiscussionCommand(
           proposal.status = 'executed';
           proposal.executionId = prepared.id;
           records.save('action_proposals', proposal);
+          s.db.set('queuedForeground', { id: prepared.id, kind: 'conversation' });
           host.operations.complete({ kind: 'draft', id: prepared.id });
         }
       );
-      void host.track(
-        host.scheduler.run(turn.id, ['foreground'], 10, () =>
-          host.executor!.execute({ id: turn.id, kind: 'conversation' })
-        )
-      );
+      void host.scheduleExecution({ id: turn.id, kind: 'conversation' });
       return { kind: 'draft', id: turn.id };
     }
     // Existing workflow guards remain the single authority for formal stage execution.

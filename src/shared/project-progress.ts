@@ -1,5 +1,19 @@
 import type { ProjectState } from './types';
 
+export const stageLabels = {
+  S01: '设定拆解',
+  S02: '项目与文风',
+  S03: '世界规则',
+  S04: '人物与连续性',
+  S05: '分卷大纲',
+  S06: '章节总纲',
+  S07: '批次节奏',
+  S08: '批量细纲',
+  S09: '单章设计',
+  S10: '正文生成',
+  S11: '章后更新'
+};
+
 /** The workflow position belongs to the project, independently of the document or historical run being viewed. */
 export function currentStageDocument(project: Pick<ProjectState, 'stage' | 'chapter' | 'batches' | 'finished'>): string | undefined {
   if (project.finished) return undefined;

@@ -43,7 +43,7 @@ const chatData = z.object({ conversation: schemas.conversationSchema, messages: 
 const retrieval = z.object({
   disputes: z.array(schemas.factSchema).optional(),
   facts: z.array(z.object({ fact: schemas.factSchema, reason: text, score: z.number().optional(), required: flag })),
-  documents: z.array(z.object({ path: text, hash: text, excerpt: text, reason: text })),
+  documents: z.array(z.object({ path: text, hash: text, excerpt: text, reason: text, start: integer.nonnegative().optional(), end: integer.nonnegative().optional() })),
   issues: z.array(text), status: text,
   snapshotId: optionalText, scope: memoryScopeSchema.optional(), total: integer.optional(), offset: integer.optional(), hasMore: flag,
   coverage: z.array(z.object({ ledger: text, status: text, count: integer })).optional(),

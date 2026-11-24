@@ -48,9 +48,7 @@
 .app-dialog {
   max-height: calc(100dvh - 48px);
   font:
-    14px/1.6 Arial,
-    'Microsoft YaHei',
-    sans-serif;
+    14px/1.6 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 .app-dialog > header .brand-logo-symbol,
 .app-dialog > header .brand-symbol {

@@ -1,3 +1,4 @@
+import { authorMarkdown } from '../shared/author-markdown';
 import { memo, useId, useLayoutEffect, useMemo, useRef, useState, type MouseEventHandler, type UIEvent } from 'react';
 import { Expand, X } from 'lucide-react';
 import DOMPurify from 'dompurify';
@@ -72,7 +73,7 @@ const StableBlock = memo(function StableBlock({ block, allowImages, index }: { b
   return <div className="markdown-stream-block" dangerouslySetInnerHTML={{ __html: rendered.html }} />;
 });
 
-export function MarkdownContent({ content, className = 'markdown-body', id, label = '内容', allowImages = false, incremental = false, onClick }: {
+export function MarkdownContent({ content: original, className = 'markdown-body', id, label = '内容', allowImages = false, incremental = false, onClick }: {
   content: string;
   className?: string;
   id?: string;
@@ -81,6 +82,7 @@ export function MarkdownContent({ content, className = 'markdown-body', id, labe
   incremental?: boolean;
   onClick?: MouseEventHandler<HTMLDivElement>;
 }) {
+  const content = useMemo(() => authorMarkdown(original), [original]);
   const cache = useRef<MarkdownBlock[]>([]);
   const blocks = useMemo(() => {
     if (!incremental) return [];

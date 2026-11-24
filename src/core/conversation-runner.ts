@@ -22,7 +22,7 @@ import { invokeModel } from './provider';
 import type { Caller } from './runner';
 import { compatibleRunBase,currentSettingsSourceHash } from './runtime-settings';
 import { piExecutorVersion } from './runtime/task-loop';
-import { FileStore,fileHash,safePath } from './storage';
+import { FileStore } from './storage';
 import { taskRunHash } from './task-discussion';
 import { driveDiscussionWorkflow } from './workflows/discussion';
 
@@ -222,7 +222,7 @@ export class ConversationRunner {
       proposal.chapter !== p.chapter ||
       proposal.profileVersion !== profile.version ||
       proposal.rulesHash !== this.rulesHash() ||
-      proposal.sources.some((s) => fileHash(safePath(this.store.root, s.path)) !== currentSettingsSourceHash(this.store, proposal.baseSnapshotId, s))
+      proposal.sources.some((s) => this.store.workingHash(s.path) !== currentSettingsSourceHash(this.store, proposal.baseSnapshotId, s))
     ) {
       proposal.status = 'stale';
       this.records.save('action_proposals', proposal);

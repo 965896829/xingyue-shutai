@@ -10,7 +10,7 @@ import { hash, paths, stageOutputs, activeBatch, batchPath, rhythmPath, prosePat
 import { attempts } from '../src/core/runtime/model-gateway';
 import { templates } from '../src/core/skill';
 import { readWorldModel, renderWorldModel } from '../src/core/world-model';
-import type { SecretProfile, Run } from '../src/shared/types';
+import { modelRoundLimit, type SecretProfile, type Run } from '../src/shared/types';
 import { decodeNarrativeResponse } from '../src/shared/narrative-events';
 import { ProjectCommitService } from '../src/core/runtime/commit-kernel';
 import { futurePlanTargets, makeStoryImpact } from '../src/core/story-impact';
@@ -246,7 +246,7 @@ async function main() {
         }
       }
       const p = store.db.project();
-      if (p.config.maxRounds < 24) {
+      if (modelRoundLimit(p.config.maxRounds) < 24) {
         await service.invoke('project.configure', { config: { ...p.config, maxRounds: 24 } });
         state.authorEdits.push({ runId: run.id, reason: '隔离评估任务轮数从12提高到24，累计请求、工具、费用、自动修复次数与120次总授权均保留。', at: new Date().toISOString() });
       }

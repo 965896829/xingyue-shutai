@@ -53,6 +53,7 @@ export function WorldWorkbench({
     [limit, setLimit] = useState(60);
   const current = model.modules.find((m) => `world:${m.id}` === selected),
     key = JSON.stringify(binding);
+  const visibleModules = model.modules.filter(m => showAll || (current ? m.id === current.id : m.state === 'enabled'));
   const active = model.modules.filter((m) => m.state === 'enabled'),
     places = model.places ?? [],
     routes = model.routes ?? [];
@@ -107,7 +108,9 @@ export function WorldWorkbench({
   const placeTitle = (id: string) => places.find((p) => p.id === id)?.title ?? id;
   return (
     <section className="world-workbench" aria-label="世界设定画布">
-      <div className="object-actions">
+      <header className="canvas-section-heading"><h2>世界设定</h2></header>
+      <div className="canvas-viewbar">
+        <div className="canvas-modes" role="group" aria-label="世界展示方式">
         {(
           [
             ['rules', '规则卡'],
@@ -123,8 +126,9 @@ export function WorldWorkbench({
             {label}
           </button>
         ))}
+        </div>
         {mode === 'rules' && (
-          <button onClick={() => setShowAll((v) => !v)}>{showAll ? '返回当前规则' : '全部模块'}</button>
+          <button aria-pressed={showAll} onClick={() => setShowAll((v) => !v)}>{showAll ? '返回当前规则' : '全部模块'}</button>
         )}
       </div>
       {error && (
@@ -135,9 +139,7 @@ export function WorldWorkbench({
       {mode === 'growth' && <GrowthSystems key={key + baseHash} model={model} baseHash={baseHash} editable={editable} storageKey={`${binding.projectId}:growth`} onCandidate={onCandidate} />}
       {mode === 'rules' && (
         <div className="world-rule-cards">
-          {model.modules
-            .filter((m) => showAll || (current ? m.id === current.id : m.state === 'enabled'))
-            .map((m) => (
+          {visibleModules.map((m) => (
               <article key={m.id} className={m.id === current?.id ? 'active' : ''}>
                 <button className="world-rule-title" onClick={() => onSelect(`world:${m.id}`)}>
                   <h3>{m.title}</h3>
@@ -146,13 +148,13 @@ export function WorldWorkbench({
                     {m.locked ? ' · 已固定' : ''}
                   </small>
                 </button>
-                <p>{m.content || '未设定'}</p>
-                {m.rule && (
+                {m.content.trim() && <p>{m.content}</p>}
+                {m.rule && ruleFields.some(([key]) => m.rule![key].trim()) && (
                   <dl>
-                    {ruleFields.map(([key, title]) => (
+                    {ruleFields.filter(([key]) => m.rule![key].trim()).map(([key, title]) => (
                       <div key={key}>
                         <dt>{title}</dt>
-                        <dd>{m.rule![key] || '未设定'}</dd>
+                        <dd>{m.rule![key]}</dd>
                       </div>
                     ))}
                   </dl>
@@ -167,6 +169,7 @@ export function WorldWorkbench({
                 )}
               </article>
             ))}
+          {!visibleModules.length && <p className="empty-state">当前范围没有世界规则</p>}
         </div>
       )}
       {mode === 'causal' && (
@@ -225,7 +228,7 @@ export function WorldWorkbench({
                 label: [
                   r.label,
                   r.direction,
-                  r.distance ? `${r.distance.value} ${r.distance.unit}` : '距离未设定'
+                  r.distance && `${r.distance.value} ${r.distance.unit}`
                 ]
                   .filter(Boolean)
                   .join(' · ')
@@ -247,8 +250,7 @@ export function WorldWorkbench({
                 <button key={r.id} className="world-route-row" onClick={() => setRoute({ ...r })}>
                   {placeTitle(r.from)} → {placeTitle(r.to)}
                   <span>
-                    {r.distance ? `${r.distance.value} ${r.distance.unit}` : '距离未设定'}
-                    {r.direction ? ` · ${r.direction}` : ''}
+                    {[r.distance && `${r.distance.value} ${r.distance.unit}`, r.direction].filter(Boolean).join(' · ')}
                   </span>
                 </button>
               ))}

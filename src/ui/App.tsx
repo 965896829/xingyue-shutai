@@ -1,5 +1,5 @@
 import { Modal } from './Modal';
-import { useDialogs } from './AppDialogs';
+import { useDialogs, type Act } from './AppDialogs';
 import { RunRecoveryButton } from './RunRecoveryButton';
 import { handleMarkdownLink } from './markdown-links';
 import { ModelControl } from './ModelControl';
@@ -7,8 +7,7 @@ import { ContextMeter, ContextCompactions } from './ContextMeter';
 import { latestContext, type ContextUsage } from '../shared/context-meter';
 import { GenerationStatus, GenerationStep } from './GenerationStatus';
 import { WritingStyleField } from './WritingStyleField';
-import { defaultWritingStyle, normalizeWritingStyle } from '../shared/writing-style';
-import { StoryLab } from './story-lab/StoryLab';
+import { defaultWritingStyle } from '../shared/writing-style';
 import { useStreamSession, proseBinding, proseFile } from './useLiveStream';
 import { LiveMarkdown } from './LiveMarkdown';
 import { LiveProseEditor, LiveProseCount } from './LiveProseEditor';
@@ -19,17 +18,16 @@ import { hasChapterPlan, hasOutlineContent } from '../shared/chapter-range';
 import { manuscriptTarget, mergeManuscript, requestedChapter, requestsManuscript, type ManuscriptEdit } from '../shared/manuscript-edit';
 import './writing-desk.css';
 import { reasoningLabel } from '../shared/reasoning';
-import { invokeCommand } from '../shared/client';
+import { invokeCommand as invoke } from '../shared/client';
 import { newProjectLocationError } from '../shared/project-location';
 import { newProjectRequest, type OpeningMode } from '../shared/new-project-request';
-import type { Invoke } from '../shared/contracts';
-import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, type ReactNode } from 'react';
+import { lazy, Suspense, useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from 'react';
 import { resumeArguments } from '../shared/run-capabilities';
 import { taskErrorId, taskFileId, taskHelpLink, taskIssueId, taskSectionId } from '../shared/task-links';
 import { sendOnEnter } from './composer-keyboard';
 import { jumpToChatTarget } from './chat-navigation';
 import { ProjectFiles } from './ProjectFiles';
-import { currentStageDocument } from '../shared/project-progress';
+import { currentStageDocument, stageLabels as names } from '../shared/project-progress';
 import { manuscriptDraft } from '../shared/manuscript-target';
 import { ObjectWorkbench } from './ObjectWorkbench';
 import {
@@ -51,13 +49,17 @@ import {
   PanelLeftOpen,
   ChevronDown,
   Download,
-  Upload,
   Layers,
   Image as ImageIcon,
   ArrowRight,
   Terminal,
   MoreHorizontal,
   AlertCircle,
+  PanelsTopLeft,
+  MessageSquare,
+  ListChecks,
+  NotebookPen,
+  SlidersHorizontal,
   Trash2
 } from 'lucide-react';
 import { MonitorCog } from 'lucide-react';
@@ -68,13 +70,11 @@ import {
   type Snapshot,
   type Run,
   type Profile,
-  type ContextManifest,
-  type ProjectConfig
+  type ContextManifest
 } from '../shared/types';
-import { Editor, Difference } from './Editor';
+import { Editor, Difference } from './LazyEditor';
 import { LegacyDialog } from './LegacyDialog';
 import { ProviderSettings as ModelSettings } from './ProviderSettings';
-import { modelLabel } from './model-label';
 import { ThemeToggle } from './ThemeToggle';
 import { BrandLogo } from './BrandLogo';
 import { WindowTitleBar } from './WindowTitleBar';
@@ -91,11 +91,14 @@ import { CharacterInspector, StoryInspector, ManuscriptCoverage } from './Manusc
 import { NarrativePanel } from './NarrativePanel';
 import { SkillLauncher } from './SkillLauncher';
 import { QualityWorkbench } from './QualityWorkbench';
-import { ExpressionSettings } from './ExpressionSettings';
+import { ProjectSettings } from './ProjectSettings';
+import { Transfer } from './Transfer';
+import { Cover } from './Cover';
 import { TagForm, TagWorkspace, cleanTagInput } from './TagWorkspace';
 import { emptyTagInput } from '../shared/tags';
 import { emptyBookProfile } from '../shared/publishing';
 import { PublishingSettings } from './PublishingSettings';
+import { authorMarkdown, isStructuredMarkdown, mergeAuthorMarkdown } from '../shared/author-markdown';
 import { requestErrorText, retryNeedsConfirmation, taskReplyText, documentPreviewText, visibleRunIssues } from '../shared/run-presentation';
 import { renderNativeCitations } from '../shared/web-search';
 import { WebSearchEvidence } from './WebSearchEvidence';
@@ -103,19 +106,8 @@ import { VolumeMarketEvidence } from './VolumeMarketEvidence';
 import type { SourceRef } from '../shared/studio';
 import { gateEvent, syncEventCursor, type EventCursor } from '../shared/event-gate';
 
-const names = {
-  S01: '设定拆解',
-  S02: '项目与文风',
-  S03: '世界规则',
-  S04: '人物与连续性',
-  S05: '分卷大纲',
-  S06: '章节总纲',
-  S07: '批次节奏',
-  S08: '批量细纲',
-  S09: '单章设计',
-  S10: '正文生成',
-  S11: '章后更新'
-};
+const StoryLab = lazy(() => import('./story-lab/StoryLab').then(module => ({ default: module.StoryLab })));
+
 const status: Record<string, string> = {
   running: '正在执行',
   awaiting_review: '查看生成结果',
@@ -146,10 +138,6 @@ const btn = (icon: ReactNode, text: string) => (
     <span>{text}</span>
   </>
 );
-const invoke: Invoke = (command, args) => {
-  if (!window.wenxu) throw new Error('请使用桌面客户端，浏览器预览不具备本地文件权限');
-  return invokeCommand(command, args);
-};
 export function App({ management = false, managementView = 'workspace' }: { management?: boolean; managementView?: ManagementView } = {}) {
   const [labEnabled, setLabEnabled] = useState(() => { try { return localStorage.getItem('story-lab:hidden') !== 'true'; } catch { return true; } });
   const [inspector, setInspector] = useState<'manuscript' | 'characters' | 'story' | 'details'>('manuscript');
@@ -173,6 +161,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [actionBusy, setBusy] = useState(false);
+  const [labVisited, setLabVisited] = useState(false);
+  useEffect(() => { if (page === 'lab') setLabVisited(true); }, [page]);
   const dialogs = useDialogs(snapshot.projectSessionId);
   const [modelPending, setModelPending] = useState(false);
   const busy = actionBusy || modelPending;
@@ -366,7 +356,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     running = visibleRuns.find((r) => r.status === 'running'),
     feedbackRun = run && ['stage', 'revision'].includes(run.mode) && !run.accepted && !run.planning && !run.naming && !run.memoryRepair && ['awaiting_review', 'needs_repair'].includes(run.status) ? run : undefined,
     discussionRun = run && (mode === 'stage' || run.mode === 'revision') ? run : undefined,
-    dirty = doc && text !== doc.content;
+    dirty = doc && text !== authorMarkdown(doc.content);
   const taskBusy = busy || !!running || !!snapshot.chatBusy;
   const writingLayout = !management && !!p && page === 'work' && (workView === 'chat' || workView === 'tasks');
   const showTaskDetails = !writingLayout || taskDetailsOpen;
@@ -441,7 +431,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       setDoc(current => current && current.runId === previous.runId && current.path === previous.path
         ? { ...current, runId: undefined, hash: saved.hash, content: saved.content, before: saved.content, disk: saved.content }
         : current);
-      setText(value => value === previous.content ? saved.content : value);
+      setText(value => value === authorMarkdown(previous.content) ? authorMarkdown(saved.content) : value);
     }).catch(error => { if (!cancelled) setError(`读取已保存文稿失败：${String(error)}`); });
     return () => { cancelled = true; };
   }, [doc?.runId, doc?.path, documentAccepted, snapshot.projectSessionId]);
@@ -492,7 +482,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       runId: active.id,
       before: doc?.runId === active.id ? doc.before : ''
     });
-    setText(prose.content);
+    setText(authorMarkdown(prose.content));
     if (firstDisplay) { setEditorOpen(true); setInspector('manuscript'); setEditorTab('edit'); }
   }, [visibleRuns.find((r) => r.status === 'running' && r.pipeline)?.pipeline?.version, documentRun?.pipeline?.version, documentRun?.status]);
   useEffect(() => {
@@ -584,6 +574,10 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           /* external changes may have no accepted revision yet */
         }
       }
+      let disk = old.content;
+      if (snapshot.documents.find(d => d.path === relative)?.status === 'external') {
+        disk = (await invoke('document.read', { path: relative, disk: true })).content;
+      }
       if (activeProjectKey.current !== projectKey) return;
       if (workView === 'objects') setWorkView('chat');
       setDoc({
@@ -594,9 +588,9 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         content: value,
         runId: r?.id,
         before: baseline,
-        disk: old.content
+        disk
       });
-      setText(workingText ?? draft ?? value);
+      setText(authorMarkdown(workingText ?? draft ?? value));
       setEditorOpen(true);
       setInspector('manuscript');
       setEditorTab(openMode ?? (r ? 'diff' : 'edit'));
@@ -610,17 +604,22 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       setError('正在载入已保存版本，请稍后再保存。');
       return;
     }
+    let content = doc.content;
     const r = await act<Run | string>(
-      () =>
-        doc.runId
-          ? invoke('run.update', { id: doc.runId, path: doc.path, content: text })
-          : invoke('document.save', { path: doc.path, baseHash: doc.hash, content: text }),
+      async () => {
+        content = mergeAuthorMarkdown(doc.content, text);
+        if (!doc.runId) return invoke('document.save', { path: doc.path, baseHash: doc.hash, content });
+        const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(doc.content));
+        const expectedHash = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+        return invoke('run.update', { id: doc.runId, path: doc.path, content, expectedHash });
+      },
       '草稿已保存，确认采纳后会更新正式文稿'
     );
     if (r && activeProjectKey.current === doc.projectKey) {
       setWorkView('tasks');
       setSelectedRun(typeof r === 'string' ? r : r.id);
-      setDoc({ ...doc, content: text, runId: typeof r === 'string' ? r : r.id });
+      setText(authorMarkdown(content));
+      setDoc({ ...doc, content, runId: typeof r === 'string' ? r : r.id });
     }
   }
   async function start(taskMode = mode) {
@@ -752,7 +751,6 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       }, '作品已移入回收站，七天内可恢复，到期自动永久删除本地文件')) === true
     );
   }
-  const filteredDocs = useMemo(() => snapshot.documents.filter((d) => !query || d.path.includes(query)), [snapshot.documents, query]);
   const currentDocument = p ? currentStageDocument(p) : undefined;
   async function openProjectDocument(path: string) {
     if (writingLayout && /^07_正文章节\/第\d+章\.md$/.test(path)) {
@@ -772,24 +770,22 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     ? [...run.changes, { path: proseFile(run.chapter), content: '', baseHash: null }] : run?.changes ?? [];
   const displayedIssues = run ? visibleRunIssues(run) : [];
   const workTabs = p && (
-    <div className="work-tabs">
-      <button className={workView === 'objects' ? 'active' : ''} onClick={() => setWorkView('objects')}>共创画布</button>
-      <QualityWorkbench key={`quality:${p.id}`} profileId={profileId} onRun={(id) => void openStartedRun(id)} />
-      <SkillLauncher
-        key={`skills:${p.id}`}
-        profileId={profileId}
-        onRun={(id) => void openStartedRun(id)}
-      />
-      <button className={workView === 'chat' ? 'active' : ''} onClick={() => { setWorkView('chat'); if (!management && deskLayout.collapsed) deskLayout.toggle(); }}>
-        创作讨论
+    <nav className="work-tabs" aria-label="写作视图">
+      <button aria-current={workView === 'objects' ? 'page' : undefined} className={workView === 'objects' ? 'active' : ''} onClick={() => setWorkView('objects')}><PanelsTopLeft size={15} />共创画布</button>
+      <button aria-current={workView === 'chat' ? 'page' : undefined} className={workView === 'chat' ? 'active' : ''} onClick={() => { setWorkView('chat'); if (!management && deskLayout.collapsed) deskLayout.toggle(); }}>
+        <MessageSquare size={15} />创作讨论
       </button>
-      <button className={workView === 'tasks' ? 'active' : ''} onClick={() => { setWorkView('tasks'); if (!management && deskLayout.collapsed) deskLayout.toggle(); }}>
-        创作任务
+      <button aria-current={workView === 'tasks' ? 'page' : undefined} className={workView === 'tasks' ? 'active' : ''} onClick={() => { setWorkView('tasks'); if (!management && deskLayout.collapsed) deskLayout.toggle(); }}>
+        <ListChecks size={15} />创作任务
       </button>
-      <button className={workView === 'tags' ? 'active' : ''} onClick={() => setWorkView('tags')}>
-        作品方案与书名
+      <button aria-current={workView === 'tags' ? 'page' : undefined} className={workView === 'tags' ? 'active' : ''} onClick={() => setWorkView('tags')}>
+        <NotebookPen size={15} />作品方案与书名
       </button>
-    </div>
+      <div className="work-tab-tools">
+        <QualityWorkbench key={`quality:${p.id}`} profileId={profileId} onRun={(id) => void openStartedRun(id)} />
+        <SkillLauncher key={`skills:${p.id}`} profileId={profileId} onRun={(id) => void openStartedRun(id)} />
+      </div>
+    </nav>
   );
   const chatSections: ProximitySection[] = run
     ? [
@@ -859,6 +855,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
             <button
               key={String(key)}
               className={page === key ? 'active' : ''}
+              aria-current={page === key ? 'page' : undefined}
               aria-label={String(label)}
               title={String(label)}
               onClick={() => setPage(key as any)}
@@ -883,7 +880,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
               <div className="current-book-title">
                 <b>{p.title}</b>
                 <small>
-                  {Object.values(p.chapters).filter((s) => s === 'complete').length} 章完整完成 · 本地作品
+                  已完成 {Object.values(p.chapters).filter((s) => s === 'complete').length} 章
                 </small>
               </div>
               <DeleteButton
@@ -909,14 +906,10 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                 {!p.finished && p.stage >= 'S06' && <small>{p.stage < 'S09' ? activeBatchText(p) : `第 ${String(p.chapter).padStart(3, '0')} 章`}</small>}
               </strong>
             </div>
-            <ProjectFiles documents={filteredDocs} selected={writingLayout && !editorOpen ? manuscriptPath : doc?.path} current={currentDocument} onOpen={path => void openProjectDocument(path)} resetKey={`${projectKey}:${query}`} />
+            <ProjectFiles key={projectKey} documents={snapshot.documents} query={query} selected={writingLayout && !editorOpen ? manuscriptPath : doc?.path} current={currentDocument} onOpen={path => void openProjectDocument(path)} resetKey={projectKey ?? p.id} />
           </>
         ) : (
-          <div className="sidebar-empty">
-            创建一部作品，
-            <br />
-            从你的第一个设定开始。
-          </div>
+          <div className="sidebar-empty">{snapshot.recent.length ? '最近打开' : '尚未打开作品'}</div>
         )}
         {!p && snapshot.recent.length > 0 && (
           <div className="recent">
@@ -938,6 +931,11 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           </div>
         )}
         <div className="sidebar-bottom">
+          <button className="utility-trigger" popoverTarget="workspace-utilities" aria-label="设置与工具" title="设置与工具">
+            {btn(<SlidersHorizontal size={16} />, '设置与工具')}<ChevronDown size={14} aria-hidden="true" />
+          </button>
+          <div className="utility-popover" id="workspace-utilities" popover="auto" role="group" aria-label="设置与工具"
+            onClick={event => { if ((event.target as Element).closest('button')) event.currentTarget.hidePopover(); }}>
           {!labEnabled && <button onClick={() => { localStorage.removeItem('story-lab:hidden'); setLabEnabled(true); setPage('lab'); }}>{btn(<Sparkles size={16} />, '启用自由创作实验室')}</button>}
           {!management && window.wenxu?.desktop && <button aria-label="打开网页管理后台" title="打开网页管理后台" onClick={() => void act(() => invoke('management.open'), '已在浏览器打开管理后台')}>
             {btn(<MonitorCog size={16} />, '网页管理后台')}
@@ -961,9 +959,6 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           <button aria-label="模型与连接设置" title="模型与连接设置" onClick={() => setModal('settings')}>
             {btn(<Settings size={16} />, '模型与连接设置')}
           </button>
-          <div className="local">
-            <span />
-            本地创作空间
           </div>
         </div>
       </aside>}
@@ -1034,16 +1029,16 @@ export function App({ management = false, managementView = 'workspace' }: { mana
             refresh={refresh}
           />
         )}
-        {!management && <StoryLab active={page === 'lab'} profiles={snapshot.profiles} formalBusy={!!running || !!snapshot.chatBusy} onBack={() => setPage('work')} onSettings={() => setModal('settings')} onHide={() => { localStorage.setItem('story-lab:hidden', 'true'); setLabEnabled(false); setPage('work'); }} />}
+        {!management && (page === 'lab' || labVisited) && <Suspense fallback={page === 'lab' && <p role="status">正在打开实验室…</p>}><StoryLab active={page === 'lab'} profiles={snapshot.profiles} formalBusy={!!running || !!snapshot.chatBusy} onBack={() => setPage('work')} onSettings={() => setModal('settings')} onHide={() => { localStorage.setItem('story-lab:hidden', 'true'); setLabEnabled(false); setPage('work'); }} /></Suspense>}
         {page === 'lab' ? null : !p ? (
           <div className="welcome">
             <div className="welcome-symbol">
               <BrandLogo symbolOnly />
             </div>
-            <h1>今天，写下哪一段故事？</h1>
+            <h1>我的写作空间</h1>
             <div className="welcome-actions">
               <button className="primary large" onClick={() => setModal('new')}>
-                {btn(<Plus size={18} />, '创建我的第一部作品')}
+                {btn(<Plus size={18} />, '新建作品')}
               </button>
               <button className="large" onClick={openProjectDirectory}>
                 {btn(<FolderOpen size={18} />, '打开已有作品')}
@@ -1053,7 +1048,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           </div>
         ) : page === 'memory' ? (
           <MemoryStudio
-            key={p.id}
+            key={snapshot.projectSessionId ?? projectKey}
             snapshot={snapshot}
             onSource={setSource}
             onRefresh={() => void refresh()}
@@ -1248,7 +1243,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             <VolumeMarketEvidence research={run.volumeNaming?.research} />
                             <ContextCompactions items={run.contextCompactions} activity={run.activity} running={run.status === 'running'} />
                             {run.documentDrafts?.map(draft => <details key={draft.path} className="saved-document-draft">
-                              <summary>已保存草稿 · {draft.path} · {draft.chunks} 段 / {draft.content.length} 字符</summary>
+                              <summary>已保存草稿 · {draft.path} · {draft.chunks} 段 / {authorMarkdown(draft.content).length} 字符</summary>
                               <MarkdownContent content={draft.content} label={draft.path.split('/').at(-1)?.replace(/\.md$/, '')} />
                             </details>)}</>}
                             {run.error && <p className="inline-warning" role="alert" id={taskErrorId(run)}>{requestErrorText(run.error)}{' '}<a href={taskHelpLink(run).href} onClick={event => { event.preventDefault(); navigateTask(event.currentTarget.getAttribute('href')!); }}>{taskHelpLink(run).label}</a></p>}
@@ -1376,7 +1371,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 <h3>确认具体动作</h3>
                                 <p>
                                   {run.permission?.kind === 'terminal'
-                                    ? '终端具有当前 Windows 用户权限，项目目录不是系统沙箱。'
+                                    ? '命令将以当前账户的权限运行，可以访问作品目录以外的文件。'
                                     : '即将访问以下地址。'}
                                 </p>
                                 <pre>{JSON.stringify(run.permission?.args, null, 2)}</pre>
@@ -1407,7 +1402,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                               <div className="approval-box" id="chat-decision">
                                 <h3>{run.issues.some(issue => issue.severity === 'error') ? '本阶段还有问题需要处理' : run.memoryRepair ? '关联修订已准备好' : run.pipeline ? '本章正文与记忆已准备好' : '本阶段结果已准备好'}</h3>
                                 <div className="button-row">
-                                  {!run.pipeline && (!run.revisionCore || run.issues.some(i => i.severity === 'error')) && run.changes.some(c => c.path.startsWith('07_')) && <button disabled={taskBusy} onClick={() => void act(async () => { const id = await invokeCommand('run.reviewProse', { id: run.id, proposalHash: run.proposalHash!, profileId }); await openStartedRun(id); })}>核对正文与记忆</button>}
+                                  {!run.pipeline && (!run.revisionCore || run.issues.some(i => i.severity === 'error')) && run.changes.some(c => c.path.startsWith('07_')) && <button disabled={taskBusy} onClick={() => void act(async () => { const id = await invoke('run.reviewProse', { id: run.id, proposalHash: run.proposalHash!, profileId }); await openStartedRun(id); })}>核对正文与记忆</button>}
                                   <button
                                     className="primary"
                                     disabled={taskBusy || run.issues.some((i) => i.severity === 'error')}
@@ -1685,7 +1680,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                             onChange={editDocument}
                             onSelection={setSelection}
                             readOnly={
-                              doc.path === '02_项目配置/标签创作契约.md' ||
+                              isStructuredMarkdown(doc.content) || doc.path === '02_项目配置/标签创作契约.md' ||
                               !!(
                                 doc.runId &&
                                 (visibleRuns.find((r) => r.id === doc.runId)?.planning ||
@@ -1920,7 +1915,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                 <p>
                   {s.reason} · {s.mode === 'full' ? '全文' : '原文摘录'}
                 </p>
-                <pre>{s.content}</pre>
+                <pre>{authorMarkdown(s.content)}</pre>
               </details>
             ))}
             {manifest.selectionTrace && <details><summary>记忆选择依据 · {manifest.selectionTrace.facts.length} 条</summary>
@@ -1937,7 +1932,6 @@ function activeBatchText(p: Snapshot['project']) {
   const b = p?.batches.find((b) => p.chapter >= b.start && p.chapter <= b.end);
   return b ? `${b.start}—${b.end} 章` : '—';
 }
-type Act = <T>(fn: () => Promise<T>, success?: string) => Promise<T | undefined>;
 function ConfirmBookTitle({ busy, error, startNext, onClose, onConfirm }: {
   busy: boolean;
   error: string;
@@ -2101,650 +2095,5 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
         </div>
       </form>
     </Modal>
-  );
-}
-function ProjectSettings({
-  config,
-  projectSessionId,
-  initialProfileId,
-  profiles,
-  onClose,
-  onPublishing,
-  profileManaged,
-  act
-}: {
-  config: ProjectConfig;
-  projectSessionId?: string;
-  initialProfileId: string;
-  profiles: Profile[];
-  onClose: () => void;
-  onPublishing: () => void;
-  profileManaged: boolean;
-  act: Act;
-}) {
-  const [c, setC] = useState(config),
-    [styleBusy, setStyleBusy] = useState(false),
-    [advanced, setAdvanced] = useState(JSON.stringify(config.stageProfiles, null, 2));
-  const field = (key: keyof ProjectConfig, value: unknown) => setC((s) => ({ ...s, [key]: value }));
-  return (
-    <Modal title="作品设置" onClose={onClose} wide>
-      <form
-        className="modal-body form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (styleBusy) return;
-          void act(async () => {
-            await invoke('project.configure', { config: { ...c, style: normalizeWritingStyle(c.style), stageProfiles: JSON.parse(advanced) } });
-            onClose();
-          }, '作品设置已保存');
-        }}
-      >
-        <div className="form-grid">
-          {(
-            [
-              ['writing', '写作模型'],
-              ['extraction', '记忆提取'],
-              ['review', '质量评估']
-            ] as const
-          ).map(([key, label]) => (
-            <label key={key}>
-              {label}
-              <select
-                value={c.modelRouting[key]}
-                onChange={(e) => field('modelRouting', { ...c.modelRouting, [key]: e.target.value })}
-              >
-                <option value="">{key === 'writing' ? '沿用本次模型' : '沿用写作模型'}</option>
-                {profiles
-                  .filter((p) => p.protocol !== 'images')
-                  .map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {modelLabel(p, profiles)}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          ))}
-          <label>
-            视角人物
-            <input
-              value={c.viewpointCharacterId}
-              onChange={(e) => field('viewpointCharacterId', e.target.value)}
-              placeholder="人物编号或姓名"
-            />
-          </label>
-          <label>
-            正文生成方式
-            <select value={c.proseMode ?? 'chapter'} onChange={e => field('proseMode', e.target.value)}>
-              <option value="chapter">整章生成</option>
-              <option value="scene">逐场生成（每场一次写作调用，需视角人物）</option>
-            </select>
-          </label>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={c.preview.enabled}
-              onChange={(e) => field('preview', { ...c.preview, enabled: e.target.checked })}
-            />
-            高级节奏评估（额外模型调用，按当前连接计费）
-          </label>
-          <label>
-            每章过程评估上限（另有规划与成稿各一次）
-            <input
-              type="number"
-              min={0}
-              max={30}
-              value={c.preview.maxCalls}
-              onChange={(e) => field('preview', { ...c.preview, maxCalls: Number(e.target.value) })}
-            />
-          </label>
-          {[
-            ['targetWords', '目标总字数'],
-            ['chapterWords', '单章目标字数'],
-            ['minWords', '每章最少字数'],
-            ['maxWords', '每章最多字数'],
-            ['batchSize', '每批章数'],
-            ['recentChapters', '近期变化窗口（章）'],
-            ['maxRounds', '任务最多模型轮数'],
-            ['maxTools', '任务最多工具调用']
-          ].map(([key, label]) => (
-            <label key={key}>
-              {label}
-              <input
-                type="number"
-                min={1}
-                max={key === 'maxRounds' ? 100 : key === 'maxTools' ? 500 : undefined}
-                value={c[key as keyof ProjectConfig] as number}
-                id={`project-setting-${key}`}
-                onChange={(e) => field(key as any, Number(e.target.value))}
-              />
-            </label>
-          ))}
-          <label>
-            叙述视角
-            <input value={c.pov} onChange={(e) => field('pov', e.target.value)} />
-          </label>
-          <label>
-            题材
-            <input value={c.genre} readOnly={profileManaged} onChange={(e) => field('genre', e.target.value)} />
-          </label>
-        </div>
-        <button type="button" onClick={onPublishing}>题材与发布分类</button>
-        <WritingStyleField value={c.style} onChange={style => field('style', style)} projectSessionId={projectSessionId}
-          profileId={projectSessionId ? c.modelRouting.writing || c.defaultProfileId || initialProfileId : ''} onBusyChange={setStyleBusy}
-          context={{ premise: '', genre: c.genre, pov: c.pov, constraints: c.constraints }} />
-        <ExpressionSettings value={c.expressionRules} onChange={(value) => field('expressionRules', value)} />
-        <label>
-          作者硬约束
-          <textarea value={c.constraints} onChange={(e) => field('constraints', e.target.value)} />
-        </label>
-        <div className="form-grid">
-          <label>
-            默认模型
-            <select value={c.defaultProfileId} onChange={(e) => field('defaultProfileId', e.target.value)}>
-              <option value="">每次选择</option>
-              {profiles
-                .filter((p) => p.protocol !== 'images')
-                .map((p) => (
-                  <option key={p.id} value={p.id} title={`${p.name} · ${p.baseUrl}`}>
-                    {modelLabel(p, profiles)}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label>
-            阶段费用上限（留空不限）
-            <input
-              type="number"
-              min={0}
-              step="any"
-              value={c.stageBudget ?? ''}
-              id="project-setting-stageBudget"
-              onChange={(e) => field('stageBudget', e.target.value === '' ? null : Number(e.target.value))}
-            />
-          </label>
-        </div>
-        <label>
-          自动备份目录
-          <div className="input-action">
-            <input readOnly value={c.backupDirectory} placeholder="未设置；本地历史始终保留" />
-            <button
-              type="button"
-              onClick={() =>
-                void act(async () => {
-                  const value = await invoke('app.chooseDirectory');
-                  if (value) field('backupDirectory', value);
-                })
-              }
-            >
-              选择
-            </button>
-            <button type="button" onClick={() => field('backupDirectory', '')}>
-              清除
-            </button>
-          </div>
-        </label>
-        <details>
-          <summary>按阶段指定模型（可选）</summary>
-          {stageIds.map((s) => (
-            <label key={s}>
-              {s} {names[s]}
-              <select
-                value={c.stageProfiles[s] ?? ''}
-                onChange={(e) => {
-                  const stageProfiles = { ...c.stageProfiles };
-                  if (e.target.value) stageProfiles[s] = e.target.value;
-                  else delete stageProfiles[s];
-                  setC({ ...c, stageProfiles });
-                  setAdvanced(JSON.stringify(stageProfiles, null, 2));
-                }}
-              >
-                <option value="">沿用默认 / 本次选择</option>
-                {profiles
-                  .filter((p) => p.protocol !== 'images')
-                  .map((p) => (
-                    <option key={p.id} value={p.id} title={`${p.name} · ${p.baseUrl}`}>
-                      {modelLabel(p, profiles)}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          ))}
-        </details>
-        <div className="modal-footer">
-          <button type="button" onClick={onClose}>
-            取消
-          </button>
-          <button className="primary" disabled={styleBusy || !c.style.trim()}>保存设置</button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
-function Transfer({
-  snapshot,
-  act,
-  onClose,
-  onImport
-}: {
-  snapshot: Snapshot;
-  act: Act;
-  onClose: () => void;
-  onImport: (file: string, content: string) => Promise<void>;
-}) {
-  const dialogs = useDialogs(snapshot.projectSessionId);
-  const [preview, setPreview] = useState<{ content: string; warnings: string[]; name: string } | null>(null),
-    [file, setFile] = useState(''),
-    [checked, setChecked] = useState(false),
-    [selection, setSelection] = useState(
-      snapshot.documents.filter((d) => d.path.startsWith('07_')).map((d) => d.path)
-    );
-  return (
-    <Modal
-      title="导入、导出与备份"
-      onClose={onClose}
-      wide
-    >
-      <div className="modal-body form">
-        {!snapshot.project ? (
-          <>
-            <p>导入文稿和导出需要先创建或打开作品。作品损坏时可直接恢复完整备份。</p>
-            <button
-              onClick={() =>
-                void act(async () => {
-                  const source = await invoke('app.chooseDirectory', {
-                    title: `选择${brand.name}备份目录`
-                  });
-                  if (!source) return;
-                  const parent = await invoke('app.chooseDirectory', {
-                    title: '选择恢复位置'
-                  });
-                  if (parent) {
-                    const result = await invoke('project.restoreBackup', { source, parent });
-                    await dialogs.alert(`已恢复到新目录：${result}`);
-                  }
-                })
-              }
-            >
-              校验备份并恢复到新目录
-            </button>
-          </>
-        ) : (
-          <>
-            <section>
-              <h3>导入文字资料</h3>
-              <button
-                onClick={() =>
-                  void act(async () => {
-                    const source = await invoke('app.chooseFile');
-                    if (source) {
-                      const p = await invoke('project.importDocument', { file: source });
-                      setPreview(p);
-                      setFile(`00_导入资料/${p.name}.md`);
-                      setChecked(false);
-                    }
-                  })
-                }
-              >
-                {btn(<Upload size={15} />, '选择 MD / TXT / DOCX')}
-              </button>
-              {preview && (
-                <>
-                  <label>
-                    项目内保存路径
-                    <input value={file} onChange={(e) => setFile(e.target.value)} />
-                  </label>
-                  {preview.warnings.map((w) => (
-                    <p className="inline-warning" key={w}>
-                      {w}
-                    </p>
-                  ))}
-                  <textarea
-                    rows={9}
-                    value={preview.content}
-                    onChange={(e) => setPreview({ ...preview, content: e.target.value })}
-                  />
-                  <label className="check">
-                    <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} />
-                    已核对导入预览与可能丢失的排版
-                  </label>
-                  <button
-                    className="primary"
-                    disabled={!checked}
-                    onClick={() => void onImport(file, preview.content)}
-                  >
-                    建立导入候选
-                  </button>
-                </>
-              )}
-            </section>
-            <section>
-              <h3>导出正式文稿</h3>
-              <div className="export-list">
-                {snapshot.documents.map((d) => (
-                  <label className="check" key={d.path}>
-                    <input
-                      type="checkbox"
-                      checked={selection.includes(d.path)}
-                      onChange={(e) =>
-                        setSelection(
-                          e.target.checked ? [...selection, d.path] : selection.filter((x) => x !== d.path)
-                        )
-                      }
-                    />
-                    {d.path}
-                  </label>
-                ))}
-              </div>
-              <button
-                disabled={!selection.length}
-                onClick={() =>
-                  void act(async () => {
-                    const target = await invoke('app.chooseFile', {
-                      save: true,
-                      name: `${snapshot.project!.title}.docx`
-                    });
-                    if (target) return invoke('project.export', { paths: selection, target });
-                  }, '导出完成')
-                }
-              >
-                选择格式和位置并导出
-              </button>
-            </section>
-            <section>
-              <h3>历史与备份</h3>
-              <div className="button-row">
-                <button
-                  onClick={() =>
-                    void act(async () => {
-                      const files = await invoke('project.repair', { preview: true });
-                      if (Array.isArray(files) && await dialogs.confirm('以下文件将作为修复候选，已有文稿不会覆盖：\n' + files.join('\n')))
-                        await invoke('project.repair');
-                    }, '修复候选已建立，请回工作台审阅')
-                  }
-                >
-                  预览并修复缺失模板 / 索引
-                </button>
-                <button
-                  onClick={() =>
-                    void act(async () => {
-                      const report = await invoke('diagnostics.export');
-                      const blob = new Blob([report], { type: 'application/json' });
-                      const url = URL.createObjectURL(blob),
-                        a = document.createElement('a');
-                      a.href = url;
-                      a.download = `${brand.name}诊断.json`;
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    })
-                  }
-                >
-                  导出脱敏诊断
-                </button>
-              </div>
-              <p className="muted">
-                每次提交都保留本地历史。完整备份包含正式文件、候选、记忆、历史对象和运行记录，不含 API Key。
-              </p>
-              <div className="button-row">
-                <button
-                  onClick={() =>
-                    void act(async () => {
-                      const directory = await invoke('app.chooseDirectory', {
-                        title: '选择备份目录'
-                      });
-                      if (directory) {
-                        const target = await invoke('project.backup', { directory });
-                        await dialogs.alert(`备份已保存：${target}`);
-                      }
-                    })
-                  }
-                >
-                  立即完整备份
-                </button>
-                <button
-                  onClick={() =>
-                    void act(async () => {
-                      const source = await invoke('app.chooseDirectory', {
-                        title: `选择${brand.name}备份目录`
-                      });
-                      if (!source) return;
-                      const parent = await invoke('app.chooseDirectory', {
-                        title: '选择恢复位置（创建新目录）'
-                      });
-                      if (parent) {
-                        const result = await invoke('project.restoreBackup', { source, parent });
-                        await dialogs.alert(`已恢复到新目录：${result}`);
-                      }
-                    })
-                  }
-                >
-                  校验并恢复备份
-                </button>
-              </div>
-            </section>
-          </>
-        )}
-      </div>
-    </Modal>
-  );
-}
-function Cover({ profiles, title, act }: { profiles: Profile[]; title: string; act: Act }) {
-  const dialogs = useDialogs(title);
-  const [prompt, setPrompt] = useState(''),
-    [profile, setProfile] = useState(''),
-    [picture, setPicture] = useState(''),
-    [book, setBook] = useState(title),
-    [author, setAuthor] = useState(''),
-    [font, setFont] = useState('Microsoft YaHei'),
-    [color, setColor] = useState('#ffffff'),
-    [size, setSize] = useState(100),
-    [x, setX] = useState(512),
-    [authorX, setAuthorX] = useState(512),
-    [y, setY] = useState(320),
-    [authorY, setAuthorY] = useState(1300),
-    [generating, setGenerating] = useState(false);
-  const canvas = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const c = canvas.current,
-      ctx = c?.getContext('2d');
-    if (!c || !ctx) return;
-    const draw = (image?: HTMLImageElement) => {
-      ctx.fillStyle = '#203b38';
-      ctx.fillRect(0, 0, 1024, 1536);
-      if (image) {
-        const scale = Math.max(1024 / image.width, 1536 / image.height);
-        ctx.drawImage(
-          image,
-          (1024 - image.width * scale) / 2,
-          (1536 - image.height * scale) / 2,
-          image.width * scale,
-          image.height * scale
-        );
-      }
-      ctx.textAlign = 'center';
-      ctx.fillStyle = color;
-      ctx.shadowColor = '#0007';
-      ctx.shadowBlur = 10;
-      ctx.font = `700 ${size}px "${font}"`;
-      const chars = Array.from(book);
-      let line = '',
-        row = 0;
-      for (const ch of chars) {
-        if (ctx.measureText(line + ch).width > 900) {
-          ctx.fillText(line, x, y + row * size * 1.3);
-          line = ch;
-          row++;
-        } else line += ch;
-      }
-      ctx.fillText(line, x, y + row * size * 1.3);
-      ctx.font = `36px "${font}"`;
-      ctx.fillText(author ? `${author} 著` : '', authorX, authorY);
-      ctx.shadowBlur = 0;
-    };
-    if (picture) {
-      const image = new window.Image();
-      image.onload = () => draw(image);
-      image.src = picture;
-    } else draw();
-  }, [picture, book, author, font, color, size, x, y, authorX, authorY]);
-  return (
-    <div className="page-content">
-      <div className="eyebrow">COVER STUDIO</div>
-      <h1>先有画面，再写书名。</h1>
-      <div className="cover-layout">
-        <div className="form">
-          <button
-            onClick={() =>
-              void act(async () => {
-                const files = await invoke('cover.list');
-                if (!files.length) throw new Error('尚无已保存封面');
-                const name = await dialogs.prompt('输入要打开的配置路径：\n' + files.join('\n'), { title: '打开已保存的封面', inputLabel: '配置路径', defaultValue: files.at(-1) });
-                if (name) {
-                  const m = await invoke('cover.load', { path: name });
-                  setBook(m.book ?? '');
-                  setAuthor(m.author ?? '');
-                  setFont(m.font ?? 'Microsoft YaHei');
-                  setColor(m.color ?? '#ffffff');
-                  setSize(m.size ?? 100);
-                  setX(m.x ?? 512);
-                  setAuthorX(m.authorX ?? 512);
-                  setY(m.y ?? 320);
-                  setAuthorY(m.authorY ?? 1300);
-                  setPrompt(m.prompt ?? '');
-                  setPicture(m.picture ?? '');
-                }
-              })
-            }
-          >
-            打开已保存的可编辑封面
-          </button>
-          <label>
-            图像模型
-            <select value={profile} onChange={(e) => setProfile(e.target.value)}>
-              <option value="">选择图像模型</option>
-              {profiles
-                .filter((p) => p.protocol === 'images')
-                .map((p) => (
-                  <option key={p.id} value={p.id} title={`${p.name} · ${p.baseUrl}`}>
-                    {modelLabel(p, profiles)}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label>
-            画面描述
-            <textarea
-              rows={5}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="主体、场景、色调、氛围；无需让 AI 写文字"
-            />
-          </label>
-          <button
-            className="primary"
-            disabled={generating || !profile || !prompt}
-            onClick={() => {
-              setGenerating(true);
-              void act(async () => {
-                const r = await invoke('cover.generate', { profileId: profile, prompt });
-                setPicture(r.dataUrl);
-              }).finally(() => setGenerating(false));
-            }}
-          >
-            {generating ? '正在请求图像…' : '确认生成画面（调用 API）'}
-          </button>
-          {generating && (
-            <button onClick={() => void invoke('cover.cancel')}>停止请求（服务端费用状态可能未知）</button>
-          )}
-          <label>
-            书名
-            <input value={book} onChange={(e) => setBook(e.target.value)} />
-          </label>
-          <label>
-            作者名
-            <input value={author} onChange={(e) => setAuthor(e.target.value)} />
-          </label>
-          <label>
-            字体
-            <select value={font} onChange={(e) => setFont(e.target.value)}>
-              {['Microsoft YaHei', 'SimSun', 'SimHei', 'KaiTi', 'FangSong'].map((f) => (
-                <option key={f}>{f}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            文字颜色
-            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-          </label>
-          <label>
-            书名字号 {size}
-            <input
-              type="range"
-              min="40"
-              max="160"
-              value={size}
-              onChange={(e) => setSize(Number(e.target.value))}
-            />
-          </label>
-          <label>
-            书名纵向位置
-            <input
-              type="range"
-              min="100"
-              max="1200"
-              value={y}
-              onChange={(e) => setY(Number(e.target.value))}
-            />
-          </label>
-          <label>
-            书名横向位置
-            <input
-              type="range"
-              min="100"
-              max="924"
-              value={x}
-              onChange={(e) => setX(Number(e.target.value))}
-            />
-          </label>
-          <label>
-            作者名横向位置
-            <input
-              type="range"
-              min="100"
-              max="924"
-              value={authorX}
-              onChange={(e) => setAuthorX(Number(e.target.value))}
-            />
-          </label>
-          <label>
-            作者名纵向位置
-            <input
-              type="range"
-              min="100"
-              max="1450"
-              value={authorY}
-              onChange={(e) => setAuthorY(Number(e.target.value))}
-            />
-          </label>
-          <button
-            onClick={() =>
-              void act(
-                () =>
-                  invoke('cover.save', {
-                    dataUrl: canvas.current!.toDataURL('image/png'),
-                    metadata: { book, author, font, color, size, x, y, authorX, authorY, prompt, picture }
-                  }),
-                '封面和文字配置已保存到作品的 10_封面 目录'
-              )
-            }
-          >
-            保存 PNG 与可编辑配置
-          </button>
-        </div>
-        <div className="cover-preview">
-          <canvas ref={canvas} width={1024} height={1536} />
-          <small>预览 · 1024 × 1536</small>
-        </div>
-      </div>
-    </div>
   );
 }

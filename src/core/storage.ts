@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { authorMarkdown } from '../shared/author-markdown';
 import { validateWorkbenchLocks } from './workbench-locks';
 import { validatePlotChanges } from './workbench-plot';
 import { validateMediaChanges } from './workbench-media';
@@ -84,7 +85,7 @@ export function safePath(root: string, relative: string, internal = false): stri
           /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(s)
       )
   )
-    throw new Error('路径包含非法目录或 Windows 保留名称');
+    throw new Error('作品文件名含有无效目录或系统保留名称');
   if (!internal && normalized.split('/')[0].toLowerCase() === '.novelclient')
     throw new Error('此操作不能修改客户端控制记录');
   const target = path.resolve(root, normalized),
@@ -127,6 +128,21 @@ export function atomicWrite(file: string, data: string | Buffer) {
 }
 export function fileHash(file: string): string | null {
   return fs.existsSync(file) ? hash(fs.readFileSync(file)) : null;
+}
+/** Publish a new book only after every file and its database have been prepared. */
+export function createProjectDirectory(target: string, prepare: (staged: string) => void) {
+  const parent = path.dirname(target);
+  fs.mkdirSync(parent, { recursive: true });
+  const staged = fs.mkdtempSync(path.join(parent, '.xingyue-preparing-'));
+  try {
+    prepare(staged);
+    if (fs.lstatSync(target, { throwIfNoEntry: false })) throw new Error('同名目录已存在，请重新选择位置');
+    fs.renameSync(staged, target);
+  } catch (error) {
+    fs.rmSync(staged, { recursive: true, force: true });
+    throw error;
+  }
+  return target;
 }
 export function readUtf8(file: string): string {
   const raw = fs.readFileSync(file);
@@ -520,7 +536,7 @@ interface Journal {
   id: string;
   state: 'prepared' | 'committed';
   createdAt: string;
-  changes: { path: string; baseHash: string | null; newHash: string }[];
+  changes: { path: string; baseHash: string | null; newHash: string; diskBaseHash?: string; diskNewHash?: string }[];
   project: ProjectState;
   run?: Run;
   baseSnapshotId?: string | null;
@@ -569,15 +585,26 @@ export class FileStore {
   private acquireLock() {
     const lock = path.join(this.control, 'write-lock.json');
     const ownerStartedAt = processStartedAt(process.pid);
-    if (fs.existsSync(lock)) {
-      const original = readUtf8(lock);
-      assertProjectLockInactive(parseProjectLock(original));
-      if (readUtf8(lock) !== original) throw new Error('作品占用状态刚刚发生变化，请重试');
+    const acquire = () => {
+      fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, nonce: this.lockNonce, startedAt: performance.timeOrigin,
+        processStartedAt: ownerStartedAt, createdAt: now() }), { flag: 'wx' });
+      this.lockOwned = true;
+    };
+    if (!fs.existsSync(lock)) return acquire();
+    const original = readUtf8(lock);
+    assertProjectLockInactive(parseProjectLock(original));
+    // The OS releases SQLite's reservation if a recovering process exits. Concurrent
+    // recoveries must recheck the original owner before removing its stale marker.
+    const guard = new DatabaseSync(safePath(this.root, '.novelclient/lock-recovery.sqlite', true), { timeout: 1000 });
+    try {
+      guard.exec('BEGIN IMMEDIATE');
+      if (!fs.existsSync(lock) || readUtf8(lock) !== original) throw new Error('作品占用状态刚刚发生变化，请重试');
       fs.unlinkSync(lock);
-    }
-    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, nonce: this.lockNonce, startedAt: performance.timeOrigin,
-      processStartedAt: ownerStartedAt, createdAt: now() }), { flag: 'wx' });
-    this.lockOwned = true;
+      acquire();
+    } catch (error) {
+      if ((error as { errcode?: number }).errcode === 5) throw new Error('另一进程正在恢复作品占用状态，请稍后再试');
+      throw error;
+    } finally { guard.close(); }
   }
   private releaseLock() {
     if (this.lockOwned) {
@@ -606,6 +633,14 @@ export class FileStore {
     if (hash(raw) !== h) throw new Error('历史对象校验失败');
     return raw;
   }
+  // The canonical object includes structured records. Working Markdown contains only the author view.
+  private workingVersion(actual: string | null, accepted?: string | null) {
+    if (actual && accepted && actual !== accepted && this.db.get<string>('markdownView:' + accepted) === actual) return accepted;
+    return actual;
+  }
+  workingHash(relative: string) {
+    return this.workingVersion(fileHash(safePath(this.root, relative)), this.db.document(relative)?.hash);
+  }
   read(relative: string, revision?: string): { path: string; content: string; hash: string } {
     if (revision) {
       const d = this.db.document(relative);
@@ -622,11 +657,9 @@ export class FileStore {
     }
     const file = safePath(this.root, relative);
     const raw = fs.readFileSync(file);
-    return {
-      path: relative,
-      content: new TextDecoder('utf-8', { fatal: true }).decode(raw),
-      hash: hash(raw)
-    };
+    const actual = hash(raw);
+    const version = this.workingVersion(actual, this.db.document(relative)?.hash)!;
+    return { path: relative, content: new TextDecoder('utf-8', { fatal: true }).decode(version === actual ? raw : this.object(version)), hash: version };
   }
   readAccepted(relative: string, snapshotId?: string) {
     safePath(this.root, relative);
@@ -653,7 +686,8 @@ export class FileStore {
       cached = { signature, hash: hash(raw), bytes: raw.length };
       this.fingerprints.set(relative, cached);
     }
-    return { id: accepted?.id ?? relative, path: relative, hash: cached.hash, acceptedHash: accepted?.hash ?? null, status: accepted ? accepted.hash === cached.hash ? 'accepted' : 'external' : 'new', bytes: cached.bytes };
+    const version = this.workingVersion(cached.hash, accepted?.hash);
+    return { id: accepted?.id ?? relative, path: relative, hash: version, acceptedHash: accepted?.hash ?? null, status: accepted ? accepted.hash === version ? 'accepted' : 'external' : 'new', bytes: cached.bytes };
   }
   invalidateListing() { this.listing = undefined; }
   documentListing() { return (this.listing ?? this.scan()).map(document => ({ ...document })); }
@@ -686,8 +720,8 @@ export class FileStore {
             cached = { signature, hash: hash(raw), bytes: raw.length };
             this.fingerprints.set(rel, cached);
           }
-          const h = cached.hash,
-            old = accepted.get(rel);
+          const old = accepted.get(rel),
+            h = this.workingVersion(cached.hash, old?.hash);
           found.set(rel, {
             id: old?.id ?? rel,
             path: rel,
@@ -747,9 +781,14 @@ export class FileStore {
       if (seen.has(key)) throw new Error('同一变更包包含重复文件');
       seen.add(key);
       const file = safePath(this.root, change.path);
-      if (fileHash(file) !== change.baseHash) throw new Error(`文件已被外部修改：${change.path}`);
-      if (change.baseHash) this.putObject(fs.readFileSync(file));
-      return { path: change.path, baseHash: change.baseHash, newHash: this.putObject(change.content) };
+      const disk = fs.existsSync(file) ? fs.readFileSync(file) : null;
+      const actual = disk ? hash(disk) : null;
+      if (this.workingVersion(actual, this.db.document(change.path)?.hash) !== change.baseHash) throw new Error(`文件已被外部修改：${change.path}`);
+      if (disk && actual === change.baseHash) this.putObject(disk);
+      const visible = authorMarkdown(change.content);
+      return { path: change.path, baseHash: change.baseHash, newHash: this.putObject(change.content),
+        ...(actual && actual !== change.baseHash ? { diskBaseHash: actual } : {}),
+        ...(visible !== change.content ? { diskNewHash: this.putObject(visible) } : {}) };
     });
     const baseSnapshotId = this.db.get<string>('headSnapshot') ?? null;
     const payloadHash = hash(
@@ -815,10 +854,14 @@ export class FileStore {
       safePath(this.root, change.path);
       this.object(change.newHash);
       if (change.baseHash) this.object(change.baseHash);
+      if (change.diskBaseHash) this.object(change.diskBaseHash);
+      if (change.diskNewHash) this.object(change.diskNewHash);
     }
   }
   private journalApproval(j: Journal) {
     if (!j.run) return;
+    const canonicalChanges = j.changes.map(({ path, baseHash, newHash }) => ({ path, baseHash, newHash }));
+    const commitHash = fingerprint({ project: j.project, changes: canonicalChanges });
     if (j.run && !j.approvalId) {
       const row = this.db.sql.prepare('SELECT data FROM changesets WHERE id=?').get(j.id);
       const prior = row ? JSON.parse(String(row.data)) as ChangeSet : undefined;
@@ -827,7 +870,7 @@ export class FileStore {
         throw new ApplicationError('APPROVAL_STALE', '旧提交缺少可验证的作者确认依据，保留记录，未自动提交');
       j.approvalId = `legacy:${j.id}`;
       const approval = { version: 1, id: j.approvalId, runId: j.run.id, fingerprint: proposalHash(j.run), projectId: j.project.id,
-        baseSnapshotId: j.baseSnapshotId ?? null, scope: prior.scope, commitHash: fingerprint({ project: j.project, changes: j.changes }),
+        baseSnapshotId: j.baseSnapshotId ?? null, scope: prior.scope, commitHash,
         actor: prior.actor, issuedAt: prior.createdAt, revokedAt: null, consumedByCommit: null, source: 'legacy-change-set', sourceId: prior.id };
       this.db.sql.prepare('INSERT OR IGNORE INTO approvals VALUES(?,?,?,?)').run(j.approvalId, j.run.id, proposalHash(j.run), JSON.stringify(approval));
     }
@@ -835,7 +878,7 @@ export class FileStore {
     if (!approvalRow) throw new ApplicationError('APPROVAL_STALE', '提交缺少可信审批记录');
     const approval = JSON.parse(String(approvalRow.data));
     if (approval.fingerprint !== proposalHash(j.run) || approval.projectId !== j.project.id ||
-      approval.baseSnapshotId !== j.baseSnapshotId || approval.commitHash !== fingerprint({ project: j.project, changes: j.changes }) ||
+      approval.baseSnapshotId !== j.baseSnapshotId || approval.commitHash !== commitHash ||
       fingerprint(approval.scope) !== fingerprint(j.changes.map((change) => change.path)))
       throw new ApplicationError('APPROVAL_STALE', '提交内容与可信审批记录不一致');
     return approval;
@@ -849,7 +892,7 @@ export class FileStore {
     this.journalApproval(j);
     for (const c of j.changes) {
       const h = fileHash(safePath(this.root, c.path));
-      if (h !== c.baseHash && h !== c.newHash)
+      if (h !== (c.diskBaseHash ?? c.baseHash) && h !== (c.diskNewHash ?? c.newHash))
         throw new PendingCommitConflict('external_edit', `恢复遇到外部改稿，已保留，请先比较：${c.path}`);
     }
     fault?.('before-database');
@@ -872,6 +915,7 @@ export class FileStore {
         const old = this.db.document(c.path),
           docId = old?.id ?? id(),
           raw = this.object(c.newHash);
+        if (c.diskNewHash) this.db.set('markdownView:' + c.newHash, c.diskNewHash);
         this.db.sql
           .prepare(
             'INSERT INTO documents VALUES(?,?,?,?) ON CONFLICT(path) DO UPDATE SET hash=excluded.hash,bytes=excluded.bytes'
@@ -949,7 +993,7 @@ export class FileStore {
       this.db.captureSnapshot(j.id);
       this.db.sql
         .prepare('INSERT INTO materialization_outbox VALUES(?,?,?,NULL)')
-        .run(j.id, 'pending', JSON.stringify(j.changes));
+        .run(j.id, 'pending', JSON.stringify(j.changes.map(c => ({ path: c.path, baseHash: c.diskBaseHash ?? c.baseHash, newHash: c.diskNewHash ?? c.newHash }))));
       this.db.sql.prepare('INSERT INTO applied_transactions VALUES(?,?)').run(j.id, now());
       this.db.sql.exec('COMMIT');
     } catch (e) {
@@ -996,6 +1040,28 @@ export class FileStore {
         .prepare('UPDATE materialization_outbox SET status=?,error=NULL WHERE id=?')
         .run('complete', row.id);
     }
+  }
+  /** Upgrade working copies through the same crash-safe outbox without changing a revision or an approval. */
+  private migrateMarkdownViews() {
+    if (!this.db.project() || this.db.get('markdownViewsV1')) return;
+    if (this.recoveryConflicts().length || this.db.sql.prepare("SELECT 1 FROM materialization_outbox WHERE status<>'complete' LIMIT 1").get()) return;
+    const migrations: { path: string; baseHash: string; newHash: string }[] = [];
+    for (const doc of this.db.acceptedDocuments()) {
+      if (!doc.hash || this.db.get('markdownView:' + doc.hash)) continue;
+      const original = this.object(doc.hash).toString('utf8');
+      const visible = authorMarkdown(original);
+      if (visible !== original) migrations.push({ path: doc.path, baseHash: doc.hash, newHash: this.putObject(visible) });
+    }
+    this.db.transaction(() => {
+      for (const change of migrations) {
+        this.db.set('markdownView:' + change.baseHash, change.newHash);
+        // Preserve externally edited or missing working copies for the existing comparison/import flow.
+        if (fileHash(safePath(this.root, change.path)) !== change.baseHash) continue;
+        this.db.sql.prepare('INSERT INTO materialization_outbox VALUES(?,?,?,NULL)').run(id(), 'pending', JSON.stringify([change]));
+      }
+      this.db.set('markdownViewsV1', true);
+    });
+    this.materialize();
   }
   private recoveryRecords(): CommitRecoveryRecord[] {
     return this.db.sql.prepare("SELECT value FROM kv WHERE key LIKE 'commitRecovery:%'").all()
@@ -1127,6 +1193,7 @@ export class FileStore {
       messages.push(`已恢复提交 ${j.id}`);
     }
     this.materialize();
+    this.migrateMarkdownViews();
     if (this.db.project() && !this.db.get('headSnapshot')) this.db.captureSnapshot();
     return messages;
   }

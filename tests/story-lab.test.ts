@@ -334,9 +334,13 @@ test('configuration snapshot, conservative prose context and visible exclusions 
       baseVersionId: first.versionId,
       instruction: '试写第一章'
     });
+    s.profile.hasKey = true;
+    s.profile.apiKey = '';
     const preview = s.lab.preview(req);
     assert.ok(preview.sources.some((s) => s.includes('开篇事件')));
     assert.equal(preview.outputLimit, 4096);
+    assert.throws(() => s.lab.start(req), /配置可用连接/);
+    s.profile.apiKey = fakeProfile.apiKey;
     s.lab.start(req);
     s.profile.model = 'changed-after-dispatch';
     await s.lab.settled(s.session.id);

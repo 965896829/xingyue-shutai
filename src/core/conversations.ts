@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { authorMarkdown } from '../shared/author-markdown';
 import { syncGeneration } from '../shared/generation';
 import { id, now, hash } from './domain';
 import { fileHash, FileStore, safePath } from './storage';
@@ -110,7 +111,8 @@ export class Conversations {
     messageId: string;
     parent?: { id: string; hash: string };
   }) {
-    if (!a.content.trim()) throw new Error('草稿不能为空');
+    const content = authorMarkdown(a.content);
+    if (!content.trim()) throw new Error('草稿不能为空');
     this.get('conversations', a.conversationId);
     const source = this.get('conversation_messages', a.messageId);
     if (source.conversationId !== a.conversationId) throw new Error('草稿来源不属于此聊天');
@@ -124,7 +126,7 @@ export class Conversations {
     const actual = fileHash(safePath(this.store.root, relative));
     if (previous ? actual !== a.baseHash : actual !== null)
       throw new Error('草稿已有外部修改，请重新读取并比较，未覆盖文件');
-    const version = this.store.putObject(a.content);
+    const version = this.store.putObject(content);
     // Preserve an externally edited version too before replacing it after an explicit reload.
     const versions = [...(previous?.versions ?? [])];
     if (actual && !versions.some((v) => v.hash === actual))
@@ -154,6 +156,6 @@ export class Conversations {
     const content = version
       ? this.store.object(version).toString('utf8')
       : this.store.read(draft.path).content;
-    return { ...draft, content, currentHash: hash(content) };
+    return { ...draft, content: authorMarkdown(content), currentHash: hash(content) };
   }
 }

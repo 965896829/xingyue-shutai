@@ -9,14 +9,16 @@
 | `dev.mjs` | `npm run dev` | 启动 Vite 和 Electron 开发环境。 |
 | `dev.mjs --isolated` | `npm run dev:isolated` | 在 `.test-output/development-profile` 使用独立开发配置，首次调试配合独立测试作品。 |
 | `doctor.mjs` | `npm run doctor` | 检查 Node、系统、架构、SQLite 与 Electron；不读取作品、模型配置或发送模型请求。 |
-| `package-macos.mjs` | `npm run pack:mac` / `npm run dist:mac` | 仅在原生 macOS 上检查、构建并生成当前 CPU 架构的 ad-hoc 开发包，不自动发布；见 [Mac 开发指南](../docs/macos-development.md)。 |
+| `package-macos.mjs` | `npm run pack` / `npm run dist` | 仅在原生 macOS 上检查、构建并生成当前 CPU 架构的 ad-hoc 开发包，不自动发布；见 [Mac 开发指南](../docs/macos-development.md)。 |
+| `smoke-desktop.mjs` | `node scripts/smoke-desktop.mjs` | 用一次性空配置打开已打包的应用，核对工作台、执行内核和实验室。 |
+| `package-release.mjs` | `npm run dist:signed` | 使用发行证书生成正式产物，在独立目录校验签名。Mac 同时校验 Apple 公证票据。 |
 | `build-main.mjs` | `npm run build` 间接调用 | 构建 Electron 主进程、预加载、业务进程和文档进程。 |
 | `bundle-dependencies.mjs` | `build-main.mjs` 调用 | 核对生成代码只外部引用 Node/Electron，保留打包输入及生产依赖树的许可到 `dist/third-party-licenses`。安装包排除重复 `node_modules`；若增加外部依赖，构建先失败，须重新验证打包边界。 |
 | `check-deliverables.mjs` | `node scripts/check-deliverables.mjs <本次测试日志>` | 检查文档、资源锁和已生成的安装包；非默认发布目录通过 `WENXU_RELEASE_DIR` 指定。每次交付显式提供本次日志，不使用脚本内的历史默认日志作为新版本证据。 |
-| `verify-v7-release.mjs` | `node scripts/verify-v7-release.mjs <本次测试日志>` | 核对 `release/xingyue-v7` 中的版本、前端、Electron 程序及全部 Skill 资源，生成带版本号的交付清单。显式提供本次日志；脚本将显式日志标为专项范围，不能据此宣称全量回归。保留既有付费调用账本，不调用模型。 |
+| `verify-v7-release.mjs` | `node scripts/verify-v7-release.mjs <本次测试日志>` | 核对当前平台 `release/`（或 `WENXU_RELEASE_DIR`）中的版本、前端、Electron 程序及全部 Skill 资源，生成带版本号的交付清单。显式提供本次日志；脚本将显式日志标为专项范围，不能据此宣称全量回归。保留既有付费调用账本，不调用模型。 |
 | `generate-contract-schemas.mjs` | `node scripts/generate-contract-schemas.mjs` | 从类型生成 `src/shared/contract-shapes.json` 和 `contract-schemas.ts`；修改契约后运行，并审阅差异、执行类型检查及回归。 |
 | `update-prompt-locks.mjs` | `node scripts/update-prompt-locks.mjs` | 在人工审阅提示词改动后更新运行资源锁和技能注册表哈希；不导入旧设计稿，不改变工具合同。随后运行提示词及恢复回归。 |
-| `create-icon.mjs`、`export-brand.cjs` | `node scripts/create-icon.mjs` | 前者启动 Electron，后者使用 `nativeImage` 导出图标；二者是调用链，不是重复脚本。会更新品牌资源。 |
+| `create-icon.mjs`、`export-brand.cjs` | `node scripts/create-icon.mjs` | 生成 Mac 应用和界面使用的 PNG 品牌资源。准备其他发行目标的 ICO 图标时可附加 `--with-ico`。 |
 
 ## 回归、专项验证与本机模拟
 

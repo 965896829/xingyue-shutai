@@ -4,6 +4,7 @@ export const managementStatusSchema = z.object({
   clientId: z.string(),
   name: z.string(),
   version: z.string(),
+  os: z.string().optional(),
   running: z.boolean(),
   url: z.string().nullable(),
   startedAt: z.string().nullable(),

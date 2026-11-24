@@ -24,4 +24,5 @@ const result = await build({
   metafile: true,
   logLevel: 'info'
 });
-verifyBundledDependencies(result.metafile);
+// The development server serves the renderer from source. Release checks use Vite's built assets.
+if (import.meta.main) verifyBundledDependencies(result.metafile);

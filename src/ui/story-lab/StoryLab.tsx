@@ -446,7 +446,7 @@ export function StoryLab({
         <header className="workflow-heading">
           <div>
             <h1>
-              自由创作实验室<span className="stage-number">实验</span>
+              自由创作实验室
             </h1>
             <p>
               {detail
@@ -543,8 +543,7 @@ export function StoryLab({
                 <div className="lab-main">
                   {!selectedId ? (
                     <section className="lab-create">
-                      <span className="lab-eyebrow">从一句想法开始</span>
-                      <h2>这次，想写一个怎样的故事？</h2>
+                      <h2>新建实验</h2>
                       <label>
                         创作想法或题材组合
                         <textarea

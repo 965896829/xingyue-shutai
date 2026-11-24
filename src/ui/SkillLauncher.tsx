@@ -1,4 +1,5 @@
 import { invokeCommand } from '../shared/client';
+import { Wrench } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useDialog } from './useDialog';
 import { creativeOperations, type CreativeInput } from '../shared/creative';
@@ -63,7 +64,7 @@ export function SkillLauncher({ profileId, onRun }: { profileId: string; onRun: 
   }, []);
   return (
     <>
-      <button onClick={() => setOpen(true)}>创作工具</button>
+      <button aria-haspopup="dialog" onClick={() => setOpen(true)}><Wrench size={14} />创作工具</button>
       {open && (
         <div className="scrim">
           <section ref={dialog} className="modal" role="dialog" aria-modal="true" aria-label="创作工具">

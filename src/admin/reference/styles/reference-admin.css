@@ -129,9 +129,7 @@
 .ref-dashboard,
 .ref-agent-page {
   font:
-    14px/1.6 Arial,
-    "Microsoft YaHei",
-    sans-serif;
+    14px/1.6 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   min-width: 0;
 }
 .ref-page h1,
@@ -140,7 +138,7 @@
 .ref-dashboard h3,
 .ref-modal h2,
 .ref-modal h3 {
-  font-family: Arial, "Microsoft YaHei", sans-serif;
+  font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   letter-spacing: 0;
   margin: 0;
 }
@@ -170,9 +168,7 @@
   border-radius: 5px;
   min-height: 32px;
   font:
-    13px/1.5 Arial,
-    "Microsoft YaHei",
-    sans-serif;
+    13px/1.5 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   padding: 5px 11px;
   max-width: 100%;
 }
@@ -777,9 +773,7 @@
 }
 .ref-agent-card > p {
   font:
-    13px/1.65 Arial,
-    "Microsoft YaHei",
-    sans-serif;
+    13px/1.65 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   color: var(--ui-muted, #a5a69c);
   margin: 16px 0 9px;
   display: -webkit-box;
@@ -860,9 +854,7 @@
   color: var(--text);
   box-shadow: 0 24px 90px var(--ui-shadow, #0009);
   font:
-    14px/1.6 Arial,
-    "Microsoft YaHei",
-    sans-serif;
+    14px/1.6 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   overflow: auto;
   overscroll-behavior: contain;
 }
@@ -1666,9 +1658,7 @@
 }
 .ref-modal-header h2 {
   font:
-    600 17px/1.5 Arial,
-    "Microsoft YaHei",
-    sans-serif;
+    600 17px/1.5 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 .ref-modal-body {
   padding: 24px;
@@ -1981,9 +1971,7 @@
   color: var(--ui-soft, #c9ccbc);
   line-height: 1.9;
   font:
-    13px/1.9 Arial,
-    "Microsoft YaHei",
-    sans-serif;
+    13px/1.9 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 .ref-preview-composer {
   margin-top: 15px;
@@ -2027,9 +2015,7 @@
   border-spacing: 0;
   width: 100%;
   font:
-    13px/1.5 Arial,
-    "Microsoft YaHei",
-    sans-serif;
+    13px/1.5 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 .ref-table th {
   font-size: 13px;

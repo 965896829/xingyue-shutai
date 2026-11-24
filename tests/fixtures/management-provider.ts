@@ -30,13 +30,14 @@ const server = http.createServer(async (req, res) => {
   for await (const chunk of req) body += chunk;
   requests++;
   const input = JSON.parse(body);
+  const probeText = body.includes('星灯已亮') ? '星灯已亮' : body.includes('Reply exactly pong.') ? 'pong' : null;
   observed.push({ model: input.model, protocol: req.url?.endsWith('/responses') ? 'responses' : 'chat', effort: input.reasoning?.effort ?? input.reasoning_effort ?? null });
   if (req.url?.endsWith('/responses')) {
-    const text = body.includes('Reply exactly pong.') ? 'pong' : '这是本机合成验收回复，未调用外部模型。';
+    const text = probeText ?? '这是本机合成验收回复，未调用外部模型。';
     const result = { id: `fixture-${requests}`, status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text }] }], usage: { input_tokens: 16, output_tokens: 16 } };
     if (input.stream) {
       res.writeHead(200, { 'Content-Type': 'text/event-stream' });
-      if (streamDelay && !body.includes('Reply exactly pong.')) {
+      if (streamDelay && !probeText) {
         res.flushHeaders();
         const wait = () => new Promise<void>(resolve => {
           const done = () => { clearTimeout(timer); res.off('close', done); resolve(); };
@@ -59,11 +60,11 @@ const server = http.createServer(async (req, res) => {
     } else { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(result)); }
     return;
   }
-  if (body.includes('Reply exactly pong.')) {
-    if (JSON.parse(body).stream) {
+  if (probeText) {
+    if (input.stream) {
       res.writeHead(200, { 'Content-Type': 'text/event-stream' });
       res.end(
-        'data: {"id":"test-pong","choices":[{"index":0,"delta":{"content":"pong"},"finish_reason":null}]}\n\ndata: {"id":"test-pong","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":4,"completion_tokens":1}}\n\ndata: [DONE]\n\n'
+        `data: ${JSON.stringify({ id: 'test-pong', choices: [{ index: 0, delta: { content: probeText }, finish_reason: null }] })}\n\ndata: {"id":"test-pong","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":4,"completion_tokens":1}}\n\ndata: [DONE]\n\n`
       );
       return;
     }
@@ -71,7 +72,7 @@ const server = http.createServer(async (req, res) => {
     res.end(
       JSON.stringify({
         id: 'test-pong',
-        choices: [{ index: 0, message: { role: 'assistant', content: 'pong' }, finish_reason: 'stop' }],
+        choices: [{ index: 0, message: { role: 'assistant', content: probeText }, finish_reason: 'stop' }],
         usage: { prompt_tokens: 4, completion_tokens: 1 }
       })
     );

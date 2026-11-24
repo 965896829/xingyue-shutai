@@ -17,7 +17,7 @@ import { withTaskReasoning } from '../../shared/reasoning';
 import { setFailure } from '../../shared/recovery';
 import { requestErrorText } from '../../shared/run-presentation';
 import { taskTurnId } from '../../shared/task-links';
-import type { ModelMessage } from '../../shared/types';
+import { modelRoundLimit, type ModelMessage } from '../../shared/types';
 import { usesNativeSearch } from '../../shared/web-search';
 import { controllerRules, taskEnvelope } from '../agent-control';
 import { countInput, requestSize } from '../context-budget';
@@ -35,7 +35,6 @@ import { callModel } from '../runtime/model-gateway';
 import { piExecutorVersion, runTaskLoop } from '../runtime/task-loop';
 import { beginTool, finishTool, stopOnToolFailure, type ToolTicket } from '../runtime/tool-gateway';
 import { PublicSearch } from '../search';
-import { fileHash, safePath } from '../storage';
 import { tagContext } from '../tags';
 import { taskDiscussionContext } from '../task-discussion';
 import { historyChat, readHistoryMessage, searchHistory, assertHistoryReads } from '../history-reading';
@@ -314,7 +313,7 @@ ${restricted ? '' : tagContext(p, 'discussion', { focused: true })}
         if (event.type === 'turn_end') host.store.db.event(turn.id, 'pi-turn', '对话回执已保存', { round });
       },
       next: async () => {
-        if (round + (turn.networkRetries ?? 0) >= p.config.maxRounds) return;
+        if (round + (turn.networkRetries ?? 0) >= modelRoundLimit(p.config.maxRounds)) return;
         if (controller.signal.aborted) throw new Error('已停止');
         assertHistoryReads(host.records, turn.historyReads);
         if (
@@ -323,7 +322,7 @@ ${restricted ? '' : tagContext(p, 'discussion', { focused: true })}
           host.rulesHash() !== rulesHash ||
           host.profiles().find((v) => v.id === profile.id)?.version !== profile.version ||
           turn.citations.some(
-            (c) => c.kind === 'document' && c.path && fileHash(safePath(host.store.root, c.path)) !== c.hash
+            (c) => c.kind === 'document' && c.path && host.store.workingHash(c.path) !== c.hash
           )
         )
           throw new Error('本轮依据、规则或模型已改变，请重新发送以核对最新资料');
@@ -450,7 +449,7 @@ ${restricted ? '' : tagContext(p, 'discussion', { focused: true })}
               host.profiles().find((v) => v.id === profile.id)?.version !== profile.version ||
               turn.citations.some(
                 (c) =>
-                  c.kind === 'document' && c.path && fileHash(safePath(host.store.root, c.path)) !== c.hash
+                  c.kind === 'document' && c.path && host.store.workingHash(c.path) !== c.hash
               )
             )
               throw new Error('响应期间依据发生变化；已保留回答，但不能据此执行任务，请重新核对');

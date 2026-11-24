@@ -1,5 +1,5 @@
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
   color: var(--ink);
   background: var(--bg);
   font-synthesis: none;
@@ -317,7 +317,7 @@ details > p {
   place-items: center;
   color: var(--sidebar-ink);
   font-size: 22px;
-  font-family: SimSun, serif;
+  font-family: "Songti SC", SimSun, serif;
 }
 .brand b {
   display: block;
@@ -1808,13 +1808,6 @@ details > p {
   align-items: center;
   gap: 9px;
   margin: 3px 0;
-}
-.provider-section-title > span {
-  font-size: 10px;
-  color: var(--soft);
-  background: var(--accent-wash);
-  border-radius: 5px;
-  padding: 4px 6px;
 }
 .provider-section-title h3 {
   margin: 0;

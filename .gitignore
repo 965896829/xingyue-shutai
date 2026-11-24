@@ -12,6 +12,7 @@ release/
 output/
 analysis-*/
 .novelclient/
+/作品/
 *.db
 *.db-wal
 *.db-shm

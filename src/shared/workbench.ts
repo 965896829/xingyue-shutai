@@ -81,6 +81,7 @@ export function plotWorkbenchObject(node: PlotNode): WorkbenchObject {
     fields: node.sources.length
       ? Object.entries({
           title: node.title,
+          summary: node.summary ?? '',
           goal: node.goal,
           obstacle: node.obstacle,
           choice: node.choice,
@@ -93,6 +94,7 @@ export function plotWorkbenchObject(node: PlotNode): WorkbenchObject {
             label: (
               {
                 title: '标题',
+                summary: '阶段功能',
                 goal: '目标',
                 obstacle: '阻力',
                 choice: '选择',

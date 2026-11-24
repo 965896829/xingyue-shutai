@@ -57,7 +57,7 @@ export function taskEnvelope(
       can_commit: false,
       can_publish: false,
       max_repairs: automaticRepairLimit,
-      max_rounds: p.config.maxRounds,
+      max_rounds: p.config.maxRounds || null,
       max_tools: p.config.maxTools,
       cost_limit: p.config.stageBudget
     },

@@ -1,4 +1,4 @@
-import type { Run, ProjectState, SecretProfile, ModelMessage } from '../shared/types';
+import { modelRoundLimit, type Run, type ProjectState, type SecretProfile, type ModelMessage } from '../shared/types';
 import type { BookSpec } from '../shared/tags';
 import { emptyTagInput } from '../shared/tags';
 import type { CreationPlan } from '../shared/creation';
@@ -76,7 +76,7 @@ export async function prepareVolumeMarketResearch(args: {
   if (!native && (settings.provider === 'openai' || !args.search?.key))
     return unavailable('当前连接未提供可用搜索，本次未取得实时目录。');
   const remainingTools = p.config.maxTools - r.toolCount;
-  if (remainingTools < 3 || native && p.config.maxRounds - r.rounds < 2)
+  if (remainingTools < 3 || native && modelRoundLimit(p.config.maxRounds) - r.rounds < 2)
     return unavailable('剩余额度优先完成大纲，本次未另开检索请求。');
   evidence.provider = native ? 'native' : 'public';
   setRunStatus(r, 'running');

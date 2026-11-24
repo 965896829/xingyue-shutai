@@ -283,7 +283,7 @@
 }
 .story-lab textarea.lab-manuscript {
   min-height: 550px;
-  font-family: ui-monospace, 'Microsoft YaHei', monospace;
+  font-family: ui-monospace, 'PingFang SC', 'Microsoft YaHei', monospace;
   margin: 14px 0;
 }
 .lab-selection {

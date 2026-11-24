@@ -45,7 +45,7 @@ import {
   workbenchCandidateSchema
 } from '../src/shared/workbench-visual';
 import { parseOutput } from '../src/shared/contracts';
-import { workbenchViewSchema } from '../src/shared/workbench';
+import { plotWorkbenchObject, workbenchViewSchema } from '../src/shared/workbench';
 import { Service } from '../src/core/service';
 import { proposalHash } from '../src/core/storage';
 import { ProjectCommitService } from '../src/core/runtime/commit-kernel';
@@ -145,6 +145,27 @@ function setup() {
   };
   return { ...f, plot, view, binding, objectBinding, commit };
 }
+
+test('仅有阶段功能的分卷表在画布显示原文和章节范围，读者视角隐藏作者计划', () => {
+  const f = setup();
+  try {
+    const summary = '恢复供水，拿回通往泵房的钥匙。';
+    const table = [
+      '| 卷序 | 卷名 | 覆盖章节 | 阶段功能 |',
+      '| --- | --- | --- | --- |',
+      `| 第一卷 | 失水日 | 001—060 | ${summary} |`
+    ].join('\n');
+    f.commit([{ path: paths.volumes, content: table, baseHash: f.store.readAccepted(paths.volumes).hash }]);
+    const view = readWorkbench(f.store, { chapter: 3 });
+    const volume = view.plot!.nodes.find(n => n.title.includes('失水日'))!;
+    assert.deepEqual([volume.chapter, volume.endChapter, volume.summary], [1, 60, summary]);
+    assert.equal(plotWorkbenchObject(volume).fields.find(field => field.id === 'summary')?.value, summary);
+    assert.ok(volume.sources[0].quote.includes(summary));
+    assert.doesNotMatch(JSON.stringify(readWorkbench(f.store, { chapter: 3, viewpoint: 'reader' })), /恢复供水，拿回/);
+  } finally {
+    f.store.close();
+  }
+});
 
 test('四层剧情投影保留计划与来源，读者和人物范围没有作者场景', () => {
   const f = setup();

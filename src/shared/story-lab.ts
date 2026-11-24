@@ -209,15 +209,6 @@ export type LabRequest = z.infer<typeof labRequestSchema>;
 export type LabGenerate = z.infer<typeof labGenerateSchema>;
 export type LabContext = z.infer<typeof labContextSchema>;
 export type LabDetail = z.infer<typeof labDetailSchema>;
-export type LabEvent = {
-  type: 'story-lab';
-  workspace: 'story-lab';
-  sessionId: string;
-  requestId: string;
-  sequence: number;
-  text?: string;
-  data?: { status: LabRequest['status']; offset: number };
-};
 
 export const labSections = [
   '一句话核心设定',
@@ -285,6 +276,7 @@ export function labReferenceVersion(detail: LabDetail, action: LabGenerate['acti
 /** Navigation is optional metadata. Offsets always refer to the original, unmodified Markdown. */
 export function labHeadings(content: string): LabHeading[] {
   const headings: LabHeading[] = [];
+  const parents: LabHeading[] = [];
   let fence = '',
     offset = 0;
   for (const line of content.split(/(?<=\n)/)) {
@@ -294,14 +286,15 @@ export function labHeadings(content: string): LabHeading[] {
       else if (marker[1][0] === fence[0] && marker[1].length >= fence.length) fence = '';
     } else if (!fence) {
       const match = line.match(/^(#{1,6})\s+(.+?)(?:\s+#+)?\r?\n?$/);
-      if (match)
-        headings.push({ title: match[2].trim(), level: match[1].length, start: offset, end: content.length });
+      if (match) {
+        const heading = { title: match[2].trim(), level: match[1].length, start: offset, end: content.length };
+        while (parents.length && parents[parents.length - 1].level >= heading.level) parents.pop()!.end = offset;
+        parents.push(heading);
+        headings.push(heading);
+      }
     }
     offset += line.length;
   }
-  for (let i = 0; i < headings.length; i++)
-    headings[i].end =
-      headings.slice(i + 1).find((h) => h.level <= headings[i].level)?.start ?? content.length;
   return headings;
 }
 export function labMaterialHeadings(content: string): LabHeading[] {

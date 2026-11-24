@@ -1,3 +1,4 @@
+import { authorMarkdown } from '../shared/author-markdown';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
 import { Annotation, EditorState, Transaction } from '@codemirror/state';
@@ -10,8 +11,8 @@ import { tags } from '@lezer/highlight';
 // CSS variables update in place so switching themes preserves selection and undo history.
 const editorAppearance = [
   EditorView.theme({
-    '&': { height: '100%', color: 'var(--ink)', backgroundColor: 'var(--panel)', fontSize: '15px' },
-    '.cm-scroller': { overflow: 'auto', fontFamily: '"Microsoft YaHei",sans-serif', lineHeight: '1.9' },
+    '&': { height: '100%', color: 'var(--ink)', backgroundColor: 'var(--bg)', fontSize: '15px' },
+    '.cm-scroller': { overflow: 'auto', fontFamily: '-apple-system, "PingFang SC", "Microsoft YaHei", sans-serif', lineHeight: '1.85' },
     '.cm-content': { padding: '22px 10px', caretColor: 'var(--accent)' },
     '.cm-gutters': { background: 'var(--inset)', color: 'var(--muted)', border: 'none' },
     '.cm-activeLine, .cm-activeLineGutter': { background: 'var(--active-line)' },
@@ -187,11 +188,11 @@ export function Difference({ before, after }: { before: string; after: string })
     const v = new MergeView({
       parent: parent.current!,
       a: {
-        doc: before,
+        doc: authorMarkdown(before),
         extensions: [markdown(), editorAppearance, EditorView.editable.of(false), EditorView.lineWrapping]
       },
       b: {
-        doc: after,
+        doc: authorMarkdown(after),
         extensions: [markdown(), editorAppearance, EditorView.editable.of(false), EditorView.lineWrapping]
       },
       highlightChanges: true,

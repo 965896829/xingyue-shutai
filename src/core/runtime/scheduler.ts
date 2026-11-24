@@ -29,15 +29,21 @@ export class ResourceScheduler {
   stop() { this.draining = true; for (const job of [...this.queue]) this.cancel(job.id); }
   private pump() {
     const held = new Set([...this.active.values()].flatMap((job) => job.resources));
+    const ready: Job[] = [];
     this.queue.sort((a, b) => b.priority + (this.sequence - b.sequence) / 10 - (a.priority + (this.sequence - a.sequence) / 10) || a.sequence - b.sequence);
     for (const job of [...this.queue]) {
       if (job.resources.some((resource) => held.has(resource))) continue;
       this.queue.splice(this.queue.indexOf(job), 1);
       this.active.set(job.id, job);
       job.resources.forEach((resource) => held.add(resource));
-      let promise: Promise<unknown>;
-      try { promise = job.run(); } catch (error) { promise = Promise.reject(error); }
-      void promise.then(job.resolve, job.reject).finally(() => { this.active.delete(job.id); this.pump(); });
+      ready.push(job);
     }
+    // Jobs can schedule other jobs synchronously. Reserve the whole batch before invoking any of them.
+    for (const job of ready) void this.execute(job);
+  }
+  private async execute(job: Job) {
+    try { job.resolve(await job.run()); }
+    catch (error) { job.reject(error); }
+    finally { this.active.delete(job.id); this.pump(); }
   }
 }

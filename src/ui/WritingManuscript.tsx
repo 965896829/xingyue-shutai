@@ -1,10 +1,11 @@
+import { authorMarkdown, mergeAuthorMarkdown } from '../shared/author-markdown';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { ArrowDown, FileText, PanelRightClose, PanelRightOpen, X } from 'lucide-react';
 import { invokeCommand } from '../shared/client';
 import type { CommandOutput } from '../shared/contracts';
 import type { Run, Snapshot } from '../shared/types';
 import { manuscriptTarget, mergeManuscript, replaceManuscriptPassage, requestsManuscript, type ManuscriptEdit } from '../shared/manuscript-edit';
-import { Editor } from './Editor';
+import { Editor } from './LazyEditor';
 import { proseBinding, proseFile, useLiveStream } from './useLiveStream';
 
 export interface WritingDeskHandle {
@@ -102,7 +103,7 @@ export const WritingManuscript = forwardRef<WritingDeskHandle, {
   const primaryProse = !!run?.pipeline && path === proseFile(run.chapter);
   const running = primaryProse && run.status === 'running' && run.pipeline!.phase === 'prose';
   const raw = (primaryProse && (running || sourceChange) ? streamed : sourceChange?.content) ?? official?.content ?? '';
-  const source = lf(raw);
+  const source = lf(authorMarkdown(raw));
   useEffect(() => {
     if (!ready || restored.current) return;
     restored.current = true;
@@ -164,8 +165,9 @@ export const WritingManuscript = forwardRef<WritingDeskHandle, {
     if (!ready || saving || running || working.conflict) return;
     setSaving(true); setError('');
     const editCount = lastEdit.current.count;
-    const content = /\r\n/.test(raw) ? value.replace(/\n/g, '\r\n') : value;
     try {
+      const edited = /\r\n/.test(raw) ? value.replace(/\n/g, '\r\n') : value;
+      const content = mergeAuthorMarkdown(raw, edited);
       const expectedHash = sourceChange && Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
         new TextEncoder().encode(sourceChange.content))), byte => byte.toString(16).padStart(2, '0')).join('');
       const result = run && sourceChange

@@ -3,11 +3,12 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import { extractFile, listPackage } from '@electron/asar';
+import { desktopArtifacts } from './desktop-artifacts.mjs';
 const testLog = process.argv[2];
 assert.ok(testLog, '请显式指定本次测试日志：node scripts/check-deliverables.mjs <测试日志路径>');
 const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const createHashForBytes = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
-const releaseRoot = process.env.WENXU_RELEASE_DIR ?? 'release';
+const { executable, resources, installer } = desktopArtifacts();
 const docsRoot = process.env.WENXU_DOCS_DIR ?? 'docs';
 const docs = fs.readdirSync(docsRoot).filter((f) => f.endsWith('.md'));
 const broken = [];
@@ -45,7 +46,7 @@ const resourceFile = (root, relative) => {
   return file;
 };
 const source = 'resources/skill',
-  packaged = path.join(releaseRoot, 'win-unpacked/resources/skill');
+  packaged = path.join(resources, 'skill');
 const skillFiles = filesIn(source);
 assert.deepEqual(filesIn(packaged), skillFiles, 'Packaged Skill file inventory differs from source');
 for (const file of skillFiles)
@@ -122,21 +123,23 @@ assert.ok(total >= 143, 'Current release regression log is incomplete');
 assert.equal(Number(tests.match(/(?:#|ℹ) pass (\d+)\r?\n/)?.[1]), total);
 assert.match(tests, /(?:#|ℹ) fail 0\r?\n/);
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-assert.ok(
-  fs.existsSync(path.join(releaseRoot, `win-unpacked/${pkg.build.win.executableName}.exe`)),
-  'Packaged executable name differs'
-);
-assert.ok(!fs.existsSync(path.join(releaseRoot, 'win-unpacked/文序.exe')), 'Obsolete executable remains in current build');
-const version = pkg.version;
-const archive = path.join(releaseRoot, 'win-unpacked/resources/app.asar');
-assert.ok(!listPackage(archive).some(file => /(?:^|[/\\])node_modules(?:[/\\]|$)/.test(file)), 'Bundled dependency source trees must not be shipped again');
+assert.ok(fs.statSync(executable).isFile(), 'Packaged executable missing');
+assert.ok(!fs.existsSync(path.join(path.dirname(executable), '文序' + path.extname(executable))), 'Obsolete executable remains in current build');
+const archive = path.join(resources, 'app.asar');
+const entries = listPackage(archive);
+assert.equal(JSON.parse(extractFile(archive, 'package.json').toString('utf8')).version, pkg.version);
+assert.ok(!entries.some(file => /(?:^|[/\\])node_modules(?:[/\\]|$)/.test(file)), 'Bundled dependency source trees must not be shipped again');
+assert.ok(!entries.some(file => file.endsWith('.map')), 'Development source maps found in packaged app');
 const dependencyNotices = JSON.parse(extractFile(archive, path.join('dist', 'third-party-licenses', 'index.json')).toString('utf8'));
 assert.ok(dependencyNotices.length > 0, 'Bundled dependency notices are missing');
 for (const notice of dependencyNotices)
   for (const file of notice.files)
     assert.equal(createHashForBytes(extractFile(archive, path.join('dist', 'third-party-licenses', file.file))), file.sha256, `Packaged license differs: ${notice.name}`);
-for (const asset of filesIn('dist'))
-  assert.deepEqual(extractFile(archive, path.join('dist', asset)), fs.readFileSync(path.join('dist', asset)), `Packaged UI asset differs: ${asset}`);
+for (const folder of ['dist', 'dist-electron'])
+  for (const asset of filesIn(folder).filter(file => !file.endsWith('.map'))) {
+    const file = path.join(folder, asset);
+    assert.deepEqual(extractFile(archive, file), fs.readFileSync(file), `Packaged runtime or UI asset differs: ${file}`);
+  }
 const managementEntries = ['admin.html'];
 for (const entry of managementEntries) {
   const html = extractFile(archive, path.join('dist', entry)).toString('utf8');
@@ -145,7 +148,6 @@ for (const entry of managementEntries) {
   assert.ok(assets.length, `Management entry has no built assets: ${entry}`);
   for (const asset of assets) assert.deepEqual(extractFile(archive, path.join('dist', asset)), fs.readFileSync(path.join('dist', asset)), `Packaged management asset differs: ${asset}`);
 }
-const installer = path.join(releaseRoot, `${pkg.build.productName} Setup ${version}.exe`);
 const report = {
   at: new Date().toISOString(),
   docs: docs.length,

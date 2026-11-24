@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { AgentRunner } from '../runner';
-import type { Run, ProjectState, SecretProfile } from '../../shared/types';
+import { modelRoundLimit, type Run, type ProjectState, type SecretProfile } from '../../shared/types';
 import { creativeOperations } from '../../shared/creative';
 import { compileCreative } from '../creative-context';
 import { hash, now } from '../domain';
@@ -131,7 +131,7 @@ export async function driveCreativeWorkflow(
     validate: value => parseCreativeResult(task, JSON.stringify(value), compiled.modelPayload),
     send: async (purpose, instruction, input) => {
     const requestMessages: Run['messages'] = [{ role: 'user', content: JSON.stringify(input) }];
-    if (run.rounds >= project.config.maxRounds) throw new Error('已达到本任务请求次数上限');
+    if (run.rounds >= modelRoundLimit(project.config.maxRounds)) throw new Error('已达到本任务请求次数上限');
     if ('protocolId' in task.input && task.input.protocolId) {
       const protocol = readQuality(host.store).protocols.find(p => p.id === ('protocolId' in task.input ? task.input.protocolId : ''))!;
       const used = [...host.store.db.allRuns()].filter(r => r.creative && 'protocolId' in r.creative.input && r.creative.input.protocolId === protocol.id).reduce((total, r) => total + attempts(host.store, r.id).filter(a => a.status !== 'not_sent').length, 0);

@@ -39,7 +39,7 @@ README 与依赖文件显示，桌面壳和嵌入式 Go 引擎通过 C ABI 上�
 
 桌面启动路径将 Tauri 外壳与 Python 后端联动，写作委派再进入生成流水线；当前本地与线上固定提交一致。[桌面启动代码](https://github.com/shenminglinyi/PlotPilot/blob/cbd260ba7b5fe35e53f528937c4a240fb67ea2dc/frontend/src-tauri/src/lib.rs)、[写作委派](https://github.com/shenminglinyi/PlotPilot/blob/cbd260ba7b5fe35e53f528937c4a240fb67ea2dc/engine/runtime/writing_delegate.py)
 
-可借鉴分层上下文、角色投影、章后管线、尝试与采纳分离；本次隔离探针发现的预算溢出与构造参数问题见 [源码审计](02_源码与档案审计.md) 和 [探针结果](../analysis-2026-10-06/plotpilot-probes.json)。没有启动全系统，不将局部缺陷扩展成对全部功能的否定。
+可借鉴分层上下文、角色投影、章后管线、尝试与采纳分离；本次隔离探针发现的预算溢出与构造参数问题见 [源码审计](02_源码与档案审计.md) 和 《探针结果》（历史资料 `analysis-2026-10-06/plotpilot-probes.json`）。没有启动全系统，不将局部缺陷扩展成对全部功能的否定。
 
 许可证是带 Commons Clause 的 Apache 2.0 文本，不能按普通 Apache 项目处理收费复用。用户明确未来存在收费功能，因此本项目建议参考设计并独立实现，复制代码需另行明确授权。[固定许可证](https://github.com/shenminglinyi/PlotPilot/blob/cbd260ba7b5fe35e53f528937c4a240fb67ea2dc/LICENSE)
 

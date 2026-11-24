@@ -17,13 +17,14 @@
   padding: 9px 22px;
   border-bottom: 1px solid var(--line);
 }
-.work-tabs button {
+.work-tabs > button,
+.work-tab-tools > button {
   white-space: nowrap;
   background: transparent;
   color: var(--muted);
   border: 0;
 }
-.work-tabs button.active {
+.work-tabs > button.active {
   background: var(--raised);
   color: var(--ink);
 }

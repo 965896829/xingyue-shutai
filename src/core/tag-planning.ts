@@ -1,5 +1,5 @@
 import { runTaskLoop } from './runtime/task-loop';
-import type { ModelResult } from '../shared/types';
+import { modelRoundLimit, type ModelResult } from '../shared/types';
 import { setRunStatus } from './runtime/run-state';
 import { callModel } from './runtime/model-gateway';
 import { withTaskReasoning } from '../shared/reasoning';
@@ -26,7 +26,7 @@ import {
 } from './tags';
 import { creationGenre, modelBookSpec } from './tags';
 import { bookProfilePath, renderBookProfile } from './publishing';
-import { fileHash, safePath, type FileStore } from './storage';
+import { type FileStore } from './storage';
 import { paths, updateConfigDocument } from './domain';
 import { assembleContext } from './memory';
 import { templates } from './skill';
@@ -114,9 +114,9 @@ export async function driveTagPlanning(args: {
     if (planningRulesHash(root, store.db.project(), t) !== skillHash) throw new Error('策划规则已更新，请继续任务以重新加载');
     planningBinding(store, r);
     if (signal.aborted) throw new RequestError('作者已停止策划', false);
-    if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools)
-      throw new ApplicationError(r.rounds >= p.config.maxRounds ? 'ROUND_LIMIT' : 'TOOL_LIMIT', '策划、审核和修订共用的任务预算已用完，候选已保留');
-    if (r.manifest!.sources.some((s) => fileHash(safePath(store.root, s.path)) !== s.hash))
+    if (r.rounds >= modelRoundLimit(p.config.maxRounds) || r.toolCount >= p.config.maxTools)
+      throw new ApplicationError(r.rounds >= modelRoundLimit(p.config.maxRounds) ? 'ROUND_LIMIT' : 'TOOL_LIMIT', '策划、审核和修订共用的任务预算已用完，候选已保留');
+    if (r.manifest!.sources.some((s) => store.workingHash(s.path) !== s.hash))
       throw new Error('策划依赖资料已在外部改变');
     const reviewing = t.phase === 'reviewing_contract';
     const selectedProfile = reviewing

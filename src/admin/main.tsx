@@ -1,5 +1,4 @@
 import { createRoot } from 'react-dom/client';
-import { AdminApp } from './AdminApp';
 import { connectManagement, installManagementBridge } from './transport';
 import { configureReferenceApi } from './reference-api';
 import './reference/styles/globals.css';
@@ -25,7 +24,8 @@ root.render(
   </div>
 );
 void connectManagement(pair ?? undefined)
-  .then((session) => {
+  .then(async (session) => {
+    const { AdminApp } = await import('./AdminApp');
     const transport = installManagementBridge(session);
     configureReferenceApi(session, transport);
     root.render(<AdminApp session={session} transport={transport} />);
@@ -38,7 +38,7 @@ void connectManagement(pair ?? undefined)
         <p>{(error as Error).message}</p>
         <ol>
           <li>打开本机星月书台客户端。</li>
-          <li>点击左侧底部「网页管理后台」。</li>
+          <li>打开左下角「设置与工具」，选择「网页管理后台」。</li>
           <li>在自动打开的浏览器中管理客户端。</li>
         </ol>
         <button onClick={() => location.reload()}>重新检查连接</button>

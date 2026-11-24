@@ -147,9 +147,9 @@ app.whenReady().then(() => {
   }));
   for (const { size, image } of icoImages)
     report.outputs.push(writePNG(path.join(iconsDir, `app-icon-${size}.png`), image));
-  report.ico = writeICO(icoImages);
+  if (process.argv.includes('--with-ico')) report.ico = writeICO(icoImages);
   fs.writeFileSync(path.join(root, 'resources/brand/export-report.json'), JSON.stringify(report, null, 2) + '\n');
-  console.log(JSON.stringify({ outputs: report.outputs.length, icoSizes: report.ico.sizes, report: 'resources/brand/export-report.json' }));
+  console.log(JSON.stringify({ outputs: report.outputs.length, icoSizes: report.ico?.sizes ?? [], report: 'resources/brand/export-report.json' }));
   app.exit(0);
 }).catch((error) => {
   console.error(error.stack || String(error));

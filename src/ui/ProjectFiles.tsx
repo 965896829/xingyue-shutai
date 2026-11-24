@@ -1,9 +1,13 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { FileText } from 'lucide-react';
 import type { DocumentInfo } from '../shared/types';
 
-export function ProjectFiles({ documents, selected, current, onOpen, resetKey }: { documents: DocumentInfo[]; selected?: string; current?: string; onOpen: (path: string) => void; resetKey: string }) {
+export function ProjectFiles({ documents: allDocuments, query = '', selected, current, onOpen, resetKey }: { documents: DocumentInfo[]; query?: string; selected?: string; current?: string; onOpen: (path: string) => void; resetKey: string }) {
   const container = useRef<HTMLDivElement>(null), firstRow = useRef<HTMLButtonElement>(null), pendingFocus = useRef<number | null>(null);
+  const [folder, setFolder] = useState('');
+  const folders = useMemo(() => [...new Set(allDocuments.filter(d => d.path.includes('/')).map(d => d.path.split('/')[0]))].sort(), [allDocuments]);
+  const activeFolder = folders.includes(folder) ? folder : '';
+  const documents = useMemo(() => allDocuments.filter(d => query ? d.path.includes(query) : !activeFolder || d.path.startsWith(activeFolder + '/')), [allDocuments, query, activeFolder]);
   const [top, setTop] = useState(0), [height, setHeight] = useState(400), [rowHeight, setRowHeight] = useState(34);
   const virtual = documents.length > 300;
   const currentIndex = current ? documents.findIndex(document => document.path === current) : -1;
@@ -31,13 +35,22 @@ export function ProjectFiles({ documents, selected, current, onOpen, resetKey }:
       ? element.scrollTop + target.getBoundingClientRect().top - element.getBoundingClientRect().top : 0;
     element.scrollTop = Math.max(0, position - (currentIndex < 0 ? 0 : (element.clientHeight - rowHeight) / 2));
     setTop(element.scrollTop);
-  }, [resetKey, current, currentIndex, rowHeight, virtual, height]);
+  }, [resetKey, current, currentIndex, rowHeight, virtual, height, activeFolder, query]);
   useLayoutEffect(() => {
     if (pendingFocus.current === null) return;
     const button = container.current?.querySelector<HTMLButtonElement>(`[data-file-index="${pendingFocus.current}"]`);
     if (button) { button.focus({ preventScroll: true }); pendingFocus.current = null; }
   }, [start, end, top]);
-  return <div className="files" ref={container} style={virtual ? { overflowAnchor: 'none' } : undefined} onScroll={event => { if (virtual) setTop(event.currentTarget.scrollTop); }}>
+  return <>
+    <div className="file-directory">
+      {query ? <span>搜索结果</span> : <select aria-label="文稿目录" value={activeFolder} onChange={e => setFolder(e.target.value)}>
+        <option value="">全部文稿</option>
+        {folders.map(name => <option key={name} value={name}>{name.replace(/^\d+_/, '')}</option>)}
+      </select>}
+      <small>{documents.length} 项</small>
+    </div>
+    <div className="files" ref={container} style={virtual ? { overflowAnchor: 'none' } : undefined} onScroll={event => { if (virtual) setTop(event.currentTarget.scrollTop); }}>
+    {!documents.length && query && <small className="file-empty">没有匹配的文稿</small>}
     {virtual && start > 0 && <div aria-hidden="true" style={{ height: start * rowHeight }} />}
     {documents.slice(start, end).map((document, offset) => {
       const index = start + offset;
@@ -67,5 +80,5 @@ export function ProjectFiles({ documents, selected, current, onOpen, resetKey }:
       </button>;
     })}
     {virtual && end < documents.length && <div aria-hidden="true" style={{ height: (documents.length - end) * rowHeight }} />}
-  </div>;
+  </div></>;
 }

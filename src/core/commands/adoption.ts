@@ -1,8 +1,7 @@
-import { revisedChapterImpact } from '../story-impact';
 import { z } from 'zod';
 import { approvedCreation } from '../../shared/creation';
 import { type Assessment } from '../../shared/studio';
-import { type Command, type ProjectState } from '../../shared/types';
+import type { Command } from '../../shared/types';
 import { batchSummaryProgress, materializeAftermathStatus } from '../aftermath-status';
 import { assertControllerRules } from '../agent-control';
 import { contextChanged } from '../context-compiler';
@@ -41,10 +40,12 @@ import { initialFiles, renderIndex } from '../skill';
 import { proposalHash } from '../storage';
 import {
   changedStoryStates,
+  finishImpactReview,
   futurePlanTargets,
   makeStoryImpact,
   nextUnwrittenChapter,
-  resolveStoryImpacts
+  resolveStoryImpacts,
+  revisedChapterImpact
 } from '../story-impact';
 import {
   approveTags,
@@ -57,13 +58,6 @@ import {
 } from '../tags';
 import { assertTitleSelection, renderTitle, titlePath, validateBookTitle } from '../title-naming';
 const str = (v: unknown) => z.string().min(1).parse(v);
-function finishImpactReview(p: ProjectState) {
-  if (p.stale.length) return;
-  for (const [chapter, state] of Object.entries(p.chapterStatesBeforeReview ?? {})) {
-    if (p.chapters[chapter] === 'stale') p.chapters[chapter] = state;
-  }
-  delete p.chapterStatesBeforeReview;
-}
 
 export const adoptionCommands = new Set<string>(['run.accept']);
 type Host = Pick<

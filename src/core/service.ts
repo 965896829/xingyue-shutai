@@ -4,7 +4,6 @@ import { WritingStyleRecommender } from './writing-style';
 import { StoryLabService } from './story-lab/service';
 import { labCreateSchema, labUpdateSchema, labEditSchema, labSelectSchema, labGenerateSchema, labExportSchema } from '../shared/story-lab';
 import { writingStyleRequestSchema } from '../shared/writing-style';
-import { proposalHash } from './storage';
 import { readQuality, mutateQuality, qualityStatistics, blindPresentation, voiceDocument, voicePath } from './quality';
 import { readWorldModel, renderWorldModel } from './world-model';
 import { bindWorkflow } from './runtime/workflow-contract';
@@ -23,12 +22,10 @@ import { buildVersion } from '../shared/build';
 import { commandContracts,isCommand,parseInput,parseOutput,type CommandOutput } from '../shared/contracts';
 import { approvedCreation } from '../shared/creation';
 import { ApplicationError } from '../shared/errors';
-import { newProjectLocationError } from '../shared/project-location';
 import { captureReasoning } from '../shared/reasoning';
-import { recoveryDecision } from '../shared/recovery';
+import { authorMarkdown, mergeAuthorMarkdown } from '../shared/author-markdown';
 import { documentPreviewText,retryNeedsConfirmation } from '../shared/run-presentation';
 import {
-embeddingSettingsSchema,
 memoryScopeSchema,
 type Assessment,
 type DraftIdentity,
@@ -46,14 +43,14 @@ type Run,
 type SecretProfile,
 type Snapshot
 } from '../shared/types';
-import { nativeServerLimit,usesNativeSearch } from '../shared/web-search';
 import { builtInRoles } from './assistant-settings';
 import { adoptionCommands,handleAdoptionCommand } from './commands/adoption';
 import { creationCommands,handleCreationCommand } from './commands/creation';
 import { discussionCommands,handleDiscussionCommand } from './commands/discussion';
-import { assertProjectVersion } from './compatibility';
+import { connectionCommands, handleConnectionCommand } from './commands/connections';
+import { handleRunCommand, runCommands } from './commands/runs';
 import { compileContext,contextChanged } from './context-compiler';
-import { ConversationRunner,type AssistantRuntime } from './conversation-runner';
+import type { ConversationRunner, AssistantRuntime } from './conversation-runner';
 import { generateCover,saveCover } from './cover';
 import { CreationTimings } from './creation-timing';
 import { createBackup,exportDocument,importDocument,restoreBackup } from './documents';
@@ -70,20 +67,17 @@ reconfigure,
 renderProgress,
 updateConfigDocument
 } from './domain';
-import { CompatibleEmbeddings,SemanticIndex } from './embeddings';
 import { expressionLibrary,validateExpressionSelection } from './expression-rules';
-import { garbageCollectionPreview,verifyObjects } from './integrity';
+import { garbageCollectionPreview } from './integrity';
 import { checkPublication } from './manuscript-check';
 import { readManuscriptView } from './manuscript-view';
 import { exportReviewPage, importReviewFeedback } from './blind-review';
 import { workbenchCommands, handleWorkbenchCommand } from './commands/workbench';
 import { bindWorkbenchCandidate } from './workbench-candidates';
 import { bookProfilePath, readBookProfile, renderBookProfile, resolveBookProfile, refreshPublishingCatalog, verifyPublishingSnapshot } from './publishing';
-import { bookProfileSchema, type PublishingSnapshot } from '../shared/publishing';
-import { storageFileName } from '../shared/file-names';
+import type { PublishingSnapshot } from '../shared/publishing';
 import { collectMarketEvidence, marketCacheKey } from './market-evidence';
 import { marketRequestSchema, type MarketEvidence } from '../shared/market-evidence';
-import { validateBookTitle } from './title-naming';
 import {
 rebuildMemory,
 searchMemory
@@ -92,59 +86,48 @@ import { memoryRepairScope,prepareMemoryRepair } from './memory-repair';
 import { characterState,retrieveMemory,syncEntities,traceSource } from './memory-studio';
 import { importLegacy,previewLegacy } from './migration';
 import { readNarrativeData } from './narrative-curves';
-import { nativeSearchSources } from './native-web-search';
-import { ProjectWatcher } from './project-watcher';
-import { ProseIndexer } from './prose-index';
 import { invokeModel } from './provider';
+import { createProjectArchive } from './project-create';
+import { prepareProjectSession } from './project-session';
 import { ProjectRecycleBin,isRecyclePath,samePath } from './recycle-bin';
-import { AgentRunner,type Caller } from './runner';
+import type { Caller } from './runner';
 import { candidateChangesForCurrentSettings,compatibleRunBase,compatibleSettingsSnapshot } from './runtime-settings';
 import { ProjectCommitService } from './runtime/commit-kernel';
 import { ExecutionRecords } from './runtime/execution-records';
-import { chooseExecutor } from './runtime/executor';
-import { ExecutorRouter } from './runtime/executor-router';
-import { authorizeUnknownAttempts,callExternal,callModel,estimatedUnits,recoverAttempts } from './runtime/model-gateway';
+import { chooseExecutor, type ExecutionContext } from './runtime/executor';
+import { parkQueuedExecution } from './runtime/queued-execution';
+import { callExternal } from './runtime/model-gateway';
 import { Operations } from './runtime/operations';
-import { prepareAuthorRevision,prepareRunRecovery } from './runtime/run-recovery';
+import { prepareAuthorRevision } from './runtime/run-recovery';
 import { setRunStatus } from './runtime/run-state';
 import { ResourceScheduler } from './runtime/scheduler';
 import { piExecutorVersion } from './runtime/task-loop';
-import { PublicSearch } from './search';
 import { initialFiles,renderIndex } from './skill';
 import { SkillRegistry,stageSkills } from './skill-registry';
-import { FileStore,fileHash,safePath } from './storage';
-import { nextUnwrittenChapter,resolveStoryImpacts } from './story-impact';
-import { hasSavedDirectionCheckpoint,planningRulesHash } from './tag-planning';
+import { FileStore, proposalHash, safePath } from './storage';
+import { finishImpactReview, nextUnwrittenChapter, resolveStoryImpacts } from './story-impact';
+import { planningRulesHash } from './tag-planning';
 import {
 compileTags,
 currentCreationDraft,
 contractPath,
 makeBookSpec,
-makeCreationSpec,
 planningBinding,
 planningFingerprint,
 tagBundle,
-tagHash,
-validateApprovedTags
+tagHash
 } from './tags';
-import { recoverUsage } from './telemetry';
 import { namingBinding,namingRulesHash,titlePath } from './title-naming';
 import { loadTitleStyleProfile } from './title-style';
 import { upgradesVolumeNaming } from './volume-market-research';
 import { revisedVolumeNaming } from './volume-naming';
 import { chapterNamingStages, makeChapterNaming, upgradesChapterNaming } from './chapter-naming';
 const str = (v: unknown) => z.string().min(1).parse(v);
-function finishImpactReview(p: ProjectState) {
-  if (p.stale.length) return;
-  for (const [chapter, state] of Object.entries(p.chapterStatesBeforeReview ?? {})) {
-    if (p.chapters[chapter] === 'stale') p.chapters[chapter] = state;
-  }
-  delete p.chapterStatesBeforeReview;
-}
 export class Service {
   projectSessionId = id();
   draining = false;
   private jobs = new Set<Promise<unknown>>();
+  private projectRequests = new Set<Promise<unknown>>();
   private requests = new Set<Promise<unknown>>();
   readonly operations = new Operations();
   readonly scheduler = new ResourceScheduler();
@@ -170,17 +153,17 @@ export class Service {
     return catalog;
   }
   private creationTimings = new CreationTimings();
-  private watcher: ProjectWatcher | null = null;
+  private session: ReturnType<typeof prepareProjectSession> | null = null;
+  private queuedExecution?: ExecutionContext;
+  get store() { return this.session?.store ?? null; }
+  get runner() { return this.session?.runner ?? null; }
+  get chat() { return this.session?.chat ?? null; }
+  get index() { return this.session?.index ?? null; }
+  get executor() { return this.session?.executor ?? null; }
   managementController = new AbortController();
-  index: SemanticIndex | null = null;
   private eventSeq = 0;
   private eventEpoch = id();
   readonly emit: (event: AppEvent) => void;
-  store: FileStore | null = null;
-  private proseIndexer: ProseIndexer | null = null;
-  runner: AgentRunner | null = null;
-  chat: ConversationRunner | null = null;
-  executor: ExecutorRouter | null = null;
   assistant: AssistantRuntime = {
     roles: [],
     search: searchSettingsSchema.parse({}),
@@ -223,7 +206,7 @@ export class Service {
     this.chat?.stop();
     this.index?.stop();
     this.coverController?.abort();
-    this.proseIndexer?.stop();
+    this.session?.proseIndexer.stop();
     this.managementController.abort();
     this.writingStyles.cancel();
     await this.storyLab?.close();
@@ -236,48 +219,50 @@ export class Service {
     this.requestJournal = null;
   }
   private assertCanClose() {
+    if (this.queuedExecution) throw new Error('当前作品还有排队任务，请先停止或等待完成');
     if (this.writingStyles.busy) throw new Error('请先停止风格推荐或等待结果');
     if (this.index?.controller) throw new Error('请先停止语义索引更新');
     if (this.chat?.controller) throw new Error('请先停止当前聊天任务');
     if (this.coverController) throw new Error('封面请求尚未结束，请先停止或等待结果');
     if (this.runner?.controller) throw new Error('请先停止当前任务');
     if (this.runner?.telemetry.busy) throw new Error('评估尚未结束，请先停止或等待结果');
+    if (this.projectRequests.size) throw new Error('当前作品的操作尚未结束，请稍后再切换或关闭');
   }
   close() {
+    this.closeSession();
+  }
+  private closeSession(nextId = id(), nextEpoch = id()) {
     this.assertCanClose();
-    this.proseIndexer?.stop();
-    this.proseIndexer = null;
-    this.watcher?.close();
-    this.watcher = null;
-    this.store?.close();
-    this.store = null;
-    this.runner = null;
-    this.chat = null;
-    this.executor = null;
-    this.index = null;
-    this.projectSessionId = id();
-    this.eventEpoch = id();
-    this.eventSeq = 0;
+    try {
+      this.session?.close();
+    } finally {
+      this.session = null;
+      this.projectSessionId = nextId;
+      this.eventEpoch = nextEpoch;
+      this.eventSeq = 0;
+    }
   }
   snapshot(): Snapshot {
-    const store = this.store;
-    const tagDraft = store ? currentCreationDraft(store) : undefined;
     if (this.recycleBin) this.recent = this.recycleBin.reconcileRecent(this.recent);
+    return this.readSnapshot(this.store, this.chat, this.recent);
+  }
+  private readSnapshot(store: FileStore | null, chat: ConversationRunner | null, recent: Snapshot['recent']): Snapshot {
+    const tagDraft = store ? currentCreationDraft(store) : undefined;
     return {
       eventSeq: this.eventSeq,
       projectSessionId: this.projectSessionId,
       epoch: this.eventEpoch,
-      studio: store ? this.studio() : undefined,
-      conversations: this.chat?.records.all('conversations') ?? [],
-      chatBusy: !!this.chat?.controller,
-      purgedDrafts: this.recycleBin?.purgedDrafts(this.recent) ?? [],
+      studio: store ? this.studio(store) : undefined,
+      conversations: chat?.records.all('conversations') ?? [],
+      chatBusy: !!chat?.controller,
+      purgedDrafts: this.recycleBin?.purgedDrafts(recent) ?? [],
       project: store?.db.project() ?? null,
       tagDraft,
       documents: store?.documentListing() ?? [],
-      runs: (store?.db.runs() ?? []).map((r) => this.presentRun(r)),
+      runs: store ? store.db.runs().map(r => this.presentRun(r, false, store)) : [],
       events: store?.db.events() ?? [],
       profiles: this.profiles.map(({ apiKey, ...p }) => p),
-      recent: this.recent,
+      recent,
       facts: store?.db.facts() ?? [],
       issues: (store?.db.get<string[]>('memoryIssues') ?? []).map((message) => ({
         code: 'memory',
@@ -286,13 +271,11 @@ export class Service {
       }))
     };
   }
-  private presentRun(run: Run, full = false): Run {
-    const store = this.store!;
+  presentRun(run: Run, full = false, store = this.store!): Run {
     return { ...run, creationTiming: this.creationTimings.view(run), basisRevision: compatibleRunBase(store, run) ? store.db.project().revision : null,
       ...(full ? {} : { messages: [], toolResults: {} }) };
   }
-  studio(): StudioState {
-    const store = this.store!;
+  studio(store = this.store!): StudioState {
     const head = store.db.headRef();
     return {
       snapshot: head
@@ -332,116 +315,45 @@ export class Service {
     };
   }
   async open(root: string) {
+    return this.switchProject(root, snapshot => parseOutput('project.open', snapshot));
+  }
+  private switchProject<T>(root: string, validate: (snapshot: Snapshot) => T): T {
     if (isRecyclePath(root)) throw new Error('请先从客户端回收站恢复作品，再打开编辑');
     this.assertCanClose();
     if (!fs.existsSync(path.join(root, '.novelclient/state.sqlite')))
       throw new Error(`此目录不是${brand.name}项目；请新建作品后导入文档`);
-    this.close();
-    const store = new FileStore(root);
-    this.store = store;
+    if (this.store && samePath(root, this.store.root)) return validate(this.snapshot());
+    const next = prepareProjectSession(new FileStore(root), {
+      skillRoot: this.skillRoot,
+      profiles: () => this.profiles,
+      assistant: () => this.assistant,
+      caller: this.caller,
+      emit: (store, event) => { if (this.store === store) this.emit(event); },
+      scheduleAssessment: execute => this.track(this.scheduler.run(id(), ['assessment'], 2, execute))
+    });
+    const nextId = id(), nextEpoch = id();
+    let recent: Snapshot['recent'];
+    let result: T;
     try {
-      verifyObjects(store.root, store.db.sql);
-      store.recover();
-      recoverAttempts(store);
-      new ExecutionRecords(store.db).recover();
-      const p = store.db.project();
-      if (!p) throw new Error(`此目录不是${brand.name}项目；请新建作品后导入文档`);
-      assertProjectVersion(p);
-      p.root = store.root;
-      p.config = configSchema.parse(p.config);
-      const creation = approvedCreation(p);
-      if (creation) validateApprovedTags(creation, p.id);
-      if (p.creation && p.tags) throw new Error('作品存在重复的正式方案记录，请恢复最近的完整备份');
-      if (p.creation && !p.creation.contract.plan || p.creationWorkflow === 2 && p.stage !== 'S01' && !p.creation)
-        throw new Error('正式作品方案记录缺失，请从完整备份恢复');
-      if (p.titleBinding && (p.title !== p.titleBinding.candidate.title || !p.titleReviewRequired && p.titleBinding.planHash !== creation?.contract.planHash))
-        throw new Error('正式书名与方案绑定不一致，请从完整备份恢复');
-      store.db.set('project', p);
-      this.runner = new AgentRunner(store, this.skillRoot, () => this.profiles, this.emit, this.caller);
-      this.runner.searchSettings = () => this.assistant.search;
-      this.runner.telemetry.schedule = (execute) => this.track(this.scheduler.run(id(), ['assessment'], 2, execute));
-      this.index = new SemanticIndex(
-        store,
-        () => ({
-          settings: embeddingSettingsSchema.parse(this.assistant.embedding ?? {}),
-          apiKey: this.assistant.embeddingKey ?? ''
-        }),
-        () => this.emit({ type: 'snapshot' })
-      );
-      this.runner.retrieve = (query, scope, budget) => this.index!.retrieve(query, scope, 12, budget);
-      this.runner.research = (signal, run) =>
-        new PublicSearch(this.assistant.search, this.assistant.searchKey, true, signal, { store, owner: run });
-      this.chat = new ConversationRunner(
-        store,
-        this.skillRoot,
-        () => this.profiles,
-        () => this.assistant,
-        this.emit,
-        this.caller
-      );
-      this.executor = new ExecutorRouter(store, this.runner, this.chat);
-      this.chat.records.recover();
-      if (!this.chat.records.all('conversations').length)
-        this.chat.records.create('创作讨论', this.assistant.search.enabled);
-      for (const r of store.db.allRuns())
-        if (r.status === 'running' || r.status === 'committing') {
-          setRunStatus(r, store.db.get(`inflight:${r.id}`) ? 'unknown' : 'paused');
-          r.error = '上次执行中断，恢复前将核对输入和未完成请求';
-          store.db.saveRun(r);
-        }
-      recoverUsage(store);
-      for (const r of store.db.allRuns()) {
-        if (r.accepted || ['discarded', 'stale'].includes(r.status)) continue;
-        if (!r.baseSnapshotId && r.baseRevision === p.revision) {
-          const head = store.db.headRef();
-          if (!head) {
-            if (!['failed', 'complete'].includes(r.status)) setRunStatus(r, 'stale');
-            r.error = '任务缺少可核验的作品版本，候选已保留，请重新建立任务'; store.db.saveRun(r);
-            continue;
-          }
-          r.baseSnapshotId = head.id;
-          if (r.stage === 'S10' && r.mode === 'stage' && !r.pipeline) {
-            const prose = r.changes.find((c) => c.path === prosePath(r.chapter));
-            r.pipeline = {
-              phase: prose ? 'review' : 'prose',
-              proseHash: prose ? hash(prose.content) : undefined,
-              epoch: id(),
-              version: 1,
-              previewCalls: 0
-            };
-            r.changes = prose ? [prose] : [];
-            r.facts = [];
-            r.messages = [];
-            r.skillHash = undefined;
-            setRunStatus(r, 'paused');
-            r.error = '候选已保留，继续后核对正文与记忆';
-          }
-          store.db.saveRun(r);
-        }
-      }
-      rebuildMemory(store);
-      syncEntities(store);
-      for (const run of store.db.runs()) {
-        if (!run.accepted && run.status === 'awaiting_review' && run.planning?.phase === 'ready' &&
-          !retryNeedsConfirmation(run) && !store.db.get(`inflight:${run.id}`)) {
-          this.runner.check(run, p);
-          store.db.saveRun(run);
-        }
-        this.runner.recoverReadyCandidate(run, p, 'restore');
-      }
-      const proseIndexer = this.proseIndexer = new ProseIndexer(store);
-      setImmediate(() => { if (this.proseIndexer === proseIndexer) void this.track(proseIndexer.rebuild()).catch(() => {}); });
-      this.watcher = new ProjectWatcher(store, () => this.emit({ type: 'snapshot', resource: 'documents' }), () => {});
-      this.recent = [{ title: p.title, root: p.root }, ...this.recent.filter((x) => x.root !== p.root)].slice(
-        0,
-        20
-      );
-    } catch (e) {
-      store.close();
-      this.store = null;
-      throw e;
+      const { title, root: openedRoot } = next.store.db.project();
+      recent = [{ title, root: openedRoot }, ...this.recent.filter(item => !samePath(item.root, openedRoot))].slice(0, 20);
+      if (this.recycleBin) recent = this.recycleBin.reconcileRecent(recent);
+      const candidate = this.readSnapshot(next.store, next.chat, recent);
+      // Validate the exact reply before releasing the active writer, including its successor's identity.
+      result = validate({ ...candidate, projectSessionId: nextId, epoch: nextEpoch, eventSeq: 0 });
+      this.closeSession(nextId, nextEpoch);
+    } catch (error) {
+      next.close();
+      if (error instanceof z.ZodError)
+        throw new ApplicationError('VALIDATION_ERROR', '目标作品的记录不完整，无法打开。请核对作品备份后再试。');
+      throw error;
     }
-    return this.snapshot();
+    this.session = next;
+    this.recent = recent;
+    setImmediate(() => {
+      if (this.session === next && !this.draining) void this.track(next.proseIndexer.rebuild()).catch(() => {});
+    });
+    return result;
   }
   require() {
     if (!this.store || !this.runner) throw new Error('请先打开作品');
@@ -535,7 +447,7 @@ export class Service {
   }
   launch(r: Run, receipt: unknown = r.id) {
     const { s, runner } = this.require();
-    if (runner.controller || this.chat?.controller || this.coverController || this.writingStyles.busy)
+    if (this.queuedExecution || runner.controller || this.chat?.controller || this.coverController || this.writingStyles.busy)
       throw new Error('本书已有运行中的模型任务');
     r.workflowVersion ??= 1;
     bindWorkflow(r);
@@ -543,18 +455,19 @@ export class Service {
       const execution = new ExecutionRecords(s.db).create(r.id, r.executorId ?? 'legacy', r.executorVersion ?? '1', r.executionId);
       r.executionId = execution.id;
       s.db.saveRun(r);
+      s.db.set('queuedForeground', { id: r.id, kind: 'run' });
       this.operations.complete(receipt);
     });
-    void this.track(this.scheduler.run(r.id, ['foreground'], 10, async () => {
+    void this.scheduleExecution({ id: r.id, kind: 'run' }, async execute => {
       const timingStore = (this.requestJournal ?? s).db;
       // Optional timing telemetry must never prevent generation or alter its result.
       try { this.creationTimings.begin(r, s.db.project(), this.profiles, timingStore); } catch {}
       try {
-        return await this.executor!.execute({ id: r.id, kind: 'run' });
+        return await execute();
       } finally {
         try { this.creationTimings.finish(s.db.run(r.id), timingStore); } catch {}
       }
-    })).catch((e) => {
+    }).catch((e) => {
       const latest = s.db.run(r.id);
       if (['complete', 'discarded', 'stale'].includes(latest.status)) return;
       setRunStatus(latest, latest.status === 'failed' ? 'failed' : 'paused');
@@ -563,6 +476,25 @@ export class Service {
       this.emit({ type: 'snapshot' });
     });
     return r.id;
+  }
+  scheduleExecution(context: ExecutionContext, around?: (execute: () => Promise<void>) => Promise<void>) {
+    const session = this.session!;
+    if (this.queuedExecution) throw new Error('本书已有排队任务');
+    this.queuedExecution = context;
+    const execute = () => session.executor.execute(context);
+    return this.track(this.scheduler.run(context.id, ['foreground'], 10, async () => {
+      session.store.db.set('queuedForeground', null);
+      this.queuedExecution = undefined;
+      return around ? around(execute) : execute();
+    }).catch(error => {
+      if (this.queuedExecution !== context) throw error;
+      try { parkQueuedExecution(session.store, session.chat.records); }
+      finally { this.queuedExecution = undefined; }
+      this.emit({ type: 'snapshot' });
+    }));
+  }
+  cancelQueued(kind: ExecutionContext['kind']) {
+    return this.queuedExecution?.kind === kind && this.scheduler.cancel(this.queuedExecution.id);
   }
   rebuildRun(old: Run, profileId: string, instruction = '', authorRevision = false) {
     const { s, p, runner } = this.require();
@@ -745,19 +677,38 @@ export class Service {
     if (options.projectSessionId && options.projectSessionId !== this.projectSessionId)
       throw new ApplicationError('PROJECT_SESSION_STALE', '作品会话已改变，请刷新后操作', ['refresh']);
     const input = parseInput(command, args);
-    const action = async () => parseOutput(command, await this.dispatch(command, input));
+    const action = () => this.executeCommand(command, input);
     const request = options.operationId && this.store && commandContracts[command].access !== 'read' && commandContracts[command].scope === 'project'
       ? this.operations.perform(this.store.db, options.operationId, command, input, action) : action();
     this.requests.add(request);
-    try { return await request; } finally { this.requests.delete(request); }
+    if (commandContracts[command].scope === 'project') this.projectRequests.add(request);
+    try { return await request; } finally { this.requests.delete(request); this.projectRequests.delete(request); }
   }
-  private async dispatch(command: Command, a: Record<string, unknown>): Promise<unknown> {
+  private async executeCommand<C extends Command>(command: C, a: Record<string, unknown>): Promise<CommandOutput<C>> {
     if (
       this.backingUp && !command.startsWith('lab.') &&
       commandContracts[command].access !== 'read' &&
       !['run.cancel', 'terminal.cancel', 'chat.stop', 'embedding.cancel', 'cover.cancel', 'style.cancel'].includes(command)
     )
       throw new Error('正在建立一致备份，请稍后再进行写入或切换项目');
+    const validate = (value: unknown) => parseOutput(command, value);
+    if (command === 'project.open') return this.switchProject(str(a.root), validate);
+    if (command === 'project.create') {
+      this.assertCanClose();
+      return this.switchProject(createProjectArchive(a, this.skillRoot, this.tagCatalog()), validate);
+    }
+    if (command === 'project.importLegacy') {
+      if (a.preview === true) return validate(previewLegacy(str(a.source)));
+      this.assertCanClose();
+      return this.switchProject(importLegacy(a), validate);
+    }
+    if (command === 'project.close') {
+      this.close();
+      return validate(this.snapshot());
+    }
+    return validate(await this.dispatch(command, a));
+  }
+  private async dispatch(command: Command, a: Record<string, unknown>): Promise<unknown> {
     if (command === 'app.snapshot') return this.snapshot();
     if (command.startsWith('lab.')) {
       const lab = this.lab();
@@ -837,51 +788,10 @@ export class Service {
       );
     }
     if (command === 'expression.catalog') return expressionLibrary(this.skillRoot).catalog;
-    if (command === 'embedding.test') {
-      const settings = embeddingSettingsSchema.parse(this.assistant.embedding ?? {});
-      const journal = this.requestJournal ?? this.store;
-      if (!journal) throw new Error('请求账本未初始化');
-      const owner = { id: id(), usage: { input: 0, output: 0, cost: 0, currency: settings.currency } };
-      const result = await callExternal(journal, owner, 'management-embedding-test', {
-        provider: 'embeddings', model: settings.model, version: 1, identity: settings,
-        pricing: settings.price, currency: settings.currency
-      }, ['连接测试'], settings.price === null ? null : estimatedUnits(32, 0, settings.price, 0), this.managementController.signal,
-      () => new CompatibleEmbeddings(settings, this.assistant.embeddingKey ?? '').embed(['连接测试'], this.managementController.signal),
-      (result) => ({ input: result.tokens, output: 0, cost: result.tokens === null || settings.price === null ? null : result.tokens * settings.price / 1e6, currency: settings.currency }));
-      return { ok: true, dimensions: result.vectors[0].length, tokens: result.tokens };
-    }
+    if (connectionCommands.has(command)) return handleConnectionCommand(this, command, a);
     if (command === 'skills.list') {
       const registry = new SkillRegistry(this.skillRoot);
       return registry.entries.map(entry => registry.get(entry.id));
-    }
-    if (command === 'search.test') {
-      const journal = this.requestJournal ?? this.store;
-      if (!journal) throw new Error('请求账本未初始化');
-      const profile = this.profiles.find(profile => a.profileId ? profile.id === a.profileId : profile.protocol === 'responses' && profile.enabled);
-      if (profile && usesNativeSearch(profile, this.assistant.search)) {
-        if (!profile.apiKey) throw new Error('请先为测试模型配置 API Key');
-        const owner = { id: id(), usage: { input: 0, output: 0, cost: 0, currency: profile.currency } };
-        const query = 'OpenAI 官方 Responses API web_search 文档';
-        const result = await callModel(journal, owner, 'management-native-search-test', this.caller ?? invokeModel,
-          { ...profile, stream: false, outputLimit: Math.min(profile.outputLimit, 1024) },
-          '请执行一次联网搜索，查找 OpenAI 官方 web_search 文档，简短回答并引用来源。',
-          [{ role: 'user', content: query }], [], this.managementController.signal, () => {},
-          { webSearch: { maxCalls: 1, required: true, serverLimit: nativeServerLimit(profile, this.assistant.search) } });
-        const sources = nativeSearchSources(result.webSearch ?? { calls: [], citations: [] });
-        if (!result.webSearch?.calls.some(call => call.status === 'completed') || !sources.length)
-          throw new Error('模型服务未返回已完成的原生搜索与可核对来源，请检查模型或中转是否支持 web_search');
-        return { ok: true, query, at: now(), message: 'OpenAI 原生搜索与来源返回正常', credits: null,
-          results: sources.map(source => ({ title: source.title, url: source.url, content: result.text.slice(0, 6000) })) };
-      }
-      if (this.assistant.search.provider === 'openai') throw new Error('请先配置支持工具调用的 Responses 模型，再测试 OpenAI 原生搜索');
-      const result = await new PublicSearch(
-        { ...this.assistant.search, enabled: true },
-        this.assistant.searchKey,
-        true,
-        this.managementController.signal,
-        { store: journal, owner: { id: id(), usage: { input: 0, output: 0, cost: 0, currency: 'USD' } } }
-      ).search('Tavily API documentation');
-      return { ok: true, ...result };
     }
     if (command === 'project.listTrash') {
       if (!this.recycleBin) throw new Error('回收站尚未初始化');
@@ -898,84 +808,6 @@ export class Service {
     if (command === 'project.preview') {
       const p = newProject(typeof a.title === 'string' ? a.title : '待定', 'preview', a.config ?? {});
       return Object.keys(initialFiles(p, this.skillRoot, typeof a.premise === 'string' ? a.premise : ''));
-    }
-    if (command === 'project.importLegacy') {
-      if (a.preview === true) return previewLegacy(str(a.source));
-      const root = importLegacy(a);
-      return this.open(root);
-    }
-    if (command === 'project.create') {
-      const args = z
-        .object({
-          parent: z.string(),
-          title: z.string().max(80).optional(),
-          premise: z.string(),
-          tagInput: tagInputSchema.optional(),
-          creationInput: tagInputSchema.optional(),
-          bookProfile: bookProfileSchema.optional(),
-          config: configSchema.optional()
-        })
-        .parse(a);
-      if (args.tagInput && args.creationInput) throw new Error('请只提交一份开书输入');
-      if (args.bookProfile && (args.creationInput?.bookProfile || args.tagInput?.bookProfile)) throw new Error('请只提交一份创作与发布分类');
-      if (!args.tagInput && !args.creationInput && !args.premise.trim()) throw new Error('原有创建方式需要填写原始设定');
-      const creationCatalog = this.tagCatalog();
-      const rawBookProfile = args.bookProfile ?? args.creationInput?.bookProfile ?? args.tagInput?.bookProfile;
-      const bookProfile = rawBookProfile ? resolveBookProfile(rawBookProfile, creationCatalog.publishingSnapshots ?? []) : null;
-      if (args.creationInput) makeCreationSpec({ id: 'preview', config: configSchema.parse(args.config ?? {}) } as ProjectState,
-        args.creationInput, 1, creationCatalog);
-      if (args.tagInput)
-        makeBookSpec(
-          { id: 'preview', config: configSchema.parse(args.config ?? {}) } as ProjectState,
-          args.tagInput,
-          1,
-          creationCatalog
-        );
-      const suppliedTitle = args.title?.trim();
-      if (args.creationInput && suppliedTitle) throw new Error('统一开书流程请先确认作品方案，再确定书名');
-      const title = suppliedTitle || `待定书名-${id().slice(0, 8)}`;
-      validateExpressionSelection(this.skillRoot, configSchema.parse(args.config ?? {}));
-      const locationError = newProjectLocationError(path.resolve(args.parent));
-      if (locationError) throw new ApplicationError('VALIDATION_ERROR', locationError);
-      validateBookTitle(title);
-      this.close();
-      const controlledName = path.join(args.parent, `《${storageFileName(title)}》创作档案`);
-      const root = fs.existsSync(controlledName) ? path.join(args.parent, `《${storageFileName(title)}》-${id().slice(0, 8)}创作档案`) : controlledName;
-      if (fs.existsSync(root)) throw new Error('同名作品目录已存在，请改名或打开');
-      fs.mkdirSync(root, { recursive: true });
-      const s = new FileStore(root);
-      this.store = s;
-      const p = newProject(title, root, args.config ?? {});
-      if (bookProfile) p.config.genre = bookProfile.profile.creativeGenres.join('、') || '未限定';
-      if (!suppliedTitle) p.titlePending = true;
-      p.revision = 1;
-      if (args.tagInput) {
-        p.tagEnabled = true;
-        p.schemaVersion = 2;
-        s.db.set('tagDraft', makeBookSpec(p, args.tagInput, 1, creationCatalog));
-      }
-      if (args.creationInput) {
-        p.creationWorkflow = 2;
-        p.schemaVersion = 3;
-        p.tagEnabled = !!args.creationInput.selection.reading.main || !!args.creationInput.bookProfile?.publishing;
-        s.db.set('tagDraft', makeCreationSpec(p, args.creationInput, 1, creationCatalog));
-      }
-      const premise = args.creationInput?.premise ?? args.tagInput?.premise ?? args.premise;
-      const files = initialFiles(p, this.skillRoot, premise);
-      if (bookProfile) files[bookProfilePath] = renderBookProfile(bookProfile.profile, bookProfile.catalog);
-      new ProjectCommitService(s).commit(
-        Object.entries(files).map(([path, content]) => ({ path, content, baseHash: null })),
-        p
-      );
-      s.db.set('premise', premise);
-      s.close();
-      this.store = null;
-      return this.open(root);
-    }
-    if (command === 'project.open') return this.open(str(a.root));
-    if (command === 'project.close') {
-      this.close();
-      return this.snapshot();
     }
     if (command === 'project.trash') {
       if (!this.recycleBin) throw new Error('回收站尚未初始化');
@@ -994,65 +826,10 @@ export class Service {
         this.emit({ type: 'snapshot' });
       }
     }
-    if (command === 'profiles.test') {
-      if (this.runner?.controller || this.chat?.controller || this.coverController)
-        throw new Error('请等当前模型任务结束再测试连接');
-      const profile = this.profiles.find((p) => p.id === str(a.id));
-      if (!profile) throw new Error('模型配置不存在');
-      const toolTest = a.tools === true;
-      const journal = this.requestJournal ?? this.store;
-      if (!journal) throw new Error('请求账本未初始化');
-      const owner = { id: id(), usage: { input: 0, output: 0, cost: 0, currency: profile.currency } };
-      const tools = toolTest
-        ? [
-            {
-              name: 'probe',
-              description: 'Call this tool with value ping',
-              parameters: {
-                type: 'object',
-                properties: { value: { type: 'string' } },
-                required: ['value'],
-                additionalProperties: false
-              }
-            }
-          ]
-        : [];
-      const result = await callModel(journal, owner, 'management-profile-test', invokeModel,
-        profile,
-        'Protocol connectivity test.',
-        [
-          {
-            role: 'user',
-            content: toolTest
-              ? 'Call probe with value ping, then after its result reply pong.'
-              : 'Reply exactly pong.'
-          }
-        ],
-        tools,
-        this.managementController.signal
-      );
-      if (toolTest) {
-        if (!result.calls.length) throw new Error('文字返回正常，但模型未执行工具调用');
-        const end = await callModel(journal, owner, 'management-profile-tool-test', invokeModel,
-          profile,
-          'Protocol connectivity test.',
-          [
-            { role: 'user', content: 'Call probe then reply pong.' },
-            { role: 'assistant', content: result.text, calls: result.calls, native: result.native },
-            ...result.calls.map((c) => ({ role: 'tool' as const, callId: c.id, content: 'ping received' }))
-          ],
-          tools,
-          this.managementController.signal
-        );
-        if (end.stop !== 'complete' || !end.text) throw new Error('工具结果续轮未完成');
-        return { ok: true, text: end.text };
-      }
-      return { ok: true, text: result.text };
-    }
     const { s, p, runner } = this.require();
     const chat = this.chat!;
     const idle = () => {
-      if (runner.controller || chat.controller || this.coverController || this.writingStyles.busy)
+      if (this.queuedExecution || runner.controller || chat.controller || this.coverController || this.writingStyles.busy)
         throw new Error('同一本书同时只能运行一个模型任务，请等待或停止当前任务');
     };
     if (command === 'run.page') {
@@ -1078,7 +855,10 @@ export class Service {
     if (command === 'manuscript.read') return readManuscriptView(s, typeof a.chapter === 'number' ? a.chapter : p.chapter, typeof a.runId === 'string' ? a.runId : undefined, a.includeDraft !== false);
     if (command === 'studio.read') return { ...this.studio(), entities: syncEntities(s) };
     if (command === 'embedding.reindex') {
-      void this.track(this.scheduler.run(id(), ['index'], 1, () => this.index!.rebuild())).catch((e) => this.emit({ type: 'error', text: (e as Error).message }));
+      const index = this.index!;
+      void this.track(this.scheduler.run(id(), ['index'], 1, async () => {
+        if (this.index === index) await index.rebuild();
+      })).catch((e) => { if (this.index === index) this.emit({ type: 'error', text: (e as Error).message }); });
       return true;
     }
     if (command === 'embedding.cancel') {
@@ -1329,7 +1109,7 @@ export class Service {
           throw new Error('候选所属阶段已变化');
         if (
           (r.manifest && contextChanged(s, r.manifest)) ||
-          candidateChangesForCurrentSettings(s, r).some((change) => fileHash(safePath(s.root, change.path)) !== change.baseHash)
+          candidateChangesForCurrentSettings(s, r).some((change) => s.workingHash(change.path) !== change.baseHash)
         )
           throw new Error('候选依据或正式文件已变化，请先核对');
       }
@@ -1367,7 +1147,7 @@ export class Service {
       if (runner.controller) throw new Error('请先停止任务');
       const files = initialFiles(p, this.skillRoot, s.db.get<string>('premise') ?? ''),
         changes = Object.entries(files)
-          .filter(([file]) => fileHash(safePath(s.root, file)) === null)
+          .filter(([file]) => s.workingHash(file) === null)
           .map(([path, content]) => ({ path, content, baseHash: null }) as Change);
       const at = changes.findIndex((c) => c.path === paths.index);
       if (at >= 0) changes.splice(at, 1);
@@ -1500,7 +1280,11 @@ export class Service {
       const relative = str(a.path),
         read = s.read(relative);
       const r = this.makeRun('manual', '接受外部改稿');
-      r.changes = [{ path: relative, content: read.content, baseHash: read.hash }];
+      const accepted = s.db.document(relative)?.hash;
+      const canonical = accepted ? s.readAccepted(relative).content : '';
+      const content = accepted && read.hash !== accepted && authorMarkdown(read.content) === read.content
+        ? mergeAuthorMarkdown(canonical, read.content) : read.content;
+      r.changes = [{ path: relative, content, baseHash: read.hash }];
       s.db.saveRun(r);
       return r.id;
     }
@@ -1526,167 +1310,10 @@ export class Service {
       for (const run of s.db.runs()) runner.recoverReadyCandidate(run, next, 'settings');
       return this.snapshot();
     }
-    if (command === 'run.start') {
-      if (p.finished && a.mode !== 'revision') throw new Error('当前全书计划已完成');
-      if (a.mode !== 'revision' && this.needsMemoryRepair(str(a.request), typeof a.profileId === 'string' ? a.profileId : undefined))
-        return this.startMemoryRepair(typeof a.profileId === 'string' ? a.profileId : undefined);
-      if (
-        s.db
-          .runs()
-          .some(
-            (r) => r.mode === 'stage' && !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status)
-          )
-      )
-        throw new Error('已有阶段任务，请继续、审阅或放弃后再开始');
-      const r = this.makeRun(
-        a.mode === 'revision' ? 'revision' : 'stage',
-        str(a.request),
-        typeof a.profileId === 'string' ? a.profileId : undefined
-      );
-      return this.launch(r);
-    }
-    if (command === 'run.cancel' || command === 'terminal.cancel') {
-      const active = s.db.runs().find((run) => run.status === 'running');
-      if (active) this.executor!.requestControl(active.id, 'cancel');
-      else runner.stop();
-      return true;
-    }
-    if (command === 'run.recover') {
-      if (runner.controller || this.chat?.controller || this.coverController) throw new Error('请先停止当前任务');
-      let r = s.db.run(str(a.id));
-      this.executor!.restore({ runId: r.id, executorId: r.executorId ?? 'legacy', executorVersion: r.executorVersion ?? '1', checkpointVersion: r.checkpointVersion ?? 1 });
-      if (r.accepted || !['paused', 'unknown', 'needs_repair', 'awaiting_review', 'failed', 'stale'].includes(r.status)) throw new Error('当前任务不需要恢复，请处理当前待确认事项');
-      const decision = recoveryDecision(r);
-      if (decision.confirmation && a.retryUnknown !== true) throw new ApplicationError('REMOTE_RESULT_UNKNOWN', '上次请求结果与费用未知，核对后确认才能重新请求', ['authorize_attempt']);
-      if (decision.kind === 'inspect' || decision.kind === 'author') throw new ApplicationError(decision.code, decision.detail, ['refresh']);
-      if (decision.confirmation && a.retryUnknown === true) authorizeUnknownAttempts(s, r);
-      const instruction = typeof a.instruction === 'string' ? a.instruction.trim() : '';
-      if (r.creative) {
-        if (instruction) throw new Error('创作工具恢复只继续原范围，修改范围请从创作工具建立新任务');
-        const profileId = typeof a.profileId === 'string' && a.profileId ? a.profileId : r.profileId;
-        const completed = s.db.sql.prepare("SELECT 1 FROM model_attempts WHERE run_id=? AND status='complete'").get(r.id);
-        if (profileId !== r.profileId || !compatibleRunBase(s, r) || decision.confirmation && !completed)
-          r = this.rebuildRun(r, profileId);
-        return this.launch(r);
-      }
-      if (r.planning && instruction) throw new ApplicationError('VALIDATION_ERROR', '修改策划想法请使用方案页；恢复任务继续当前已确认的输入');
-      if (!instruction && runner.recoverReadyCandidate(r, p, 'continue')) return r.id;
-      // Completing an old direction-review checkpoint needs no model/tool call.
-      // The executor still validates the saved report and current source binding.
-      if (!hasSavedDirectionCheckpoint(r)) {
-        if (r.rounds >= p.config.maxRounds) throw new ApplicationError('ROUND_LIMIT', '已达到模型调用上限，请在运行配置中提高上限后恢复');
-        if (r.toolCount >= p.config.maxTools) throw new ApplicationError('TOOL_LIMIT', '已达到工具调用上限，请在运行配置中提高上限后恢复');
-      }
-      const profileId = typeof a.profileId === 'string' && a.profileId ? a.profileId : r.profileId;
-      if (profileId !== r.profileId || runner.needsFreshContext(r) || upgradesVolumeNaming(r, instruction) || upgradesChapterNaming(r, instruction)) {
-        r = this.rebuildRun(r, profileId, instruction);
-        if (instruction) prepareAuthorRevision(r, '');
-      }
-      else if (instruction) prepareAuthorRevision(r, instruction);
-      runner.check(r, p);
-      if (!instruction) prepareRunRecovery(r);
-      s.db.event(r.id, 'recovery-requested', '已检查恢复条件，将沿用已保存内容继续当前步骤', { code: decision.code, profileId, repairPaths: r.repairScope?.paths ?? [], confirmedUnknown: decision.confirmation });
-      s.db.saveRun(r);
-      return this.launch(r);
-    }
-    if (command === 'run.handoff') {
-      if (runner.controller) throw new Error('请先停止任务');
-      const old = s.db.run(str(a.id));
-      if (old.accepted || old.status === 'discarded') throw new Error('此任务不能交接');
-      if (retryNeedsConfirmation(old) && a.retryUnknown !== true)
-        throw new Error('上次请求结果未知，须先核对收费请求');
-      if (retryNeedsConfirmation(old) && a.retryUnknown === true) authorizeUnknownAttempts(s, old);
-      const r = this.rebuildRun(old, str(a.profileId), typeof a.instruction === 'string' ? a.instruction : '');
-      return this.launch(r);
-    }
-    if (command === 'run.resume' || command === 'run.answer' || command === 'run.permission') {
-      const r = s.db.run(str(a.id));
-      this.executor!.restore({ runId: r.id, executorId: r.executorId ?? 'legacy', executorVersion: r.executorVersion ?? '1', checkpointVersion: r.checkpointVersion ?? 1 });
-      if (r.accepted || r.status === 'discarded') throw new Error('此任务不能恢复');
-      if (retryNeedsConfirmation(r) && a.retryUnknown !== true)
-        throw new Error('上次请求结果与费用未知，需明确选择重新请求');
-      if (retryNeedsConfirmation(r) && a.retryUnknown === true) authorizeUnknownAttempts(s, r);
-      if (r.creative && typeof a.instruction === 'string' && a.instruction.trim())
-        throw new Error('创作工具恢复只继续原阅读范围和输入，修改范围请建立新任务');
-      if (r.creative && a.retryUnknown === true && retryNeedsConfirmation(r) &&
-          !s.db.sql.prepare("SELECT 1 FROM model_attempts WHERE run_id=? AND status='complete'").get(r.id))
-        return this.launch(this.rebuildRun(r, r.profileId));
-      if (r.planning && typeof a.instruction === 'string' && a.instruction.trim())
-        throw new Error('策划输入变更请在标签与策划中保存，或使用方向局部重做；恢复只继续已绑定的输入');
-      if (command === 'run.resume') {
-        if (!['paused', 'unknown', 'needs_repair', 'awaiting_review', 'failed', 'stale'].includes(r.status)) throw new Error('请先处理当前待回答或待授权的事项');
-        if (!String(a.instruction ?? '').trim() && runner.recoverReadyCandidate(r, p, 'continue')) return r.id;
-        if (runner.needsFreshContext(r) || upgradesVolumeNaming(r, String(a.instruction ?? '')) || upgradesChapterNaming(r, String(a.instruction ?? '')))
-          return this.launch(this.rebuildRun(r, r.profileId, typeof a.instruction === 'string' ? a.instruction : ''));
-      }
-      if (command === 'run.answer') {
-        if (!r.input) throw new Error('任务没有待回答问题');
-        r.input.answer = str(a.answer);
-        if (runner.needsFreshContext(r)) {
-          s.db.saveRun(r);
-          return this.launch(this.rebuildRun(r, r.profileId, `作者已回答待确认问题：${r.input.question}\n回答：${r.input.answer}`));
-        }
-      }
-      if (command === 'run.permission') {
-        if (!r.permission) throw new Error('没有待批准动作');
-        r.permission.status = a.approved === true ? 'approved' : 'denied';
-        if (runner.needsFreshContext(r)) {
-          s.db.saveRun(r);
-          return this.launch(this.rebuildRun(r, r.profileId, `先前待确认动作：${JSON.stringify(r.permission)}。上下文已改变，不能直接执行旧动作；如仍需执行，提出当前具体动作重新确认。`));
-        }
-      }
-      if (typeof a.instruction === 'string' && a.instruction.trim()) {
-        if (r.messages.length) r.messages.push({ role: 'user', content: a.instruction });
-        else r.request += `\n\n作者补充：${a.instruction}`;
-        r.candidateWrites = {};
-      }
-      return this.launch(r);
-    }
-    if (command === 'run.discard') {
-      const r = s.db.run(str(a.id));
-      if (r.accepted || runner.controller) throw new Error('请先停止，已接受的版本请通过修订恢复');
-      setRunStatus(r, 'discarded');
-      s.db.saveRun(r);
-      return true;
-    }
-    if (command === 'run.update') {
-      const r = s.db.run(str(a.id));
-      if (r.accepted || runner.controller) throw new Error('此时不能修改候选');
-      if (r.planning) throw new Error('结构化策划候选需在标签与策划中修改输入后重新审核');
-      const at = r.changes.findIndex((c) => c.path === str(a.path));
-      if (at < 0) throw new Error('候选不存在');
-      if (a.expectedHash && hash(r.changes[at].content) !== a.expectedHash) throw new Error('候选已更新，请核对最新正文后再保存。');
-      r.changes[at].content = z.string().parse(a.content);
-      if (r.pipeline && r.changes[at].path === prosePath(r.chapter)) {
-        const previousProseHash = r.pipeline.proseHash;
-        const previousRepairAttempts = structuredClone(r.repairAttempts);
-        runner.telemetry.invalidate(r.id);
-        r.pipeline.phase = 'review';
-        r.pipeline.proseHash = hash(r.changes[at].content);
-        r.pipeline.version++;
-        r.sourceProseHash = r.pipeline.proseHash;
-        r.messages = [];
-        r.facts = [];
-        r.candidateWrites = {};
-        r.repairScope = undefined;
-        r.memoryReview = undefined;
-        r.memoryCompletionHash = undefined;
-        r.chapterCoverage = undefined;
-        r.futurePlanReview = undefined;
-        r.proseReviewFeedback = undefined;
-        // The author supplied a new prose version, so old per-version repair
-        // scopes/receipts no longer apply. Task-wide rounds, tools and usage stay.
-        for (const phase of ['prose', 'review', 'memory']) if (r.repairAttempts) delete r.repairAttempts[phase];
-        r.changes = [r.changes[at]];
-        s.db.event(r.id, 'candidate-prose-edited', '作者修改正文候选；旧审核与章后证据失效，保留累计轮数、工具数及用量，重新审核当前稿。', {
-          previousProseHash, proseHash: r.pipeline.proseHash, previousRepairAttempts,
-          rounds: r.rounds, toolCount: r.toolCount
-        });
-      }
-      runner.check(r, p);
-      setRunStatus(r, r.issues.some((i) => i.severity === 'error') ? 'needs_repair' : 'awaiting_review');
-      s.db.saveRun(r);
-      return this.presentRun(r, true);
+    if (runCommands.has(command)) {
+      if (this.queuedExecution && command !== 'run.cancel' && command !== 'terminal.cancel')
+        throw new Error('请先停止排队任务或等待完成');
+      return handleRunCommand(this, command, a);
     }
     if (adoptionCommands.has(command)) return handleAdoptionCommand(this, command, a, idle);
     if (command === 'memory.search')
@@ -1712,7 +1339,7 @@ export class Service {
       const relative = str(a.path),
         reason = str(a.reason);
       if (!p.stale.includes(relative)) throw new Error('不在待核对范围内');
-      if (fileHash(safePath(s.root, relative)) !== s.db.document(relative)?.hash)
+      if (s.workingHash(relative) !== s.db.document(relative)?.hash)
         throw new Error('先处理外部改动');
       p.stale = p.stale.filter((f) => f !== relative);
       resolveStoryImpacts(p, [relative]);
@@ -1754,7 +1381,7 @@ export class Service {
         });
       const issues = checkPublication(p, documents);
       if (issues.length) throw new Error(`正式文稿尚未准备好：\n${issues.map(issue => `${issue.path}：${issue.message}`).join('\n')}`);
-      const content = documents.map(doc => doc.path.startsWith('07_') ? doc.content : documentPreviewText(doc.content)).join('\n\n');
+      const content = documents.map(doc => doc.path.startsWith('07_') ? authorMarkdown(doc.content) : documentPreviewText(doc.content)).join('\n\n');
       return exportDocument(content, str(a.target));
     }
     throw new Error(`尚未实现命令：${command}`);

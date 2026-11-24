@@ -98,7 +98,9 @@ test('管理连接必须配对，令牌一次有效，Cookie 不可被脚本读�
   assert.match(s.setCookie, /HttpOnly/);
   assert.match(s.setCookie, /SameSite=Strict/);
   assert.equal((await f.post(f.origin + '/api/session', { token: s.token }, s)).status, 401);
-  assert.equal((await fetch(f.api + 'status', { headers: { Cookie: s.cookie } })).status, 200);
+  const status = await fetch(f.api + 'status', { headers: { Cookie: s.cookie } });
+  assert.equal(status.status, 200);
+  assert.equal((await status.json()).os, process.platform === 'darwin' ? 'macOS' : process.platform === 'win32' ? 'Windows' : process.platform);
   const again = await f.pair(s.cookie);
   assert.equal(again.cookie, s.cookie);
   assert.equal(f.server.status().sessions, 1);
@@ -167,13 +169,33 @@ test('命令契约、作品绑定和原操作编号经过 HTTP 入口传给唯�
   ).json()) as any;
   assert.equal(result.result, true);
   assert.equal(f.invocations.length, 1);
-  assert.deepEqual(f.invocations[0].context, context);
+  assert.notEqual(f.invocations[0].context.waitId, context.waitId);
+  assert.deepEqual({ ...f.invocations[0].context, waitId: context.waitId }, context);
   assert.equal(f.invocations[0].caller.source, 'browser');
   assert.equal(
     (await f.post(f.api + 'rpc', { command: 'run.cancel', args: { unexpected: true }, context }, s)).status,
     400
   );
   assert.equal((await f.post(f.api + 'rpc', { command: 'not-a-command', args: {}, context }, s)).status, 400);
+});
+test('浏览器取消自己的等待时使用宿主分配的等待编号', async (t) => {
+  const f = await fixture(t);
+  const session = await f.pair(), waitId = randomUUID();
+  let started!: (id: string) => void, finish!: () => void;
+  const dispatched = new Promise<string>(resolve => { started = resolve; });
+  const finished = new Promise<void>(resolve => { finish = resolve; });
+  f.client.invoke = async (_command, _args, context) => {
+    started(context.waitId!);
+    await finished;
+    return { ok: true, result: true };
+  };
+  const operation = f.post(f.api + 'rpc', { command: 'app.snapshot', args: {}, context: { waitId } }, session);
+  try {
+    const hostWait = await dispatched;
+    assert.notEqual(hostWait, waitId);
+    assert.equal((await f.post(f.api + 'cancel-wait', { waitId }, session)).status, 200);
+    assert.deepEqual(f.cancelled, [hostWait]);
+  } finally { finish(); await operation; }
 });
 test('文件选择只授予当前会话，中文路径、创建目录、保存路径和覆盖检测可用', async (t) => {
   const f = await fixture(t),

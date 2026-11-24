@@ -5,7 +5,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { Service } from '../src/core/service';
 import { invokeModel, requestBody } from '../src/core/provider';
-import { profileSchema, type Run } from '../src/shared/types';
+import { modelRoundLimit, profileSchema, type Run } from '../src/shared/types';
 
 const configArg = process.argv.find(v => v.startsWith('--harness-config='));
 if (!configArg) throw new Error('Pass --harness-config=<absolute JSON path>');
@@ -248,7 +248,7 @@ async function main() {
         }
         if (command.action === 'budget') {
           const beforeProject = service.store!.db.project();
-          if (!Number.isInteger(command.maxRounds) || command.maxRounds <= beforeProject.config.maxRounds || command.maxRounds > 100)
+          if (!Number.isInteger(command.maxRounds) || command.maxRounds <= modelRoundLimit(beforeProject.config.maxRounds) || command.maxRounds > 100)
             throw new Error('Expected an explicit bounded increase to this isolated project round limit');
           if (!command.reason) throw new Error('Budget change requires a recorded reason');
           await service.invoke('project.configure', { config: { ...beforeProject.config, maxRounds: command.maxRounds } });

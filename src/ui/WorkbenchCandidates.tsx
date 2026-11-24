@@ -3,84 +3,6 @@ import type { CandidateView, WorkbenchScopeBinding } from '../shared/workbench-v
 import { invokeCommand } from '../shared/client';
 import { documentPreviewText } from '../shared/run-presentation';
 
-function readable(content: string) {
-  const match = content.match(/```json\s*([\s\S]*?)```/);
-  if (!match || !/^# (?:世界|剧情|人物外观)/.test(content))
-    return documentPreviewText(content)
-      .replace(/<!--[\s\S]*?-->/g, '')
-      .trim();
-  try {
-    const data = JSON.parse(match[1]),
-      lines: string[] = [];
-    const names: Record<string, string> = {
-      title: '名称',
-      content: '内容',
-      goal: '目标',
-      obstacle: '阻力',
-      choice: '选择',
-      outcome: '结果',
-      promise: '承诺',
-      storyTime: '故事时间',
-      scope: '适用范围',
-      trigger: '触发条件',
-      boundary: '边界',
-      cost: '代价',
-      exception: '例外',
-      evidence: '证据',
-      description: '描述',
-      name: '图片',
-      version: '版本',
-      state: '状态',
-      chapter: '章节',
-      protected: '固定',
-      locked: '固定'
-    };
-    const rows = [
-      ...(data.modules ?? []),
-      ...(data.scenes ?? []),
-      ...(data.places ?? []),
-      ...(data.avatars ?? [])
-    ];
-    for (const row of rows) {
-      if (row.state && row.state !== 'enabled' && !row.content && !row.rule) continue;
-      lines.push(
-        Object.entries({ ...row, ...row.rule })
-          .filter(([key, value]) => names[key] && String(value))
-          .map(
-            ([key, value]) =>
-              `${names[key]}：${key === 'state' ? ({ enabled: '启用', disabled: '停用', undecided: '待定' } as Record<string, string>)[String(value)] : typeof value === 'boolean' ? (value ? '是' : '否') : value}`
-          )
-          .join('\n')
-      );
-    }
-    for (const system of data.systems ?? []) {
-      const stageTitle = (id: string) => system.steps.find((step: { id: string }) => step.id === id)?.title ?? '待核对阶段';
-      lines.push([
-        `成长体系：${system.title} · 第${system.version}版`,
-        `状态：${({ enabled: '启用', disabled: '停用', undecided: '未定' } as Record<string, string>)[system.state]}；${system.locked ? '已固定' : '可修改'}`,
-        `适用：${system.subjects.join('、') || '未限定人物或阵营'}；第${system.fromChapter}章起${system.toChapter === null ? '' : `，至第${system.toChapter}章`}`,
-        ...system.steps.map((step: { title: string; ability: string; boundary: string; prerequisites: string[] }) =>
-          `${step.title}：${step.ability || '能力未定'}；${step.boundary || '边界未定'}${step.prerequisites.length ? `；前置：${step.prerequisites.map(stageTitle).join('、')}` : ''}`),
-        ...system.interactions.map((item: { targetSystemId: string; rule: string }) =>
-          `与${data.systems.find((s: { id: string }) => s.id === item.targetSystemId)?.title ?? '待核对体系'}：${item.rule}`),
-        ...(system.original ? [`导入原文：${system.original}`] : []),
-        ...(system.unparsed.length ? [`待定内容：${system.unparsed.join('；')}`] : [])
-      ].join('\n'));
-    }
-    const title = (id: string) =>
-      rows.find((r) => r.id === id)?.title ??
-      (/^chapter:\d+$/.test(id)
-        ? `第 ${id.split(':')[1]} 章`
-        : (rows.find((r) => `scene:${r.id}` === id)?.title ?? id));
-    for (const link of [...(data.links ?? []), ...(data.routes ?? [])])
-      lines.push(
-        `${title(link.from)} → ${title(link.to)}：${link.label}${link.distance ? ` · ${link.distance.value} ${link.distance.unit}` : 'distance' in link ? ' · 距离未设定' : ''}${link.direction ? ` · ${link.direction}` : ''}${link.nonlinear ? ' · 非线性叙事' : ''}`
-      );
-    return lines.filter(Boolean).join('\n\n').replace(/<!--[\s\S]*?-->/g, '') || '未设定';
-  } catch {
-    return '资料暂不可读';
-  }
-}
 export function WorkbenchCandidates({
   binding,
   enabled,
@@ -172,11 +94,11 @@ export function WorkbenchCandidates({
                   <div className="workbench-diff">
                     <div>
                       <h4>当前内容</h4>
-                      <pre>{readable(change.before) || '未设定'}</pre>
+                      <pre>{documentPreviewText(change.before) || '未设定'}</pre>
                     </div>
                     <div>
                       <h4>修改内容</h4>
-                      <pre>{readable(change.after) || '未设定'}</pre>
+                      <pre>{documentPreviewText(change.after) || '未设定'}</pre>
                     </div>
                   </div>
                 </details>

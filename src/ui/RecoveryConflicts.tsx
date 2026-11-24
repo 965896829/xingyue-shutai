@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { invokeCommand as invoke } from '../shared/client';
 import type { CommitRecoveryConflict } from '../shared/studio';
-import { Difference } from './Editor';
+import { Difference } from './LazyEditor';
 
 type Preview = { path: string; accepted: string; current: string | null; candidate: string };
 

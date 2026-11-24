@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
 import { countInput } from '../src/core/context-budget';
 import { profileSchema } from '../src/shared/types';
+import { userDataDirectory } from '../electron/window-appearance';
 
 export const firstDraftCases = [
   { id: 'horror', function: '恐怖环境', setup: '停电后的档案室只有应急灯。维修员阿宁知道楼里还有值班员，但不知道走廊脚步是谁。她要取回维修记录。', result: '找到记录，发现门从外面被推住，尚未识别来人。', protect: '不新增鬼怪、童年创伤或幕后真相。' },
@@ -38,7 +40,8 @@ export function prepareCreationEvaluation(output = '.test-output/creation-upgrad
   const oldBudget = fs.existsSync(oldBudgetFile) ? JSON.parse(fs.readFileSync(oldBudgetFile, 'utf8')) : null;
   let selected: ReturnType<typeof profileSchema.parse> | undefined;
   try {
-    const settings = JSON.parse(fs.readFileSync(path.join(process.env.APPDATA!, 'wenxu-desktop/settings.json'), 'utf8'));
+    const data = userDataDirectory(path.join(homedir(), 'Library', 'Application Support'), process.env.WENXU_DATA_DIR);
+    const settings = JSON.parse(fs.readFileSync(path.join(data, 'settings.json'), 'utf8'));
     const db = new DatabaseSync(path.join(settings.recent[0].root, '.novelclient/state.sqlite'), { readOnly: true });
     let key: string;
     try { key = JSON.parse(String(db.prepare('SELECT value FROM kv WHERE key=?').get('project')!.value)).config.defaultProfileId; } finally { db.close(); }

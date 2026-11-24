@@ -23,7 +23,7 @@ export function objectReferences(sql: DatabaseSync) {
       if (table === 'snapshots') Object.values(data.documents ?? {}).forEach((value) => add(value));
       if (table === 'draft_artifacts') { add(data.hash); for (const version of data.versions ?? []) add(version.hash); }
       if (table === 'materialization_outbox') for (const entry of data) { add(entry.newHash); add(entry.baseHash); }
-      if (table === 'model_attempts') { add(data.requestRef); add(data.responseRef); }
+      if (table === 'model_attempts') { add(data.requestRef); add(data.responseRef); add(data.partialResponseRef); }
     }
   }
   if (tables.has('kv')) for (const row of sql.prepare('SELECT value FROM kv').iterate()) visit(JSON.parse(String(row.value)));

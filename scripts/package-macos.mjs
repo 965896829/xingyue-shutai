@@ -6,11 +6,11 @@ const require = createRequire(import.meta.url);
 const root = fileURLToPath(new URL('../', import.meta.url));
 const target = process.argv[2];
 if (process.platform !== 'darwin') {
-  console.error('Mac 打包必须在 macOS 上执行。Windows 请使用 npm run pack / npm run dist。');
+  console.error('请在 Mac 上运行此打包命令。');
   process.exit(1);
 }
 if (!['arm64', 'x64'].includes(process.arch) || !['dir', 'dist'].includes(target) || process.argv.length !== 3) {
-  console.error('用法：npm run pack:mac 或 npm run dist:mac；支持原生 arm64 / x64 Node.js。');
+  console.error('用法：npm run pack 或 npm run dist。请使用原生 arm64 或 x64 Node.js。');
   process.exit(1);
 }
 const translated = spawnSync('/usr/sbin/sysctl', ['-in', 'sysctl.proc_translated'], { encoding: 'utf8' });

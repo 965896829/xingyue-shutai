@@ -1,6 +1,6 @@
 {
-  "source": "D:/aiwangzhan/novel-platform/apps/admin/src",
-  "catalogSource": "D:/aiwangzhan/novel-platform/services/api/app/catalog.py",
+  "source": "novel-platform/apps/admin/src",
+  "catalogSource": "novel-platform/services/api/app/catalog.py",
   "files": [
     {
       "path": "components/admin-app.tsx",

@@ -13,7 +13,7 @@
   --danger: #eea898;
   --radius: 18px;
   color-scheme: dark;
-  font-family: Arial, "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 14px;
 }
 * {
@@ -543,7 +543,7 @@ small {
   background: var(--ui-surface, #737f61);
 }
 .eyebrow {
-  font-family: Arial, "Microsoft YaHei", sans-serif;
+  font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 10px;
   letter-spacing: 1.7px;
   color: var(--ui-muted, #9aa689);
@@ -645,9 +645,7 @@ small {
 }
 .stat-value small {
   font:
-    11px Arial,
-    "Microsoft YaHei",
-    sans-serif;
+    11px system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   color: var(--ui-muted, #858e7a);
 }
 .stat-bottom {
@@ -2019,9 +2017,7 @@ tbody tr:last-child td {
 }
 .rule-detail-section h3 {
   font:
-    11px Arial,
-    "Microsoft YaHei",
-    sans-serif;
+    11px system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   color: var(--ui-accent, #91a576);
   margin-bottom: 10px;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BookOpen, ChevronRight, FileText, Layers, ListTree, Waypoints, ListOrdered } from 'lucide-react';
 import type {
   PlotDocument,
   PlotMutation,
@@ -20,6 +21,7 @@ const fields = [
   ['storyTime', '故事时间']
 ] as const;
 const levelNames = { project: '作品', volume: '卷', chapter: '章', scene: '场景' };
+const levelIcons = { project: BookOpen, volume: Layers, chapter: FileText, scene: ListTree };
 export function PlotWorkbench({
   view,
   binding,
@@ -89,6 +91,7 @@ export function PlotWorkbench({
   const plot = expanded ?? view,
     current = plot.nodes.find((n) => n.id === parent) ?? plot.nodes[0];
   const children = plot.nodes.filter((n) => n.parentId === current?.id);
+  const commonTrack = children.length && children.every(n => n.track === children[0].track) ? children[0].track : undefined;
   const chapters = children.filter((n) => n.level === 'chapter').map((n) => n.chapter!);
   const shownOrder =
     order.length && order.every((n) => chapters.includes(n)) && order.length === chapters.length
@@ -150,29 +153,36 @@ export function PlotWorkbench({
   const graphNodes = plot.nodes.filter((n) => graphIds.has(n.id)).slice(0, 60);
   return (
     <section className="plot-workbench" aria-label="剧情结构画布">
-      <div className="workbench-subnav" aria-label="剧情层级">
-        {ancestors.map((n) => (
+      {ancestors.length > 1 && <nav className="workbench-subnav" aria-label="剧情层级">
+        {ancestors.slice(0, -1).map((n) => (
           <button
             key={n.id}
             aria-current={n.id === current?.id ? 'location' : undefined}
             onClick={() => select(n.id)}
           >
-            {levelNames[n.level]} · {n.title}
+            {n.level !== 'project' && <ChevronRight size={12} aria-hidden="true" />}
+            {n.level === 'project' ? '分卷大纲' : n.title}
           </button>
         ))}
-      </div>
-      <div className="object-actions">
+      </nav>}
+      <header className="canvas-section-heading">
+        <h2>{current?.level === 'project' ? '分卷大纲' : current?.title || '剧情结构'}</h2>
+        {children.length > 0 && <small>{children.length} {levelNames[children[0].level]}{commonTrack ? commonTrack === 'plan' ? ' · 计划' : ' · 已保存' : ''}</small>}
+      </header>
+      <div className="canvas-viewbar">
+        <div className="canvas-modes" role="group" aria-label="剧情展示方式">
         {(
           [
-            ['cards', '剧情卡'],
-            ['chain', '因果链'],
-            ['order', '章节列表']
+            ['cards', '大纲列表', ListTree],
+            ['chain', '因果链', Waypoints],
+            ['order', '章节排序', ListOrdered]
           ] as const
-        ).map(([id, label]) => (
+        ).map(([id, label, Icon]) => (
           <button key={id} aria-pressed={mode === id} onClick={() => setMode(id)}>
-            {label}
+            <Icon size={14} aria-hidden="true" />{label}
           </button>
         ))}
+        </div>
         {editable && current?.level === 'chapter' && (
           <button
             disabled={busy}
@@ -233,29 +243,26 @@ export function PlotWorkbench({
         </p>
       )}
       {mode === 'cards' && (
-        <div className="plot-cards">
-          {children.slice(0, limit).map((n) => (
-            <button
-              key={n.id}
-              className={`plot-card${n.id === selected ? ' active' : ''}`}
-              onClick={() => select(n.id)}
-            >
-              <small>
-                {levelNames[n.level]}
-                {n.track === 'plan' ? ' · 计划' : ''}
-              </small>
-              <h3>{n.title}</h3>
-              {fields
-                .filter(([id]) => id !== 'storyTime')
-                .map(([id, label]) => (
-                  <span key={id}>
-                    <b>{label}</b>
-                    {n[id] || '未设定'}
-                  </span>
-                ))}
-            </button>
-          ))}
-          {!children.length && <p className="empty-state">此层尚无场景记录</p>}
+        <div className="plot-outline">
+          {children.slice(0, limit).map((node) => {
+            const Icon = levelIcons[node.level];
+            const summary = node.summary || node.goal || node.outcome || node.obstacle || node.choice || node.promise;
+            const volumeTitle = node.level === 'volume' && node.title.match(/^(第[〇零一二两三四五六七八九十百千万\d]+卷)\s*[·：:]\s*(.+)$/);
+            const inScope = node.level === 'volume' && node.chapter !== undefined && node.endChapter !== undefined &&
+              binding.scope.chapter >= node.chapter && binding.scope.chapter <= node.endChapter;
+            return <button key={node.id} className={`outline-row${volumeTitle ? ' outline-volume' : ''}`} data-in-scope={inScope || undefined} aria-pressed={selected === node.id}
+              onClick={() => select(node.id)}>
+              {volumeTitle ? <span className="volume-label">{volumeTitle[1]}</span> : <span className="outline-symbol"><Icon size={17} aria-hidden="true" /></span>}
+              <span className="outline-copy"><strong>{volumeTitle ? volumeTitle[2] : node.title}</strong>{summary && <span>{summary}</span>}</span>
+              <span className="outline-meta">
+                {inScope && <small className="scope-volume">当前卷</small>}
+                {node.chapter && <span>第 {node.chapter}{node.endChapter && node.endChapter !== node.chapter ? `–${node.endChapter}` : ''} 章</span>}
+                {!commonTrack && <small>{node.track === 'plan' ? '计划' : '已保存'}</small>}
+              </span>
+              <ChevronRight className="outline-arrow" size={15} aria-hidden="true" />
+            </button>;
+          })}
+          {!children.length && current?.level !== 'scene' && <p className="empty-state">{current?.level === 'volume' ? '本卷还没有章节记录' : current?.level === 'project' ? '这部作品还没有分卷大纲' : '本章还没有场景记录'}</p>}
           {children.length > limit && (
             <button onClick={() => setLimit((n) => n + 60)}>显示更多 · 共 {children.length} 项</button>
           )}

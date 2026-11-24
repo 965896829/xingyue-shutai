@@ -1,6 +1,5 @@
 import type { ModelMessage, Run, SecretProfile, Usage } from '../../shared/types';
 import type { FileStore } from '../storage';
-import { fileHash, safePath } from '../storage';
 import { hash, paths, renderProgress } from '../domain';
 import { requestSize } from '../context-budget';
 import { fingerprint } from './canonical';
@@ -201,7 +200,7 @@ export function prepareCacheSession(store: FileStore, run: Run, profile: SecretP
       const sameHistory = fingerprint(previous.messages.slice(0, prior.messageCount)) === prior.messagesHash;
       const sourcesCurrent = (previous.manifest?.sources ?? []).every(s => {
         const changed = previous.changes.find(c => c.path === s.path);
-        const actual = fileHash(safePath(store.root, s.path));
+        const actual = store.workingHash(s.path);
         if (actual === (changed ? hash(changed.content) : s.hash)) return true;
         if (changed && s.path.startsWith('04_') && actual === store.db.document(s.path)?.hash &&
             actual === hash(encodeFacts(changed.content, store.db.facts().filter(f => primaryPath(f) === s.path))) &&

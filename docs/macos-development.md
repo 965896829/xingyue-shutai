@@ -1,6 +1,6 @@
-# 从 Windows 迁到 Mac mini 开发
+# 在 Mac 上开发星月书台
 
-本分支从写作工作台 0.4.98 的提交 `c43573c38e3f7aee56c63081fc97783b2f6826f5` 开始，包含三栏工作台、自由创作实验室和本次写作资料改造。开发包版本为 **0.4.98-macos.1**。
+本分支从写作工作台 0.4.98 的提交 `c43573c38e3f7aee56c63081fc97783b2f6826f5` 开始，包含三栏工作台、自由创作实验室和写作资料改造。请以当前检出版本的项目清单确定开发包版本。[项目清单](../package.json)
 
 源码分支：[`codex/macos-writing-desk-0.4.98`](https://github.com/965896829/xingyue-shutai/tree/codex/macos-writing-desk-0.4.98)。请下载此分支，仓库默认分支可能是另一个版本。
 
@@ -15,7 +15,7 @@ cd xingyue-shutai
 
 也可以在该分支页面点击 **Code → Download ZIP**，解压后在终端进入包含 `package.json` 的目录。ZIP 不包含 Git 历史；准备长期开发时优先使用 Git。
 
-不要从 Windows 复制 `node_modules`、`dist-electron` 或安装目录。在 Mac 上按锁文件重新安装依赖，才能获得正确的 Electron、esbuild 等本机二进制。
+在当前 Mac 上按锁文件安装依赖，Electron 和 esbuild 会使用本机架构。
 
 ## 2. 安装开发环境
 
@@ -45,7 +45,7 @@ npm run dev:isolated
 
 开发服务只监听 `127.0.0.1:5173`。端口被占用时明确报错，不会悄悄换端口再加载错误的服务。
 
-正常配置启动使用 `npm run dev`。macOS 正常配置目录是 `~/Library/Application Support/wenxu-desktop/`；Windows 正常配置目录是 `%APPDATA%\wenxu-desktop\`。可通过 `WENXU_DATA_DIR` 指定其他目录。
+正常配置启动使用 `npm run dev`。配置目录为 `~/Library/Application Support/wenxu-desktop/`，可通过 `WENXU_DATA_DIR` 指定隔离目录。
 
 ```sh
 npm test
@@ -64,18 +64,15 @@ WENXU_DATA_DIR="$PWD/.test-output/development-profile" npm start
 ## 4. 在 Mac 上打包
 
 ```sh
-npm run pack:mac
-npm run dist:mac
+npm run pack
+npm run dist
 ```
 
-- `pack:mac`：先检查环境并构建，再输出 `.app` 到 `release/mac-arm64/`（Apple 芯片）或 `release/mac/`（Intel）。
-- `dist:mac`：输出包含版本和架构名的 `.dmg` 与 `.zip`，位于 `release/`。
-- 两条命令都按当前原生 Node.js 架构构建；检测到 Rosetta 或非 macOS 会停止并给出原因。没有在 Windows 上伪造 Mac 构建结果，也不会自动上传或发布安装包。
-- Windows 的 `npm run pack` / `npm run dist` 保持原用途。
+`pack` 输出可运行的应用，Apple 芯片位于 `release/mac-arm64/`，Intel 位于 `release/mac/`。`dist` 还会在 `release/` 生成标注版本和芯片的 DMG 与 ZIP。之前使用的 `pack:mac` 和 `dist:mac` 是同一套命令的别名。
 
-当前 Mac 包使用 **ad-hoc 开发签名**，没有 Apple Developer ID 和公证，不是已认证的公众发行包。首次在目标 Mac 上使用时优先本机从源码构建。若 Gatekeeper 拦截，请按照系统“隐私与安全性”的提示核对来源；不要全局关闭 Gatekeeper、SIP 或 TLS 校验。
+运行 `node scripts/smoke-desktop.mjs` 会用临时空配置打开刚构建的应用，检查工作台和自由创作实验室。运行 `node scripts/check-deliverables.mjs <本次完整测试日志>` 可核对应用、安装包与内置资源。
 
-未来正式分发时，需要另行配置 Developer ID、公证和稳定签名身份，并复验钥匙串在升级后的行为。签名证书、密码和模型 Key 不进入仓库。参考 [electron-builder 26 签名说明](https://www.electron.build/v26/docs/features/code-signing/code-signing-mac/)。
+日常包使用本机临时签名。配置 Developer ID Application 证书和 Apple 公证凭据后，运行 `npm run dist:signed` 将正式产物单独写入 `release/signed/`，并检查应用的签名和公证票据。[Apple 公证说明](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution)
 
 ## 5. 搬迁作品与模型配置
 
@@ -94,7 +91,7 @@ Mac 使用系统钥匙串保存密钥。开发版签名变化可能导致系统�
 
 ## 6. 自动检查与剩余实机验收
 
-[Windows and macOS preparation 工作流](../.github/workflows/desktop-platforms.yml) 在本分支推送时执行 Windows x64、Mac ARM64 和 Mac Intel 的依赖安装、离线回归和构建。Mac 还会启动打包后的应用，检查写作工作台本地页面。Mac 构建产物保留 14 天；应查看对应提交的运行结果，不能把工作流文件存在当作检查通过。
+常规推送和合并请求按工作流分支规则在 Apple Silicon 和 Intel Mac 上安装、测试、打包并打开应用。需要验证未来的 Windows 客户端时，可以手动勾选 Windows x64 发行验收。每个目标的安装包在该次运行下保留 14 天。[桌面构建工作流](../.github/workflows/desktop-platforms.yml)
 
 CI 构建与命令行检查不能代替目标 Mac 的交互验收。首次使用时逐项确认：
 

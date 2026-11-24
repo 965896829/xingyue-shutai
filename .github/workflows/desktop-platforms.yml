@@ -1,11 +1,16 @@
-name: Windows and macOS preparation
+name: macOS development and desktop delivery
 
 on:
   push:
-    branches: [codex/macos-writing-desk-0.4.98]
+    branches: [main, 'codex/macos-*']
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      verify_windows:
+        description: Include Windows x64 release verification
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -16,19 +21,13 @@ concurrency:
 
 jobs:
   verify:
-    name: ${{ matrix.name }}
+    name: Verify ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: Windows x64
-            os: windows-2022
-          - name: macOS Apple Silicon
-            os: macos-26
-          - name: macOS Intel
-            os: macos-15-intel
+        os: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.verify_windows && '["macos-26","macos-15-intel","windows-2022"]' || '["macos-26","macos-15-intel"]') }}
     env:
       NODE_TLS_REJECT_UNAUTHORIZED: '1'
     steps:
@@ -42,22 +41,30 @@ jobs:
       - run: npm ci
       - run: npm run doctor
       - name: Offline regression tests (no model credentials)
-        run: npm test
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p .test-output
+          npm test | tee .test-output/desktop-regression.log
       - name: Build and package Windows
         if: runner.os == 'Windows'
-        run: npm run pack
+        run: |
+          npm run build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm exec -- electron-builder --win nsis --x64 --publish never
       - name: Build ad-hoc macOS development packages
         if: runner.os == 'macOS'
-        run: npm run dist:mac
-      - name: Start packaged application with an isolated profile
-        if: runner.os == 'macOS'
-        run: node scripts/smoke-macos.mjs
-      - name: Retain macOS development packages
-        if: runner.os == 'macOS'
+        run: npm run dist
+      - name: Open packaged workspace and studio with an isolated profile
+        run: node scripts/smoke-desktop.mjs
+      - name: Verify the installer, runtime and bundled resources
+        run: node scripts/check-deliverables.mjs .test-output/desktop-regression.log
+      - name: Retain platform packages
         uses: actions/upload-artifact@v7
         with:
-          name: macos-development-${{ runner.arch }}-${{ github.sha }}
+          name: desktop-development-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
           path: |
+            release/*.exe
             release/*-mac-*.dmg
             release/*-mac-*.zip
           if-no-files-found: error

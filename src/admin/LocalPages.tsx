@@ -10,7 +10,7 @@ import { ErrorState, Spinner, useToast } from './reference/components/ui';
 import type { PageSpec } from './reference/lib/api';
 import type { RoleRule } from '../shared/assistant';
 import type { Profile } from '../shared/types';
-import { localViews } from './ClientModule';
+import { localViews } from './client-views';
 import { Logs } from './Logs';
 
 const go = (view: string) => navigate('/admin/local/' + view);

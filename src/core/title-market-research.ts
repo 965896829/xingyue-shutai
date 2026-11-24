@@ -1,7 +1,7 @@
 import type { BookSpec } from '../shared/tags';
 import type { TitleMarketResearch } from '../shared/title-style';
 import type { SearchSettings } from '../shared/assistant';
-import type { Run, ProjectState, SecretProfile, ModelMessage } from '../shared/types';
+import { modelRoundLimit, type Run, type ProjectState, type SecretProfile, type ModelMessage } from '../shared/types';
 import type { CreationPlan } from '../shared/creation';
 import type { GenerationPhase } from '../shared/generation';
 import { usesNativeSearch } from '../shared/web-search';
@@ -141,7 +141,7 @@ export async function prepareTitleMarketResearch(args: {
   const native = usesNativeSearch(profile, settings);
   if (!native && (settings.provider === 'openai' || !args.search?.key))
     return unavailable('当前连接未提供可用搜索。请在“智能体与联网设置”配置支持搜索的连接；本批未联网。');
-  if (p.config.maxTools - r.toolCount < 3 || native && p.config.maxRounds - r.rounds < 3)
+  if (p.config.maxTools - r.toolCount < 3 || native && modelRoundLimit(p.config.maxRounds) - r.rounds < 3)
     return unavailable('剩余调用额度优先用于书名生成和审核，本批未额外联网。');
   evidence.provider = native ? 'native' : 'public';
   setRunStatus(r, 'running');

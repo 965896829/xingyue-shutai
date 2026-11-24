@@ -123,6 +123,30 @@ test('终端中文输出完整且不混入 CLIXML', async () => {
     s.close();
   }
 });
+test('取消授权终端后，其子进程不会继续写入作品', async () => {
+  const { s } = setup();
+  const { AgentRunner } = await import('../src/core/runner');
+  const runner = new AgentRunner(s, skill, () => [], () => {});
+  const controller = new AbortController();
+  try {
+    const script = process.platform === 'win32'
+      ? "Set-Content ready.txt ready; Start-Sleep -Seconds 2; Set-Content late.txt late"
+      : "(sleep 0.8; printf late > late.txt) & printf ready > ready.txt; wait";
+    const task = runner.terminal(script, controller.signal);
+    const deadline = Date.now() + 10000;
+    while (!fs.existsSync(path.join(s.root, 'ready.txt')) && Date.now() < deadline)
+      await new Promise(resolve => setTimeout(resolve, 20));
+    assert.ok(fs.existsSync(path.join(s.root, 'ready.txt')));
+    controller.abort();
+    await task;
+    await new Promise(resolve => setTimeout(resolve, process.platform === 'win32' ? 2100 : 900));
+    assert.equal(fs.existsSync(path.join(s.root, 'late.txt')), false);
+    await assert.rejects(runner.terminal(script, controller.signal), /停止|abort/i);
+  } finally {
+    controller.abort();
+    s.close();
+  }
+});
 test('未规划批次允许缩短；参数更新保留作者备注与未知 Markdown', () => {
   const p = newProject('参数', 'x', {});
   const c = { ...p.config, targetWords: 25000, batchSize: 10 };

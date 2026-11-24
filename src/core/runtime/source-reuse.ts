@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { Run, ProjectState } from '../../shared/types';
 import { factSchema } from '../../shared/types';
 import { paths, hash, batchPath, activeBatch, prosePath, qualityPath, stageOutputs } from '../domain';
-import { FileStore, safePath, fileHash } from '../storage';
+import { FileStore, safePath } from '../storage';
 import type { DraftChange } from './document-drafts';
 
 export const outlineFields = ['承接', '章节类型', '情节强度', '前300字叙事入口', '核心场面', '主角动作', '外部推动', '状态变化', '设定揭示预算', '主要阅读回报', '人物记忆变化', '章末牵引'] as const;
@@ -171,7 +171,7 @@ export function materializeChanges(store: FileStore, run: Run, project: ProjectS
       if (run.mode !== 'stage' || run.pipeline || run.stage !== 'S08' || change.path !== batchPath(activeBatch(project)))
         throw new Error('总纲字段引用仅用于当前 S08 批次细纲');
       const doc = store.readAccepted(paths.outline);
-      if (fileHash(safePath(store.root, paths.outline)) !== doc.hash || store.inspect(paths.outline)?.status !== 'accepted')
+      if (store.workingHash(paths.outline) !== doc.hash || store.inspect(paths.outline)?.status !== 'accepted')
         throw new Error('章节总纲存在未确认改动');
       const prior = run.documentDrafts?.find(d => d.path === change.path);
       if (change.append && prior && change.outline.chapters.some(c => new RegExp(`^## 第0*${c.chapter}章[：:]`, 'm').test(prior.content)))

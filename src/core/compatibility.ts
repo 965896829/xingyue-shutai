@@ -1,8 +1,9 @@
-import { DatabaseSync } from 'node:sqlite';
+import type { DatabaseSync } from 'node:sqlite';
 import { z } from 'zod';
 
 // Older executors must not reopen a forward-only review as an unrestricted revision.
-export const databaseVersion = 8;
+// Older clients compare working Markdown bytes directly to canonical evidence hashes.
+export const databaseVersion = 9;
 export const projectIdentitySchema = z.object({
   id: z.string().min(1),
   schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3)])
@@ -25,13 +26,4 @@ export function checkDatabaseCompatibility(db: DatabaseSync, requireProject = fa
     return { databaseVersion: version, project: null };
   }
   return { databaseVersion: version, project: assertProjectVersion(JSON.parse(String(row.value))) };
-}
-
-export function inspectProjectDatabase(filename: string) {
-  const db = new DatabaseSync(filename, { readOnly: true });
-  try {
-    return checkDatabaseCompatibility(db, true);
-  } finally {
-    db.close();
-  }
 }

@@ -2,14 +2,14 @@ import { z } from 'zod';
 import { approvedCreation, type TitleSelection } from '../../shared/creation';
 import { bookProfilePath, publishingResearchSpec } from '../publishing';
 import { retryNeedsConfirmation } from '../../shared/run-presentation';
-import { type Command } from '../../shared/types';
+import { modelRoundLimit, type Command } from '../../shared/types';
 import { hash, now, paths, renderProgress, updateConfigDocument } from '../domain';
 import { samePath } from '../recycle-bin';
 import { ProjectCommitService } from '../runtime/commit-kernel';
 import { setRunStatus } from '../runtime/run-state';
 import type { Service } from '../service';
 import { renderIndex } from '../skill';
-import { fileHash, proposalHash, safePath } from '../storage';
+import { proposalHash } from '../storage';
 import { resolveStoryImpacts } from '../story-impact';
 import {
   contractPath,
@@ -154,7 +154,7 @@ export async function handleCreationCommand(
       throw new Error('请等待当前作品方案生成完成后再修改');
     if (a.proposalHash !== proposalHash(r)) throw new Error('作品方案已改变，请查看最新结果后再修改');
     if (retryNeedsConfirmation(r)) throw new Error('上次请求结果与费用未知，请先核对这次请求');
-    if (r.rounds >= p.config.maxRounds || r.toolCount >= p.config.maxTools)
+    if (r.rounds >= modelRoundLimit(p.config.maxRounds) || r.toolCount >= p.config.maxTools)
       throw new Error('已达到当前任务调用上限，请先在运行设置中调整限额');
     t.history.push({
       kind: 'author-revision',
@@ -180,7 +180,7 @@ export async function handleCreationCommand(
   if (command === 'titles.restoreProjection') {
     idle();
     if (!p.titleBinding) throw new Error('本书尚无正式命名记录');
-    const actual = fileHash(safePath(s.root, titlePath));
+    const actual = s.workingHash(titlePath);
     if (a.baseHash !== actual) throw new Error('书名展示文件再次改变，请刷新后恢复');
     const next = structuredClone(p);
     next.revision++;
@@ -468,7 +468,7 @@ export async function handleCreationCommand(
     idle();
     const creation = approvedCreation(p);
     if (!creation) throw new Error('本书尚无正式作品契约');
-    const actual = fileHash(safePath(s.root, contractPath));
+    const actual = s.workingHash(contractPath);
     if (a.baseHash !== actual) throw new Error('展示文件已再次改变，请刷新后恢复');
     const content = renderContract(creation.spec, creation.contract);
     if (actual === hash(content)) return true;

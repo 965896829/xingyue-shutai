@@ -30,7 +30,7 @@ fieldset.local-preview-fields { border: 0; margin: 0; padding: 0; min-width: 0; 
  --panel: var(--ui-surface, #202020); --raised: var(--ui-hover, #252525); --inset: var(--ui-inset, #191919);
  --ink: var(--text); --placeholder: var(--muted); --accent: var(--lime); --accent-fill: var(--lime); --accent-hover: var(--lime-dim); --accent-wash: var(--ui-accent-bg, #d4ef681a); --accent-line: var(--ui-accent-line, #d4ef6830); --on-accent: var(--ui-on-accent, #242a11);
  --success: #96b986; --success-bg: #263125; --danger-bg: #3a2525; --warning: #d4be82; --warning-bg: #302d24; --warning-line: #665c3b; --info: #b2c1cb; --info-bg: #252d32; --scrim: #080808aa; --shadow: #00000033; --scrollbar: #555; --selection: #d4ef6830; --active-line: #ffffff05; --diff-add: #263b29; --diff-add-text: #c3e9bc; --diff-add-mark: #385b3d; --diff-delete: #442c27; --diff-delete-text: #f5b6aa; --diff-delete-mark: #6b3b32; --sidebar-bg: var(--ui-surface); --sidebar-ink: var(--text); --sidebar-muted: var(--muted); --sidebar-hover: var(--ui-hover); --sidebar-selected: var(--ui-accent-bg); --nav-selected: var(--ui-accent-bg); --composer-bg: var(--ui-surface); --page-glow: none; --green: var(--lime); --paper: var(--ui-surface); --brand-wordmark: var(--text); --brand-gold: var(--lime); --focus-ring: #d4ef6830;
- min-width: 0; color: var(--text); font: 14px/1.6 Arial, 'Microsoft YaHei', sans-serif;
+ min-width: 0; color: var(--text); font: 14px/1.6 system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 .reference-shell .client-module .app-shell { display: flex; min-height: calc(100vh - 140px); height: auto; background: transparent; }
 .reference-shell .client-module .app-shell > main { width: 100%; min-width: 0; display: flex; flex-direction: column; }
