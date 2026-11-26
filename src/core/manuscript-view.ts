@@ -100,8 +100,8 @@ function factEntry(fact: Fact, track: 'saved' | 'draft'): ProjectionEntry {
 
 /** Read-only author-facing projection. Markdown remains authoritative; this never registers new facts. */
 export function readManuscriptView(store: FileStore, chapter: number, runId?: string, includeDraft = true): ManuscriptView {
-  const project = store.db.project(), run = runId ? store.db.runs().find(run => run.id === runId && run.chapter === chapter) : undefined;
-  const candidate = run && run.projectId === project.id && !run.accepted && !['discarded', 'stale'].includes(run.status) && compatibleRunBase(store, run) ? run : undefined;
+  const project = store.db.project(), run = runId ? store.db.findRun(runId) : undefined;
+  const candidate = run && run.chapter === chapter && (!run.projectId || run.projectId === project.id) && !run.accepted && !['discarded', 'stale'].includes(run.status) && compatibleRunBase(store, run) ? run : undefined;
   const view: ManuscriptView = { projectId: project.id, revision: project.revision, chapter, runId: candidate?.id, draftAvailable: !!candidate?.changes.length,
     characters: [], entries: [], unavailable: [] };
   const saved = new Map<string, Document>(), drafts = new Map<string, Document>();

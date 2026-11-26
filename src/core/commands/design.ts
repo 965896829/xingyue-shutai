@@ -53,7 +53,7 @@ export async function runDesign(
     }
     const source = input.runId
       ? s.db.run(input.runId)
-      : s.db.runs().find((r) => r.planning && compatibleRunBase(s, r));
+      : s.db.pendingRuns('planning').find((r) => r.planning && compatibleRunBase(s, r));
     if (!source?.planning || !compatibleRunBase(s, source)) throw new Error('请选择当前版本的策划任务');
     if (input.id === 'concept-forge.regenerate')
       return handleCreationCommand(

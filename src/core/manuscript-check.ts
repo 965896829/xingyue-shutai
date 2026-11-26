@@ -27,12 +27,14 @@ export function assessReviewEvidence(file: string, report: string, prose: string
   const findings: Issue[] = [];
   if (value.proseHash !== hash(prose))
     issues.push({ code: 'review_evidence_stale', severity: 'error', path: file, message: '审稿对应的正文已经变化，请重新审阅当前稿。' });
-  if (value.checks.length !== reviewAspects.length || reviewAspects.some(aspect => value.checks.filter(check => check.aspect === aspect).length !== 1))
-    issues.push({ code: 'review_evidence_coverage', severity: 'error', path: file, message: `审稿核验恰好需要“${reviewAspects.join('、')}”五项，且每项只出现一次；当前填写 ${value.checks.length} 项，存在新增、重复或遗漏。其他建议写入中文报告，将 warning/error 归入对应核心维度，不另增维度。` });
+  if (reviewAspects.some(aspect => value.checks.filter(check => check.aspect === aspect).length !== 1))
+    issues.push({ code: 'review_evidence_coverage', severity: 'error', path: file, message: `审稿需覆盖“${reviewAspects.join('、')}”，每个必需项目各一次。请补齐遗漏或合并重复判断。` });
   for (const check of value.checks) {
     if (!prose.includes(check.quote))
       issues.push({ code: 'review_evidence_quote', severity: 'error', path: file, message: `“${check.aspect}”引用的文字不在当前正文中，请重新核对。` });
-    if (check.verdict !== 'pass')
+    if (!reviewAspects.some(aspect => aspect === check.aspect)) {
+      findings.push({ code: 'editorial_observation', severity: 'warning', path: file, message: `编辑观察 · ${check.aspect}：${check.reason}（原文“${check.quote}”）` });
+    } else if (check.verdict !== 'pass')
       findings.push({ code: 'review_finding', severity: check.verdict, path: file, message: `${check.aspect}：${check.reason}` });
   }
   return { validationIssues: issues, findings };

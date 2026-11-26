@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { approvedCreation } from '../../shared/creation';
-import { type Assessment } from '../../shared/studio';
+import { finishAdoptionWork } from '../adoption-maintenance';
 import type { Command } from '../../shared/types';
 import { batchSummaryProgress, materializeAftermathStatus } from '../aftermath-status';
 import { assertControllerRules } from '../agent-control';
@@ -21,13 +21,12 @@ import {
   updateConfigDocument
 } from '../domain';
 import { confirmedAlignedPlans } from '../future-plan-review';
-import { decodeFacts, encodeFacts, primaryPath, rebuildMemory, validateEvidence } from '../memory';
+import { decodeFacts, encodeFacts, primaryPath, validateEvidence } from '../memory';
 import { sameStoryText } from '../memory-source';
 import { volumeNameSlots, volumeRenameIssues } from '../volume-naming';
 import { chapterNameSlots, chapterRenameIssues } from '../chapter-naming';
-import { syncEntities } from '../memory-studio';
 import { samePath } from '../recycle-bin';
-import { candidateChangesForCurrentSettings, compatibleRunBase } from '../runtime-settings';
+import { candidateChangesForCurrentSettings, compatibleRunBase, independentNotes } from '../runtime-settings';
 import { ProjectCommitService } from '../runtime/commit-kernel';
 import { voicePath } from '../quality';
 import { supersedeFact } from '../fact-transitions';
@@ -68,9 +67,9 @@ type Host = Pick<
   | 'recent'
   | 'backingUp'
   | 'scheduler'
+  | 'operations'
   | 'managementController'
-  | 'needsMemoryRepair'
-  | 'startMemoryRepair'
+  | 'startWriting'
   | 'makeRun'
   | 'launch'
 >;
@@ -92,7 +91,9 @@ export async function handleAdoptionCommand(
         throw new Error('此方向已经确认书名，请刷新查看已保存的结果');
       if (a.proposalHash !== undefined && a.proposalHash !== proposalHash(r))
         throw new Error('提交编号与候选内容不匹配');
-      return { alreadyAccepted: true };
+      const approved = s.db.sql.prepare('SELECT a.data FROM candidate_commits c JOIN approvals a ON a.id=c.approval_id WHERE c.run_id=?').get(r.id);
+      const saved = approved && JSON.parse(String(approved.data)).result;
+      return { ...saved, alreadyAccepted: true };
     }
     if (str(a.proposalHash) !== proposalHash(r)) throw new Error('候选内容已改变，请重新打开审阅');
     runner.recoverReadyCandidate(r, p, 'accept');
@@ -108,7 +109,7 @@ export async function handleAdoptionCommand(
       throw new Error('请先完成标签策划与契约审核');
     if (r.manifest && contextChanged(s, r.manifest))
       throw new Error('候选所依赖的资料已被外部修改；请先核对资料并重新建立任务，旧批准不能沿用');
-    if (r.mode === 'stage' && (p.stage !== r.stage || p.chapter !== r.chapter))
+    if (r.mode === 'stage' && (p.stage !== (r.quickFromStage ?? r.stage) || p.chapter !== r.chapter))
       throw new Error('阶段已经改变');
     const confirmsTitle = p.titlePending === true && r.mode === 'stage' && r.stage === 'S01';
     let confirmedTitle: string | undefined;
@@ -141,7 +142,8 @@ export async function handleAdoptionCommand(
     }
     if (!r.changes.length) throw new Error('没有可接受的候选文件');
     if (a.warningReason) s.db.event(r.id, 'warning-review', String(a.warningReason));
-    let next = r.mode === 'stage' ? advance(p, r.id) : structuredClone(p);
+    const basis = r.quickFromStage ? { ...p, quickWriting: true as const, stage: r.stage } : p;
+    let next = r.mode === 'stage' ? advance(basis, r.id) : structuredClone(p);
     if (r.pipeline && r.mode === 'stage' && r.chapter === p.chapter) next = advance(next, r.id);
     next.revision++;
     let changes = candidateChangesForCurrentSettings(s, r);
@@ -445,7 +447,7 @@ export async function handleAdoptionCommand(
       }
       const record = `\n\n## ${now()} 作品方案变更\n\n- 来源任务：${r.id}\n- 变化条目：${delta.changedClaimIds.join('、') || '无'}\n- 后续生效：第 ${fromChapter} 章起；保留当前阶段、写作位置与已有正文\n- 待核对：${targets.map((v) => v.path).join('、') || '无'}\n- 书名：${next.titleReviewRequired ? '需在独立命名中核对' : '已核对'}\n`;
       changes.push(host.change(paths.impact, s.readAccepted(paths.impact).content + record));
-    } else if (r.mode !== 'stage' && r.mode !== 'analysis' && substantiveChanges.length) {
+    } else if (r.mode !== 'stage' && r.mode !== 'analysis' && substantiveChanges.length && !independentNotes(s, r)) {
       const changed = substantiveChanges,
         earliest = Math.min(...changed.map((f) => Number(f.match(/^07_.*第(\d+)章/)?.[1] ?? Infinity)));
       const plotOnly = changed.length === 1 && changed[0] === plotPath;
@@ -556,23 +558,21 @@ export async function handleAdoptionCommand(
     r.accepted = true;
     setRunStatus(r, 'complete');
     r.updatedAt = now();
-    new ProjectCommitService(s).commit(changes, next, r);
+    let transaction: string;
+    try {
+      transaction = new ProjectCommitService(s).commit(changes, next, r,
+        host.operations.binding('run.accept') ?? host.operations.binding('workbench.accept'));
+    } catch (error) {
+      const saved = s.db.sql.prepare('SELECT transaction_id FROM candidate_commits WHERE run_id=? AND fingerprint=?').get(r.id, proposalHash(r));
+      if (!saved) throw error;
+      transaction = String(saved.transaction_id);
+    }
     host.recent = host.recent.map((item) =>
       samePath(item.root, next.root) ? { ...item, title: next.title } : item
     );
-    rebuildMemory(s);
-    syncEntities(s);
-    for (const row of s.db.sql.prepare('SELECT id,data FROM assessments').all() as {
-      id: string;
-      data: string;
-    }[]) {
-      const value = JSON.parse(row.data) as Assessment;
-      if (value.track === 'candidate' && value.draftId === r.id && value.hash === r.pipeline?.proseHash) {
-        const accepted = { ...value, id: id(), track: 'accepted', snapshotId: s.db.get('headSnapshot') };
-        s.db.sql.prepare('INSERT INTO assessments VALUES(?,?)').run(accepted.id, JSON.stringify(accepted));
-      }
-    }
-    s.db.event(r.id, 'accepted', '作者接受结果，已提交正式文件');
+    const pending = finishAdoptionWork(s);
+    if (s.db.sql.prepare("SELECT 1 FROM materialization_outbox WHERE id=? AND status<>'complete'").get(transaction))
+      pending.push('工作目录文件');
     if (next.config.backupDirectory) {
       host.backingUp = true;
       try {
@@ -585,28 +585,17 @@ export async function handleAdoptionCommand(
         host.backingUp = false;
       }
     }
-    const titleResult = confirmedTitle && confirmedTitle !== p.title ? { titleChanged: true } : {};
+    const titleResult = { revision: next.revision, proposalHash: proposalHash(r), ...(pending.length ? { pending } : {}),
+      ...(confirmedTitle && confirmedTitle !== p.title ? { titleChanged: true } : {}) };
     if (a.startNext === true && (r.mode === 'stage' || r.memoryRepair) && !next.finished) {
       try {
-        if (
-          host.needsMemoryRepair(
-            `完成 ${stageNames[next.stage]}。沿用已接受要求，开始前复核全部必读资料。`,
-            next.config.stageProfiles[next.stage] || next.config.defaultProfileId || r.profileId
-          )
-        )
-          return {
-            accepted: true,
-            nextRun: host.startMemoryRepair(next.config.defaultProfileId || r.profileId),
-            ...titleResult
-          };
-        const nextRun = host.makeRun(
-          'stage',
+        const waiting = s.db.get<{repairId: string}>('writingContinuation');
+        const receipt = (nextRun: string) => ({ accepted: true, nextRun, ...titleResult });
+        const nextId = host.startWriting(
           `完成 ${stageNames[next.stage]}。沿用已接受要求，开始前复核全部必读资料。`,
-          next.config.stageProfiles[next.stage] || next.config.defaultProfileId || r.profileId
-        );
-        const result = { accepted: true, nextRun: nextRun.id, ...titleResult };
-        host.launch(nextRun, result);
-        return result;
+          next.config.stageProfiles[next.stage] || next.config.defaultProfileId || r.profileId, undefined,
+          receipt, waiting?.repairId === r.id ? r.id : undefined);
+        return receipt(nextId);
       } catch (error) {
         const nextError = `本阶段已保存，下一阶段未能开始：${(error as Error).message}`;
         s.db.event(r.id, 'next-stage-error', nextError);

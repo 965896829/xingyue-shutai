@@ -256,7 +256,8 @@ test('正文只输出正文，独立审核和记忆阶段携带实际工具提�
   assert.match(review, /使用 propose_changes 提交完整质量报告候选/);
   assert.match(review, /08_章后更新\/第001章质量评分\.md/);
   assert.match(review, /json wenxu-review/);
-  assert.match(review, /checks 恰好五项/);
+  assert.match(review, /checks 的必需项目为[^。]+每项只出现一次/);
+  assert.match(review, /额外|其他观察/);
   for (const field of ['proseHash', 'checks', 'aspect', 'verdict', 'quote', 'reason']) assert.ok(review.includes(field), field);
   assert.doesNotMatch(review, /不提议阶段文件|只返回本轮给定审阅结构/);
   const memory = systemPrompt(root, p, 'S11', undefined, undefined, { outputMode: 'memory' });

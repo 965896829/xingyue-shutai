@@ -1,7 +1,7 @@
 import type { Change, ProjectConfig, ProjectState, Run } from '../shared/types';
 import type { CanonicalSnapshot } from '../shared/studio';
 import type { FileStore } from './storage';
-import { hash, paths, renderProgress, updateConfigDocument } from './domain';
+import { hash, isAuthorNote, paths, renderProgress, updateConfigDocument } from './domain';
 import { fingerprint } from './runtime/canonical';
 
 // These controls affect execution, never the author's story or approved evidence.
@@ -56,9 +56,24 @@ export function compatibleSettingsSnapshot(store: FileStore, snapshotId: string 
   } catch { return null; }
 }
 
-export function compatibleRunBase(store: FileStore, run: Pick<Run, 'baseRevision' | 'baseSnapshotId'>) {
+export function independentNotes(store: FileStore, run: Partial<Run>) {
+  if (run.mode !== 'manual' || !run.changes?.length || run.projectId !== store.db.project().id ||
+      run.manifest || run.facts?.length || run.factRetractions?.length || run.workbench || run.revisionCore || run.planning || run.design) return false;
+  const project = store.db.project();
+  return run.changes.every(change => isAuthorNote(change.path) && !project.stale.includes(change.path) &&
+    !store.db.sql.prepare('SELECT 1 FROM dependencies WHERE source_path=? OR dependent=? LIMIT 1').get(change.path, change.path) &&
+    !store.db.sql.prepare('SELECT 1 FROM fact_source_index WHERE path=? LIMIT 1').get(change.path));
+}
+
+export function compatibleRunBase(store: FileStore, run: Pick<Run, 'baseRevision' | 'baseSnapshotId'> & Partial<Run>) {
   const p = store.db.project();
   if (run.baseRevision === p.revision && (!run.baseSnapshotId || run.baseSnapshotId === store.db.get('headSnapshot'))) return true;
+  if (run.baseSnapshotId && independentNotes(store, run)) {
+    const base = store.db.snapshot(run.baseSnapshotId);
+    return base.projectId === p.id && base.revision === run.baseRevision && run.changes!.every(change =>
+      (base.documents[change.path] ?? null) === change.baseHash && (store.db.document(change.path)?.hash ?? null) === change.baseHash &&
+      store.workingHash(change.path) === change.baseHash);
+  }
   return compatibleSettingsSnapshot(store, run.baseSnapshotId)?.base.revision === run.baseRevision;
 }
 
@@ -83,7 +98,7 @@ function withCurrentExecutionSettings(text: string, config: ProjectConfig) {
 /** Merge only managed execution settings at commit time; never rewrite the reviewed story or its provenance. */
 export function candidateChangesForCurrentSettings(store: FileStore, run: Pick<Run, 'baseRevision' | 'baseSnapshotId' | 'changes'>): Change[] {
   const changes = structuredClone(run.changes);
-  if (run.baseSnapshotId === store.db.get('headSnapshot')) return changes;
+  if (!changes.some(change => change.path === paths.config) || run.baseSnapshotId === store.db.get('headSnapshot')) return changes;
   const transition = compatibleSettingsSnapshot(store, run.baseSnapshotId);
   if (!transition || transition.base.revision !== run.baseRevision) return changes;
   for (const change of changes) {

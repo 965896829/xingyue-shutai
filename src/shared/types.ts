@@ -151,6 +151,7 @@ export interface Batch {
   sizeAtCreation: number;
 }
 export interface ProjectState {
+  quickWriting?: true;
   id: string;
   title: string;
   titlePending?: boolean;
@@ -358,7 +359,20 @@ export type RunStatus =
   | 'discarded'
   | 'awaiting_input'
   | 'awaiting_permission';
+export interface WritingContinuation {
+  projectId: string;
+  stage: StageId;
+  chapter: number;
+  request: string;
+  profileId?: string;
+  targetHash: string | null;
+  conversationId?: string;
+  draft?: { id: string; hash: string };
+}
+
 export interface Run {
+  quickFromStage?: StageId;
+  selectedDraft?: { id: string; hash: string };
   taskScope?: import('./task-scope').TaskScope;
   revisionCoreRequired?: 1;
   revisionCore?: { version: 1; sourceRunId: string; chapters: number[]; proseHashes: Record<string, string>; coverage: Record<string, import('./chapter-memory').ChapterCoverage>; reports: Record<string, string>; phase: 'extract' | 'review' | 'needs_prose_revision' | 'ready' };

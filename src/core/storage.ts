@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { panelRecordSchema } from './auxiliary-records';
 import { authorMarkdown } from '../shared/author-markdown';
 import { validateWorkbenchLocks } from './workbench-locks';
 import { validatePlotChanges } from './workbench-plot';
@@ -52,6 +53,8 @@ export const proposalHash = (run: Run) => {
       dependencies: run.manifest?.sources.map((s) => [s.path, s.hash]),
       ...(run.manifest?.selectedBy === 'context-compiler-v1' ? { compiledContext: fingerprint(run.manifest) } : {}),
       pipeline: run.pipeline,
+      ...(run.selectedDraft ? { selectedDraft: run.selectedDraft } : {}),
+      ...(run.quickFromStage ? { quickFromStage: run.quickFromStage } : {}),
       planning: run.planning,
       ...(run.naming ? { naming: run.naming } : {}),
       ...(run.volumeNaming?.version === 2 ? { volumeNaming: run.volumeNaming } : {}),
@@ -213,6 +216,7 @@ export class Database {
       CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY,path TEXT UNIQUE NOT NULL,hash TEXT,bytes INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS revisions(document_id TEXT NOT NULL,hash TEXT NOT NULL,created_at TEXT NOT NULL,tx TEXT NOT NULL,PRIMARY KEY(document_id,hash));
       CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS run_stage_slot ON runs(json_extract(data,'$.projectId'),json_extract(data,'$.stage'),json_extract(data,'$.chapter'),json_extract(data,'$.mode'));
       CREATE INDEX IF NOT EXISTS run_creative_read ON runs(json_extract(data,'$.creative.input.operation'),json_extract(data,'$.creative.input.throughChapter'));
       CREATE INDEX IF NOT EXISTS run_revision_source ON runs(json_extract(data,'$.revisionCore.sourceRunId'));
       CREATE TABLE IF NOT EXISTS events(seq INTEGER PRIMARY KEY AUTOINCREMENT,run_id TEXT NOT NULL,kind TEXT NOT NULL,text TEXT NOT NULL,at TEXT NOT NULL,data TEXT);
@@ -237,6 +241,8 @@ export class Database {
       CREATE TABLE IF NOT EXISTS snapshots(id TEXT PRIMARY KEY,project_id TEXT NOT NULL,revision INTEGER NOT NULL,created_at TEXT NOT NULL,data TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS snapshot_project ON snapshots(project_id,revision);
       CREATE TABLE IF NOT EXISTS changesets(id TEXT PRIMARY KEY,payload_hash TEXT NOT NULL,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS adoption_followups(tx TEXT NOT NULL,kind TEXT NOT NULL,run_id TEXT NOT NULL,PRIMARY KEY(tx,kind));
+      CREATE TABLE IF NOT EXISTS auxiliary_quarantine(kind TEXT NOT NULL,id TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(kind,id));
       CREATE TABLE IF NOT EXISTS materialization_outbox(id TEXT PRIMARY KEY,status TEXT NOT NULL,data TEXT NOT NULL,error TEXT);
       CREATE TABLE IF NOT EXISTS dependencies(source_path TEXT NOT NULL,source_hash TEXT NOT NULL,dependent TEXT NOT NULL,kind TEXT NOT NULL,PRIMARY KEY(source_path,source_hash,dependent,kind));
       CREATE TABLE IF NOT EXISTS review_queue(id TEXT PRIMARY KEY,source TEXT NOT NULL,dependent TEXT NOT NULL,status TEXT NOT NULL);
@@ -265,7 +271,18 @@ export class Database {
   }
   get<T>(key: string): T | undefined {
     const r = this.sql.prepare('SELECT value FROM kv WHERE key=?').get(key) as { value: string } | undefined;
-    return r ? JSON.parse(r.value) : undefined;
+    if (!r) return undefined;
+    const schema = panelRecordSchema(key);
+    if (!schema) return JSON.parse(r.value);
+    try {
+      const data = JSON.parse(r.value);
+      if (schema.safeParse(data).success) return data;
+    } catch { /* A damaged display record can be restored independently. */ }
+    this.transaction(() => {
+      this.sql.prepare("INSERT OR IGNORE INTO auxiliary_quarantine VALUES('panel',?,?)").run(key, r.value);
+      this.sql.prepare('DELETE FROM kv WHERE key=?').run(key);
+    });
+    return undefined;
   }
   set(key: string, value: unknown) {
     this.sql
@@ -315,15 +332,51 @@ export class Database {
     try { const result = action(); this.sql.exec(`RELEASE ${savepoint}`); return result; }
     catch (error) { this.sql.exec(`ROLLBACK TO ${savepoint}; RELEASE ${savepoint}`); throw error; }
   }
+  findRun(runId: string): Run | undefined {
+    const row = this.sql.prepare('SELECT data FROM runs WHERE id=?').get(runId);
+    return row ? this.withUsage(JSON.parse(String(row.data))) : undefined;
+  }
   run(runId: string): Run {
-    const r = this.sql.prepare('SELECT data FROM runs WHERE id=?').get(runId) as { data: string } | undefined;
-    if (!r) throw new Error('运行记录不存在');
-    return this.withUsage(JSON.parse(r.data));
+    const run = this.findRun(runId);
+    if (!run) throw new Error('运行记录不存在');
+    return run;
   }
   runs(): Run[] {
     return (
       this.sql.prepare('SELECT data FROM runs ORDER BY rowid DESC LIMIT 100').all() as { data: string }[]
     ).map((r) => this.withUsage(JSON.parse(r.data)));
+  }
+  pendingRuns(kind: 'stage' | 'planning' | 'memory' | 'running' | 'creation' | 'recovery', target?: Pick<Run, 'stage' | 'chapter'>): Run[] {
+    const filters = {
+      stage: "json_extract(data,'$.mode')='stage'",
+      planning: "(json_type(data,'$.planning')='object' OR json_type(data,'$.naming.sourceRunId')='text')",
+      memory: "json_type(data,'$.memoryRepair')='object'",
+      running: "json_extract(data,'$.status')='running'",
+      creation: "(json_type(data,'$.planning')='object' OR json_extract(data,'$.mode')='stage')",
+      recovery: "(json_extract(data,'$.mode')<>'manual' OR json_type(data,'$.savedCandidateReview')='object')"
+    };
+    const slot = target ? " AND json_extract(data,'$.stage')=? AND json_extract(data,'$.chapter')=?" : '';
+    const rows = this.sql.prepare("SELECT data FROM runs WHERE (json_extract(data,'$.projectId')=? OR json_type(data,'$.projectId') IS NULL) AND COALESCE(json_extract(data,'$.accepted'),0)=0 AND json_extract(data,'$.status') NOT IN ('complete','discarded','stale')" +
+      (kind === 'recovery' ? '' : " AND (json_extract(data,'$.status')<>'failed' OR json_type(data,'$.pipeline.proseHash')='text')") +
+      ' AND ' + filters[kind] + slot + ' ORDER BY rowid DESC')
+      .all(this.project().id, ...(target ? [target.stage, target.chapter] : []));
+    return rows.map(row => this.withUsage(JSON.parse(String(row.data))));
+  }
+  assertStageAvailable(target: Pick<Run, 'stage' | 'chapter'>, exceptId?: string) {
+    if (this.pendingRuns('stage', target).some(run => run.id !== exceptId))
+      throw new Error('已有阶段任务，请继续、审阅或放弃后再开始');
+  }
+  workspaceRuns() {
+    const recent = this.runs();
+    const project = this.project();
+    const active = [
+      ...this.pendingRuns('stage', project),
+      ...(project.stage < 'S10' ? this.pendingRuns('stage', { stage: 'S10', chapter: project.chapter }) : []),
+      ...this.pendingRuns('running'), ...this.pendingRuns('memory').slice(0, 1)
+    ];
+    const pinned = new Map(active.map(run => [run.id, run]));
+    const page = recent.filter(run => !pinned.has(run.id)).slice(0, Math.max(0, 100 - pinned.size));
+    return [...pinned.values(), ...page].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
   revisionReviews(sourceId: string): Run[] {
     return this.sql.prepare("SELECT data FROM runs WHERE json_extract(data,'$.revisionCore.sourceRunId')=? ORDER BY rowid DESC")
@@ -907,6 +960,19 @@ export class FileStore {
         const current = this.db.run(j.run.id);
         if (proposalHash(current) !== approval.fingerprint || (current.stateVersion ?? 0) !== (j.run.stateVersion ?? 0))
           throw new PendingCommitConflict('candidate_changed', '候选版本或任务状态已改变，未自动提交');
+        const saved = { accepted: true, revision: j.project.revision, proposalHash: approval.fingerprint,
+          ...(this.db.project().title !== j.project.title ? { titleChanged: true } : {}) };
+        approval.result = saved;
+        if (approval.operation) {
+          const kind = approval.operation.kind ?? 'run.accept';
+          const result = this.db.sql.prepare("UPDATE operation_receipts SET data=json_set(data,'$.status','complete','$.result',json(?)) WHERE id=? AND input_hash=? AND kind=?")
+            .run(JSON.stringify(kind === 'workbench.accept' ? true : saved), approval.operation.id, approval.operation.inputHash, kind);
+          if (result.changes !== 1) throw new Error('采纳操作与原回执不一致');
+        }
+        const enqueue = this.db.sql.prepare('INSERT INTO adoption_followups(tx,kind,run_id) VALUES(?,?,?)');
+        for (const kind of ['memory', 'entities', ...(j.run.pipeline?.proseHash ? ['assessments'] : [])])
+          enqueue.run(j.id, kind, j.run.id);
+        this.db.event(j.run.id, 'accepted', '作者已采纳并保存这一版', saved);
         approval.consumedByCommit = j.id;
         this.db.sql.prepare('UPDATE approvals SET data=? WHERE id=?').run(JSON.stringify(approval), j.approvalId!);
         this.db.sql.prepare('INSERT INTO candidate_commits VALUES(?,?,?,?)').run(j.run.id, proposalHash(j.run), j.id, j.approvalId!);
@@ -924,25 +990,22 @@ export class FileStore {
         this.db.sql
           .prepare('INSERT OR IGNORE INTO revisions VALUES(?,?,?,?)')
           .run(docId, c.newHash, j.createdAt, j.id);
-        const indexed = this.db.sql.prepare('SELECT hash,fts_rowid FROM document_fts_rows WHERE path=?').get(c.path);
-        if (old) {
-          if (indexed?.hash === old.hash) this.db.sql.prepare('DELETE FROM documents_fts WHERE rowid=?').run(indexed.fts_rowid);
-          else this.db.sql.prepare('DELETE FROM documents_fts WHERE path=?').run(c.path);
-        }
-        const indexedRow = this.db.sql
-          .prepare('INSERT INTO documents_fts(path,content) VALUES(?,?)')
-          .run(c.path, new TextDecoder().decode(raw));
-        this.db.sql.prepare('INSERT INTO document_fts_rows VALUES(?,?,?) ON CONFLICT(path) DO UPDATE SET hash=excluded.hash,fts_rowid=excluded.fts_rowid').run(c.path, c.newHash, indexedRow.lastInsertRowid);
-        indexProse(this.db.sql, c.path, c.newHash, raw.toString('utf8'));
         const chapter = c.path.match(/^07_正文章节\/第(\d+)章\.md$/)?.[1];
         if (j.run && chapter) {
           const coverage = j.run.revisionCore?.coverage[Number(chapter)] ?? j.run.chapterCoverage;
           if (coverage?.proseHash === c.newHash) this.db.set('accepted-coverage:' + Number(chapter), coverage);
         }
-        if (j.run) captureCommittedEdit(this, c.path, c.baseHash, c.newHash, j.run.mode === 'manual' || j.run.revisionCore && this.db.run(j.run.revisionCore.sourceRunId).mode === 'manual' ? 'author' : 'model', j.run.chapter);
       }
       this.db.set('project', j.project);
       if (j.run) this.db.saveRun(j.run);
+      if (j.run?.quickFromStage) {
+        for (const earlier of this.db.pendingRuns('stage', { stage: j.run.quickFromStage, chapter: j.run.chapter })) {
+          if (['failed', 'committing'].includes(earlier.status)) continue;
+          earlier.status = 'stale';
+          earlier.error = '作者已从选定稿开始连载，这份早期方案保留在历史中。';
+          this.db.saveRun(earlier);
+        }
+      }
       const titleSelection = j.run?.planning?.titleSelection;
       if (titleSelection) {
         const child = this.db.run(titleSelection.batchRunId);
@@ -991,6 +1054,7 @@ export class FileStore {
         if (resolved) this.db.sql.prepare("UPDATE review_queue SET status='complete' WHERE id=?").run(row.id);
       }
       this.db.captureSnapshot(j.id);
+      this.db.sql.prepare("INSERT INTO adoption_followups VALUES(?,'documents',?)").run(j.id, j.run?.id ?? 'project');
       this.db.sql
         .prepare('INSERT INTO materialization_outbox VALUES(?,?,?,NULL)')
         .run(j.id, 'pending', JSON.stringify(j.changes.map(c => ({ path: c.path, baseHash: c.diskBaseHash ?? c.baseHash, newHash: c.diskNewHash ?? c.newHash }))));
@@ -1001,7 +1065,38 @@ export class FileStore {
       throw e;
     }
     fault?.('after-database');
+    this.updateDocumentViews(j.id);
     this.materialize(j.id, fault);
+  }
+  updateDocumentViews(tx?: string) {
+    const db = this.db;
+    const rows = db.sql.prepare("SELECT tx,run_id FROM adoption_followups WHERE kind='documents' " + (tx ? 'AND tx=?' : '') + ' ORDER BY rowid').all(...(tx ? [tx] : []));
+    for (const row of rows) {
+      try {
+        db.transaction(() => {
+          const saved = db.sql.prepare('SELECT data FROM changesets WHERE id=?').get(row.tx);
+          if (!saved) throw new Error('缺少已提交的文稿版本');
+          const changes = (JSON.parse(String(saved.data)) as ChangeSet).changes;
+          const run = row.run_id === 'project' ? undefined : db.run(String(row.run_id));
+          for (const change of changes) {
+            const digest = hash(change.content);
+            if (db.document(change.path)?.hash === digest) {
+              const indexed = db.sql.prepare('SELECT hash,fts_rowid FROM document_fts_rows WHERE path=?').get(change.path);
+              if (indexed?.hash !== digest) {
+                if (indexed) db.sql.prepare('DELETE FROM documents_fts WHERE rowid=?').run(indexed.fts_rowid);
+                else db.sql.prepare('DELETE FROM documents_fts WHERE path=?').run(change.path);
+                const next = db.sql.prepare('INSERT INTO documents_fts(path,content) VALUES(?,?)').run(change.path, change.content);
+                db.sql.prepare('INSERT OR REPLACE INTO document_fts_rows VALUES(?,?,?)').run(change.path, digest, next.lastInsertRowid);
+              }
+            }
+            indexProse(db.sql, change.path, digest, change.content);
+            if (run) captureCommittedEdit(this, change.path, change.baseHash, digest,
+              run.mode === 'manual' || run.revisionCore && db.run(run.revisionCore.sourceRunId).mode === 'manual' ? 'author' : 'model', run.chapter);
+          }
+          db.sql.prepare("DELETE FROM adoption_followups WHERE tx=? AND kind='documents'").run(row.tx);
+        });
+      } catch { /* The immutable changeset and its pending row survive a restart. */ }
+    }
   }
   materialize(tx?: string, fault?: (point: string) => void) {
     const rows = this.db.sql

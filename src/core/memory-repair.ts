@@ -20,23 +20,24 @@ export function memoryRepairScope(repair: NonNullable<Run['memoryRepair']>): Run
     ? { mode: 'forward', fromChapter: Math.min(...repair.impacts.map(impact => impact.scope.fromChapter)) } : undefined;
 }
 
-export function prepareMemoryRepair(store: FileStore): NonNullable<Run['memoryRepair']> {
+export function prepareMemoryRepair(store: FileStore, selected?: Set<string>): NonNullable<Run['memoryRepair']> {
   const project = store.db.project();
   const affected = store.db.facts().filter(fact => fact.reviewStatus !== 'retracted' && fact.state !== 'superseded' &&
     (fact.reviewStatus === 'disputed' || fact.evidence.some(e => store.db.document(e.path)?.hash !== e.hash || pendingSource(project, e.path))));
   const changed = affected.flatMap(fact => fact.evidence.filter(e => store.db.document(e.path)?.hash !== e.hash).map(e => e.path));
-  const pending = store.db.sql.prepare("SELECT source FROM review_queue WHERE status='pending'").all();
-  const impacts = structuredClone(project.storyImpacts ?? []);
+  const pending = store.db.sql.prepare("SELECT source,dependent FROM review_queue WHERE status='pending'").all();
+  const impacts = structuredClone((project.storyImpacts ?? []).filter(impact => !selected || impact.targets.some(target => selected.has(target.path)) || impact.sources.some(source => selected.has(source.path))));
   const baseline = [paths.seed, paths.config, paths.style, paths.world, ...(approvedCreation(project) ? [contractPath] : [])]
     .filter(file => store.db.document(file));
   const forwardOnly = impacts.length > 0 && impacts.every(impact => impact.scope.mode === 'forward') &&
     project.stale.every(file => impacts.some(impact => impact.targets.some(target => target.path === file)));
   const first = Object.keys(project.chapters).map(Number).filter(chapter => project.chapters[chapter] === 'stale').sort((a, b) => a - b)[0];
-  const sources = [...new Set([...baseline, ...impacts.flatMap(impact => impact.sources.map(source => source.path)), ...changed,
-    ...pending.map(row => String(row.source)), ...(first ? [prosePath(first)] : [])])].filter(file => store.db.document(file));
+  const sources = [...new Set([...baseline, ...impacts.flatMap(impact => impact.sources.map(source => source.path)), ...changed.filter(file => !selected || selected.has(file)),
+    ...pending.filter(row => !selected || selected.has(String(row.dependent)) || selected.has(String(row.source))).map(row => String(row.source)), ...(first && (!selected || selected.has(prosePath(first))) ? [prosePath(first)] : [])])].filter(file => store.db.document(file));
   const files = [...new Set(forwardOnly ? project.stale : [...project.stale, ...sources.filter(file => !baseline.includes(file)), ...affected.flatMap(fact => [primaryPath(fact), ...fact.evidence.map(e => e.path)])])]
     .filter(file => store.db.document(file) && file !== paths.impact && file !== contractPath);
-  return { paths: sortImpactFiles(files), sources, completed: [], cursor: 0, impacts,
+  const targets = selected ? files.filter(file => selected.has(file)) : files;
+  return { paths: sortImpactFiles(targets), sources, completed: [], cursor: 0, impacts,
     sourceHashes: Object.fromEntries(sources.map(file => [file, store.db.document(file)!.hash!])),
     readonlySources: [...new Set([...baseline, ...impacts.flatMap(impact => impact.sources.map(source => source.path))])]
       .filter(file => !project.stale.includes(file)) };

@@ -122,7 +122,10 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   if (snapshot.project.revision !== p.revision) throw new Error('作品版本已变化，请重新组装资料');
   const checked = new Map<string, DocumentInfo | undefined>();
   const status = { get(file: string) { if (!checked.has(file)) checked.set(file, store.inspect(file)); return checked.get(file); } };
-  if (store.db.get<number>('indexRevision') !== p.revision) rebuildMemory(store);
+  if (store.db.get<number>('indexRevision') !== p.revision) {
+    try { rebuildMemory(store); }
+    catch (error) { if (!options.allowConflicts || purpose !== 'draft' && purpose !== 'discussion') throw error; }
+  }
   const m: ContextManifest = {
     id: id(), projectId: p.id, inputHash: hash(request), selectedBy: 'context-compiler-v1', purpose,
     scope, snapshotId: snapshot.id, projectRevision: p.revision, chapter: p.chapter, stage,
@@ -137,12 +140,20 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   }
   m.writingTarget = options.writingTarget;
   m.writingBatch = {start: activeBatch(p).start, end: activeBatch(p).end};
-  const planned = formal ? requiredInputs(stage, p) : [paths.config, paths.style, ...(stage >= 'S04' ? [paths.world] : []), ...(purpose === 'draft' && stage >= 'S09' ? [paths.volumes, paths.outline, batchPath(activeBatch(p)), rhythmPath(activeBatch(p)), taskPath(p.chapter), detailPath(p.chapter), ...(p.chapter > 1 ? [prosePath(p.chapter - 1)] : [])] : [])];
+  const planned = formal || p.quickWriting && purpose === 'draft' ? requiredInputs(stage, p) : [paths.config, paths.style, ...(stage >= 'S04' ? [paths.world] : []), ...(purpose === 'draft' && stage >= 'S09' ? [paths.volumes, paths.outline, batchPath(activeBatch(p)), rhythmPath(activeBatch(p)), taskPath(p.chapter), detailPath(p.chapter), ...(p.chapter > 1 ? [prosePath(p.chapter - 1)] : [])] : [])];
   // S09 uses the current chapter's plan and entry/exit neighbors. Character
   // records still supply the first chapter's baseline before prose facts exist.
   const required = planned.filter(file => !(stage >= 'S10' && file.startsWith('04_') && file !== paths.summary));
   if (stage >= 'S09' && purpose !== 'discussion')
     for (let n = Math.max(1, p.chapter - p.config.recentChapters); n < p.chapter; n++) if (snapshot.documents[updatePath(n)]) required.push(updatePath(n));
+  if (p.quickWriting && stage >= 'S09') {
+    // An author can add a chapter plan later. Empty templates never become story evidence.
+    for (const file of [paths.world, paths.volumes, paths.outline, batchPath(activeBatch(p)), detailPath(p.chapter), taskPath(p.chapter)]) {
+      if (!snapshot.documents[file]) continue;
+      const content = store.readAccepted(file, snapshot.id).content;
+      if (!/待生成|待填写/.test(content) && content.trim().length > 30) required.push(file);
+    }
+  }
   if (approvedCreation(p)) required.push(contractPath);
   if (scope.viewpoint === 'author' && snapshot.documents[bookProfilePath]) required.push(bookProfilePath);
   if (scope.viewpoint === 'author' && stage >= 'S06' && snapshot.documents[plotPath]) required.push(plotPath);
@@ -237,7 +248,8 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
   }
   const found = retrieveMemory(store, query, scope, 12, undefined, validSource, all);
   m.coverage = found.coverage;
-  m.disputedFacts = found.disputes;
+  const competing = current.filter(fact => conflicts.has(fact.id) && related(fact, query, entities) && visibleFact(fact, scope));
+  m.disputedFacts = [...new Map([...found.disputes, ...competing].map(fact => [fact.id, fact])).values()];
   const hardIds = new Set(m.hardConstraints!.map(f => f.id));
   m.retrievedFacts = found.facts.filter(x => x.fact.kind !== 'expression_sample' && !hardIds.has(x.fact.id) && (purpose === 'discussion' || scope.viewpoint === 'character' || x.fact.revealedAt <= p.chapter)).map(x => x.fact);
   m.requiredFactIds = found.facts.filter(x => x.required).map(x => x.fact.id);
@@ -260,7 +272,14 @@ export function compileContext(store: FileStore, p: ProjectState, stage: StageId
     m.omitted!.push({ path: issue.path, reason: '与当前任务无关的失效记忆已隔离；原问题保留在记忆管理中，未作为本次事实使用' });
   if (stage >= 'S09' && purpose !== 'discussion') m.conflicts.push(...found.coverage.filter(c => c.status === 'missing').map(c => `缺少连续性台账：${c.ledger}`));
   m.conflicts = [...new Set(m.conflicts)];
-  if (m.conflicts.length && !options.allowConflicts) throw new Error(`记忆来源需要核对：${m.conflicts.slice(0, 4).join('；')}`);
+  const decisions = m.disputedFacts.filter(fact => related(fact, query, entities) &&
+    (importantCurrentFact(fact) || fact.mandatory || ['world_rule','author_constraint'].includes(fact.kind)));
+  if (decisions.length && formal) m.conflicts.push('本次要用到的事实有冲突');
+  if (m.conflicts.length && !options.allowConflicts) {
+    const evidence = decisions.flatMap(fact => fact.evidence.filter(validSource).slice(0, 1)
+      .map(ref => fact.subject + ' · ' + fact.value + '（' + ref.path + '）“' + ref.quote.slice(0, 120) + '”'));
+    throw new Error(['记忆来源需要核对：' + m.conflicts.slice(0, 4).join('；'), ...evidence.slice(0, 4)].join('\n'));
+  }
   for (const doc of found.documents) {
     if (m.sources.some(s => s.path === doc.path) || status.get(doc.path)?.status !== 'accepted') continue;
     m.sources.push({ path: doc.path, hash: doc.hash, content: doc.excerpt, ranges: [{ start: doc.start, end: doc.end }], required: false, mode: 'excerpt', reason: '本章人物或事件相关原文', layer: 'prose', sourceSnapshotId: snapshot.id, category: 'accepted_prose' });

@@ -16,7 +16,8 @@ import {
   worldRequiredFields,
   chapterTypes,
   behaviorRequiredFields,
-  estimatedChapters
+  estimatedChapters,
+  isAuthorNote
 } from './domain';
 import type { Change, Issue, ProjectState, StageId } from '../shared/types';
 import { checkProse, checkReviewEvidence } from './manuscript-check';
@@ -287,7 +288,14 @@ export function validateCandidate(
       issues.push({ code: 'file_type', severity: 'error', path: c.path, message: '写作产物必须是 Markdown' });
       continue;
     }
+    if (p.quickWriting && mode === 'stage' && stage >= 'S10' && c.path.startsWith('04_') &&
+        c.path !== paths.behavior && !(c.path === paths.summary && p.chapter === b.end) &&
+        previousContents?.get(c.path) === c.content) continue;
     if (mode === 'stage') issues.push(...authorStructureIssues(c, previousContents?.get(c.path)));
+    if (mode === 'manual' && isAuthorNote(c.path)) {
+      if (!c.content.trim()) issues.push({ code: 'placeholder', severity: 'error', path: c.path, message: '笔记不能为空' });
+      continue;
+    }
     const lines = c.content.split(/\r?\n/);
     for (const header of tableContracts[c.path] ?? []) {
       const cells = (line: string) =>

@@ -110,6 +110,10 @@ export interface CommitRecoveryConflict {
   detectedAt: string;
 }
 export interface StudioState {
+  waitingWriting?: { repairId: string; chapter: number; ready: boolean };
+  pendingIndexes?: string[];
+  quarantinedAssessments?: number;
+  quarantinedPanels?: number;
   recoveryConflicts?: CommitRecoveryConflict[];
   snapshot: SnapshotRef | null;
   snapshots: SnapshotRef[];

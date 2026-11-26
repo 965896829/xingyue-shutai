@@ -138,7 +138,7 @@ export class ConversationRunner {
   }
   profile(profileId: string, requireTools = true) {
     const p = this.profiles().find((v) => v.id === profileId && v.protocol !== 'images');
-    if (!p?.apiKey) throw new Error('请先选择已设置 Key 的文字模型');
+    if (!p?.apiKey || !p.enabled) throw new Error('请先选择已设置 Key 的文字模型');
     requireModelLimits(p);
     if (requireTools && (!p.tools || p.capabilities.tools === 'failed'))
       throw new Error('智能体需要支持工具调用的模型，请启用并测试工具调用');
@@ -163,7 +163,7 @@ export class ConversationRunner {
       if (a.kind === 'stage' || a.outputs.some(path => !allowed.has(path))) throw new Error('对象讨论只能修订当前对象的来源文稿');
     }
     const p = this.store.db.project(),
-      profile = this.profile(profileId);
+      profile = this.profile(profileId, a.kind !== 'draft');
     const proposal: ActionProposal = {
       ...a,
       id: id(),
@@ -214,7 +214,7 @@ export class ConversationRunner {
     if (proposal.version !== version) throw new Error('任务卡版本已变化，请重新查看');
     if (proposal.status !== 'pending') throw new Error('任务卡已执行、失效或取消');
     const p = this.store.db.project(),
-      profile = this.profile(proposal.profileId);
+      profile = this.profile(proposal.profileId, proposal.kind !== 'draft');
     if (
       (proposal.resumeRunId && proposal.resumeRunHash !== taskRunHash(this.store.db.run(proposal.resumeRunId), proposal.resumeRunHashVersion ?? 1)) ||
       !compatibleRunBase(this.store, { baseRevision: proposal.projectRevision, baseSnapshotId: proposal.baseSnapshotId }) ||
@@ -240,13 +240,13 @@ export class ConversationRunner {
   ) {
     const conv = this.records.get('conversations', conversationId);
     if (conv.archived) throw new Error('请先恢复此聊天');
-    const profile = this.profile(profileId, !conv.runId && !manuscript),
+    const profile = this.profile(profileId, false),
       turnId = id(),
       messageId = id();
     textArg(request, 120000);
     const turn: ConversationTurn = {
       historyReadVersion: 1,
-      ...(manuscript ? { manuscript } : {}),
+      ...(manuscript ? { manuscript, archiveManuscript: true as const } : {}),
       executorId: 'pi',
       executorVersion: piExecutorVersion,
       id: turnId,

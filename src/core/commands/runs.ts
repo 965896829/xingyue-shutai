@@ -21,32 +21,21 @@ export const runCommands = new Set<Command>([
 ]);
 
 type RunHost = Pick<Service, 'require' | 'executor' | 'chat' | 'coverController' | 'launch' |
-  'makeRun' | 'rebuildRun' | 'needsMemoryRepair' | 'startMemoryRepair' | 'cancelQueued' | 'presentRun'>;
+  'makeRun' | 'rebuildRun' | 'startWriting' | 'cancelQueued' | 'presentRun'>;
 
 export function handleRunCommand(host: RunHost, command: Command, a: Record<string, unknown>) {
   const { s, p, runner } = host.require();
   if (command === 'run.start') {
     if (p.finished && a.mode !== 'revision') throw new Error('当前全书计划已完成');
-    if (a.mode !== 'revision' && host.needsMemoryRepair(str(a.request), typeof a.profileId === 'string' ? a.profileId : undefined))
-      return host.startMemoryRepair(typeof a.profileId === 'string' ? a.profileId : undefined);
-    if (
-      s.db
-        .runs()
-        .some(
-          (r) => r.mode === 'stage' && !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status)
-        )
-    )
-      throw new Error('已有阶段任务，请继续、审阅或放弃后再开始');
-    const r = host.makeRun(
-      a.mode === 'revision' ? 'revision' : 'stage',
-      str(a.request),
-      typeof a.profileId === 'string' ? a.profileId : undefined
-    );
+    const profileId = typeof a.profileId === 'string' ? a.profileId : undefined;
+    if (a.mode !== 'revision') return host.startWriting(str(a.request), profileId, undefined, undefined,
+      typeof a.afterRepair === 'string' ? a.afterRepair : undefined);
+    const r = host.makeRun('revision', str(a.request), profileId);
     return host.launch(r);
   }
   if (command === 'run.cancel' || command === 'terminal.cancel') {
     if (host.cancelQueued('run')) return true;
-    const active = s.db.runs().find((run) => run.status === 'running');
+    const active = s.db.pendingRuns('running')[0];
     if (active) host.executor!.requestControl(active.id, 'cancel');
     else runner.stop();
     return true;
@@ -155,8 +144,10 @@ export function handleRunCommand(host: RunHost, command: Command, a: Record<stri
     if (r.planning) throw new Error('结构化策划候选需在标签与策划中修改输入后重新审核');
     const at = r.changes.findIndex((c) => c.path === str(a.path));
     if (at < 0) throw new Error('候选不存在');
+    const content = z.string().parse(a.content);
+    if (r.changes[at].content === content) return host.presentRun(r, true);
     if (a.expectedHash && hash(r.changes[at].content) !== a.expectedHash) throw new Error('候选已更新，请核对最新正文后再保存。');
-    r.changes[at].content = z.string().parse(a.content);
+    r.changes[at].content = content;
     if (r.pipeline && r.changes[at].path === prosePath(r.chapter)) {
       const previousProseHash = r.pipeline.proseHash;
       const previousRepairAttempts = structuredClone(r.repairAttempts);

@@ -46,7 +46,8 @@ export function syncUsage(store: FileStore, run: Run) {
   }
 }
 export function recoverUsage(store: FileStore) {
-  for (const run of store.db.runs()) {
+  for (const row of store.db.sql.prepare("SELECT DISTINCT substr(key,instr(key,':')+1) AS id FROM kv WHERE (key LIKE 'assessmentInflight:%' OR key LIKE 'inflight:%') AND value<>'null' AND substr(key,instr(key,':')+1) IN (SELECT id FROM runs)").all()) {
+    const run = store.db.run(String(row.id));
     const assessment = store.db.get<{ profileId: string; profileVersion: number; currency: string }>(
       `assessmentInflight:${run.id}`
     );

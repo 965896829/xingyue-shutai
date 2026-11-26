@@ -4,6 +4,8 @@ import path from 'node:path';
 import { Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell } from 'docx';
 import { backup, DatabaseSync } from 'node:sqlite';
 import { z } from 'zod';
+import { panelRecordSchema } from './auxiliary-records';
+import { assessmentSchema } from '../shared/contract-schemas';
 import { verifyObjects } from './integrity';
 import { checkDatabaseCompatibility } from './compatibility';
 import { FileStore, atomicWrite, createProjectDirectory, durableCreate, safePath, fileHash } from './storage';
@@ -153,6 +155,42 @@ export async function createBackup(store: FileStore, directory: string, signal?:
   );
   fs.unlinkSync(checkpoint);
   return target;
+}
+/** Recover only isolated auxiliary records from a verified snapshot of the same book. */
+export function restoreAuxiliaryHistory(store: FileStore, source: string) {
+  const { schema, manifest } = backupManifest.parse(JSON.parse(fs.readFileSync(safePath(source, manifestName, true), 'utf8')));
+  const payload = schema === 2 ? safePath(source, 'files', true) : source;
+  const relative = '.novelclient/state.sqlite';
+  const database = safePath(payload, relative, true);
+  const expected = manifest.find(entry => entry.path === relative);
+  if (!expected || fileHash(database) !== expected.hash) throw new Error('备份数据库校验失败');
+  const copy = new DatabaseSync(database, { readOnly: true });
+  try {
+    const projectId = store.db.project().id;
+    if (checkDatabaseCompatibility(copy, true).project?.id !== projectId) throw new Error('请选择同一部作品的备份');
+    const lookup = copy.prepare('SELECT data FROM assessments WHERE id=?');
+    return store.db.transaction(() => {
+      let restored = 0;
+      const lookupPanel = copy.prepare('SELECT value AS data FROM kv WHERE key=?');
+      for (const row of store.db.sql.prepare('SELECT kind,id FROM auxiliary_quarantine').all()) {
+        const assessment = row.kind === 'assessment';
+        const record = (assessment ? lookup : lookupPanel).get(row.id);
+        if (!record) continue;
+        try {
+          const data = JSON.parse(String(record.data));
+          if (assessment) {
+            const valid = assessmentSchema.parse(data);
+            if (valid.id !== row.id || valid.projectId !== projectId) continue;
+          } else if (!panelRecordSchema(String(row.id))?.safeParse(data).success) continue;
+        } catch { continue; }
+        if (assessment) store.db.sql.prepare('INSERT OR IGNORE INTO assessments VALUES(?,?)').run(row.id, record.data);
+        else store.db.sql.prepare('INSERT OR IGNORE INTO kv VALUES(?,?)').run(row.id, record.data);
+        store.db.sql.prepare('DELETE FROM auxiliary_quarantine WHERE kind=? AND id=?').run(row.kind, row.id);
+        restored++;
+      }
+      return restored;
+    });
+  } finally { copy.close(); }
 }
 export function restoreBackup(source: string, parent: string) {
   const result = backupManifest.safeParse(JSON.parse(fs.readFileSync(safePath(source, manifestName, true), 'utf8')));

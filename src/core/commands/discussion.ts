@@ -4,7 +4,7 @@ import { bindWorkbenchCandidate } from '../workbench-candidates';
 import { retryNeedsConfirmation } from '../../shared/run-presentation';
 import { needsNewChapterCandidate } from '../../shared/task-revision';
 import { modelRoundLimit, type Command } from '../../shared/types';
-import { hash, now, prosePath, stageNames } from '../domain';
+import { now, prosePath, stageNames } from '../domain';
 import { prepareAuthorRevision } from '../runtime/run-recovery';
 import type { Service } from '../service';
 import { taskRunHash } from '../task-discussion';
@@ -29,6 +29,7 @@ export const discussionCommands = new Set<string>([
   'proposal.cancel',
   'proposal.refresh',
   'proposal.confirm',
+  'draft.write',
   'draft.list',
   'draft.read',
   'draft.fork',
@@ -55,7 +56,7 @@ type Host = Pick<
   | 'rebuildRun'
   | 'launch'
   | 'makeRun'
-  | 'needsMemoryRepair'
+  | 'startWriting'
 >;
 
 export async function handleDiscussionCommand(
@@ -108,7 +109,7 @@ export async function handleDiscussionCommand(
     const old = command === 'chat.retry' ? records.get('conversation_turns', str(a.id)) : undefined;
     if (old && ['running', 'complete'].includes(old.status)) throw new Error('此消息无需重发');
     if (old && a.confirmRetry !== true) throw new Error('需要明确确认重新请求，可能产生新的费用');
-    if (old?.kind === 'draft') throw new Error('试写重试需要重新建立任务卡');
+    if (old?.kind === 'draft' && !old.draftTask) throw new Error('请从原试写范围重新建立草稿');
     const allowed = z
       .array(z.string())
       .max(10)
@@ -136,9 +137,10 @@ export async function handleDiscussionCommand(
       conversationId,
       old?.request ?? str(a.text),
       typeof a.profileId === 'string' ? a.profileId : (old?.profileId ?? p.config.defaultProfileId),
-      'discussion',
+      old?.kind ?? 'discussion',
       undefined,
       (prepared) => {
+        if (old?.draftTask) prepared.draftTask = structuredClone(old.draftTask);
         if (!manuscript && objectBinding && explicitlyRequestsEdit(prepared.request))
           prepared.objectEdit = { bindingHash: fingerprint(objectBinding) };
         prepared.displayedError =
@@ -280,15 +282,19 @@ export async function handleDiscussionCommand(
     }
     // Existing workflow guards remain the single authority for formal stage execution.
     if (p.finished && proposal.kind === 'stage') throw new Error('全书计划已完成');
-    if (
-      s.db
-        .runs()
-        .some(
-          (r) => r.mode === 'stage' && !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status)
-        )
-    )
-      throw new Error('已有阶段任务，请先审阅、恢复或放弃');
-    const r = host.makeRun(proposal.kind, `${proposal.request}\n范围：${proposal.scope}`, proposal.profileId);
+
+    const request = `${proposal.request}\n范围：${proposal.scope}`;
+    const bind = (runId: string) => {
+      proposal.status = 'executed';
+      proposal.executionId = runId;
+      records.save('action_proposals', proposal);
+    };
+    if (proposal.kind === 'stage') {
+      const id = host.startWriting(request, proposal.profileId, undefined, id => ({ kind: proposal.kind, id }), undefined,
+        { conversationId: proposal.conversationId, bind });
+      return { kind: proposal.kind, id };
+    }
+    const r = host.makeRun(proposal.kind, request, proposal.profileId);
     r.conversationId = proposal.conversationId;
     const binding = records.get('conversations', proposal.conversationId).objectBinding;
     if (binding) {
@@ -301,15 +307,39 @@ export async function handleDiscussionCommand(
       metadata.groups[0].paths = [...new Set(fields.map(f => f.source.path))];
       r.request += `\n仅修改所选${binding.fieldId ? '字段' : '对象'}，保留其他字段、行、标题与格式。当前对象：${workbenchDiscussionContext(s, binding)}`;
     }
-    records.transaction(() => {
-      s.db.saveRun(r);
-      proposal.status = 'executed';
-      proposal.executionId = r.id;
-      records.save('action_proposals', proposal);
-      host.operations.complete({ kind: proposal.kind, id: r.id });
-    });
-    host.launch(r, { kind: proposal.kind, id: r.id });
+    host.launch(r, { kind: proposal.kind, id: r.id }, () => bind(r.id));
     return { kind: proposal.kind, id: r.id };
+  }
+  if (command === 'draft.write') {
+    idle();
+    const kind = z.enum(['direction', 'scene', 'revise']).parse(a.kind);
+    const profile = chat.profile(str(a.profileId), false);
+    const version = z.object({ id: z.string(), hash: z.string() }).optional().parse(a.source);
+    const source = version && records.readDraft(version.id, version.hash);
+    if (kind === 'revise' && !source) throw new Error('请选择要修改的草稿版本');
+    const conversationId = typeof a.conversationId === 'string' ? a.conversationId : source?.conversationId ??
+      records.all('conversations').find(item => !item.archived && !item.runId && !item.objectBinding)?.id;
+    if (!conversationId) throw new Error('请选择写作对话');
+    const conversation = records.get('conversations', conversationId);
+    if (conversation.runId || conversation.objectBinding) throw new Error('请在写作讨论中试写');
+    let directionText: string | undefined;
+    if (a.direction) {
+      const binding = z.object({ runId: z.string(), reportHash: z.string(), directionId: z.string() }).parse(a.direction);
+      const planning = s.db.run(binding.runId).planning;
+      const choice = planning?.report?.directions.find(item => item.id === binding.directionId);
+      if (!choice || planning?.reportHash !== binding.reportHash) throw new Error('方向已更新，请重新选择');
+      directionText = [choice.title, choice.logline, choice.openingDecision, choice.storyEngine,
+        ...planning.report!.assumptions.filter(item => !item.directionIds.length || item.directionIds.includes(choice.id)).map(item => item.text)].join('\n');
+    }
+    const title = kind === 'direction' ? '开篇设定' : kind === 'revise' ? source!.title + ' · 改稿' : '场景试写';
+    const turn = chat.prepare(conversationId, str(a.request), profile.id, 'draft', undefined, prepared => {
+      prepared.draftTask = { kind, title, source: version, directionText };
+      records.save('conversation_turns', prepared);
+      s.db.set('queuedForeground', { id: prepared.id, kind: 'conversation' });
+      host.operations.complete({ id: prepared.id, conversationId });
+    });
+    void host.scheduleExecution({ id: turn.id, kind: 'conversation' });
+    return { id: turn.id, conversationId };
   }
   if (command === 'draft.list') return records.all('draft_artifacts');
   if (command === 'draft.fork') {
@@ -348,20 +378,10 @@ export async function handleDiscussionCommand(
     );
   if (command === 'draft.chapter') {
     idle();
-    if (p.finished || p.stage !== 'S10') throw new Error('当前尚未进入正文写作阶段，草稿已保留');
-    if (s.db.runs().some(run => run.mode === 'stage' && !run.accepted && !['discarded', 'stale', 'failed'].includes(run.status)))
-      throw new Error('已有章节任务，请先审阅、恢复或放弃');
-    const draft = records.readDraft(str(a.id));
-    if (draft.currentHash !== str(a.hash)) throw new Error('草稿已变化，请重新读取再核对');
-    const request = `将作者选定的草稿《${draft.title}》作为本章正文候选，保留原文并完成审稿、章后记忆和人物覆盖；来源 ${draft.path} @ ${draft.currentHash}`;
-    if (host.needsMemoryRepair(request, str(a.profileId))) throw new Error('当前资料尚需记忆同步，请完成核对后再使用草稿');
-    const run = host.makeRun('stage', request, str(a.profileId));
-    const file = prosePath(p.chapter);
-    run.conversationId = draft.conversationId;
-    run.changes = [{ path: file, content: draft.content, baseHash: s.db.document(file)?.hash ?? null }];
-    run.sourceProseHash = hash(draft.content);
-    run.pipeline = { ...run.pipeline!, phase: 'review', proseHash: run.sourceProseHash, version: 1 };
-    return host.launch(run);
+    const selected = { id: str(a.id), hash: str(a.hash) };
+    const draft = records.readDraft(selected.id, selected.hash);
+    const request = `采用作者选定的《${draft.title}》原文，核对本章及章后记忆。`;
+    return host.startWriting(request, str(a.profileId), selected);
   }
   if (command === 'draft.promote') {
     const draft = records.readDraft(str(a.id));

@@ -91,6 +91,21 @@ export class Conversations {
       'pendingDraft'
     );
     if (pending) this.finishDraft(pending.draft, pending.baseHash);
+    for (const row of this.store.db.sql.prepare("SELECT data FROM conversation_turns WHERE (json_type(data,'$.draftTask')='object' OR json_extract(data,'$.archiveManuscript')=1) AND json_extract(data,'$.status') IN ('complete','failed','unknown','stopped') AND json_type(data,'$.savedDraftId') IS NULL").all()) {
+      const turn = JSON.parse(String(row.data)) as ConversationTurn;
+      try { this.archiveReply(turn, this.get('conversation_messages', turn.messageId)); }
+      catch { /* The complete reply remains readable and can be saved locally. */ }
+    }
+  }
+  archiveReply(turn: ConversationTurn, message: ConversationMessage) {
+    if (turn.savedDraftId || !message.content.trim()) return;
+    const previous = this.store.db.sql.prepare("SELECT id FROM draft_artifacts WHERE json_extract(data,'$.messageId')=? ORDER BY rowid LIMIT 1").get(message.id);
+    turn.savedDraftId = previous ? String(previous.id) : this.saveDraft({
+      title: (turn.draftTask?.title ?? (turn.manuscript?.mode === 'passage' ? '选区改稿' : turn.manuscript ? '章节草稿' : '场景试写')) + (turn.status === 'complete' ? '' : '（未完）'), content: message.content,
+      conversationId: message.conversationId, messageId: message.id, parent: turn.draftTask?.source
+    }).id;
+    turn.savedDraftHash = this.get('draft_artifacts', turn.savedDraftId).versions[0].hash;
+    this.save('conversation_turns', turn);
   }
   private finishDraft(draft: DraftArtifact, baseHash: string | null) {
     const target = safePath(this.store.root, draft.path),
@@ -127,6 +142,7 @@ export class Conversations {
     if (previous ? actual !== a.baseHash : actual !== null)
       throw new Error('草稿已有外部修改，请重新读取并比较，未覆盖文件');
     const version = this.store.putObject(content);
+    if (previous && actual === version && previous.hash === version && previous.title === a.title) return previous;
     // Preserve an externally edited version too before replacing it after an explicit reload.
     const versions = [...(previous?.versions ?? [])];
     if (actual && !versions.some((v) => v.hash === actual))
@@ -152,7 +168,7 @@ export class Conversations {
   }
   readDraft(key: string, version?: string) {
     const draft = this.get('draft_artifacts', key);
-    if (version && !draft.versions.some((v) => v.hash === version)) throw new Error('草稿版本不存在');
+    if (version && !draft.versions.some((v) => v.hash === version)) throw new Error('草稿已变化，找不到所选版本，请重新读取');
     const content = version
       ? this.store.object(version).toString('utf8')
       : this.store.read(draft.path).content;

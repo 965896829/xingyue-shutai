@@ -33,6 +33,11 @@ export function createProjectArchive(input: unknown, skillRoot: string, catalog:
   if (fs.existsSync(root)) throw new Error('同名作品目录已存在，请改名或打开');
 
   const project = newProject(title, root, args.config ?? {});
+  if (args.quickWriting) {
+    if (args.creationInput || args.tagInput) throw new Error('轻量开书请使用一个创作想法');
+    project.quickWriting = true;
+    project.stage = 'S10';
+  }
   validateExpressionSelection(skillRoot, project.config);
   const rawProfile = args.bookProfile ?? args.creationInput?.bookProfile ?? args.tagInput?.bookProfile;
   const profile = rawProfile ? resolveBookProfile(rawProfile, catalog.publishingSnapshots ?? []) : null;

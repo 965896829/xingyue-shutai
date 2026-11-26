@@ -8,8 +8,7 @@ import { ConversationRunner, type AssistantRuntime } from './conversation-runner
 import { hash, id, prosePath } from './domain';
 import { SemanticIndex } from './embeddings';
 import { verifyObjects } from './integrity';
-import { rebuildMemory } from './memory';
-import { syncEntities } from './memory-studio';
+import { finishAdoptionWork } from './adoption-maintenance';
 import { ProjectWatcher } from './project-watcher';
 import { ProseIndexer } from './prose-index';
 import { AgentRunner, type Caller } from './runner';
@@ -48,7 +47,7 @@ function recoverProjectState(store: FileStore) {
   if (creation) validateApprovedTags(creation, project.id);
   if (project.creation && project.tags) throw new Error('作品存在重复的正式方案记录，请恢复最近的完整备份');
   if ((project.creation && !project.creation.contract.plan) ||
-      (project.creationWorkflow === 2 && project.stage !== 'S01' && !project.creation))
+      (project.creationWorkflow === 2 && project.stage !== 'S01' && !project.quickWriting && !project.creation))
     throw new Error('正式作品方案记录缺失，请从完整备份恢复');
   if (project.titleBinding && (project.title !== project.titleBinding.candidate.title ||
       (!project.titleReviewRequired && project.titleBinding.planHash !== creation?.contract.planHash)))
@@ -94,9 +93,8 @@ function recoverProjectRuns(store: FileStore, project: ProjectState, runner: Age
     store.db.saveRun(run);
   }
 
-  rebuildMemory(store);
-  syncEntities(store);
-  for (const run of store.db.runs()) {
+  finishAdoptionWork(store, true);
+  for (const run of store.db.pendingRuns('recovery')) {
     if (!run.accepted && run.status === 'awaiting_review' && run.planning?.phase === 'ready' &&
         !retryNeedsConfirmation(run) && !store.db.get(`inflight:${run.id}`)) {
       runner.check(run, project);

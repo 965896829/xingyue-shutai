@@ -11,6 +11,7 @@ import type { Act } from './AppDialogs';
 
 export function ProjectSettings({
   config,
+  canSetFirstTitle,
   projectSessionId,
   initialProfileId,
   profiles,
@@ -20,6 +21,7 @@ export function ProjectSettings({
   act
 }: {
   config: ProjectConfig;
+  canSetFirstTitle?: boolean;
   projectSessionId?: string;
   initialProfileId: string;
   profiles: Profile[];
@@ -28,7 +30,7 @@ export function ProjectSettings({
   profileManaged: boolean;
   act: Act;
 }) {
-  const [c, setC] = useState(config),
+  const [c, setC] = useState(config), [firstTitle, setFirstTitle] = useState(''),
     [limitRounds, setLimitRounds] = useState(config.maxRounds !== 0),
     [styleBusy, setStyleBusy] = useState(false),
     [advanced, setAdvanced] = useState(JSON.stringify(config.stageProfiles, null, 2));
@@ -41,11 +43,13 @@ export function ProjectSettings({
           e.preventDefault();
           if (styleBusy) return;
           void act(async () => {
-            await invoke('project.configure', { config: { ...c, maxRounds: limitRounds ? c.maxRounds : 0, style: normalizeWritingStyle(c.style), stageProfiles: JSON.parse(advanced) } });
+            await invoke('project.configure', { ...(canSetFirstTitle && firstTitle.trim() ? { firstTitle: firstTitle.trim() } : {}),
+              config: { ...c, maxRounds: limitRounds ? c.maxRounds : 0, style: normalizeWritingStyle(c.style), stageProfiles: JSON.parse(advanced) } });
             onClose();
           }, '作品设置已保存');
         }}
       >
+        {canSetFirstTitle && <label>书名（选填）<input value={firstTitle} maxLength={80} onChange={event => setFirstTitle(event.target.value)} placeholder="想好后再填" /></label>}
         <div className="form-grid">
           {(
             [

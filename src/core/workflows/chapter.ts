@@ -69,6 +69,10 @@ export type ChapterWorkflowHost = Pick<
   | 'event'
 >;
 
+export function chapterRoleProfileId(run: Run, project: ProjectState, role: 'writing' | 'review' | 'extraction') {
+  return project.config.modelRouting[role] || project.config.modelRouting.writing || run.profileId;
+}
+
 export async function driveChapterWorkflow(
   host: ChapterWorkflowHost,
   r: Run,
@@ -79,12 +83,12 @@ export async function driveChapterWorkflow(
 ) {
   const pipeline = r.pipeline!;
   const select = (role: 'writing' | 'extraction' | 'review') => {
-    const key =
-      p.config.modelRouting[role] ||
-      (role === 'writing' ? r.profileId : p.config.modelRouting.writing || r.profileId);
+    const key = chapterRoleProfileId(r, p, role);
     const profile = host.profiles().find((x) => x.id === key);
-    if (!profile) throw new Error('所选分工模型已移除，请重新选择');
-    if (!profile.apiKey || !profile.enabled) throw new Error('分工模型不可用');
+    if (!profile?.apiKey || !profile.enabled || role !== 'writing' && (!profile.tools || profile.capabilities.tools === 'failed')) {
+      const label = { writing: '写手', review: '审稿', extraction: '记忆提取' }[role];
+      throw new ApplicationError('MODEL_CONFIGURATION', (pipeline.proseHash ? '正文已保存。' : '') + label + '模型不可用，启用后可从此步骤继续。');
+    }
     const binding = r.modelBindings?.[role];
     if (binding && (binding.id !== profile.id || binding.version !== profile.version))
       throw new Error('分工模型配置已改变，请重新建立任务');
@@ -95,9 +99,7 @@ export async function driveChapterWorkflow(
   const lock = host.chapterRulesHash(p, naming, r.chapterNaming?.version);
   if (r.skillHash && r.skillHash !== lock) throw new Error('任务规则或工具契约发生变化，请重新组装上下文');
   r.skillHash = lock;
-  const writer = select('writing'),
-    reviewer = select('review'),
-    extractor = select('extraction');
+
   let pendingTransitionIssues: Run['issues'] = [];
   if (pipeline.phase === 'ready') {
     host.check(r, p);
@@ -106,6 +108,12 @@ export async function driveChapterWorkflow(
       pipeline.phase = 'memory';
     }
   }
+  if (pipeline.phase === 'ready') {
+    setRunStatus(r, r.issues.some(issue => issue.severity === 'error') ? 'needs_repair' : 'awaiting_review');
+    host.save(r);
+    return;
+  }
+  const contextProfile = select(pipeline.phase === 'prose' ? 'writing' : pipeline.phase === 'review' ? 'review' : 'extraction');
   const { resident } = host.contextResident(r, p, naming);
   const reviewReferences = r.pipeline?.phase !== 'prose' ? r.manifest?.referenceSources : undefined;
   let restoredPhase = false;
@@ -116,13 +124,13 @@ export async function driveChapterWorkflow(
       restoredPhase = fingerprint(packet.sources) === fingerprint(contextPayload(r.manifest, p, phase).sources);
     } catch {}
   }
-  if (!restoredPhase) r.manifest = assembleContext(host.store, p, 'S10', r.request, writer, false, { resident, scope: r.taskScope?.memory });
+  if (!restoredPhase) r.manifest = assembleContext(host.store, p, 'S10', r.request, contextProfile, false, { resident, scope: r.taskScope?.memory });
   // Keep a completed review's evidence through memory extraction and approval;
   // only a new prose draft can replace that review and its source versions.
   r.manifest!.referenceSources = [...new Map([...(r.manifest!.referenceSources ?? []), ...(reviewReferences ?? [])].map(source => [source.path, source])).values()];
   if (!restoredPhase) {
-    await host.enrichContext(r, p, writer);
-    fitContext(r.manifest!, writer, resident, 0, true, p);
+    await host.enrichContext(r, p, contextProfile);
+    fitContext(r.manifest!, contextProfile, resident, 0, true, p);
   }
   const context = {
     ...modelTaskEnvelope(host.store, host.skillRoot, r, 'prose'),
@@ -199,7 +207,13 @@ export async function driveChapterWorkflow(
     return result;
   };
   if (pipeline.phase === 'prose') {
-    if (p.config.preview.enabled && !(r.steps ?? []).some((s) => s.phase === 'assessment:plan'))
+    const writer = contextProfile;
+    let reviewer: SecretProfile | undefined;
+    if (p.config.preview.enabled) {
+      try { reviewer = select('review'); }
+      catch { host.event(r, 'preview-deferred', '节奏预览暂不可用，先写正文'); }
+    }
+    if (reviewer && host.store.db.document(detailPath(r.chapter))?.hash && !(r.steps ?? []).some((s) => s.phase === 'assessment:plan'))
       await host.telemetry.final(
         r,
         host.store.readAccepted(detailPath(r.chapter)).content,
@@ -282,7 +296,7 @@ export async function driveChapterWorkflow(
                   text,
                   textOffset: draft.length - text.length
                 });
-                if (p.config.preview.enabled) host.telemetry.checkpoint(r, draft, reviewer);
+                if (reviewer) host.telemetry.checkpoint(r, draft, reviewer);
               },
               (event) => {
                 pipeline.narrative!.events = [...pipeline.narrative!.events, event];
@@ -363,7 +377,7 @@ export async function driveChapterWorkflow(
   for (const phase of ['review', 'memory'] as const) {
     if (pipeline.phase !== phase) continue;
     const stage = phase === 'memory' ? 'S11' : 'S10',
-      profile = phase === 'memory' ? extractor : reviewer;
+      profile = select(phase === 'memory' ? 'extraction' : 'review');
     const skillId = phase === 'memory' ? 'webnovel-memory-extractor' : 'webnovel-chapter-reviewer';
     const expression = expressionPack(host.skillRoot, p.config, phase === 'memory' ? 'record' : 'review');
     bindExpressionRules(r, expression.binding);
@@ -494,7 +508,7 @@ export async function driveChapterWorkflow(
             return;
           }
           if (!repair) {
-            if (phase === 'memory') await host.auditMemory(r, p, reviewer, signal);
+            if (phase === 'memory') await host.auditMemory(r, p, select('review'), signal);
             host.check(r, p);
             const issues = r.issues.filter(
               (issue) =>
@@ -542,7 +556,7 @@ export async function driveChapterWorkflow(
           }),
           finish: async (result) => {
             if (!result.calls.length) {
-              if (phase === 'memory') await host.auditMemory(r, p, reviewer, signal);
+              if (phase === 'memory') await host.auditMemory(r, p, select('review'), signal);
               host.check(r, p);
               if (host.redirectProseRepair(r, p)) {
                 redirected = true;
@@ -575,7 +589,7 @@ export async function driveChapterWorkflow(
     if (r.status !== 'running') return;
     if (!completed) throw new Error('本阶段达到调用上限，候选已保留');
     if (phase === 'review') {
-      if (p.config.preview.enabled) await host.telemetry.final(r, prose.content, reviewer);
+      if (p.config.preview.enabled) await host.telemetry.final(r, prose.content, profile);
       pipeline.phase = 'memory';
       r.messages = [];
     } else {

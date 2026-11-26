@@ -223,6 +223,7 @@ export function TagWorkspace({
   setProfileId,
   refresh,
   onReview,
+  onTrial,
   onAccept
 }: {
   snapshot: Snapshot;
@@ -230,6 +231,7 @@ export function TagWorkspace({
   setProfileId: (id: string) => void;
   refresh: () => Promise<void>;
   onReview: (id: string) => void;
+  onTrial: (conversationId: string) => void;
   onAccept: (run: Run, startNext: boolean, warningReason?: string) => Promise<void>;
 }) {
   const p = snapshot.project!,
@@ -548,6 +550,11 @@ export function TagWorkspace({
                   </div>
                   <DirectionCards report={report} selectedId={t.selectedDirectionId || direction}
                     disabled={busy || running || t.phase !== 'awaiting_direction'} onSelect={setDirection} format={showText} />
+                  {selectedDirection && t.reportHash && <button disabled={busy || running || !profileId || !saved} onClick={() => void act(async () => {
+                    const result = await invoke('draft.write', { kind: 'scene', request: '从选中方向的开篇决定写一场戏。', profileId,
+                      direction: { runId: run.id, reportHash: t.reportHash!, directionId: selectedDirection.id } });
+                    onTrial(result.conversationId);
+                  })}>按这个方向试写一场</button>}
                   <p className="creation-recommendation"><strong>推荐理由：</strong>{showText(report.recommendationReasons.join('；'))}</p>
                   {t.phase === 'awaiting_direction' && (
                     <div className="creation-reroll">

@@ -259,7 +259,7 @@ export function retrieveMemory(
     const count = facts.filter((x) => (categories as readonly string[]).includes(x.fact.category)).length;
     const missing =
       !snapshot.documents[file] ||
-      pendingSource(snapshot.project, file) ||
+      pendingSource(snapshot.project, file) && (query === '' || recalled.some(item => item.required && (categories as readonly string[]).includes(item.fact.category))) ||
       invalid.some((x) => x.required && (categories as readonly string[]).includes(x.fact.category));
     return { ledger, status: missing ? 'missing' : count ? 'covered' : 'irrelevant', count };
   });
@@ -327,10 +327,11 @@ export function traceSource(store: FileStore, source: SourceRef) {
   } catch {
     const owned = (store.db.sql.prepare('SELECT data FROM assessments').all() as { data: string }[]).some(
       (row) => {
-        const assessment = JSON.parse(row.data);
-        return assessment.evidence.some(
-          (e: SourceRef) => e.path === source.path && e.hash === source.hash && e.quote === source.quote
-        );
+        try {
+          const assessment = JSON.parse(row.data);
+          return assessment.projectId === store.db.project().id && Array.isArray(assessment.evidence) &&
+            assessment.evidence.some((e: SourceRef) => e?.path === source.path && e.hash === source.hash && e.quote === source.quote);
+        } catch { return false; }
       }
     );
     const draft = draftSource(store, source);

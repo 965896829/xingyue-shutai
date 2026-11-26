@@ -8,7 +8,7 @@ export function targetBatch(project: ProjectState, chapter: number, documents: s
 }
 
 /** A task view never moves the author's saved writing progress. */
-export function projectForRun(project: ProjectState, run: Pick<Run, 'chapter' | 'stage' | 'taskScope'>): ProjectState {
+export function projectForRun(project: ProjectState, run: Pick<Run, 'chapter' | 'stage' | 'taskScope' | 'quickFromStage'>): ProjectState {
   const bound = run.taskScope?.batch;
   const registered = project.batches.find(b => b.start <= run.chapter && run.chapter <= b.end);
   const batch = registered ?? (bound && bound.start <= run.chapter && run.chapter <= bound.end ? bound : targetBatch(project, run.chapter));
@@ -16,7 +16,7 @@ export function projectForRun(project: ProjectState, run: Pick<Run, 'chapter' | 
       run.taskScope.memory.projectId !== project.id || run.taskScope.branchId !== 'main' ||
       run.taskScope.batch.start !== batch.start || run.taskScope.batch.end !== batch.end))
     throw new Error('任务章节或批次范围已改变，请重新建立当前任务上下文');
-  return { ...project, chapter: run.chapter, stage: run.stage,
+  return { ...project, ...(run.quickFromStage ? { quickWriting: true as const } : {}), chapter: run.chapter, stage: run.stage,
     batches: project.batches.some(value => value.id === batch.id) ? project.batches : [...project.batches, batch] };
 }
 

@@ -135,6 +135,31 @@ test('资料包只装入本章计划与当前卷目标，保留全局规则和�
   } finally { store.close(); }
 });
 
+test('正文材料合并跨规划的同一安排，保留不同后果、上章原句和独立审核原文', () => {
+  const { store, project } = contextBook(false);
+  try {
+    const manifest = compileContext(store, project, 'S10', contextCase.request, model);
+    const plans = manifest.sources.filter(source => source.category === 'plan' && /^(05_|06_)/.test(source.path));
+    assert.ok(plans.length >= 2);
+    const decision = '林澈把渡船的最后一张票塞回孩子手里，再独自登上栈桥。';
+    const other = '林澈把渡船的最后一张票塞回孩子手里，转身跟着他回家。';
+    plans[0].content += '\n| 第二十五章 | ' + decision + ' |';
+    plans[1].content += '\n- 主角选择：' + decision + '\n- 备选：' + other;
+    const previous = manifest.sources.find(source => source.path === prosePath(24))!;
+    previous.content += '\n' + decision;
+    const before = structuredClone(manifest);
+    const writer = contextPayload(manifest, project, 'prose'), review = contextPayload(manifest, project, 'review');
+    const planText = writer.sources.filter(source => plans.some(plan => plan.path === source.path)).map(source => source.content).join('\n');
+    assert.equal(planText.split(decision).length - 1, 1);
+    assert.match(planText, /〔同 P\d+〕/);
+    assert.ok(planText.includes(other));
+    assert.deepEqual(writer.sources.find(source => source.path === previous.path)?.content, previous.content);
+    assert.deepEqual(writer.revelation, review.revelation);
+    for (const plan of plans) assert.equal(review.sources.find(source => source.path === plan.path)?.content, plan.content);
+    assert.deepEqual(manifest, before);
+  } finally { store.close(); }
+});
+
 test('章节选择理解中文章号，无法可靠匹配时保留全文，结尾不截断 Unicode 字符', () => {
   const text = '# 大纲\n\n全书禁区。\n\n## 第二十四章\n\n过去。\n\n## 第二十五章\n\n码头。\n\n## 第二十六章\n\n未来。';
   assert.match(chapterSlice(text, 25).content, /全书禁区|码头/);

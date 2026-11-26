@@ -45,6 +45,14 @@ export const stageNames: Record<StageId, string> = {
   S10: '正文生成',
   S11: '章后更新'
 };
+/** Free-standing author notes have no chapter, ledger or system document contract. */
+export function isAuthorNote(file: string) {
+  return file.endsWith('.md') && !file.startsWith('.') && !file.includes('\\') &&
+    (!/^\d{2}_/.test(file) || file.startsWith('00_作者输入/') &&
+      file !== '00_作者输入/原始设定.md' && !file.startsWith('00_作者输入/自由草稿/')) &&
+    file !== paths.index;
+}
+
 export const paths = {
   seed: '01_设定拆解/设定拆解.md',
   config: '02_项目配置/项目配置.md',
@@ -108,6 +116,10 @@ export function requiredInputs(stage: StageId, p: ProjectState): string[] {
   const b = activeBatch(p),
     n = p.chapter;
   const base = [paths.config, paths.style, paths.progress, paths.impact];
+  if (p.quickWriting && (stage === 'S10' || stage === 'S11')) {
+    return [paths.config, paths.style, '00_作者输入/原始设定.md', ...(p.chapter > 1 ? [prosePath(p.chapter - 1)] : []),
+      ...(stage === 'S11' ? [prosePath(p.chapter)] : [])];
+  }
   if (stage === 'S01') return base;
   const early: string[] = [paths.seed];
   if (stage > 'S03') early.push(paths.world);
@@ -158,6 +170,7 @@ export function advance(p: ProjectState, runId: string): ProjectState {
       next.batches.push(makeBatch(next.chapter, next.config));
       next.stage = 'S06';
     } else next.stage = 'S09';
+    if (next.quickWriting) next.stage = 'S10';
   } else next.stage = stageIds[stageIds.indexOf(s) + 1];
   return next;
 }

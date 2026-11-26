@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
+import { panelRecordSchema } from './auxiliary-records';
 import { hash } from './domain';
 
 export function objectReferences(sql: DatabaseSync) {
@@ -15,10 +16,15 @@ export function objectReferences(sql: DatabaseSync) {
   const tables = new Set(sql.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((row) => String(row.name)));
   for (const table of ['documents', 'revisions']) if (tables.has(table))
     for (const row of sql.prepare(`SELECT hash FROM ${table}`).iterate()) add(row.hash);
-  for (const table of ['snapshots', 'draft_artifacts', 'materialization_outbox', 'model_attempts', 'runs', 'candidate_versions', 'changesets', 'tool_executions', 'execution_checkpoints', 'assessments']) {
+  for (const table of ['snapshots', 'draft_artifacts', 'materialization_outbox', 'model_attempts', 'runs', 'candidate_versions', 'changesets', 'tool_executions', 'execution_checkpoints', 'assessments', 'auxiliary_quarantine']) {
     if (!tables.has(table)) continue;
     for (const row of sql.prepare(`SELECT data FROM ${table}`).iterate()) {
-      const data = JSON.parse(String(row.data));
+      const raw = String(row.data);
+      if (table === 'assessments' || table === 'auxiliary_quarantine') {
+        for (const match of raw.matchAll(/\b[a-f0-9]{64}\b/g)) retained.add(match[0]);
+        continue;
+      }
+      const data = JSON.parse(raw);
       visit(data);
       if (table === 'snapshots') Object.values(data.documents ?? {}).forEach((value) => add(value));
       if (table === 'draft_artifacts') { add(data.hash); for (const version of data.versions ?? []) add(version.hash); }
@@ -26,7 +32,12 @@ export function objectReferences(sql: DatabaseSync) {
       if (table === 'model_attempts') { add(data.requestRef); add(data.responseRef); add(data.partialResponseRef); }
     }
   }
-  if (tables.has('kv')) for (const row of sql.prepare('SELECT value FROM kv').iterate()) visit(JSON.parse(String(row.value)));
+  if (tables.has('kv')) for (const row of sql.prepare('SELECT key,value FROM kv').iterate()) {
+    const raw = String(row.value);
+    if (panelRecordSchema(String(row.key))) {
+      for (const match of raw.matchAll(/\b[a-f0-9]{64}\b/g)) retained.add(match[0]);
+    } else visit(JSON.parse(raw));
+  }
   for (const value of required) retained.add(value);
   return { required, retained };
 }

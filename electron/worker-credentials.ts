@@ -10,7 +10,7 @@ const providerCommands = new Set<Command>([
   'tags.start', 'tags.selectDirection', 'tags.reviseDirection', 'tags.reroll',
   'creation.start', 'creation.revisePlan', 'titles.start', 'titles.regenerate',
   'memory.rebuild', 'chat.send', 'run.discuss', 'chat.retry', 'proposal.create',
-  'proposal.refresh', 'proposal.confirm', 'draft.chapter', 'draft.promote',
+  'proposal.refresh', 'proposal.confirm', 'draft.write', 'draft.chapter', 'draft.promote',
   'diagnostics.export' // Redacts any saved keys from the exported report.
 ]);
 

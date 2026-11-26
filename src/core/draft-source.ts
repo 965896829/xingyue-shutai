@@ -4,7 +4,7 @@ import { hash } from './domain';
 
 /** Read an exact version owned by this project's saved task. Never accepts arbitrary object hashes. */
 export function draftSource(store: FileStore, source: SourceRef): string | undefined {
-  for (const run of store.db.runs()) {
+  for (const run of store.db.allRuns()) {
     const change = run.changes.find(change => change.path === source.path && hash(change.content) === source.hash);
     if (change && change.content.includes(source.quote)) return change.content;
   }

@@ -145,6 +145,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   const [focus, setFocus] = useState(false);
   const refreshSeq = useRef(0),
     eventCursor = useRef<EventCursor>({ seq: 0, waiting: false });
+  const [writingConversation, setWritingConversation] = useState('');
   const [workView, setWorkView] = useState<'chat' | 'tasks' | 'tags' | 'objects'>('chat');
   const deskLayout = useDeskLayout();
   const [taskDetailsOpen, setTaskDetailsOpen] = useState(false);
@@ -281,7 +282,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     setTitleConfirmation(null);
     setSelectedRun(result.nextRun ?? candidate.id);
     setWorkView('tasks');
-    setNotice(result.nextRun ? '本阶段已保存，正在开始下一阶段' : '结果已保存');
+    setNotice([result.revision ? `已采纳为作品第 ${result.revision} 版` : '已采纳所选版本', result.nextRun && '已开始下一阶段', result.pending?.length && `${result.pending.join('、')}待更新`].filter(Boolean).join('。'));
     if (result.nextError) setError(result.nextError);
   }
   async function openStartedRun(id?: string) {
@@ -504,7 +505,10 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     setSelectedRun(pending?.id ?? '');
     setMode('stage');
     setRequest('');
-    setWorkView(pending?.planning || pending?.naming || ((p?.tagEnabled || p?.creationWorkflow === 2) && p.stage === 'S01') ? 'tags' : pending || p?.stage === 'S01' || snapshot.runs.some(r => r.mode === 'stage') ? 'tasks' : 'chat');
+    const planning = pending?.planning || pending?.naming || ((p?.tagEnabled || p?.creationWorkflow === 2) && p.stage === 'S01');
+    const stageWork = pending || (!p?.quickWriting && (p?.stage === 'S01' || snapshot.runs.some(r => r.mode === 'stage')));
+    setWritingConversation('');
+    setWorkView(planning ? 'tags' : stageWork ? 'tasks' : 'chat');
   }, [projectKey]);
   const activeProse = running?.pipeline?.phase === 'prose' ? running : undefined;
   const followedRun = useRef('');
@@ -1021,6 +1025,25 @@ export function App({ management = false, managementView = 'workspace' }: { mana
             {notice}
           </div>
         )}
+        {!!snapshot.studio?.pendingIndexes?.length && <div className="banner notice" role="status">
+          <span>{snapshot.studio.pendingIndexes.join('、')}待更新</span>
+          <button disabled={busy} onClick={() => void act(() => invoke('outbox.retry'))}>本地重试</button>
+        </div>}
+        {(!!snapshot.studio?.quarantinedAssessments || !!snapshot.studio?.quarantinedPanels) && <div className="banner notice" role="status">
+          <span>{[snapshot.studio.quarantinedAssessments && `${snapshot.studio.quarantinedAssessments} 条历史评估`, snapshot.studio.quarantinedPanels && `${snapshot.studio.quarantinedPanels} 条面板记录`].filter(Boolean).join('、')}待修复，文稿可继续使用。</span>
+          <button disabled={busy} onClick={() => void act(async () => {
+            const source = await invoke('app.chooseDirectory', { title: '选择本书的备份目录' });
+            if (source) { const count = await invoke('studio.restoreHistory', { source }); setNotice(count ? `已恢复 ${count} 条记录` : '此备份中没有可恢复的对应记录，原记录已保留。'); }
+          })}>从备份恢复记录</button>
+        </div>}
+        {snapshot.studio?.waitingWriting && <div className="banner notice" role="status">
+          <span>已保留第 {snapshot.studio.waitingWriting.chapter} 章的写作要求和选稿。</span>
+          <button disabled={busy || !!running || !!snapshot.chatBusy} onClick={() => void act(async () => {
+            const waiting = snapshot.studio!.waitingWriting!;
+            const id = waiting.ready ? await invoke('run.start', { request: '继续已保存的写作要求', afterRepair: waiting.repairId }) : waiting.repairId;
+            setPage('work'); setSelectedRun(id); setWorkView('tasks');
+          })}>{snapshot.studio.waitingWriting.ready ? '从原稿继续' : '查看待核对资料'}</button>
+        </div>}
         {p && !!snapshot.studio?.recoveryConflicts?.length && (
           <RecoveryConflicts
             key={p.id}
@@ -1073,6 +1096,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                   setProfileId={setProfileId}
                   refresh={refresh}
                   onAccept={acceptRun}
+                  onTrial={id => { setWritingConversation(id); setWorkView('chat'); if (deskLayout.collapsed) deskLayout.toggle(); }}
                   onReview={(id) => {
                     setSelectedRun(id);
                     setWorkView('tasks');
@@ -1081,6 +1105,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
               ) : workView === 'chat' ? (
                 <ChatWorkspace
                   key={p.id}
+                  conversationId={writingConversation || undefined}
                   desk={writingLayout ? desk : undefined}
                   topicTools={writingLayout ? <NarrativePanel snapshot={snapshot} run={run} onSource={setSource} /> : undefined}
                   snapshot={snapshot}
@@ -1833,7 +1858,10 @@ export function App({ management = false, managementView = 'workspace' }: { mana
             setSelectedRun(id);
             setWorkView(tagged ? 'tags' : 'tasks');
           }}
-          onCreated={() => {
+          onCreated={mode => {
+            setWritingConversation('');
+            setWorkView(mode === 'scene' ? 'chat' : mode === 'planning' ? 'tags' : 'tasks');
+            if (mode === 'scene' && deskLayout.collapsed) deskLayout.toggle();
             setModal(null);
             setDoc(null);
             setSelectedRun('');
@@ -1852,6 +1880,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       {modal === 'project' && p && (
         <ProjectSettings
           config={p.config}
+          canSetFirstTitle={!!p.quickWriting && !!p.titlePending}
           projectSessionId={snapshot.projectSessionId}
           initialProfileId={profileId}
           profiles={snapshot.profiles}
@@ -1958,14 +1987,14 @@ function ConfirmBookTitle({ busy, error, startNext, onClose, onConfirm }: {
 }
 function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId, act }: {
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (mode: OpeningMode) => void;
   onStarted: (id: string, tagged: boolean) => void;
   profiles: Profile[];
   initialProfileId: string;
   act: Act;
 }) {
   const [tagInput, setTagInput] = useState(() => ({ ...emptyTagInput(), bookProfile: emptyBookProfile() }));
-  const [openingMode, setOpeningMode] = useState<OpeningMode>('planning'),
+  const [openingMode, setOpeningMode] = useState<OpeningMode>('scene'),
     [title, setTitle] = useState(''),
     [previewEnabled, setPreviewEnabled] = useState(false),
     [style, setStyle] = useState(defaultWritingStyle),
@@ -2002,9 +2031,13 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
               setCreateError((error as Error).message);
               return;
             }
-            onCreated();
+            onCreated(openingMode);
             if (!profileId) return;
             try {
+              if (openingMode === 'scene') {
+                await invoke('draft.write', { kind: 'direction', request: premise.trim(), profileId });
+                return;
+              }
               const id = openingMode === 'existing'
                 ? await invoke('run.start', { request: '按原 Skill 执行 S01，完整保留作者提供的设定、硬约束和叙事承诺。', profileId })
                 : await invoke('creation.start', { inputHash: created.tagDraft!.inputHash, profileId, requestId: crypto.randomUUID() });
@@ -2039,7 +2072,8 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
         <label>
           开书方式
           <select value={openingMode} disabled={submitting} onChange={e => setOpeningMode(e.target.value as OpeningMode)}>
-            <option value="planning">从创意开始策划</option>
+            <option value="scene">先试写一场</option>
+            <option value="planning">比较三个故事方向</option>
             <option value="existing">已有完整设定</option>
           </select>
         </label>
@@ -2054,8 +2088,10 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
               placeholder={openingMode === 'existing' ? '粘贴已有的故事核、规则、人物、分卷和开篇安排。' : '一句话也可以。例如：夜班检修员在电梯故障中发现异常规则。'}
             />
         </label>
-        <TagForm value={{ ...tagInput, premise }} onChange={value => { setTagInput({ ...value, bookProfile: value.bookProfile ?? emptyBookProfile() }); setPremise(value.premise); }} disabled={submitting} showPremise={false} optionalTags />
         <div className="new-project-model"><span>创作模型</span><ModelControl profiles={profiles} profileId={profileId} onProfileChange={setProfileId} disabled={submitting} onPendingChange={setReasoningPending} label="创作模型与推理强度" /></div>
+        <details className="form"><summary>更多创作设置</summary>
+        {openingMode === 'scene' && <label>书名（选填）<input value={title} maxLength={80} disabled={submitting} onChange={event => setTitle(event.target.value)} placeholder="可以在作品设置中补填" /></label>}
+        <TagForm value={{ ...tagInput, premise }} onChange={value => { setTagInput({ ...value, bookProfile: value.bookProfile ?? emptyBookProfile() }); setPremise(value.premise); }} disabled={submitting} showPremise={false} optionalTags />
         <WritingStyleField value={style} onChange={setStyle} profileId={profileId} disabled={submitting || reasoningPending} onBusyChange={setStyleBusy}
           context={{ premise, genre: tagInput.bookProfile?.creativeGenres.join('、') ?? '', pov: '第三人称',
             bookProfile: tagInput.bookProfile, readingMain: tagInput.selection.reading.main,
@@ -2084,13 +2120,14 @@ function NewProject({ onClose, onCreated, onStarted, profiles, initialProfileId,
           </details>
         )}
         </details>
+        </details>
         {createError && <p className="project-location-feedback error-text" role="alert">{createError}</p>}
         <div className="modal-footer">
           <button type="button" disabled={submitting} onClick={onClose}>
             取消
           </button>
           <button className="primary" disabled={submitting || reasoningPending || styleBusy || !!locationError || !parent || incompletePublishing || !style.trim() || (openingMode === 'planning' ? !hasIdea : !premise.trim())}>
-            {submitting ? '正在创建…' : profileId ? '创建并开始' : '创建作品'}
+            {submitting ? '正在创建…' : profileId ? openingMode === 'scene' ? '创建并生成开篇设定' : '创建并开始' : '创建作品'}
           </button>
         </div>
       </form>

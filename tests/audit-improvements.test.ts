@@ -128,8 +128,10 @@ test('审稿须绑定当前正文且五项引文可回查，问题结论不能�
   assert.ok(checkReviewEvidence(file, report(), prose + '新增内容').some(issue => issue.code === 'review_evidence_stale'));
   const extra = { ...value.checks[0], aspect: '重复解释', verdict: 'warning' };
   const expanded = checkReviewEvidence(file, report({ ...value, checks: [...value.checks, extra, { ...extra, aspect: '节奏建议' }] }), prose);
-  assert.ok(expanded.some(issue => issue.code === 'review_evidence_coverage' && /当前填写 7 项/.test(issue.message)));
+  assert.deepEqual(expanded.map(issue => [issue.code, issue.severity]), [['editorial_observation', 'warning'], ['editorial_observation', 'warning']]);
+  assert.ok(checkReviewEvidence(file, report({ ...value, checks: [...value.checks, { ...extra, quote: '这句额外的引文不存在于原稿。' }] }), prose).some(issue => issue.code === 'review_evidence_quote'));
   assert.ok(!expanded.some(issue => issue.code === 'review_evidence_missing'));
+  assert.ok(checkReviewEvidence(file, report({ ...value, checks: [...value.checks, { ...extra, verdict: 'pass' }] }), prose).some(issue => issue.code === 'editorial_observation' && issue.message.includes(extra.quote)));
   for (const checks of [value.checks.slice(1), [...value.checks.slice(0, 4), value.checks[0]], [...value.checks.slice(0, 4), extra]])
     assert.ok(checkReviewEvidence(file, report({ ...value, checks }), prose).some(issue => issue.code === 'review_evidence_coverage'));
   value.checks[0].quote = '原文没有的桥段不能作为任何判断依据';

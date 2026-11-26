@@ -21,13 +21,13 @@ import { brand } from '../shared/brand';
 import { buildVersion } from '../shared/build';
 import { commandContracts,isCommand,parseInput,parseOutput,type CommandOutput } from '../shared/contracts';
 import { approvedCreation } from '../shared/creation';
-import { ApplicationError } from '../shared/errors';
+import { ApplicationError, errorPayload } from '../shared/errors';
+import { runDiagnostic, chatDiagnostics, savedActionFailures } from './writing-diagnostics';
 import { captureReasoning } from '../shared/reasoning';
 import { authorMarkdown, mergeAuthorMarkdown } from '../shared/author-markdown';
 import { documentPreviewText,retryNeedsConfirmation } from '../shared/run-presentation';
 import {
 memoryScopeSchema,
-type Assessment,
 type DraftIdentity,
 type StudioState
 } from '../shared/studio';
@@ -41,9 +41,11 @@ type Command,
 type ProjectState,
 type Run,
 type SecretProfile,
-type Snapshot
+type Snapshot,
+type WritingContinuation
 } from '../shared/types';
 import { builtInRoles } from './assistant-settings';
+import { readAssessments, finishAdoptionWork } from './adoption-maintenance';
 import { adoptionCommands,handleAdoptionCommand } from './commands/adoption';
 import { creationCommands,handleCreationCommand } from './commands/creation';
 import { discussionCommands,handleDiscussionCommand } from './commands/discussion';
@@ -53,7 +55,7 @@ import { compileContext,contextChanged } from './context-compiler';
 import type { ConversationRunner, AssistantRuntime } from './conversation-runner';
 import { generateCover,saveCover } from './cover';
 import { CreationTimings } from './creation-timing';
-import { createBackup,exportDocument,importDocument,restoreBackup } from './documents';
+import { createBackup,exportDocument,importDocument,restoreBackup,restoreAuxiliaryHistory } from './documents';
 import {
 activeBatch,
 detailPath,
@@ -63,13 +65,15 @@ newProject,
 now,
 paths,
 prosePath,
+requiredInputs,
+stageOutputs,
 reconfigure,
 renderProgress,
 updateConfigDocument
 } from './domain';
 import { expressionLibrary,validateExpressionSelection } from './expression-rules';
 import { garbageCollectionPreview } from './integrity';
-import { checkPublication } from './manuscript-check';
+import { checkProse, checkPublication } from './manuscript-check';
 import { readManuscriptView } from './manuscript-view';
 import { exportReviewPage, importReviewFeedback } from './blind-review';
 import { workbenchCommands, handleWorkbenchCommand } from './commands/workbench';
@@ -117,7 +121,7 @@ planningFingerprint,
 tagBundle,
 tagHash
 } from './tags';
-import { namingBinding,namingRulesHash,titlePath } from './title-naming';
+import { namingBinding,namingRulesHash,titlePath,validateBookTitle } from './title-naming';
 import { loadTitleStyleProfile } from './title-style';
 import { upgradesVolumeNaming } from './volume-market-research';
 import { revisedVolumeNaming } from './volume-naming';
@@ -259,7 +263,7 @@ export class Service {
       project: store?.db.project() ?? null,
       tagDraft,
       documents: store?.documentListing() ?? [],
-      runs: store ? store.db.runs().map(r => this.presentRun(r, false, store)) : [],
+      runs: store ? store.db.workspaceRuns().map(r => this.presentRun(r, false, store)) : [],
       events: store?.db.events() ?? [],
       profiles: this.profiles.map(({ apiKey, ...p }) => p),
       recent,
@@ -277,7 +281,12 @@ export class Service {
   }
   studio(store = this.store!): StudioState {
     const head = store.db.headRef();
+    const waiting = store.db.get<{ repairId: string; intent: WritingContinuation }>('writingContinuation');
+    const repair = waiting && store.db.findRun(waiting.repairId);
     return {
+      ...(waiting && repair && !['stale','discarded'].includes(repair.status) && waiting.intent.chapter === store.db.project().chapter && waiting.intent.stage === store.db.project().stage ? {
+        waitingWriting: { repairId: repair.id, chapter: waiting.intent.chapter, ready: repair.accepted }
+      } : {}),
       snapshot: head
         ? { id: head.id, projectId: head.projectId, revision: head.revision, createdAt: head.createdAt }
         : null,
@@ -286,12 +295,7 @@ export class Service {
       outbox: store.db.sql
         .prepare("SELECT id,status,error FROM materialization_outbox WHERE status<>'complete'")
         .all() as StudioState['outbox'],
-      assessments: (
-        store.db.sql.prepare('SELECT data FROM assessments ORDER BY rowid DESC LIMIT 500').all() as {
-          data: string;
-        }[]
-      ).map((x) => {
-        const a = JSON.parse(x.data) as Assessment;
+      assessments: readAssessments(store).map(a => {
         const identity = store.db.get<DraftIdentity | null>(`candidateIdentity:${a.draftId}`);
         return {
           ...a,
@@ -309,6 +313,10 @@ export class Service {
         };
       }),
       index: store.db.get('vectorIndex') ?? null,
+      quarantinedAssessments: Number(store.db.sql.prepare("SELECT count(*) AS n FROM auxiliary_quarantine WHERE kind='assessment'").get()!.n),
+      quarantinedPanels: Number(store.db.sql.prepare("SELECT count(*) AS n FROM auxiliary_quarantine WHERE kind='panel'").get()!.n),
+      pendingIndexes: store.db.sql.prepare('SELECT DISTINCT kind FROM adoption_followups ORDER BY kind').all().map(row =>
+        row.kind === 'memory' ? '记忆索引' : row.kind === 'entities' ? '人物索引' : row.kind === 'documents' ? '文稿检索与编辑记录' : '节奏评估'),
       reviewQueue: store.db.sql
         .prepare("SELECT * FROM review_queue WHERE status='pending' LIMIT 500")
         .all() as StudioState['reviewQueue']
@@ -359,8 +367,8 @@ export class Service {
     if (!this.store || !this.runner) throw new Error('请先打开作品');
     return { s: this.store, p: this.store.db.project(), runner: this.runner };
   }
-  makeRun(mode: Run['mode'], request: string, profileId?: string): Run {
-    const { p } = this.require(),
+  makeRun(mode: Run['mode'], request: string, profileId?: string, p = this.require().p): Run {
+    const
       profile = this.profiles.find(
         (v) => v.id === (profileId || p.config.stageProfiles[p.stage] || p.config.defaultProfileId)
       );
@@ -445,16 +453,18 @@ export class Service {
     };
     run.planning.binding = planningFingerprint(run);
   }
-  launch(r: Run, receipt: unknown = r.id) {
+  launch(r: Run, receipt: unknown = r.id, onQueued?: () => void) {
     const { s, runner } = this.require();
     if (this.queuedExecution || runner.controller || this.chat?.controller || this.coverController || this.writingStyles.busy)
       throw new Error('本书已有运行中的模型任务');
     r.workflowVersion ??= 1;
     bindWorkflow(r);
     s.db.transaction(() => {
+      if (r.mode === 'stage') s.db.assertStageAvailable(r, r.id);
       const execution = new ExecutionRecords(s.db).create(r.id, r.executorId ?? 'legacy', r.executorVersion ?? '1', r.executionId);
       r.executionId = execution.id;
       s.db.saveRun(r);
+      onQueued?.();
       s.db.set('queuedForeground', { id: r.id, kind: 'run' });
       this.operations.complete(receipt);
     });
@@ -501,8 +511,11 @@ export class Service {
     if (runner.controller || this.chat?.controller || this.coverController) throw new Error('请先停止当前任务');
     if (old.accepted || ['discarded', 'running', 'committing'].includes(old.status)) throw new Error('此任务不能重建上下文');
     if (old.workbench && old.workbench.snapshotId !== s.db.headRef()?.id) throw new Error('画布候选所属版本已变化，请回到共创画布重新建立候选');
-    if (old.mode === 'stage' && (old.stage !== p.stage || old.chapter !== p.chapter)) throw new Error('作品已进入其他阶段，请从当前阶段继续，旧任务保留供查阅');
-    const r = this.makeRun(old.mode, `${old.request}\n\n作者要求：${instruction || '继续当前任务'}\n按当前规则与正式资料重新核对已有候选后继续。候选尚未接受，不能据此跳过确认。之前错误：${old.error ?? '无'}。`, profileId);
+    if (old.mode === 'stage' && ((old.quickFromStage ?? old.stage) !== p.stage || old.chapter !== p.chapter)) throw new Error('作品已进入其他阶段，请从当前阶段继续，旧任务保留供查阅');
+    const writingProject = old.quickFromStage ? { ...p, quickWriting: true as const, stage: old.stage } : p;
+    const r = this.makeRun(old.mode, `${old.request}\n\n作者要求：${instruction || '继续当前任务'}\n按当前规则与正式资料重新核对已有候选后继续。候选尚未接受，不能据此跳过确认。之前错误：${old.error ?? '无'}。`, profileId, writingProject);
+    r.quickFromStage = old.quickFromStage;
+    r.selectedDraft = old.selectedDraft;
     r.skillId = old.skillId;
     if (old.design) {
       assertDesign(s, old);
@@ -546,7 +559,8 @@ export class Service {
     if (old.revisionCore && !instruction.trim()) r.revisionCore = structuredClone(old.revisionCore);
     if (old.memoryRepair) {
       const compatible = compatibleRunBase(s, old);
-      r.memoryRepair = compatible ? structuredClone(old.memoryRepair) : prepareMemoryRepair(s);
+      const waiting = s.db.get<{ repairId: string; intent: WritingContinuation }>('writingContinuation');
+      r.memoryRepair = compatible ? structuredClone(old.memoryRepair) : prepareMemoryRepair(s, waiting?.repairId === old.id ? new Set(old.memoryRepair.paths) : undefined);
       r.continuity = memoryRepairScope(r.memoryRepair);
       if (compatible) {
         r.baseRevision = old.baseRevision;
@@ -615,6 +629,8 @@ export class Service {
       : [];
     s.db.transaction(() => {
       s.db.saveRun(r);
+      const waiting = s.db.get<{repairId: string; intent: WritingContinuation}>('writingContinuation');
+      if (old.memoryRepair && waiting?.repairId === old.id) s.db.set('writingContinuation', { ...waiting, repairId: r.id });
       for (const child of namingChildren) {
         child.naming!.sourceRunId = r.id;
         s.db.saveRun(child);
@@ -647,29 +663,89 @@ export class Service {
     const { s } = this.require();
     return { path: relative, content, baseHash: s.db.document(relative)?.hash ?? null };
   }
-  needsMemoryRepair(request: string, profileId?: string) {
-    const { s, p } = this.require();
-    if (p.stale.length) return true;
-    if (!(s.db.get<string[]>('memoryIssues') ?? []).length) return false;
-    const profile = this.profiles.find(item => item.id === (profileId || p.config.stageProfiles[p.stage] || p.config.defaultProfileId));
-    if (!profile) return true;
-    let blocked = true;
-    try {
-      compileContext(s, p, p.stage, request, profile, { allowConflicts: true, deferBudgetCheck: true,
-        onMemoryDiagnostics: result => { blocked = result.blocking.length > 0; } });
-    } catch { return true; }
-    return blocked;
-  }
-  startMemoryRepair(profileId?: string, receipt?: { count: number; issues: string[] }) {
+  private writingDependencies(p: ProjectState, request: string, profileId?: string) {
     const { s } = this.require();
-    const existing = s.db.runs().find(run => run.memoryRepair && !run.accepted && !['discarded', 'stale', 'failed'].includes(run.status) && compatibleRunBase(s, run));
-    if (existing) return existing.id;
+    const needed = new Set([...requiredInputs(p.stage, p).filter(file => p.stage < 'S10' || !file.startsWith('04_') || file === paths.summary), ...stageOutputs(p.stage, p)]);
+    const selected = new Set(p.stale.filter(file => needed.has(file)));
+    const issues = s.db.get<string[]>('memoryIssues') ?? [];
+    if (!issues.length && !p.stale.length) return selected;
+    const profile = this.profiles.find(item => item.id === (profileId || p.config.stageProfiles[p.stage] || p.config.defaultProfileId));
+    if (!profile) throw new Error('请先选择本次任务使用的模型');
+    const manifest = compileContext(s, p, p.stage, request, profile, { allowConflicts: true, deferBudgetCheck: true,
+      onMemoryDiagnostics: result => {
+        if (!result.blocking.length) return;
+        const diagnostics = s.db.get<{ issues: { path: string; message: string; fact?: { evidence: { path: string }[] } }[] }>('memoryDiagnostics');
+        const matched = diagnostics?.issues?.filter(issue => result.blocking.includes(issue.message)) ?? [];
+        for (const issue of matched) {
+          selected.add(issue.path);
+          for (const evidence of issue.fact?.evidence ?? []) selected.add(evidence.path);
+        }
+        if (!matched.length) for (const file of prepareMemoryRepair(s).paths) selected.add(file);
+      } });
+    for (const item of manifest.omitted ?? []) if (p.stale.includes(item.path) && item.reason.includes('待核对')) selected.add(item.path);
+    return selected;
+  }
+  startWriting(request: string, profileId?: string, draft?: WritingContinuation['draft'],
+    receiptFor: (id: string) => unknown = id => id, afterRepair?: string,
+    proposal?: { conversationId: string; bind: (id: string) => void }) {
+    const { s, p } = this.require();
+    const waiting = s.db.get<{ repairId: string; intent: WritingContinuation }>('writingContinuation');
+    const resume = afterRepair && waiting?.repairId === afterRepair ? waiting.intent : undefined;
+    if (afterRepair && (!resume || !s.db.run(afterRepair).accepted)) throw new Error('原写作任务仍在等待资料核对');
+    const intent: WritingContinuation = resume ?? { projectId: p.id, stage: p.stage, chapter: p.chapter, request,
+      profileId: profileId || p.config.stageProfiles[p.stage] || p.config.defaultProfileId, draft,
+      targetHash: s.db.document(prosePath(p.chapter))?.hash ?? null, conversationId: proposal?.conversationId };
+    if (p.finished || intent.projectId !== p.id || intent.stage !== p.stage || intent.chapter !== p.chapter ||
+        intent.targetHash !== (s.db.document(prosePath(p.chapter))?.hash ?? null))
+      throw new Error('目标章节或正文版本已经改变，原稿已保留，请重新选择');
+    const selected = intent.draft && this.chat!.records.readDraft(intent.draft.id, intent.draft.hash);
+    if (selected) {
+      const problem = checkProse(prosePath(p.chapter), selected.content, p.config).find(issue => issue.severity === 'error');
+      if (problem) throw new Error(`所选草稿已保存。作为正式第 ${p.chapter} 章还需调整。${problem.message}`);
+    }
+    const quick = selected && p.stage < 'S10';
+    if (selected && p.stage === 'S11') throw new Error('当前正文已采纳，请完成章后更新或从正文发起修订');
+    const writing = quick ? { ...p, stage: 'S10' as const, quickWriting: true as const } : p;
+    s.db.assertStageAvailable(writing);
+    const dependencies = this.writingDependencies(writing, selected ? intent.request + '\n' + selected.content : intent.request, intent.profileId);
+    if (dependencies.size) return this.startMemoryRepair(intent.profileId, undefined, { intent, dependencies, receiptFor, bind: proposal?.bind });
+    const run = this.makeRun('stage', intent.request, intent.profileId, writing);
+    if (intent.conversationId) run.conversationId = intent.conversationId;
+    if (selected) {
+      if (quick) run.quickFromStage = p.stage;
+      run.selectedDraft = intent.draft;
+      run.conversationId = selected.conversationId;
+      run.changes = [{ path: prosePath(p.chapter), content: selected.content, baseHash: intent.targetHash }];
+      run.sourceProseHash = hash(selected.content);
+      run.pipeline = { ...run.pipeline!, phase: 'review', proseHash: run.sourceProseHash, version: 1 };
+    }
+    return this.launch(run, receiptFor(run.id), () => {
+      if (resume) s.db.set('writingContinuation', null);
+      proposal?.bind(run.id);
+    });
+  }
+  startMemoryRepair(profileId?: string, receipt?: { count: number; issues: string[] },
+    writing?: { intent: WritingContinuation; dependencies: Set<string>; receiptFor: (id: string) => unknown; bind?: (id: string) => void }) {
+    const { s } = this.require();
+    const existing = s.db.pendingRuns('memory').find(run => compatibleRunBase(s, run) &&
+      (!writing || [...writing.dependencies].every(file => run.memoryRepair!.paths.includes(file))));
+    const remember = (repairId: string) => {
+      if (!writing) return;
+      const prior = s.db.get<{ repairId: string; intent: WritingContinuation }>('writingContinuation');
+      if (prior && prior.repairId !== repairId && !['discarded','stale','complete'].includes(s.db.run(prior.repairId).status) ||
+          prior?.repairId === repairId && JSON.stringify(prior.intent) !== JSON.stringify(writing.intent))
+        throw new Error('另一个写作要求正在等待记忆核对，请先处理原任务');
+      s.db.set('writingContinuation', { repairId, intent: writing.intent });
+      writing.bind?.(repairId);
+    };
+    if (existing) { s.db.transaction(() => remember(existing.id)); return existing.id; }
     const run = this.makeRun('revision', '核对并同步前文修改影响的记忆与后续资料，保留无关内容，汇总为一次审阅。', profileId);
-    run.memoryRepair = prepareMemoryRepair(s);
+    run.memoryRepair = prepareMemoryRepair(s, writing?.dependencies);
     run.continuity = memoryRepairScope(run.memoryRepair);
-    if (!run.memoryRepair.paths.length) throw new Error('没有需要同步的记忆或资料');
-    if (!this.profiles.some(profile => profile.id === run.profileId && profile.apiKey)) throw new Error('请先选择可用模型，再核对并同步记忆');
-    return this.launch(run, receipt ? { ...receipt, runId: run.id } : run.id);
+    if (!run.memoryRepair.paths.length) throw new Error('没有可自动同步的资料，请在记忆面板核对冲突证据');
+    if (!this.profiles.some(profile => profile.id === run.profileId && profile.enabled && profile.apiKey))
+      throw new Error('请先选择可用模型，再核对并同步记忆');
+    return this.launch(run, writing ? writing.receiptFor(run.id) : receipt ? { ...receipt, runId: run.id } : run.id, () => remember(run.id));
   }
   async invoke<C extends Command>(command: C, args: unknown = {}, options: { operationId?: string; projectSessionId?: string } = {}): Promise<CommandOutput<C>> {
     if (!isCommand(command)) throw new ApplicationError('VALIDATION_ERROR', '不支持此操作');
@@ -682,7 +758,24 @@ export class Service {
       ? this.operations.perform(this.store.db, options.operationId, command, input, action) : action();
     this.requests.add(request);
     if (commandContracts[command].scope === 'project') this.projectRequests.add(request);
-    try { return await request; } finally { this.requests.delete(request); this.projectRequests.delete(request); }
+    try { return await request; }
+    catch (error) {
+      if (commandContracts[command].scope === 'project' && commandContracts[command].access !== 'read' && this.store) {
+        // Diagnostics must never replace the original error. Record categories, never the author's inputs.
+        try {
+          const targetId = 'id' in input && typeof input.id === 'string' ? input.id : undefined;
+          const target = targetId ? this.store.db.findRun(targetId) : undefined;
+          const draft = command.startsWith('draft.') && targetId &&
+            !!this.store.db.sql.prepare('SELECT 1 FROM draft_artifacts WHERE id=?').get(targetId);
+          this.store.db.event(target?.id ?? 'project', 'author-operation-failed', '作者操作未完成', {
+            command, code: errorPayload(error).code, ...(target ? runDiagnostic(this.store, target, command) : {
+              phase: 'command', draftSaved: !!draft, formallyCommitted: false, modelRequest: 'not_sent', nextStep: 'local'
+            })
+          });
+        } catch { /* Preserve the original error even if storage is unavailable. */ }
+      }
+      throw error;
+    } finally { this.requests.delete(request); this.projectRequests.delete(request); }
   }
   private async executeCommand<C extends Command>(command: C, a: Record<string, unknown>): Promise<CommandOutput<C>> {
     if (
@@ -742,7 +835,7 @@ export class Service {
       const { s } = this.require();
       const resources = a.resources as string[];
       return { projectSessionId: this.projectSessionId, eventSeq: this.eventSeq,
-        ...(resources.includes('runs') ? { runs: s.db.runs().map((run) => this.presentRun(run)), events: s.db.events() } : {}),
+        ...(resources.includes('runs') ? { runs: s.db.workspaceRuns().map((run) => this.presentRun(run)), events: s.db.events() } : {}),
         ...(resources.includes('chat') ? { conversations: this.chat!.records.all('conversations'), chatBusy: !!this.chat?.controller } : {}),
         ...(resources.includes('documents') ? { documents: s.documentListing() } : {}),
         ...(resources.includes('studio') ? { studio: this.studio() } : {}) };
@@ -853,7 +946,13 @@ export class Service {
       );
     if (creationCommands.has(command)) return handleCreationCommand(this, command, a, idle);
     if (command === 'manuscript.read') return readManuscriptView(s, typeof a.chapter === 'number' ? a.chapter : p.chapter, typeof a.runId === 'string' ? a.runId : undefined, a.includeDraft !== false);
-    if (command === 'studio.read') return { ...this.studio(), entities: syncEntities(s) };
+    if (command === 'studio.restoreHistory') return restoreAuxiliaryHistory(s, str(a.source));
+    if (command === 'studio.read') {
+      let entities: ReturnType<typeof syncEntities> = [];
+      try { entities = syncEntities(s); }
+      catch { s.db.sql.prepare("INSERT OR IGNORE INTO adoption_followups VALUES('open','entities','project')").run(); }
+      return { ...this.studio(), entities };
+    }
     if (command === 'embedding.reindex') {
       const index = this.index!;
       void this.track(this.scheduler.run(id(), ['index'], 1, async () => {
@@ -869,6 +968,7 @@ export class Service {
     if (command === 'snapshot.page') return s.db.snapshotPage(typeof a.before === 'number' ? a.before : undefined, typeof a.watermark === 'number' ? a.watermark : undefined, typeof a.limit === 'number' ? a.limit : 100);
     if (command === 'outbox.retry') {
       s.materialize();
+      finishAdoptionWork(s);
       return this.studio();
     }
     if (command === 'recovery.preview') return s.recoveryPreview(str(a.transactionId), str(a.path));
@@ -1189,10 +1289,13 @@ export class Service {
     if (command === 'diagnostics.export') {
       const report = {
         version: buildVersion,
-        project: { title: p.title, revision: p.revision, stage: p.stage, chapter: p.chapter },
+        project: { id: p.id, revision: p.revision, stage: p.stage, chapter: p.chapter },
+        failures: savedActionFailures(s),
+        conversations: chatDiagnostics(s),
+        pendingLocalWork: s.db.sql.prepare('SELECT kind,count(*) AS count FROM adoption_followups GROUP BY kind').all(),
         runs: s.db
-          .runs()
-          .map((r) => ({ id: r.id, operationId: r.operationId, executorId: r.executorId ?? 'legacy', stateVersion: r.stateVersion, candidateFingerprint: r.proposalHash, stage: r.stage, status: r.status, usage: r.usage, hasError: !!r.error })),
+          .workspaceRuns()
+          .map((r) => ({ id: r.id, operationId: r.operationId, executorId: r.executorId ?? 'legacy', stateVersion: r.stateVersion, candidateFingerprint: r.proposalHash, stage: r.stage, status: r.status, usage: r.usage, hasError: !!r.error, ...runDiagnostic(s, r) })),
         events: s.db.events().map(({ data, ...e }) => ({
           ...e,
           text: '内容已省略'
@@ -1251,7 +1354,13 @@ export class Service {
     }
     if (command === 'cover.save') return saveCover(s, str(a.dataUrl), a.metadata);
     if (command === 'project.scan') { s.scan(); return this.snapshot(); }
-    if (command === 'narrative.read') return readNarrativeData(s, Number(a.chapter), typeof a.runId === 'string' ? a.runId : undefined, a.scope === 'book' ? 'book' : 'batch');
+    if (command === 'narrative.read') {
+      const before = s.db.sql.prepare("SELECT count(*) AS n FROM auxiliary_quarantine WHERE kind='panel'");
+      const count = before.get()!.n;
+      const data = readNarrativeData(s, Number(a.chapter), typeof a.runId === 'string' ? a.runId : undefined, a.scope === 'book' ? 'book' : 'batch');
+      if (count !== before.get()!.n) this.emit({ type: 'snapshot', resource: 'studio' });
+      return data;
+    }
     if (command === 'document.read')
       return typeof a.hash === 'string'
         ? s.read(str(a.path), a.hash)
@@ -1293,21 +1402,26 @@ export class Service {
       if (s.read(paths.config).hash !== s.db.document(paths.config)?.hash)
         throw new Error('配置文件存在外部改动，请先比较并接受，不能用旧设置覆盖');
       const cfg = configSchema.parse(a.config);
-      if (tagHash(cfg) === tagHash(p.config)) return this.snapshot();
+      const firstTitle = typeof a.firstTitle === 'string' ? validateBookTitle(a.firstTitle) : undefined;
+      const naming = !!firstTitle && (p.titlePending || firstTitle !== p.title);
+      if (naming && (!p.quickWriting || !p.titlePending)) throw new Error('本书已有命名流程，请在作品方案与书名中修改');
+      if (!naming && tagHash(cfg) === tagHash(p.config)) return this.snapshot();
       if (s.db.document(bookProfilePath)?.hash && cfg.genre !== p.config.genre)
         throw new Error('请在题材与发布分类中修改创作题材');
       if (approvedCreation(p)?.knowledge.options.some(o => o.group === 'reading.main') && cfg.genre !== p.config.genre)
         throw new Error('本书题材由正式标签契约确定，请在标签与策划中修订主分类');
       validateExpressionSelection(this.skillRoot, cfg);
       const next = reconfigure(p, cfg);
+      if (naming && firstTitle) { next.title = firstTitle; next.titlePending = false; }
       new ProjectCommitService(s).commit(
         [
           this.change(paths.config, updateConfigDocument(s.read(paths.config).content, next)),
-          this.change(paths.progress, renderProgress(next))
+          this.change(paths.progress, renderProgress(next)),
+          ...(naming ? [this.change(paths.index, renderIndex(next, s.db.acceptedDocuments().map(d => d.path)))] : [])
         ],
         next
       );
-      for (const run of s.db.runs()) runner.recoverReadyCandidate(run, next, 'settings');
+      for (const run of s.db.pendingRuns('recovery')) runner.recoverReadyCandidate(run, next, 'settings');
       return this.snapshot();
     }
     if (runCommands.has(command)) {

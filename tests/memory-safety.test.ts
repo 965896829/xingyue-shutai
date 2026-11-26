@@ -311,6 +311,11 @@ test('后续调整按大纲到细纲传递候选，正式采纳前不覆盖，�
   const { service, store } = await setup(async (...args) => {
     const input = JSON.parse(args[2][0].content);
     if (args[1].includes('你独立检查')) return caller(...args);
+    if (!input.file) {
+      const p = service.store!.db.project();
+      const changes = stageOutputs('S09', p).map(file => service.change(file, fixture(p, file, service)));
+      return { ...fakeResult(''), stop: 'tools', calls: [{ id: crypto.randomUUID(), name: 'propose_changes', arguments: JSON.stringify({ changes }) }] };
+    }
     processed.push(input.file.path);
     let content = input.file.content;
     if (input.file.path === paths.volumes) content += '\n\n后续行动改为左手持盾。';
@@ -374,10 +379,19 @@ test('后续调整按大纲到细纲传递候选，正式采纳前不覆盖，�
     assert.match(active.readAccepted(detailPath(3)).content, /左手持盾/);
     assert.equal(pastPlanText(active.readAccepted(paths.outline).content, 3), pastPlanText(oldOutline, 3));
     assert.equal(active.readAccepted(detailPath(2)).content, oldDetail);
-    assert.deepEqual(active.db.project().stale, []);
-    assert.deepEqual(active.db.project().storyImpacts, []);
+    assert.deepEqual(new Set(active.db.project().stale), new Set([taskPath(4), detailPath(4)]));
+    assert.ok(active.db.project().storyImpacts?.every(impact => impact.targets.every(target => [taskPath(4), detailPath(4)].includes(target.path))));
+    const waiting = service.snapshot().studio!.waitingWriting;
+    assert.deepEqual(waiting, { chapter: 3, ready: true, repairId: nextId });
     assert.ok(active.db.sql.prepare("SELECT * FROM dependencies WHERE source_path=? AND dependent=? AND kind='plan'").get(paths.outline, detailPath(3)));
     assert.equal((await service.invoke('run.accept', { id: nextId, proposalHash: proposalHash(ready) })).alreadyAccepted, true);
+    service.close();
+    await service.open(root);
+    const resumedId = await service.invoke('run.start', { afterRepair: nextId, request: '从原稿继续' });
+    const resumed = await waitForRun(service, resumedId);
+    assert.deepEqual([resumed.stage, resumed.chapter, resumed.request], ['S09', 3, '继续第三章']);
+    assert.equal(resumed.memoryRepair, undefined);
+    assert.equal(service.snapshot().studio!.waitingWriting, undefined);
   } finally { await service.drain(); }
 });
 

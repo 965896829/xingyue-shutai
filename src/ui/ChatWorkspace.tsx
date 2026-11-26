@@ -32,7 +32,7 @@ interface ChatData {
   turns: ConversationTurn[];
   proposals: ActionProposal[];
 }
-type DraftEdit = DraftArtifact & { content: string; currentHash: string };
+type DraftEdit = DraftArtifact & { content: string; currentHash: string; viewedHash?: string };
 export function ChatWorkspace({
   snapshot,
   profileId,
@@ -110,7 +110,7 @@ export function ChatWorkspace({
       const result = await invokeCommand('draft.read', { id });
       const cacheKey = `draft:${p.id}:free:${id}`;
       const cached = useCache ? JSON.parse(localStorage.getItem(cacheKey) ?? 'null') : null;
-      setDraft(cached ? { ...result, content: authorMarkdown(cached.content), currentHash: cached.baseHash } : result);
+      setDraft(cached ? { ...result, content: authorMarkdown(cached.content), currentHash: cached.baseHash, viewedHash: cached.viewedHash } : result);
       if (!useCache) localStorage.removeItem(cacheKey);
     } catch (e) {
       setError((e as Error).message);
@@ -121,21 +121,23 @@ export function ChatWorkspace({
     try {
       localStorage.setItem(
         `draft:${p.id}:free:${draft.id}`,
-        JSON.stringify({ content: draft.content, baseHash: draft.currentHash })
+        JSON.stringify({ content: draft.content, baseHash: draft.currentHash, viewedHash: draft.viewedHash })
       );
     } catch {
       setError('草稿缓存空间不足，请及时保存草稿版本');
     }
-  }, [draft?.id, draft?.content, draft?.currentHash]);
+  }, [draft?.id, draft?.content, draft?.currentHash, draft?.viewedHash]);
   useEffect(() => {
     try {
       setInputs(JSON.parse(localStorage.getItem(key) ?? '{}'));
     } catch {}
   }, [key]);
   useEffect(() => {
-    if (conversationId) { select(conversationId); return; }
+    if (conversationId) select(conversationId);
+  }, [conversationId]);
+  useEffect(() => {
     if (!conversations.some((c) => c.id === selected))
-      select(conversations.find((c) => !c.archived)?.id ?? conversations[0]?.id ?? '');
+      select(conversations.find(c => c.id === conversationId)?.id ?? conversations.find(c => !c.archived)?.id ?? conversations[0]?.id ?? '');
   }, [conversations, selected, conversationId]);
   const load = useCallback(async () => {
     if (!selected) return;
@@ -244,6 +246,14 @@ export function ChatWorkspace({
       scroll.current?.scrollTo({ top: scroll.current.scrollHeight });
     }
   }
+  async function selectedVersion(value: DraftEdit) {
+    if (value.viewedHash) {
+      const historical = await call('draft.read', { id: value.id, hash: value.viewedHash });
+      if (!historical) return;
+      if (historical.content === value.content) return { id: value.id, hash: value.viewedHash };
+    }
+    return call('draft.save', { id: value.id, title: value.title, content: value.content, baseHash: value.currentHash, conversationId: value.conversationId, messageId: value.messageId });
+  }
   async function saveMessage(message: ConversationMessage) {
     const title = await ask(
       '自由草稿名称',
@@ -272,8 +282,10 @@ export function ChatWorkspace({
     await callAndStartProposal(kind, text);
   }
   async function callAndStartProposal(kind: 'stage' | 'revision' | 'draft', text: string) {
-    // The explicit toolbar action starts generation, not a second approval card.
-    // Version validation and final content acceptance remain on the host.
+    if (kind === 'draft') {
+      if (await call('draft.write', { kind: 'scene', request: text, profileId, conversationId: selected })) input('');
+      return;
+    }
     setBusy(true);
     setError('');
     try {
@@ -282,10 +294,10 @@ export function ChatWorkspace({
       profileId,
       proposal: {
         kind,
-        goal: kind === 'stage' ? '执行当前阶段' : kind === 'draft' ? '自由试写' : '修订正式资料',
+        goal: kind === 'stage' ? '执行当前阶段' : '修订正式资料',
         scope: text,
         request: text,
-        outputs: [kind === 'draft' ? '独立聊天草稿' : '生成内容，满意后保存']
+        outputs: ['生成内容，满意后保存']
       }
       });
       const result = await invokeCommand('proposal.confirm', { id: card.id, version: card.version });
@@ -530,6 +542,12 @@ export function ChatWorkspace({
                       <ContextCompactions items={turn?.contextCompactions} activity={turn?.activity} running={m.status === 'running'} />
           {turn?.manuscript && turn.manifest && desk?.materials && <button onClick={() => desk.materials?.(turn.manifest!, turn.manuscript!)}>本轮写作资料</button>}
                       {turn?.error && <p className="inline-warning">{requestErrorText(turn.error)}</p>}
+                      {turn?.savedDraftId && <div className="button-row">
+                        <button onClick={async () => { setShowDrafts(true); setDrafts(await invokeCommand('draft.list')); await openDraft(turn.savedDraftId!); }}>打开草稿</button>
+                        {turn.status === 'complete' && turn.savedDraftHash && turn.draftTask?.kind === 'direction' && <button disabled={busy || modelBusy || !profileId}
+                          onClick={() => void call('draft.write', { kind: 'scene', request: '把这份开篇设定写成一场戏。', profileId, conversationId: selected,
+                            source: { id: turn.savedDraftId!, hash: turn.savedDraftHash! } })}>按此设定试写一场</button>}
+                      </div>}
                       {turn?.calls
                         .filter((c) => ['public_search', 'extract_pages'].includes(c.name))
                         .map((c, i) => {
@@ -603,7 +621,7 @@ export function ChatWorkspace({
                         </button>
                       )}
                       </details>
-                      {['unknown', 'failed', 'stopped'].includes(m.status) && turn?.kind === 'discussion' && (
+                      {['unknown', 'failed', 'stopped'].includes(m.status) && turn && (turn.kind === 'discussion' || turn.draftTask) && (
                         <button
                           disabled={modelBusy || busy}
                           onClick={async () => {
@@ -688,11 +706,7 @@ export function ChatWorkspace({
           </select>
           {draft && (
             <>
-              <p>{draft.path}</p>
-              <small>
-                来源聊天 {conversations.find((c) => c.id === draft.conversationId)?.title} · 消息{' '}
-                {draft.messageId.slice(0, 8)}
-              </small>
+              <small>{conversations.find(c => c.id === draft.conversationId)?.title} · 第 {draft.versions.findIndex(v => v.hash === (draft.viewedHash ?? draft.hash)) + 1} 版</small>
               <textarea
                 aria-label="自由草稿正文"
                 value={draft.content}
@@ -732,23 +746,32 @@ export function ChatWorkspace({
                         id: draft.id,
                         hash: v.hash
                       });
-                      setDraft({ ...draft, content: old.content });
+                      setDraft({ ...draft, content: old.content, viewedHash: v.hash });
                     }}
                   >
-                    {new Date(v.at).toLocaleString()} · {v.hash.slice(0, 8)}
+                    第 {draft.versions.findIndex(version => version.hash === v.hash) + 1} 版 · {new Date(v.at).toLocaleString()}
                   </button>
                 ))}
               </details>
-                {p.stage === 'S10' && !p.finished && <button
+                <button disabled={!profileId || busy || modelBusy} onClick={async () => {
+                  const request = await ask('这版草稿想怎么改？', currentText.trim());
+                  if (!request) return;
+                  const saved = await selectedVersion(draft);
+                  if (!saved) return;
+                  await openDraft(draft.id, false);
+                  const next = await call('draft.write', { kind: 'revise', request, profileId, source: { id: saved.id, hash: saved.hash }, conversationId: selected });
+                  if (next) setShowDrafts(false);
+                }}>按这版改稿</button>
+                {p.stage <= 'S10' && !p.finished && <button
                   disabled={!profileId || busy || modelBusy}
                   onClick={async () => {
-                    const saved = await call('draft.save', { id: draft.id, title: draft.title, content: draft.content, baseHash: draft.currentHash, conversationId: draft.conversationId, messageId: draft.messageId });
+                    const saved = await selectedVersion(draft);
                     if (!saved) return;
                     await openDraft(draft.id, false);
                     const runId = await call('draft.chapter', { id: saved.id, hash: saved.hash, profileId });
                     if (runId) onRun(runId);
                   }}
-                >作为第 {p.chapter} 章候选核对</button>}
+                >{p.chapter === 1 ? '用这版开始连载' : `作为第 ${p.chapter} 章候选核对`}</button>}
                 <button
                   disabled={!profileId || busy || modelBusy}
                   onClick={async () => {

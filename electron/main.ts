@@ -530,6 +530,7 @@ async function handle(command: Command, a: Record<string, unknown>) {
   }
   if (command === 'project.open' && !settings.recent.some((p) => p.root === a.root)) selected(a.root);
   if (command === 'project.importDocument') selected(a.file);
+  if (command === 'studio.restoreHistory') selected(a.source);
   if (command === 'project.restoreTrash' && a.parent) selected(a.parent);
   if (command === 'project.export') selected(a.target);
   if (command === 'project.backup' && a.directory) selected(a.directory);

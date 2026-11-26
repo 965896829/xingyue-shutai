@@ -71,12 +71,7 @@ export async function handleCreationCommand(
     )(p, a.input, (prior?.revision ?? 0) + 1, host.tagCatalog());
     s.db.set('tagDraft', draft);
     s.db.set('tagDraftPublishingBase', s.db.document(bookProfilePath)?.hash ?? null);
-    for (const r of s.db.runs())
-      if (
-        (r.planning || r.naming?.sourceRunId) &&
-        !r.accepted &&
-        !['discarded', 'stale', 'failed'].includes(r.status)
-      ) {
+    for (const r of s.db.pendingRuns('planning')) {
         setRunStatus(r, 'stale');
         r.error = '标签或作者输入已更新，旧报告保留为历史';
         s.db.saveRun(r);
@@ -98,17 +93,7 @@ export async function handleCreationCommand(
       return old.id;
     }
     idle();
-    if (
-      s.db
-        .runs()
-        .some(
-          (r) =>
-            !r.accepted &&
-            (r.planning || r.mode === 'stage') &&
-            !['discarded', 'stale', 'failed'].includes(r.status)
-        )
-    )
-      throw new Error('请先继续或放弃已有策划/阶段候选');
+
     const origin = approvedCreation(p) ? 'revision' : p.stage === 'S01' ? 'new' : 'adoption';
     const r = host.makeRun(
       origin === 'new' ? 'stage' : 'revision',
@@ -116,9 +101,10 @@ export async function handleCreationCommand(
       typeof a.profileId === 'string' ? a.profileId : undefined
     );
     host.initializePlanning(r, origin, command === 'creation.start' || p.creationWorkflow === 2);
-    s.db.saveRun(r);
-    s.db.set(`tagRequest:${requestId}`, { id: r.id, fingerprint });
-    return host.launch(r);
+    return host.launch(r, r.id, () => {
+      if (s.db.pendingRuns('creation').some(other => other.id !== r.id)) throw new Error('请先继续或放弃已有策划/阶段候选');
+      s.db.set(`tagRequest:${requestId}`, { id: r.id, fingerprint });
+    });
   }
   if (command === 'creation.confirmPlan') {
     idle();

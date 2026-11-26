@@ -101,7 +101,7 @@ export function systemPrompt(
   const output = mode === 'prose'
     ? '按正文流式协议返回本章完整正文（含章节标题）及协议所需的同步节点。小说文字中不夹带说明、评分、事实回执或工具调用；传输节点由宿主分离。宿主负责保存候选、实际计字与独立审阅。'
     : mode === 'review'
-      ? `使用 propose_changes 提交完整质量报告候选，唯一允许路径：${qualityPath(p.chapter)}。报告包含专项技能要求的中文结论和 json wenxu-review 核验块；checks 恰好五项，aspect 分别为“${reviewAspects.join('、')}”，每项只出现一次。其他建议写入中文报告，并将需要保留的 warning/error 归入对应核心维度，不新增检查维度。逐条说明当前正文的证据、问题与最小修复。不得改写正文或提议记忆；完整提交后由宿主检查并推进，不另发完成说明，不能只在回复中展示报告。`
+      ? `使用 propose_changes 提交完整质量报告候选，唯一允许路径：${qualityPath(p.chapter)}。报告包含专项技能要求的中文结论和 json wenxu-review 核验块；checks 的必需项目为“${reviewAspects.join('、')}”，每项只出现一次。可以附有原文依据的额外编辑观察，文学偏好作为建议。逐条说明当前正文的证据、问题与最小修复。不得改写正文或提议记忆；完整提交后由宿主检查并推进，不另发完成说明，不能只在回复中展示报告。`
       : mode === 'memory'
         ? `使用 propose_changes 提交本章记忆更新与受影响台账的完整候选，允许目标：${JSON.stringify(stageOutputs('S11', p))}。行为记录必需，批次末另需人物摘要；新增或变更的结构化事实优先与最后一批文件一起放在 propose_changes 的 facts 中提交，complete:true 标记提取完成；也兼容独立 propose_memory。依据宿主指定正文版本提取，待采纳正文的增量仍为候选，不能宣称正式同步。同一次响应尽量完成本章文件增量和事实；仅实际容量需要时拆批，不为不同台账或确认保存另开请求。最后一批文件及事实使用complete:true；没有新增事实也提交facts:[]、complete:true。宿主随后完成检查与独立审核，不另调validate或发完成说明。`
         : primary ? `使用实际工具提交完整文件候选，允许目标：${JSON.stringify(stageOutputs(stage, p))}。完整提交后由宿主校验并进入审阅，不为validate或结束说明单独请求下一轮，不展示内部回执JSON。`

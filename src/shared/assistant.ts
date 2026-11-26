@@ -62,6 +62,15 @@ export interface ConversationMessage {
   citations: Citation[];
 }
 export interface ConversationTurn {
+  draftTask?: {
+    kind: 'direction' | 'scene' | 'revise';
+    title: string;
+    source?: { id: string; hash: string };
+    directionText?: string;
+  };
+  savedDraftId?: string;
+  savedDraftHash?: string;
+  archiveManuscript?: true;
   manuscript?: import('./manuscript-edit').ManuscriptEdit;
   historyReadVersion?: 1;
   historyReads?: { messageId: string; conversationId: string; hash: string }[];

@@ -14,7 +14,7 @@ import { chapterRenameIssues, chapterTitleIssues } from '../chapter-naming';
 
 export class ProjectCommitService {
   constructor(private readonly store: FileStore) {}
-  commit(changes: Change[], project: ProjectState, run?: Run) {
+  commit(changes: Change[], project: ProjectState, run?: Run, operation?: { id: string; inputHash: string; kind?: string }) {
     if (!run) return this.store.commit(changes, project);
     assertDesign(this.store, run);
     // Host projections include progress, index and rebased evidence records; the authored scope stays frozen.
@@ -49,7 +49,7 @@ export class ProjectCommitService {
     if (current.accepted || proposalHash(current) !== fingerprint)
       throw new ApplicationError('APPROVAL_STALE', '候选已改变，请重新审阅');
     const approvalId = id();
-    const approval = { version: 1, id: approvalId, runId: run.id, fingerprint, projectId: project.id,
+    const approval = { version: 1, id: approvalId, operation, runId: run.id, fingerprint, projectId: project.id,
       baseSnapshotId: this.store.db.get<string>('headSnapshot') ?? null, scope: changes.map((change) => change.path),
       commitHash: contentFingerprint({ project, changes: changes.map((change) => ({ path: change.path, baseHash: change.baseHash, newHash: hash(change.content) })) }),
       actor: 'local-author', issuedAt: now(), revokedAt: null, consumedByCommit: null };

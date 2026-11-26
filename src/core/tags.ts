@@ -58,7 +58,7 @@ export function currentCreationDraft(store: FileStore): BookSpec | undefined {
       value.selection.reading = { main: '', theme: [], role: [], plot: [] };
       result = bookSpecSchema.parse({ ...value, inputHash: tagHash(value) });
       store.db.set('tagDraft', result);
-      for (const run of store.db.runs()) if ((run.planning || run.naming?.sourceRunId) && !run.accepted && !['discarded', 'stale', 'failed'].includes(run.status)) {
+      for (const run of store.db.pendingRuns('planning')) {
         setRunStatus(run, 'stale');
         run.error = '创作题材或发布分类已更新，旧方案保留为历史';
         store.db.saveRun(run);

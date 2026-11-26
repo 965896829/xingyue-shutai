@@ -70,7 +70,8 @@ export function saveNarrativeRecord(store: FileStore, run: Run, raw: unknown): b
 // Parsed immutable artifacts are reused across navigation; never store project plaintext globally.
 const parsed = new WeakMap<FileStore, Map<string, ReturnType<typeof tableIntensities>>>();
 export function readNarrativeData(store: FileStore, chapter: number, runId?: string, scope: 'batch' | 'book' = 'batch'): NarrativeData {
-  const project = store.db.project(), run = runId ? store.db.runs().find(r => r.id === runId && r.chapter === chapter) : undefined;
+  const project = store.db.project(), found = runId ? store.db.findRun(runId) : undefined;
+  const run = found?.chapter === chapter ? found : undefined;
   const batch = project.batches.find(b => chapter >= b.start && chapter <= b.end);
   const range: [number, number] = scope === 'book' ? [1, 100000] :
     batch ? [batch.start, batch.end] : [Math.max(1, chapter - 14), chapter + 15];
@@ -91,7 +92,7 @@ export function readNarrativeData(store: FileStore, chapter: number, runId?: str
       const record = narrativeRecordSchema.safeParse(store.db.get(key(kind, Number(dimensionChapter), document.hash)));
       if (record.success && record.data.chapterValues) Object.assign(row(Number(dimensionChapter)), {
         [kind === 'plan' ? 'planValues' : 'actualValues']: record.data.chapterValues,
-        [kind === 'plan' ? 'planSource' : 'actualSource']: { ...record.data.source, quote: record.data.points[0].anchor }
+        [kind === 'plan' ? 'planSource' : 'actualSource']: { ...record.data.source, quote: record.data.points[0]?.anchor ?? record.data.source.quote }
       });
     }
     if (document.path === paths.outline || /^05_长篇大纲\/第\d+-\d+章节奏\.md$/.test(document.path)) {

@@ -86,7 +86,7 @@ import { templateFields,validateCandidate,validateCoverage } from './validation'
 import { prepareVolumeMarketResearch,volumeNamingContext } from './volume-market-research';
 import { volumeRenameIssues } from './volume-naming';
 import { alignChapterTitle, chapterNamingContext, chapterRenameIssues, chapterTitleIssues } from './chapter-naming';
-import { driveChapterWorkflow } from './workflows/chapter';
+import { chapterRoleProfileId, driveChapterWorkflow } from './workflows/chapter';
 import { driveCreativeWorkflow } from './workflows/creative';
 import { driveCreationWorkflow } from './workflows/creation';
 import { bindWorkflow } from './runtime/workflow-contract';
@@ -305,11 +305,17 @@ export class AgentRunner {
     return !!transition && transition.base.revision === r.baseRevision &&
       transition.snapshots.some(snapshot => r.skillHash === hash(this.taskRules(r, snapshot.project).system + JSON.stringify(this.toolsFor(r))));
   }
+  private currentProfile(run: Run, project: ProjectState) {
+    const phase = run.pipeline?.phase;
+    const role = phase === 'review' ? 'review' : phase === 'memory' ? 'extraction' : 'writing';
+    const key = phase ? chapterRoleProfileId(run, project, role) : run.profileId;
+    return this.profiles().find(profile => profile.id === key);
+  }
   needsFreshContext(r: Run) {
-    const p = projectForRun(this.store.db.project(), r), profile = this.profiles().find(item => item.id === r.profileId);
+    const p = projectForRun(this.store.db.project(), r), profile = this.currentProfile(r, p);
     const creation = approvedCreation(p);
-    if (!profile?.apiKey) throw new Error('原任务的模型不可用，请选择模型后点击“用所选模型继续”。');
-    if (r.status === 'stale' || !compatibleRunBase(this.store, r) || r.profileVersion !== profile.version) return true;
+    if (!r.pipeline && !profile?.apiKey) throw new Error('原任务的模型不可用，请选择模型后点击“用所选模型继续”。');
+    if (r.status === 'stale' || !compatibleRunBase(this.store, r) || !r.pipeline && r.profileVersion !== profile?.version) return true;
     if (r.tagBinding && (!creation || r.tagBinding.inputHash !== creation.spec.inputHash || r.tagBinding.contractRevision !== creation.contract.revision)) return true;
     if (r.manifest && contextChanged(this.store, r.manifest)) return true;
     if (r.manifest && r.manifest.selectedBy !== 'context-compiler-v1') return true;
@@ -397,14 +403,21 @@ export class AgentRunner {
     if (this.controller) throw new Error('已有任务运行中');
     const r = this.store.db.run(runId),
       p = projectForRun(this.store.db.project(), r),
-      selectedProfile = this.profiles().find((x) => x.id === r.profileId),
+      selectedProfile = this.currentProfile(r, p),
       profile = selectedProfile && withTaskReasoning(selectedProfile, r);
     bindWorkflow(r);
     const creation = approvedCreation(p);
-    if (!profile?.apiKey) throw new Error('请先设置模型 API Key');
-    if (!r.memoryRepair && !r.creative && !r.revisionCore && (!profile.tools || profile.capabilities.tools === 'failed'))
+    if (r.pipeline?.phase === 'ready') {
+      this.check(r, p);
+      if (!r.issues.some(issue => issue.code === 'fact_transition')) {
+        setRunStatus(r, r.issues.some(issue => issue.severity === 'error') ? 'needs_repair' : 'awaiting_review');
+        this.save(r); return;
+      }
+    }
+    if (!profile || !r.pipeline && !profile.apiKey) throw new ApplicationError('MODEL_CONFIGURATION', r.pipeline?.proseHash ? '正文已保存，请配置本阶段的模型后继续。' : '请先设置本次写作的模型。');
+    if (!r.pipeline && !r.memoryRepair && !r.creative && !r.revisionCore && (!profile.tools || profile.capabilities.tools === 'failed'))
       throw new Error('此配置的工具调用未启用或测试失败，请在模型设置中启用并通过工具续轮测试');
-    if (profile.version !== r.profileVersion) throw new Error('模型配置版本已改变，请新建任务以保留准确来源');
+    if (!r.pipeline && profile.version !== r.profileVersion) throw new Error('模型配置版本已改变，请新建任务以保留准确来源');
     if (!compatibleRunBase(this.store, r)) throw new Error('项目已改变，需重新建立任务上下文');
     if (
       r.tagBinding &&
@@ -413,8 +426,7 @@ export class AgentRunner {
         r.tagBinding.contractRevision !== creation.contract.revision)
     )
       throw new Error('创作契约已改变，请重新建立任务');
-    if (p.stale.length && r.mode === 'stage') throw new Error('存在未核对的修订影响，请先处理');
-    if (r.mode === 'stage' && r.stage === 'S10') {
+    if (r.mode === 'stage' && r.stage === 'S10' && !p.quickWriting) {
       const b = activeBatch(p),
         issues = validateCoverage(this.store.read(batchPath(b)).content, b.start, b.end, batchPath(b));
       if (issues.length) throw new Error('当前批次章节规划不完整，不能生成正文');
@@ -972,6 +984,10 @@ export class AgentRunner {
     // be repaired by the reviewer; warnings alone never force a prose rewrite.
     const proseFinding = (issue: Run['issues'][number]) => issue.code === 'quality_rewrite' || issue.code === 'review_finding';
     if (!errors.some(proseFinding) || errors.some(i => !proseFinding(i))) return false;
+    if (r.selectedDraft) {
+      setFailure(r, classifyFailure(new ApplicationError('AUTHOR_DECISION_REQUIRED', '已保存所选原稿和审稿意见，请决定如何改稿后再继续。')));
+      setRunStatus(r, 'needs_repair'); this.save(r); return true;
+    }
     const report = r.changes.find(c => c.path === reportPath);
     if (!report || !r.pipeline.proseHash) return false;
     if ((r.repairAttempts?.prose ?? 0) >= automaticRepairLimit || r.rounds >= modelRoundLimit(p.config.maxRounds) || r.toolCount >= p.config.maxTools) {

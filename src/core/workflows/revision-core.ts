@@ -154,7 +154,7 @@ export async function driveRevisionCore(host: Host, run: Run, project: ProjectSt
       run.facts = nextFacts; core.coverage[chapter] = coverage; run.memoryReview = undefined; host.save(run);
     }
     if (!core.reports[chapter]) {
-      const report = await request(`revision-review-${chapter}`, creationPolicy(host.skillRoot, 'chapter-review.review').content + `\n独立审阅最终修订正文。只返回 JSON {report:"完整 Markdown 审稿报告"}。填写输入模板全部字段和十项分数，总分正确；报告附 json wenxu-review 代码块 {proseHash,checks:[{aspect,verdict,quote,reason}]}，checks 恰好五项：${reviewAspects.join('、')}。verdict 为 pass/warning/error；quote 是正文连续原文至少8字，reason 至少8字。故事依据、人物一致性与表达建议分别判断，文学偏好只作为 warning，硬矛盾才是 error。`, { prose: prose.content, proseHash: core.proseHashes[chapter], constraints: project.config.constraints, template: templates(host.skillRoot)['章节质量评分'] }, value => {
+      const report = await request(`revision-review-${chapter}`, creationPolicy(host.skillRoot, 'chapter-review.review').content + `\n独立审阅最终修订正文。只返回 JSON {report:"完整 Markdown 审稿报告"}。填写输入模板全部字段和十项分数，总分正确；报告附 json wenxu-review 代码块 {proseHash,checks:[{aspect,verdict,quote,reason}]}，必需五项各一次：${reviewAspects.join('、')}。额外观察作为编辑建议。verdict 为 pass/warning/error；quote 是正文连续原文至少8字，reason 至少8字。故事依据、人物一致性与表达建议分别判断，文学偏好只作为 warning，硬矛盾才是 error。`, { prose: prose.content, proseHash: core.proseHashes[chapter], constraints: project.config.constraints, template: templates(host.skillRoot)['章节质量评分'] }, value => {
       const report = z.object({ report: z.string().min(1) }).strict().parse(value).report;
       const issues = assessReviewEvidence(qualityPath(chapter), report, prose.content).validationIssues;
       if (issues.some(i => i.severity === 'error')) throw new Error(issues.map(i => i.message).join('；'));

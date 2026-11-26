@@ -57,6 +57,21 @@ try {
   })()`);
   if (!ready.includes('星月书台')) throw Error('应用名称不一致');
   const readyMs = Math.round(performance.now() - started);
+  const opening = await evaluate(`(async () => {
+    document.querySelector('button[aria-label="新建作品"]').click();
+    const deadline = Date.now() + 10000;
+    let dialog;
+    while (!(dialog = document.querySelector('[role="dialog"][aria-label="新建作品"]')) && Date.now() < deadline)
+      await new Promise(resolve => setTimeout(resolve, 25));
+    if (!dialog) throw Error('新建作品窗口未渲染');
+    const choice = [...dialog.querySelectorAll('select')].find(select => select.querySelector('option[value="scene"]'));
+    const advanced = [...dialog.querySelectorAll('details')].find(d => d.querySelector('summary')?.textContent === '更多创作设置');
+    if (choice?.value !== 'scene' || !choice.querySelector('option[value="planning"]') || !choice.querySelector('option[value="existing"]'))
+      throw Error('开书方式缺失或试写未默认选中');
+    if (!advanced || advanced.open || !dialog.querySelector('textarea')) throw Error('轻量开书表单状态有误');
+    dialog.querySelector('[aria-label="关闭"]').click();
+    return choice.selectedOptions[0].textContent;
+  })()`);
   const labMs = await evaluate(`(async () => {
     const button = [...document.querySelectorAll('button')].find(b => b.innerText.trim() === '自由创作实验室');
     if (!button) throw Error('实验室入口缺失');
@@ -66,7 +81,7 @@ try {
     if (!document.querySelector('.story-lab:not([hidden]) h1')) throw Error('实验室未渲染');
     return Math.round(performance.now() - start);
   })()`);
-  console.log(JSON.stringify({ platform: process.platform, arch, title: ready, readyMs, labMs }));
+  console.log(JSON.stringify({ platform: process.platform, arch, title: ready, readyMs, opening, labMs }));
 } finally {
   socket?.terminate();
   if (child.exitCode === null) child.kill('SIGTERM');

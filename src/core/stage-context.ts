@@ -21,7 +21,48 @@ export function stageSources(manifest: ContextManifest, project: ProjectState, p
     if (reason) { excluded.push({ path: source.path, hash: source.hash, reason }); return []; }
     return [modelSource(source)];
   });
+  if (manifest.stage === 'S10' && phase === 'prose') condensePlanDecisions(sources);
   return { sources, excluded, phase };
+}
+
+// Keep the original hashes and source ranges for lookup. Only the writer's projected
+// plan text gets cross-references. Formal checks still receive the verbatim documents.
+function condensePlanDecisions(sources: ReturnType<typeof modelSource>[]) {
+  const plans = sources.filter(source => /^(05_|06_)/.test(source.path) && source.category === 'plan');
+  if (plans.length < 2) return;
+  const decisions = new Map<string, { path: string; number?: number }>();
+  let next = 1;
+  function passages(content: string, visit: (text: string) => string) {
+    const cell = (value: string) => {
+      const text = value.trim();
+      return text.length >= 16 && /\p{L}/u.test(text) ? value.replace(text, () => visit(text)) : value;
+    };
+    return content.replace(/[^\r\n]+/g, line => {
+      if (/^\s*[#>`]/.test(line)) return line;
+      if (/^\s*\|/.test(line)) return line.includes('\\|') ? line : line.split('|').map(cell).join('|');
+      const [, label, value] = line.match(/^(\s*(?:[-*+]\s+|\d+[.、]\s*)?(?:[^：:|]{1,32}[：:]\s*)?)(.*)$/su)!;
+      return label + cell(value);
+    });
+  }
+  for (const source of plans) passages(source.content, text => {
+    const first = decisions.get(text);
+    if (!first) decisions.set(text, { path: source.path });
+    else if (first.path !== source.path && first.number === undefined) first.number = next++;
+    return text;
+  });
+  if (next === 1) return;
+  const marked = new Set<number>();
+  for (const source of plans) {
+    const content = passages(source.content, text => {
+      const decision = decisions.get(text);
+      if (!decision?.number) return text;
+      if (decision.path !== source.path) return '〔同 P' + decision.number + '〕';
+      if (marked.has(decision.number)) return text;
+      marked.add(decision.number);
+      return text + '〔P' + decision.number + '〕';
+    });
+    if (content !== source.content) Object.assign(source, { content, mode: 'excerpt' as const });
+  }
 }
 
 export function modelSource(source: ContextSource) {

@@ -98,27 +98,42 @@ test('an asynchronous export holds the current book until the document is publis
   } finally { await service.drain(); }
 });
 
-test('a book with an incomplete review cannot displace the active writer or accept its next draft', async () => {
+test('an incomplete historical assessment is isolated without allowing a stale writer to edit the newly opened book', async () => {
   const active = refactorFixture(), incomplete = refactorFixture();
-  const source = active.store.readAccepted('正文.md');
+  const source = incomplete.store.readAccepted('正文.md');
+  const raw = JSON.stringify({ id: 'old-review', chapter: 1, track: 'candidate' });
+  const fromOther = await createBackup(active.store, isolatedRoot());
   active.store.close();
-  incomplete.store.db.sql.prepare('INSERT INTO assessments(id,data) VALUES(?,?)')
-    .run('old-review', JSON.stringify({ id: 'old-review', chapter: 1, track: 'candidate' }));
+  const record = { id: 'old-review', projectId: incomplete.project.id, snapshotId: incomplete.store.db.headRef()!.id,
+    draftId: 'test-draft', draftVersion: 1, hash: source.hash, epoch: 'old', chapter: 1, track: 'accepted', rubric: 'narrative-1',
+    createdAt: new Date().toISOString(), profileId: 'local-test', values: { pressure: 2, payoff: null, emotion: null, revelation: null, relationship: null },
+    evidence: [], note: '合成评估', usage: { input: 0, output: 0, cost: 0, currency: 'USD' } };
+  const saveRecord = incomplete.store.db.sql.prepare('INSERT OR REPLACE INTO assessments(id,data) VALUES(?,?)');
+  saveRecord.run('old-review', JSON.stringify(record));
+  incomplete.store.db.set('vectorIndex', { generation: 'local', status: 'ready', count: 0, watermark: null });
+  const fromThisBook = await createBackup(incomplete.store, isolatedRoot());
+  incomplete.store.db.sql.prepare("UPDATE kv SET value='{' WHERE key='vectorIndex'").run();
+  saveRecord.run('old-review', raw);
   incomplete.store.close();
   const service = new Service(path.resolve('resources/skill'), () => {});
   try {
     const original = await service.invoke('project.open', { root: active.root });
-    const activeStore = service.store!;
-    await assert.rejects(service.invoke('project.open', { root: incomplete.root }), /目标作品的记录不完整/);
-    assert.equal(service.store, activeStore);
-    assert.equal(service.projectSessionId, original.projectSessionId);
-    const draft = await service.invoke('document.save', {
-      path: '正文.md', content: '切换失败后继续写稿', baseHash: source.hash
-    }, { projectSessionId: original.projectSessionId });
-    assert.equal(activeStore.db.run(draft).changes[0].content, '切换失败后继续写稿');
-    const reopened = new FileStore(incomplete.root);
-    try { assert.equal(Array.from(reopened.db.allRuns(), run => run.id).includes(draft), false); }
-    finally { reopened.close(); }
+    const next = await service.invoke('project.open', { root: incomplete.root });
+    assert.equal(next.project?.root, incomplete.root);
+    assert.equal(next.studio?.quarantinedAssessments, 1);
+    assert.equal(next.studio?.quarantinedPanels, 1);
+    assert.equal(service.store!.db.sql.prepare("SELECT data FROM auxiliary_quarantine WHERE kind='assessment' AND id=?").get('old-review')?.data, raw);
+    const args = { path: '正文.md', content: '正确作品中的新草稿', baseHash: source.hash };
+    await assert.rejects(service.invoke('document.save', args, { projectSessionId: original.projectSessionId }), /作品会话已改变/);
+    const draft = await service.invoke('document.save', args, { projectSessionId: next.projectSessionId });
+    assert.equal(service.store!.db.run(draft).changes[0].content, args.content);
+    await assert.rejects(service.invoke('studio.restoreHistory', { source: fromOther }), /同一部作品/);
+    assert.equal(await service.invoke('studio.restoreHistory', { source: fromThisBook }), 2);
+    assert.equal(service.snapshot().studio?.assessments[0].id, 'old-review');
+    assert.equal(service.snapshot().studio?.index?.generation, 'local');
+    assert.equal(service.store!.readAccepted('正文.md').hash, source.hash);
+    const other = new FileStore(active.root);
+    try { assert.equal(other.db.findRun(draft), undefined); } finally { other.close(); }
   } finally { await service.drain(); }
 });
 

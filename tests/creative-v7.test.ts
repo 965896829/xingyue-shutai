@@ -237,7 +237,8 @@ test('V7 空作品探索使用现有命令回执，只保存草稿且重复点�
     assert.equal(run.changes.length, 0);
     assert.equal(run.facts.length, 0);
     assert.equal(run.workflowBinding!.registry, 'creative-v7-v1');
-    await assert.rejects(service.invoke('draft.chapter', { id: draft.id, hash: draft.currentHash, profileId: fakeProfile.id }), /正文写作阶段/);
+    await assert.rejects(service.invoke('draft.chapter', { id: draft.id, hash: draft.currentHash, profileId: fakeProfile.id }), /所选草稿已保存.*正式第 1 章.*允许范围/);
+    assert.equal(requests, 1, '短场景保留为草稿，章长核验在本地完成');
   } finally {
     await service.drain();
   }

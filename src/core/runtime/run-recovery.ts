@@ -60,6 +60,7 @@ export function prepareRunRecovery(run: Run) {
   // to erase the model's previous proposal and its exact validation feedback.
   // Source/rule freshness and request authorization are checked by the caller.
   if (['REMOTE_RESULT_UNKNOWN', 'NETWORK_UNAVAILABLE', 'RATE_LIMITED'].includes(failure) && pairedHistory(run)) return;
+  if (run.pipeline && failure === 'MODEL_CONFIGURATION' && pairedHistory(run)) return;
   const planning = run.planning;
   if (planning) {
     planning.consecutiveFormatFailures = 0;

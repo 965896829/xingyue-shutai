@@ -3,7 +3,8 @@ import { z } from 'zod';
 
 // Older executors must not reopen a forward-only review as an unrestricted revision.
 // Older clients compare working Markdown bytes directly to canonical evidence hashes.
-export const databaseVersion = 9;
+// Earlier clients cannot honor durable adoption follow-ups or a book opened directly in chapter writing.
+export const databaseVersion = 10;
 export const projectIdentitySchema = z.object({
   id: z.string().min(1),
   schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3)])

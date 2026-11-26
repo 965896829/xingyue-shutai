@@ -2,7 +2,7 @@ import type { CommandInput } from './contracts';
 import type { TagInput } from './tags';
 import { normalizeWritingStyle } from './writing-style';
 
-export type OpeningMode = 'planning' | 'existing';
+export type OpeningMode = 'scene' | 'planning' | 'existing';
 
 /** Keep the original Skill entry point available when the author already has a full setting. */
 export function newProjectRequest(input: {
@@ -21,10 +21,11 @@ export function newProjectRequest(input: {
     premise: input.premise,
     config: { ...input.capacity, defaultProfileId: input.profileId, preview: { enabled: input.previewEnabled ?? false, maxCalls: 8 },
       ...(input.style !== undefined ? { style: normalizeWritingStyle(input.style) } : {}),
-      ...(input.mode === 'existing' && (input.creationInput.mustKeep.length || input.creationInput.mustAvoid.length) ? {
+      ...(input.mode !== 'planning' && (input.creationInput.mustKeep.length || input.creationInput.mustAvoid.length) ? {
         constraints: [...input.creationInput.mustKeep.map(text => `必须保留：${text}`), ...input.creationInput.mustAvoid.map(text => `不能出现：${text}`)].join('\n')
       } : {}) },
-    ...(input.mode === 'existing'
+    ...(input.mode === 'scene' ? { quickWriting: true as const } : {}),
+    ...(input.mode !== 'planning'
       ? { title: input.title.trim() || undefined, ...(input.creationInput.bookProfile ? { bookProfile: input.creationInput.bookProfile } : {}) }
       : { creationInput: input.creationInput })
   };
