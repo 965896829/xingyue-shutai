@@ -142,7 +142,7 @@ export interface ActionProposal {
   projectRevision: number;
   profileId: string;
   profileVersion: number;
-  sources: { path: string; hash: string }[];
+  sources: { path: string; hash: string; draftVersionId?: string }[];
   rulesHash: string;
   createdAt: string;
   executionId?: string;

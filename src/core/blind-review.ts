@@ -8,7 +8,7 @@ import { FileStore } from './storage';
 import { Conversations } from './conversations';
 import { hash, id, now } from './domain';
 import { fingerprint } from './runtime/canonical';
-import { readQuality, saveQuality } from './quality';
+import { storedQuality, saveQuality } from './quality';
 import { renderReviewPage } from '../shared/review-page';
 
 export function publicReviewPacket(packet: ReviewPacket): PublicReviewPacket {
@@ -25,7 +25,7 @@ export function publicReviewPacket(packet: ReviewPacket): PublicReviewPacket {
 
 export function registerReviewPacket(store: FileStore, cases: ReviewPacket['cases'], createdAt = now()) {
   return store.db.transaction(() => {
-    const state = readQuality(store);
+    const state = storedQuality(store);
     const packet = reviewPacketSchema.parse({
       id: hash(JSON.stringify(publicReviewPacket({ id: '', createdAt, cases }).cases)),
       createdAt,
@@ -61,7 +61,7 @@ export function registerReviewPacket(store: FileStore, cases: ReviewPacket['case
 export function exportReviewPage(store: FileStore, experimentIds: string[]) {
   if (!experimentIds.length || new Set(experimentIds).size !== experimentIds.length)
     throw new Error('请选择不同的试读场景');
-  const state = readQuality(store),
+  const state = storedQuality(store),
     drafts = new Conversations(store);
   const cases = experimentIds.map((experimentId, index) => {
     const experiment = state.experiments.find((e) => e.id === experimentId);
@@ -93,7 +93,7 @@ export function importReviewFeedback(store: FileStore, expectedRevision: number,
     observations: feedback.observations.map(({ submittedAt, ...observation }) => observation)
   });
   return store.db.transaction(() => {
-    const state = readQuality(store);
+    const state = storedQuality(store);
     const prior = state.reviewImports.find((r) => r.hash === receiptHash);
     if (prior) return { state, imported: 0, duplicate: true };
     if (state.revision !== expectedRevision) throw new Error('记录已更新，请刷新后再导入');

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { growthSystemSchema, type WorldModel } from '../shared/quality';
 import { invokeCommand } from '../shared/client';
 import { WorkbenchGraph } from './WorkbenchGraph';
@@ -8,6 +8,13 @@ export function GrowthSystems({ model, baseHash, editable, storageKey, onCandida
 }) {
   const [draft, setDraft] = useState<System>(), [error, setError] = useState(''), [busy, setBusy] = useState(false);
   const systems = model.systems ?? [], existing = systems.find(s => s.id === draft?.id);
+  const [selected, setSelected] = useState<{ system: string; step: string }>();
+  const selectedRow = useRef<HTMLLIElement>(null), selectedField = useRef<HTMLFieldSetElement>(null);
+  useLayoutEffect(() => {
+    const target = selectedField.current ?? selectedRow.current;
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: 'nearest' });
+  }, [selected]);
   const save = async () => {
     if (!draft || busy) return;
     setBusy(true); setError('');
@@ -23,9 +30,9 @@ export function GrowthSystems({ model, baseHash, editable, storageKey, onCandida
     {!systems.length && !draft && <p>尚未设置成长体系。</p>}
     {systems.map(system => <article key={system.id}>
       <h3>{system.title} · 第{system.version}版</h3><p>{({ enabled: '启用', disabled: '停用', undecided: '未定' })[system.state]} · {system.subjects.join('、') || '未限定人物或阵营'} · {system.fromChapter}章起{system.toChapter === null ? '' : `，至${system.toChapter}章`}{system.locked ? ' · 已固定' : ''}</p>
-      {system.steps.length > 0 && <WorkbenchGraph label={`${system.title}成长路径`} storageKey={`${storageKey}:${system.id}`} nodes={system.steps.slice(0, 60).map(s => ({ id: s.id, title: s.title }))} edges={system.steps.slice(0, 60).flatMap(s => s.prerequisites.filter(id => system.steps.slice(0, 60).some(n => n.id === id)).map(id => ({ id: `${id}:${s.id}`, from: id, to: s.id, label: '前置' })))} onSelect={id => { if (editable) setDraft(structuredClone(system)); document.getElementById(`growth-${id}`)?.scrollIntoView({ block: 'nearest' }); }} />}
+      {system.steps.length > 0 && <WorkbenchGraph label={`${system.title}成长路径`} storageKey={`${storageKey}:${system.id}`} nodes={system.steps.slice(0, 60).map(s => ({ id: s.id, title: s.title, selected: selected?.system === system.id && selected.step === s.id }))} edges={system.steps.slice(0, 60).flatMap(s => s.prerequisites.filter(id => system.steps.slice(0, 60).some(n => n.id === id)).map(id => ({ id: `${id}:${s.id}`, from: id, to: s.id, label: '前置' })))} onSelect={id => { if (editable && !draft) setDraft(structuredClone(system)); setSelected({ system: system.id, step: id }); }} />}
       {system.steps.length > 60 && <p>图中展示前60个阶段，完整阶段见编辑列表。</p>}
-      <ul>{system.steps.slice(0, 60).map(step => <li key={step.id}>{step.title}：{step.ability || '能力未定'}；{step.boundary || '边界未定'}</li>)}</ul>
+      <ul>{system.steps.slice(0, 60).map(step => <li key={step.id} tabIndex={-1} ref={selected?.system === system.id && selected.step === step.id ? selectedRow : undefined}>{step.title}：{step.ability || '能力未定'}；{step.boundary || '边界未定'}</li>)}</ul>
       {!!system.interactions.length && <p>{system.interactions.map(i => `${systems.find(s => s.id === i.targetSystemId)?.title ?? '未知体系'}：${i.rule}`).join('；')}</p>}
       {!!system.unparsed.length && <details><summary>待解析原文</summary>{system.unparsed.map((text, i) => <p key={i}>{text}</p>)}</details>}
       {editable && <button disabled={busy} onClick={() => setDraft(structuredClone(system))}>编辑体系</button>}
@@ -39,7 +46,7 @@ export function GrowthSystems({ model, baseHash, editable, storageKey, onCandida
       <label>截至第几章<input type="number" min={draft.fromChapter} value={draft.toChapter ?? ''} disabled={draft.locked} onChange={e => setDraft({ ...draft, toChapter: e.target.value ? Number(e.target.value) : null })} /></label></div>
       <details><summary>导入原文与待定内容</summary><label>作者原体系<textarea value={draft.original} disabled={!!existing || draft.locked} onChange={e => setDraft({ ...draft, original: e.target.value })} /></label>
       <label>待解析片段（每行一项）<textarea value={draft.unparsed.join('\n')} disabled={draft.locked} onChange={e => setDraft({ ...draft, unparsed: e.target.value.split('\n').filter(Boolean) })} /></label></details>
-      {draft.steps.map((step, index) => <fieldset key={step.id} id={`growth-${step.id}`} disabled={draft.locked || busy}><legend>阶段 {index + 1}</legend>
+      {draft.steps.map((step, index) => <fieldset key={step.id} tabIndex={-1} ref={selected?.system === draft.id && selected.step === step.id ? selectedField : undefined} disabled={draft.locked || busy}><legend>阶段 {index + 1}</legend>
         <label>阶段名称<input required value={step.title} onChange={e => setDraft({ ...draft, steps: draft.steps.map(s => s.id === step.id ? { ...s, title: e.target.value } : s) })} /></label>
         <label>能力与资格<textarea value={step.ability} onChange={e => setDraft({ ...draft, steps: draft.steps.map(s => s.id === step.id ? { ...s, ability: e.target.value } : s) })} /></label>
         <label>限制与例外<textarea value={step.boundary} onChange={e => setDraft({ ...draft, steps: draft.steps.map(s => s.id === step.id ? { ...s, boundary: e.target.value } : s) })} /></label>

@@ -584,6 +584,10 @@ test('草稿历史与外部冲突保护；转正式任务卡绑定草稿版本',
       baseHash: current.currentHash
     });
     assert.equal(updated.versions.length, 3);
+    const historical = await service.invoke('draft.promote', { id: draft.id, hash: draft.hash, historical: true, profileId: 'test', scope: '按初版修订' });
+    assert.match(historical.request, /草稿初版，未采纳/);
+    assert.doesNotMatch(historical.request, /作者合并后的新版本/);
+    assert.doesNotThrow(() => service.chat!.verify(historical, historical.version));
     assert.equal(
       (await service.invoke('draft.read', { id: draft.id, hash: draft.hash })).content,
       '草稿初版，未采纳'

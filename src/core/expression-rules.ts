@@ -76,17 +76,17 @@ export function expressionLibrary(root: string): Library {
   return library;
 }
 
-export function validateExpressionSelection(root: string, config: ProjectConfig) {
-  const catalog = expressionLibrary(root).catalog;
+export function validateExpressionSelection(root: string, config: ProjectConfig, library?: Library) {
+  const catalog = (library ?? expressionLibrary(root)).catalog;
   const selected = config.expressionRules?.modules ?? [];
   for (const id of selected)
     if (!catalog.modules.some((m) => m.id === id)) throw new Error(`未知表达规则模块：${id}`);
   if (new Set(selected).size !== selected.length) throw new Error('表达规则模块不能重复');
 }
 
-export function expressionFingerprint(root: string, config: ProjectConfig) {
+export function expressionFingerprint(root: string, config: ProjectConfig, library?: Library) {
   if (config.expressionRules?.enabled === false) return 'expression-disabled';
-  const library = expressionLibrary(root);
+  library ??= expressionLibrary(root);
   return hash(
     JSON.stringify([policyVersion, library.hash, [...new Set(config.expressionRules?.modules ?? [])].sort()])
   );
@@ -164,8 +164,8 @@ export function expressionPack(
   fingerprint: string;
 } {
   if (config.expressionRules?.enabled === false) return { prompt: '', fingerprint: 'expression-disabled' };
-  validateExpressionSelection(root, config);
   const library = expressionLibrary(root);
+  validateExpressionSelection(root, config, library);
   const languageOnly = mode === 'discussion' || mode === 'record' || mode === 'planning' || mode === 'title' || mode === 'title_market';
   const defaults = new Set(mode === 'record' ? [] : ['VOICE-001']);
   if (!languageOnly) for (const id of ['META-001', 'POV-001', 'DIA-001', 'STATE-001']) defaults.add(id);
@@ -186,7 +186,7 @@ export function expressionPack(
   const prompt = `\n\n<expression_rules version="${library.version}" mode="${mode}">\n${adapters[mode]}\n${shared}${language}${extra}${edit}\n</expression_rules>`;
   return {
     prompt,
-    fingerprint: expressionFingerprint(root, config),
+    fingerprint: expressionFingerprint(root, config, library),
     binding: {
       version: library.version,
       policyVersion,

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { commandContracts } from '../shared/contracts';
 import { ApplicationError } from '../shared/errors';
+import { assertNativeDirectory } from './system-path';
 import { storageFileName } from '../shared/file-names';
 import { newProjectLocationError } from '../shared/project-location';
 import type { BookSpec, TagCatalog } from '../shared/tags';
@@ -24,6 +25,7 @@ export function createProjectArchive(input: unknown, skillRoot: string, catalog:
   if (args.creationInput && suppliedTitle) throw new Error('统一开书流程请先确认作品方案，再确定书名');
   const title = suppliedTitle || `待定书名-${id().slice(0, 8)}`;
   validateBookTitle(title);
+  assertNativeDirectory(args.parent);
   const locationError = newProjectLocationError(path.resolve(args.parent));
   if (locationError) throw new ApplicationError('VALIDATION_ERROR', locationError);
 

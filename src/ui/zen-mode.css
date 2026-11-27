@@ -1,0 +1,124 @@
+/* === 1. 侧栏折叠平滑过渡与细节打磨 === */
+.sidebar {
+  width: var(--sidebar-width);
+  transition: width var(--dur-base) var(--ease-out), padding var(--dur-base) var(--ease-out);
+  will-change: width;
+}
+.sidebar-collapsed .sidebar {
+  width: var(--sidebar-width-collapsed);
+  padding-inline: 8px;
+}
+.sidebar nav button,
+.sidebar .sidebar-action > button,
+.work-tabs > button,
+.work-tab-tools > button {
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.sidebar-collapsed .sidebar nav button {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* === 2. 写作工作台正文画布与舒适阅读行宽 === */
+.desk-manuscript {
+  background: var(--surface-canvas);
+}
+.desk-manuscript .cm-content,
+.writing-desk > .editor-panel .cm-content,
+.writing-desk > .editor-panel .markdown-preview .markdown-rendered {
+  font-family: var(--manuscript-font);
+  font-size: var(--manuscript-size);
+  line-height: var(--manuscript-leading);
+}
+.desk-manuscript .cm-content {
+  width: 100%;
+  max-width: var(--manuscript-measure);
+  margin-inline: auto;
+  padding: var(--space-8) clamp(18px, 3vw, 40px) 96px;
+}
+
+/* 拖拽分割线悬浮抓手反馈 */
+.desk-divider {
+  position: relative;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.desk-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+  transform: translate(-50%, -50%) scaleY(0.75);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+.desk-divider:hover::after,
+.desk-divider:focus-visible::after {
+  opacity: 1;
+  background: var(--accent);
+  transform: translate(-50%, -50%) scaleY(1);
+}
+
+/* === 3. 专注写作模式（Zen Mode，覆盖主写作台 writingLayout） === */
+.app-shell.zen-mode > .sidebar,
+.app-shell.zen-mode .writing-desk > .work-tabs {
+  display: none;
+}
+.app-shell.zen-mode .writing-desk > :is(.desk-manuscript, .editor-panel) {
+  grid-row: 1 / -1;
+}
+.app-shell.zen-mode .desk-heading {
+  background: transparent;
+  border-bottom-color: var(--surface-hairline);
+  padding-inline: max(var(--space-6), calc((100% - var(--manuscript-measure)) / 2));
+}
+.app-shell.zen-mode .desk-manuscript .cm-content {
+  padding-top: 44px;
+  padding-bottom: 140px;
+}
+
+/* 工具条与作品操作共享顶栏，在布局中各自占位。 */
+.zen-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline-end: var(--space-2);
+  border-inline-end: 1px solid var(--line);
+}
+.zen-toolbar button {
+  min-height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--soft);
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.zen-toolbar button:hover {
+  background: var(--raised);
+  color: var(--ink);
+}
+.zen-toolbar button.active {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.zen-toolbar-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--line);
+  margin-inline: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .desk-divider::after {
+    transition: none;
+  }
+}

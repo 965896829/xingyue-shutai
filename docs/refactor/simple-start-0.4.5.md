@@ -29,11 +29,11 @@
 | 可选标签开书 | 新建时启用标签后自动策划；空修改意见可集中确认方向，接受设定后可停在下一阶段 |
 | 模型能力不符 | 工具未启用时零轮调用即暂停，作品保留；选可用模型后通过已有交接入口继续，无需重建作品 |
 
-证据与复现代码见 [默认开书](simple-start-evidence/happy-result.json)、[未配置模型与直接修改](simple-start-evidence/noModel-result.json)、[重启与暂停](simple-start-evidence/reopen-result.json)、[可选标签](simple-start-evidence/tag-result.json)、[模型能力异常恢复](simple-start-evidence/failure-result.json)。截图：[原入口](../../output/playwright/newbook-before-0.4.4.png)、[新入口](../../output/playwright/newbook-0.4.5-form.png)、[结果与确认](../../output/playwright/newbook-0.4.5-result.png)、[可选方向确认](../../output/playwright/newbook-0.4.5-tags.png)。
+证据与复现代码见 [默认开书](simple-start-evidence/happy-result.json)、[未配置模型与直接修改](simple-start-evidence/noModel-result.json)、[重启与暂停](simple-start-evidence/reopen-result.json)、[可选标签](simple-start-evidence/tag-result.json)、[模型能力异常恢复](simple-start-evidence/failure-result.json)。原入口、新建表单、结果确认和可选方向的截图属于当时的本机验收输出。
 
 模型响应来自本机模拟服务，模型配置通过测试接口准备；原生目录选择框返回隔离目录。测试验证界面、状态、保存和衔接，不验证真实模型的提问质量、文学效果或原生目录框操作。首个异常测试曾误以为模型能力校验会在创建调用内同步失败；实际是任务创建后零轮调用即暂停，已按真实异步行为完成恢复验证。测试没有操作作者既有作品、配置或安装。
 
-完整回归 210 项通过，0 失败、0 跳过、0 取消，耗时 221757.4589ms；最终构建包含 TypeScript 检查并通过。源码审核确认只有 App.tsx、TagWorkspace.tsx 的交互结构变化，其余 18 个组件及 26 项样式图像保持原基线；新增代码注释为零，依赖未改变。四个 Electron 入口、10 份渲染文件、152 份 Skill 资源与打包内容匹配。见 [测试](simple-start-evidence/tests.log)、[构建](simple-start-evidence/build.log)、[交付核对](simple-start-evidence/delivery-report.json)。所有测试窗口和模拟服务已退出，见 [清理](simple-start-evidence/cleanup.json)。
+完整回归 210 项通过，0 失败、0 跳过、0 取消，耗时 221757.4589ms；最终构建包含 TypeScript 检查并通过。源码审核确认只有 App.tsx、TagWorkspace.tsx 的交互结构变化，其余 18 个组件及 26 项样式图像保持原基线；新增代码注释为零，依赖未改变。四个 Electron 入口、10 份渲染文件、152 份 Skill 资源与打包内容匹配。见 [交付核对](simple-start-evidence/delivery-report.json)。所有测试窗口和模拟服务已退出，见 [清理](simple-start-evidence/cleanup.json)。
 
 ## 交付
 

@@ -29,9 +29,9 @@
 
 ## 验证证据
 
-完整回归210项全部通过，0失败、0跳过、0取消，耗时224745.5049ms；类型检查及最终构建通过。新增4项验证集中确认与过期报告、修改意见和未选方向、继续与暂停、重复操作回执、下一阶段启动失败，以及旧书接入的阶段保护。见 [完整回归](workflow-evidence/tests.log)、[定向回归](workflow-evidence/targeted-tests.log)、[最终构建](workflow-evidence/build.log)。
+完整回归210项全部通过，0失败、0跳过、0取消，耗时224745.5049ms；类型检查及最终构建通过。新增4项验证集中确认与过期报告、修改意见和未选方向、继续与暂停、重复操作回执、下一阶段启动失败，以及旧书接入的阶段保护。见 [验收记录索引](workflow-evidence/README.md)。
 
-实际Windows10客户端通过全局Playwright MCP验证：修改输入后直接开始；空意见不阻止集中确认；预选不等于正式批准；完整设定原地展示；未保存的新输入阻止接受旧结果；依次确认进入项目与文风、世界规则；选择暂不继续后保存到人物阶段但未生成新任务。最终包另用全新隔离样本复测，并确认辅助按钮默认折叠。两次样本均只请求本机模拟服务，不涉及作者作品或收费模型。见 [流程检查](workflow-evidence/electron-smoke.json)、[最终包复测](workflow-evidence/final-desktop.json)、[实际阶段页面](../../output/playwright/workflow-0.4.4-stage.png)、[设定页面](../../output/playwright/workflow-0.4.4-ready.png)。
+实际Windows10客户端通过全局Playwright MCP验证：修改输入后直接开始；空意见不阻止集中确认；预选不等于正式批准；完整设定原地展示；未保存的新输入阻止接受旧结果；依次确认进入项目与文风、世界规则；选择暂不继续后保存到人物阶段但未生成新任务。最终包另用全新隔离样本复测，并确认辅助按钮默认折叠。两次样本均只请求本机模拟服务，不涉及作者作品或收费模型。见 [流程检查](workflow-evidence/electron-smoke.json)、[最终包复测](workflow-evidence/final-desktop.json)。
 
 本次交互调整有意改变 `App.tsx` 和 `TagWorkspace.tsx` 的操作分组及文字，不能再宣称所有组件结构完全不变。另18个TSX组件结构及静态文字保持原基线，26项CSS/图像资源逐字节不变；95个源码文件及本次修改测试没有新增注释，UI仍不依赖core。四个Electron入口及10个渲染文件与包内容匹配，152份Skill资源一致。见 [原结构审计](workflow-evidence/source-audit.json)、[本次范围核对](workflow-evidence/review.json)、[交付完整性](workflow-evidence/delivery-report.json)。原审计报告中的两个UI差异就是上述授权交互变化，没有放宽其他检查。
 

@@ -208,9 +208,6 @@ button.icon {
   color: var(--accent);
   padding: 5px;
 }
-.danger-text {
-  color: var(--danger) !important;
-}
 input,
 textarea,
 select {
@@ -307,17 +304,6 @@ details > p {
   gap: 8px;
   margin: 0 4px 18px;
   min-height: 42px;
-}
-.brand-mark {
-  width: 30px;
-  height: 34px;
-  background: transparent;
-  border-radius: 10px 3px 10px 3px;
-  display: grid;
-  place-items: center;
-  color: var(--sidebar-ink);
-  font-size: 22px;
-  font-family: "Songti SC", SimSun, serif;
 }
 .brand b {
   display: block;
@@ -419,15 +405,6 @@ details > p {
   margin-top: 4px;
   font-size: 11px;
   color: var(--sidebar-muted);
-}
-.book-spine {
-  width: 26px;
-  height: 33px;
-  background: var(--raised);
-  border: 1px solid var(--accent-line);
-  border-radius: 3px;
-  box-shadow: inset 4px 0 var(--accent-line);
-  flex-shrink: 0;
 }
 .file-search {
   display: flex;
@@ -822,19 +799,6 @@ details > p {
   max-width: 470px;
   margin: 0 auto;
 }
-.start-features {
-  display: flex;
-  gap: 20px;
-  margin-top: 22px;
-  justify-content: center;
-}
-.start-features span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 12px;
-}
 .run-selector {
   display: flex;
   align-items: center;
@@ -901,11 +865,6 @@ details > p {
   color: var(--warning);
   background: var(--warning-bg);
 }
-.execution-summary {
-  font-size: 12px;
-  color: var(--muted);
-  margin: 12px 0 18px;
-}
 .context-card {
   width: 100%;
   justify-content: flex-start;
@@ -930,14 +889,6 @@ details > p {
   display: block;
   font-size: 11px;
   margin-top: 4px;
-}
-.model-text {
-  font-size: 14px;
-  white-space: pre-wrap;
-  line-height: 1.9;
-  max-height: none;
-  overflow: visible;
-  color: var(--ink);
 }
 .candidate-list {
   margin-top: 19px;
@@ -1131,10 +1082,6 @@ details > p {
   max-width: 150px;
   padding-left: 5px;
   gap: 1px;
-}
-.composer-model {
-  max-width: 230px;
-  min-width: 74px;
 }
 .composer-context,
 .composer-send {
@@ -1421,38 +1368,6 @@ details > p {
   line-height: 1.9;
   margin-bottom: 26px;
 }
-.welcome-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin: 44px 0 28px;
-  max-width: 760px;
-  border-top: 1px solid var(--line);
-  padding-top: 27px;
-  border: 0;
-  padding: 0;
-  width: 100%;
-  text-align: left;
-}
-.welcome-cards span {
-  color: var(--muted);
-  font-size: 11px;
-}
-.welcome-cards h3 {
-  font-weight: 500;
-  margin: 8px 0;
-  font-size: 14px;
-}
-.welcome-cards p {
-  font-size: 12px;
-  color: var(--muted);
-  margin: 0;
-  max-width: none;
-}
-.welcome-note {
-  font-size: 11px;
-  color: var(--muted);
-}
 .welcome-symbol {
   width: 58px;
   height: 58px;
@@ -1467,12 +1382,6 @@ details > p {
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
-}
-.welcome-cards > div {
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--inset);
 }
 .sidebar-toggle {
   margin-left: auto;
@@ -2053,46 +1962,7 @@ details > p {
   font-size: 25px;
   font-weight: 600;
 }
-.memory-search {
-  display: flex;
-  gap: 8px;
-  margin: 25px 0;
-}
-.memory-search input:first-child {
-  flex: 1;
-}
-.memory-search input[type='number'] {
-  width: 138px;
-}
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-bottom: 28px;
-}
-.stat-grid > div {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 19px 23px;
-  background: var(--panel);
-}
-.stat-grid small {
-  display: block;
-  font-size: 11px;
-}
-.stat-grid strong {
-  font-size: 28px;
-  font-weight: 500;
-  display: block;
-  margin: 13px 0 5px;
-  color: var(--ink);
-}
-.stat-grid span {
-  font-size: 10px;
-  color: var(--muted);
-}
-.facts article,
-.source-result {
+.facts article {
   padding: 20px;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -2141,19 +2011,6 @@ details > p {
 .source small {
   display: block;
   margin-top: 8px;
-}
-.source-result p {
-  font-size: 12px;
-  color: var(--muted);
-  white-space: pre-wrap;
-  max-height: 200px;
-  overflow: auto;
-}
-.source-result button {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  font-size: 11px;
 }
 .empty-state {
   text-align: center;
@@ -2289,9 +2146,6 @@ details > p {
   }
   .page-content {
     padding: 30px;
-  }
-  .welcome-cards {
-    margin-top: 32px;
   }
 }
 

@@ -850,6 +850,12 @@ export function ProviderSettings({
                         }
                       />
                     </label>
+                    {(['cacheReadPrice', 'cacheWritePrice'] as const).map(field => (
+                      <label key={field}>{field === 'cacheReadPrice' ? '缓存读取价' : '缓存写入价'} / 百万 tokens
+                        <input type="number" min={0} step="any" placeholder="沿用输入价" value={p[field] ?? ''}
+                          onChange={e => update(field, e.target.value === '' ? null : Number(e.target.value))} />
+                      </label>
+                    ))}
                     <label>
                       输出价 / 百万 tokens
                       <input

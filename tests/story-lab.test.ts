@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs';
+import { acceptanceOutputRoot } from './fixtures/test-output';
 import { Service } from '../src/core/service';
 import { StoryLabService } from '../src/core/story-lab/service';
 import { LabStore } from '../src/core/story-lab/store';
@@ -60,6 +61,26 @@ async function generate(lab: StoryLabService, request: LabGenerate) {
   await lab.settled(request.sessionId);
   return lab.store.get('requests', request.requestId)!;
 }
+
+test('实验室指定正文可离线转入当前作品，重复导入复用同份自由草稿', async () => {
+  const { lab, root, session } = setup();
+  const version = { id: crypto.randomUUID(), sessionId: session.id, kind: 'prose' as const, title: '试稿',
+    content: '她把最后一把伞交给了来客。', createdAt: new Date().toISOString(), baseVersionId: null, requestId: null, partial: false, source: 'edit' as const };
+  lab.store.save('versions', version);
+  await lab.close();
+  const service = new Service(path.resolve('resources/skill'), () => {}, async () => { throw new Error('意外模型请求'); });
+  service.storyLabRoot = root;
+  try {
+    const created = await service.invoke('project.create', { parent: isolatedRoot('lab-import'), title: '雨伞', premise: '修伞人的故事' });
+    const request = { projectId: created.project!.id, sessionId: session.id, versionId: version.id };
+    await assert.rejects(service.invoke('draft.importLab', { ...request, projectId: '另一部书' }), /切换/);
+    const draft = await service.invoke('draft.importLab', request);
+    assert.equal((await service.invoke('draft.read', { id: draft.id })).content, version.content);
+    assert.equal((await service.invoke('draft.importLab', request)).id, draft.id);
+    assert.equal((await service.invoke('draft.list')).length, 1);
+    assert.equal(service.store!.db.project().revision, created.project!.revision);
+  } finally { await service.drain(); }
+});
 
 test('independent first generation: one real gateway attempt, no project, no old prompt or tools, scoped events and safe config', async () => {
   let calls = 0;
@@ -651,7 +672,7 @@ test('补写、局部中断、重启恢复和下一章使用相应的正文及�
     await make({ action: 'prose', baseVersionId: expansion.versionId, instruction: '紧接第一章写第二章' });
     assert.ok(wires[5].includes(updated) && wires[5].includes(resumed.versionId!));
     const solo = lab.preview(input(s.session.id, { action: 'prose', baseVersionId: expansion.versionId, proseMode: 'independent', instruction: '独立试写场景' }));
-    const directory = path.resolve('.test-output/writing-material-acceptance'); fs.mkdirSync(directory, { recursive: true });
+    const directory = path.join(acceptanceOutputRoot, 'writing-material-acceptance'); fs.mkdirSync(directory, { recursive: true });
     fs.writeFileSync(path.join(directory, 'lab.json'), JSON.stringify({ before: plan, expansion: { id: expansion.versionId, accepted: merged },
       prose: { before: prose, start, end, partial: partial.versionId, adopted: resumed.versionId, content: updated }, requests: wires }, null, 2));
     assert.ok(!solo.user.includes(updated));

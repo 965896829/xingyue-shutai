@@ -60,6 +60,8 @@ export class SseFramer {
 
   /** Called only at EOF. An unterminated data event cannot complete a model call. */
   hasPendingData() {
+    const tail = [...this.lines, this.pieces.join('') + this.tail].join('\n').trim();
+    if (/^data:\s*\[DONE\]$/.test(tail)) return false;
     return this.lines.some(line => line.startsWith('data:')) ||
       (this.pieces.length ? this.pieces[0] : this.tail).startsWith('data:');
   }

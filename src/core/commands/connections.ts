@@ -1,3 +1,4 @@
+import { ApplicationError } from '../../shared/errors';
 import { embeddingSettingsSchema } from '../../shared/studio';
 import type { Command } from '../../shared/types';
 import { nativeServerLimit, usesNativeSearch } from '../../shared/web-search';
@@ -96,10 +97,10 @@ export async function handleConnectionCommand(host: ConnectionHost, command: Com
     if (toolTest) {
       const probe = result.calls[0];
       if (result.stop !== 'tools' || result.calls.length !== 1 || probe.name !== 'probe')
-        throw new Error('模型未按要求调用测试工具');
+        throw new ApplicationError('MODEL_CONFIGURATION', '模型未按要求调用测试工具', [], { capabilityTestFailed: true });
       let value: unknown;
       try { value = JSON.parse(probe.arguments)?.value; } catch { /* Report malformed tool input below. */ }
-      if (value !== 'ping') throw new Error('模型返回的测试工具参数无效');
+      if (value !== 'ping') throw new ApplicationError('MODEL_CONFIGURATION', '模型返回的测试工具参数无效', [], { capabilityTestFailed: true });
       const end = await callModel(journal, owner, 'management-profile-tool-test', host.caller ?? invokeModel,
         profile,
         'Protocol connectivity test.',
@@ -111,10 +112,10 @@ export async function handleConnectionCommand(host: ConnectionHost, command: Com
         tools,
         host.managementController.signal
       );
-      if (end.stop !== 'complete' || !end.text.trim()) throw new Error('工具结果续轮未完成');
+      if (end.stop !== 'complete' || !end.text.trim()) throw new ApplicationError('MODEL_CONFIGURATION', '工具结果续轮未完成', [], { capabilityTestFailed: true });
       return { ok: true, text: end.text };
     }
-    if (result.stop !== 'complete' || !result.text.trim()) throw new Error('模型未返回完整文字，请检查输出和连接设置');
+    if (result.stop !== 'complete' || !result.text.trim()) throw new ApplicationError('MODEL_CONFIGURATION', '模型未返回完整文字，请检查输出和连接设置', [], { capabilityTestFailed: true });
     return { ok: true, text: result.text };
   }
   throw new Error('不支持的连接测试');

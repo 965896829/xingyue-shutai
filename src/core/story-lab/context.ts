@@ -87,6 +87,7 @@ export function buildLabContext(
         // parent subtree that might also contain the ending or discarded material.
         if (visible) {
           const lines = visible.filter(item => item.rule.section === index);
+          if (!lines.length && input.sectionIndexes?.includes(index)) throw new Error(`“${heading.title}”不在本章可用资料中，请重新选择。`);
           if (!lines.length) continue;
           excerpts.push(heading.title + '\n' + lines.map(item => item.text).join('') + '\n');
         } else excerpts.push(base.content.slice(heading.start, headings[index + 1]?.start ?? base.content.length));

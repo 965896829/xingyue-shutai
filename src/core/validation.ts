@@ -1,3 +1,4 @@
+import { outlineScenes } from '../shared/scene-headings';
 import fs from 'node:fs';
 import { bookProfilePath, parseBookProfile } from './publishing';
 import { parseWorldModel, renderWorldModel } from './world-model';
@@ -588,7 +589,7 @@ export function validateCandidate(
         }
       }
     }
-    if (c.path === detailPath(p.chapter) && !/^## 场面\d+/m.test(c.content))
+    if (c.path === detailPath(p.chapter) && !outlineScenes(c.content).length)
       issues.push({
         code: 'scene_structure',
         severity: 'error',
@@ -626,7 +627,7 @@ export function validateCandidate(
           });
       }
     }
-    for (const m of c.content.matchAll(/(?:情节强度|强度)[：:]\s*([\d.]+)/g))
+    if (/^0[56]_/.test(c.path)) for (const m of c.content.matchAll(/^[ \t]*(?:[-*][ \t]+)?(?:场面强度|情节强度|强度)[：:][ \t]*([\d.]+)/gm))
       if (!/^[1-5]$/.test(m[1]))
         issues.push({
           code: 'intensity',
@@ -635,9 +636,9 @@ export function validateCandidate(
           message: `情节强度必须是 1—5 整数，发现 ${m[1]}`
         });
     if (c.path === paths.relations) {
-      for (const line of c.content.split('\n').filter((l) => l.startsWith('|') && !l.includes('---'))) {
+      for (const line of c.content.split('\n').filter((l) => l.startsWith('|') && !/^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/.test(l))) {
         const cells = line
-          .split('|')
+          .split(/(?<!\\)\|/)
           .slice(1, -1)
           .map((x) => x.trim());
         if (
@@ -663,9 +664,9 @@ export function validateCandidate(
     }
     if (c.path === paths.hooks) {
       const seen = new Set<string>();
-      for (const line of c.content.split('\n').filter((l) => l.startsWith('|') && !l.includes('---'))) {
+      for (const line of c.content.split('\n').filter((l) => l.startsWith('|') && !/^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/.test(l))) {
         const cells = line
-          .split('|')
+          .split(/(?<!\\)\|/)
           .slice(1, -1)
           .map((x) => x.trim());
         if (cells[0] && cells[0] !== '编号') {

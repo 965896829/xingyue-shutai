@@ -1,3 +1,4 @@
+import { outlineScenes } from './scene-headings';
 import { readIntensity, chapterIntensity } from './narrative-curve';
 export interface NarrativeScene { title: string; action: string; hook: string; content: string; strength?: number }
 export interface NarrativePlan { strength?: number; payoff: string; scenes: NarrativeScene[] }
@@ -7,17 +8,17 @@ export function narrativePlan(content: string): NarrativePlan {
   const strength = chapterIntensity(content)?.strength;
   const payoff = content.match(/(?:本章主要阅读回报|主要阅读回报)[：:]\s*(.+)/)?.[1] ?? '';
   const scenes: NarrativeScene[] = [];
-  for (const line of content.split(/\r?\n/)) {
-    const heading = line.match(/^#{2,4}\s*((?:场面|场景)\s*[一二三四五六七八九十\d]+[^\n]*)/);
-    if (heading) { scenes.push({ title: clean(heading[1]), action: '', hook: '', content: '' }); continue; }
-    const scene = scenes.at(-1);
-    if (!scene) continue;
+  for (const section of outlineScenes(content)) {
+    const scene: NarrativeScene = { title: clean(section.title), action: '', hook: '', content: '' };
+    scenes.push(scene);
+    for (const line of section.block.split(/\r?\n/).slice(1)) {
     const field = clean(line.replace(/^\s*[-*]\s*/, ''));
     scene.content += field + '\n';
     const intensity = field.match(/^(?:场面强度|情节强度|强度)[：:]\s*(.*)/);
     if (intensity) scene.strength = readIntensity(intensity[1]) ?? undefined;
     if (/^(?:动作(?:\/对话)?推进|场景任务|主要动作|主角行动|主角主动选择|回报内容|最后一幕|动作与对话)[：:]/.test(field)) scene.action = field.replace(/^[^：:]+[：:]\s*/, '');
     if (/^(?:小钩子|阅读回报|余波\/状态变化|场景落点|下一章必须承接)[：:]/.test(field)) scene.hook = field.replace(/^[^：:]+[：:]\s*/, '');
+  }
   }
   return { strength, payoff: clean(payoff), scenes };
 }

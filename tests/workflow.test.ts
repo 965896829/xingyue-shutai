@@ -262,6 +262,10 @@ test('旧档案复制保持原始 UTF-8 BOM、CRLF、备注和九列表格字节
   fs.writeFileSync(path.join(source, paths.roles), raw);
   const preview = previewLegacy(source);
   assert.equal(preview.files.length, 1);
+  if (process.platform !== 'win32') {
+    assert.throws(() => previewLegacy('D:/Books'), /Windows/);
+    assert.throws(() => importLegacy({ source, parent: 'D:/Books', title: '旧稿', chapter: 1, stage: 'S01', config: {} }), /Windows/);
+  }
   const target = importLegacy({ source, parent, title: '旧稿', chapter: 1, stage: 'S01', config: {} });
   assert.deepEqual(fs.readFileSync(path.join(target, paths.roles)), raw);
   assert.deepEqual(fs.readFileSync(path.join(source, paths.roles)), raw);

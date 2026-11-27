@@ -194,7 +194,8 @@ export class StoryLabService {
   }
   private event(request: LabRequest, offset: number, text?: string) {
     request.sequence++;
-    this.store.save('requests', request);
+    if (text && request.status === 'running') this.store.appendResponse(request, text);
+    else this.store.save('requests', request);
     this.emit({
       type: 'story-lab',
       workspace: 'story-lab',
@@ -278,7 +279,8 @@ export class StoryLabService {
       ).length;
       request.endedAt = new Date().toISOString();
       this.store.finish(request);
-      this.event(request, request.response.length);
+      const tail = pending && request.response.endsWith(pending) ? pending : '';
+      this.event(request, request.response.length - tail.length, tail || undefined);
     }
   }
   cancel(sessionId: string, requestId: string) {

@@ -1,7 +1,8 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
-const { version, build } = createRequire(import.meta.url)('../package.json');
+const require = createRequire(import.meta.url);
+const { version, build } = require('../package.json');
 
 export function desktopArtifacts(root = process.env.WENXU_RELEASE_DIR || 'release') {
   const output = path.resolve(root);
@@ -15,10 +16,11 @@ export function desktopArtifacts(root = process.env.WENXU_RELEASE_DIR || 'releas
     };
   }
   if (process.platform === 'win32') {
+    const { win } = require('./windows-builder.cjs');
     const folder = path.join(output, 'win-unpacked');
     return {
       resources: path.join(folder, 'resources'),
-      executable: path.join(folder, build.win.executableName + '.exe'),
+      executable: path.join(folder, win.executableName + '.exe'),
       installer: path.join(output, `${build.productName} Setup ${version}.exe`)
     };
   }

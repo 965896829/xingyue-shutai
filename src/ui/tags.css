@@ -35,15 +35,6 @@
 .creation-input > .tag-form {
   margin-top: 18px;
 }
-.creation-model,
-.creation-review-reason {
-  display: grid;
-  gap: 8px;
-  margin: 18px 0;
-}
-.creation-model {
-  max-width: 560px;
-}
 .creation-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -327,9 +318,6 @@
 .creation-final input {
   width: auto;
 }
-.creation-review-reason textarea {
-  min-height: 70px;
-}
 .title-options {
   margin: 16px 0;
 }
@@ -429,9 +417,6 @@
   display: grid;
   gap: 12px;
   margin: 20px 0;
-}
-.tag-status {
-  font-weight: 600;
 }
 .tag-diff {
   display: grid;

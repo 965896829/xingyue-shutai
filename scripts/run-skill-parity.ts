@@ -1,8 +1,11 @@
 /** Real-provider, isolated client-engine run. No model responses are mocked. */
 import { app, safeStorage } from 'electron';
 import fs from 'node:fs';
+import { prepareEvaluationProfile } from './evaluation-profile';
+import { assertNativeDirectory } from '../src/core/system-path';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { atomicWrite } from '../src/core/storage';
 import { Service } from '../src/core/service';
 import { invokeModel, requestBody } from '../src/core/provider';
 import { modelRoundLimit, profileSchema, type Run } from '../src/shared/types';
@@ -10,42 +13,23 @@ import { modelRoundLimit, profileSchema, type Run } from '../src/shared/types';
 const configArg = process.argv.find(v => v.startsWith('--harness-config='));
 if (!configArg) throw new Error('Pass --harness-config=<absolute JSON path>');
 const config = JSON.parse(fs.readFileSync(configArg.slice('--harness-config='.length), 'utf8'));
+assertNativeDirectory(config.recordsRoot);
 const records: string = path.resolve(config.recordsRoot);
 if (config.cleanRun && (config.resumeRoot || config.resumeRunId || fs.existsSync(path.join(records, 'session.json'))))
   throw new Error('Clean benchmark must start in a new record directory and a new project');
 fs.mkdirSync(records, { recursive: true });
-const isolatedUserData = path.join(records, 'electron-profile');
-fs.mkdirSync(isolatedUserData, { recursive: true });
-const localState = path.join(path.dirname(config.settingsFile), 'Local State');
-if (fs.existsSync(localState) && !fs.existsSync(path.join(isolatedUserData, 'Local State')))
-  fs.copyFileSync(localState, path.join(isolatedUserData, 'Local State'));
-app.setPath('userData', isolatedUserData);
-app.setPath('sessionData', isolatedUserData);
-app.setName('星月书台流程复测');
+prepareEvaluationProfile(app, path.dirname(path.resolve(config.settingsFile)));
 const write = (file: string, value: unknown) => {
   const target = path.join(records, file);
   fs.mkdirSync(path.dirname(target), { recursive: true });
-  const temporary = target + '.tmp';
-  fs.writeFileSync(temporary, JSON.stringify(value, null, 2));
-  // Windows readers/antivirus may briefly hold the replaced file without delete
-  // sharing. A live status mirror must never abort an in-flight model request.
-  for (let attempt = 0; ; attempt++) {
-    try { fs.renameSync(temporary, target); return; }
-    catch (error: any) {
-      const transient = ['EPERM', 'EACCES', 'EBUSY'].includes(error.code);
-      if (transient && attempt < 20) {
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
-        continue;
-      }
-      if (transient && file === 'status.json') {
-        fs.appendFileSync(path.join(records, 'recorder-warnings.jsonl'), JSON.stringify({
-          at: new Date().toISOString(), file, code: error.code,
-          message: 'Status mirror skipped after bounded replacement retries; generation continues.'
-        }) + '\n');
-        return;
-      }
-      throw error;
-    }
+  try {
+    atomicWrite(target, JSON.stringify(value, null, 2));
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (file !== 'status.json' || !['EPERM', 'EACCES', 'EBUSY'].includes(code ?? '')) throw error;
+    fs.appendFileSync(path.join(records, 'recorder-warnings.jsonl'), JSON.stringify({
+      at: new Date().toISOString(), file, code, message: 'Status mirror unavailable; generation continues.'
+    }) + '\n');
   }
 };
 const log = (file: string, value: unknown) => fs.appendFileSync(path.join(records, file), JSON.stringify(value) + '\n');

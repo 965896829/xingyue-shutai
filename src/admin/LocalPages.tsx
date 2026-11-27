@@ -30,7 +30,9 @@ export function LocalPage({ page }: { page: PageSpec }) {
 function Knowledge() {
   const { snapshot } = useManagement();
   const [query, setQuery] = useState('');
-  function open(path: string) { go('workspace'); setTimeout(() => window.dispatchEvent(new CustomEvent('management:document', { detail: path })), 0); }
+  function open(path: string) {
+    if (snapshot?.projectSessionId) go('workspace?' + new URLSearchParams({ document: path, session: snapshot.projectSessionId }));
+  }
   return <div className="ref-page"><CompactHeading title="知识库管理" description="管理当前作品的正式资料。编辑沿用客户端的版本检查与变更联动；平台共享知识库、云端向量库尚未接入。" actions={<><button className="button secondary" onClick={() => go('search')}>检索设置</button><button className="button primary" onClick={() => navigate('/admin/sys/backup-restore')}>导入资料</button></>} /><div className="ref-toolbar"><SearchBox value={query} onChange={setQuery} placeholder="搜索文档路径" /><span>{snapshot?.documents.length ?? 0} 份文档</span></div><div className="ref-collection-grid">{snapshot?.documents.filter(d => d.path.includes(query)).map(d => <article className="ref-box" key={d.path}><BookOpen size={22} /><h3>{d.path}</h3><p>当前作品正式文档</p><button className="button secondary" onClick={() => open(d.path)}>查看与编辑</button></article>)}</div>{!snapshot?.documents.length && <RefEmpty text="打开作品后查看资料，或先导入本机文档。" />}</div>;
 }
 function Projects() {
@@ -40,7 +42,7 @@ function Projects() {
   return <div className="ref-page">
     <CompactHeading title="作品与运行" description="在本机打开作品，管理文稿、任务与创作进度。" actions={<>
       <button className="button secondary" disabled={busy} onClick={() => void act(async () => { const root = await invokeCommand('app.chooseDirectory'); if (root) { await invokeCommand('project.open', { root }); go('workspace'); } })}><FolderOpen size={14} />打开作品</button>
-      <button className="button primary" onClick={() => { go('workspace'); setTimeout(() => window.dispatchEvent(new CustomEvent('management:navigate', { detail: 'new' })), 0); }}><Plus size={14} />新建作品</button>
+      <button className="button primary" onClick={() => go('workspace?action=new')}><Plus size={14} />新建作品</button>
     </>} />
     <div className="ref-toolbar"><SearchBox value={query} onChange={setQuery} placeholder="搜索作品名称或目录" /><span className="ref-spacer" /><button className="button secondary" onClick={() => void refresh()}><RefreshCw size={14} />刷新</button><button className="button secondary" onClick={() => go('trash')}>作品回收站</button></div>
     <div className="ref-table-wrap"><table className="ref-table"><thead><tr><th>作品</th><th>保存目录</th><th>状态</th><th>操作</th></tr></thead><tbody>

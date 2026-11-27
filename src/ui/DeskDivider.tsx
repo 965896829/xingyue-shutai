@@ -15,7 +15,7 @@ export function useDeskLayout() {
       localStorage.setItem('writing-desk:collapsed', String(collapsed));
     } catch { /* Current window still keeps the preference. */ }
   }, [width, collapsed]);
-  return { width, setWidth, collapsed, toggle: () => setCollapsed(v => !v),
+  return { width, setWidth, collapsed, expand: () => setCollapsed(false), toggle: () => setCollapsed(v => !v),
     style: { '--desk-chat-width': width + 'px' } as CSSProperties };
 }
 export function DeskDivider({ width, setWidth }: { width: number; setWidth: (v: number) => void }) {

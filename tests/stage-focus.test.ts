@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { testOutputRoot } from './fixtures/test-output';
 import { Service } from '../src/core/service';
 import { fakeProfile, fakeResult, isolatedRoot, refactorFixture } from './fixtures/refactor';
 import { fixture } from './fixtures/workflow';
@@ -23,7 +24,7 @@ import { designCatalog, designResource } from '../src/core/design-operations';
 
 const root = path.resolve('resources/skill');
 const model = { ...fakeProfile, protocol: 'responses' as const, contextLimit: 1000000, outputLimit: 16000 };
-const output = path.resolve('.test-output/stage-focus/requests');
+const output = path.join(testOutputRoot, 'stage-focus/requests');
 fs.mkdirSync(output, { recursive: true });
 
 for (const stage of stageIds) test(`阶段真实入口与网关请求专注当前专业任务：${stage}`, async () => {

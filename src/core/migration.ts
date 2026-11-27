@@ -1,10 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { FileStore, safePath } from './storage';
+import { assertNativeDirectory } from './system-path';
 import { newProject, paths, id, now } from './domain';
 import { configSchema, stageIds } from '../shared/types';
 import { z } from 'zod';
 export function previewLegacy(source: string) {
+  assertNativeDirectory(source);
   const files: { path: string; bytes: number; warning?: string }[] = [];
   const walk = (dir: string, prefix = '') => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -40,8 +42,9 @@ export function importLegacy(args: unknown) {
         stage: z.enum(stageIds),
         config: configSchema
       })
-      .parse(args),
-    preview = previewLegacy(a.source);
+      .parse(args);
+  assertNativeDirectory(a.parent);
+  const preview = previewLegacy(a.source);
   const root = path.join(a.parent, `导入作品_${id().slice(0, 8)}`);
   fs.mkdirSync(root);
   const s = new FileStore(root);

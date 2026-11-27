@@ -20,7 +20,10 @@ export default defineConfig(({ command }) => {
     html: command === 'serve' ? { cspNonce: nonce } : undefined,
     base: './',
     optimizeDeps: { entries: ['index.html', 'admin.html'] },
-    server: { host: '127.0.0.1', port: 5173, strictPort: true, watch: { ignored: ['**/.test-output/**', '**/release/**'] } },
+    server: {
+      host: '127.0.0.1', port: 5173, strictPort: true,
+      watch: { ignored: ['**/.test-output/**', '**/dist-electron/**', '**/release/**', '**/output/**', '**/作品/**', '**/.novelclient/**'] }
+    },
     build: { sourcemap: true, rolldownOptions: { input: ['index.html', 'admin.html'] } }
   };
 });

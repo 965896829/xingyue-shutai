@@ -1,7 +1,10 @@
 import type { FileStore } from './storage';
-import { factSchema, type Fact } from '../shared/types';
-import { validateEvidence } from './memory-records';
+import type { Fact } from '../shared/types';
+import { decodeFacts, validateEvidence } from './memory-records';
+import type { MemoryDiagnostic } from './memory-diagnostics';
 import { pendingSource } from './memory-source';
+
+export class InvalidFactLedger extends Error {}
 
 export function updateFactIndex(store: FileStore, changedSources: string[], revision: number) {
   const { db } = store,
@@ -12,7 +15,7 @@ export function updateFactIndex(store: FileStore, changedSources: string[], revi
       (row) => [row.path, row.hash]
     )
   );
-  const rebuild = !db.get<boolean>('factLedgerIndexValid');
+  const rebuild = !db.get<boolean>('factLedgerIndexValid') || !db.get('memoryDiagnostics');
   const changed = documents.filter((doc) => rebuild || versions.get(doc.path) !== doc.hash);
   const removed = [...versions.keys()].filter((file) => !documents.some((doc) => doc.path === file));
   const affected = new Set<string>();
@@ -30,16 +33,15 @@ export function updateFactIndex(store: FileStore, changedSources: string[], revi
   const source = sql.prepare('INSERT OR IGNORE INTO fact_source_index VALUES(?,?,?)');
   for (const doc of changed) {
     const content = store.object(doc.hash!).toString('utf8');
-    const match = content.match(/<!-- wenxu-facts:v1 -->\s*```json\s*\n([\s\S]*?)\n```/);
-    if (match) {
-      const input: unknown = JSON.parse(match[1]);
-      if (!Array.isArray(input)) throw new Error('事实记录必须为数组');
-      for (const item of input) {
-        const fact = factSchema.parse(item);
-        insert.run(fact.id, doc.path, JSON.stringify(fact));
-        for (const evidence of fact.evidence) source.run(fact.id, evidence.path, evidence.hash);
-        affected.add(fact.id);
-      }
+    let facts: Fact[];
+    try { facts = decodeFacts(content); }
+    catch (error) { throw new InvalidFactLedger(`${doc.path}：${(error as Error).message}`); }
+    for (const fact of facts) {
+      if (sql.prepare('SELECT 1 FROM fact_ledgers WHERE id=?').get(fact.id))
+        throw new InvalidFactLedger(`重复记忆编号：${fact.id}`);
+      insert.run(fact.id, doc.path, JSON.stringify(fact));
+      for (const evidence of fact.evidence) source.run(fact.id, evidence.path, evidence.hash);
+      affected.add(fact.id);
     }
     sql.prepare('INSERT INTO fact_ledger_versions VALUES(?,?)').run(doc.path, doc.hash!);
   }
@@ -63,25 +65,37 @@ export function updateFactIndex(store: FileStore, changedSources: string[], revi
   const sourcePaths = new Set<string>();
   for (const key of affected) for (const row of sql.prepare('SELECT path FROM fact_source_index WHERE fact_id=?').all(key)) sourcePaths.add(String(row.path));
   const candidates = changedSources.filter(path => sourcePaths.has(path) && db.document(path)?.hash).map(path => ({ path, content: store.object(db.document(path)!.hash!).toString('utf8'), baseHash: db.document(path)!.hash }));
+  const previous = db.get<{ issues: MemoryDiagnostic[] }>('memoryDiagnostics');
+  const diagnostics = (previous?.issues ?? []).filter(issue => !rebuild && !removed.includes(issue.path) && !changed.some(doc => doc.path === issue.path) && !(issue.fact && affected.has(issue.fact.id)));
   for (const key of affected) {
-    const row = sql.prepare('SELECT data FROM fact_ledgers WHERE id=?').get(key);
+    const row = sql.prepare('SELECT path,data FROM fact_ledgers WHERE id=?').get(key);
     if (!row) {
       sql.prepare('DELETE FROM facts WHERE id=?').run(key);
       continue;
     }
     const fact = JSON.parse(String(row.data)) as Fact;
     if (!['accepted', 'disputed'].includes(fact.reviewStatus)) { sql.prepare('DELETE FROM facts WHERE id=?').run(key); continue; }
-    if (
-      fact.state !== 'superseded' &&
-      validateEvidence(store, fact, Math.max(project.chapter, fact.revealedAt), candidates, [], project, sourceCache).length
-    ) {
+    const errors = fact.state === 'superseded' ? [] : validateEvidence(store, fact, Math.max(project.chapter, fact.revealedAt), candidates, [], project, sourceCache);
+    if (errors.length) {
+      const original = structuredClone(fact);
+      for (const message of errors) diagnostics.push({ code: 'invalid_evidence', path: String(row.path), message, fact: original });
       fact.state = 'disputed';
       fact.reviewStatus = 'disputed';
     }
     upsert.run(fact.id, JSON.stringify(fact), fact.evidence.map((e) => e.hash).join(','));
     for (const evidence of fact.evidence) dependency.run(evidence.path, evidence.hash, fact.id, 'fact');
   }
-  db.set('indexRevision', revision);
+  sql.exec('SAVEPOINT memory_diagnostics');
+  try {
+    db.set('memoryIssues', diagnostics.map(issue => issue.message));
+    db.set('memoryDiagnostics', { version: 1, revision, issues: diagnostics });
+    db.set('indexRevision', revision);
+    sql.exec('RELEASE memory_diagnostics');
+  } catch {
+    sql.exec('ROLLBACK TO memory_diagnostics; RELEASE memory_diagnostics');
+    db.set('indexRevision', -1);
+    sql.prepare("INSERT OR IGNORE INTO adoption_followups VALUES('diagnostics','memory','project')").run();
+  }
   db.set('factLedgerIndexValid', true);
   db.set('factSourceAvailability', availability);
   return { rebuilt: rebuild, ledgers: changed.length, facts: affected.size };

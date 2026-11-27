@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { testOutputRoot } from './fixtures/test-output';
 import { Service } from '../src/core/service';
 import { professionalMethod } from '../src/core/creation-policy';
 import { hash, paths, renderProgress } from '../src/core/domain';
@@ -15,7 +16,7 @@ const response = (text: string, calls: { name: string; args: unknown }[] = []): 
 const repair = { kind: 'stage', goal: '补齐项目配置和文风', scope: '只处理当前阶段缺失的两个候选', request: '保留原有要求，补齐本阶段候选并重新检查', outputs: ['项目配置', '文风样本与规则'] };
 
 async function fixture(caller: Caller, status: Run['status'] = 'needs_repair') {
-  const scope = path.resolve('.test-output/task-discussion-tests');
+  const scope = path.join(testOutputRoot, 'task-discussion-tests');
   fs.mkdirSync(scope, { recursive: true });
   const parent = fs.mkdtempSync(path.join(scope, 'case-'));
   const service = new Service(path.resolve('resources/skill'), () => {}, caller);

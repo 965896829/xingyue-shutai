@@ -23,7 +23,7 @@ export function finishAdoptionWork(store: FileStore, opening = false) {
   const db = store.db;
   if (opening) {
     const enqueue = db.sql.prepare("INSERT OR IGNORE INTO adoption_followups VALUES('open',?,'project')");
-    if (db.get<number>('indexRevision') !== db.project().revision) enqueue.run('memory');
+    if (db.get<number>('indexRevision') !== db.project().revision || db.get<{ revision: number }>('memoryDiagnostics')?.revision !== db.project().revision) enqueue.run('memory');
     if (db.get<number>('entityIndexRevision') !== db.project().revision) enqueue.run('entities');
   }
   const has = (kind: string) => db.sql.prepare('SELECT 1 FROM adoption_followups WHERE kind=? LIMIT 1').get(kind);

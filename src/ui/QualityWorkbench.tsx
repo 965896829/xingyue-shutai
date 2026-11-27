@@ -1,5 +1,6 @@
 import { ReviewObservations } from './ReviewObservations';
 import { useEffect, useRef, useState } from 'react';
+import { reviewDownload } from './export-review';
 import { AudioLines, BookOpenCheck, Columns2, GitBranch, Globe2, NotebookText, Route, PanelsTopLeft } from 'lucide-react';
 import { invokeCommand } from '../shared/client';
 import type { CommandOutput } from '../shared/contracts';
@@ -26,6 +27,7 @@ const empty: QualityState = {
 const origins = { human_author: '作者', human_target_reader: '目标读者', model_simulation: '模型模拟' };
 export function QualityWorkbench({ profileId, onRun }: { profileId: string; onRun: (id: string) => void }) {
   const [open, setOpen] = useState(false),
+    [exportPage, setExportPage] = useState(-1),
     [tab, setTab] = useState('voice'),
     [state, setState] = useState(empty);
   const [error, setError] = useState(''),
@@ -71,9 +73,13 @@ export function QualityWorkbench({ profileId, onRun }: { profileId: string; onRu
   const [choice, setChoice] = useState('tie'),
     [feedback, setFeedback] = useState(''),
     [recruitment, setRecruitment] = useState('');
+  const exportPages = Math.ceil(state.experiments.length / 100);
+  const currentExportPage = Math.min(exportPage, exportPages - 1);
   const dialog = useRef<HTMLElement | null>(null);
   useDialog(dialog, open, () => setOpen(false));
+  const pendingActions = useRef(0);
   const act = async (work: () => Promise<unknown>) => {
+    pendingActions.current++;
     setBusy(true);
     setError('');
     setNotice('');
@@ -82,7 +88,7 @@ export function QualityWorkbench({ profileId, onRun }: { profileId: string; onRu
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setBusy(false);
+      if (--pendingActions.current === 0) setBusy(false);
     }
   };
   const mutate = async (mutation: QualityMutation) => {
@@ -106,6 +112,7 @@ export function QualityWorkbench({ profileId, onRun }: { profileId: string; onRu
     questions: ['更愿意继续阅读哪一份？为什么？']
   };
   useEffect(() => {
+    let active = true;
     if (open)
       void act(async () => {
         const [quality, resource, model] = await Promise.allSettled([
@@ -113,6 +120,7 @@ export function QualityWorkbench({ profileId, onRun }: { profileId: string; onRu
           invokeCommand('resource.read', { resources: ['documents', 'runs'] }),
           invokeCommand('world.read')
         ]);
+        if (!active) return;
         if (quality.status === 'fulfilled') setState(quality.value);
         if (model.status === 'fulfilled') setWorld(model.value);
         if (resource.status === 'fulfilled') {
@@ -133,17 +141,23 @@ export function QualityWorkbench({ profileId, onRun }: { profileId: string; onRu
               .join('；')
           );
       });
+    return () => { active = false; };
   }, [open]);
   useEffect(() => {
-    if (path)
+    let active = true;
+    setBeforeHash('');
+    setHistory([]);
+    if (open && path)
       void act(async () => {
         const versions = await invokeCommand('document.history', { path });
+        if (!active) return;
         setHistory(versions);
         setBeforeHash(
           versions.find((v) => v.hash !== documents.find((d) => d.path === path)?.hash)?.hash ?? ''
         );
       });
-  }, [path]);
+    return () => { active = false; };
+  }, [open, path]);
   const scopeFields = (
     <div className="quality-grid">
       <label>
@@ -666,19 +680,21 @@ export function QualityWorkbench({ profileId, onRun }: { profileId: string; onRu
                 {tab === 'compare' && (
                   <>
                     <div className="quality-actions">
+                      {exportPages > 1 && <label>试读导出范围 <select value={currentExportPage} onChange={e => setExportPage(Number(e.target.value))}>
+                        <option value={-1}>全部试读</option>
+                        {Array.from({ length: exportPages }, (_, page) => <option key={page} value={page}>第 {page * 100 + 1} 至 {Math.min((page + 1) * 100, state.experiments.length)} 项</option>)}
+                      </select></label>}
                       <button
-                        disabled={!state.experiments.length || state.experiments.length > 100}
+                        disabled={!state.experiments.length}
                         onClick={() =>
                           void act(async () => {
-                            const result = await invokeCommand('quality.exportReview', {
-                              experimentIds: state.experiments.map((e) => e.id)
-                            });
-                            const url = URL.createObjectURL(
-                              new Blob([result.html], { type: 'text/html;charset=utf-8' })
-                            );
+                            const all = currentExportPage < 0 || exportPages <= 1;
+                            const selected = all ? state.experiments : state.experiments.slice(currentExportPage * 100, (currentExportPage + 1) * 100);
+                            const download = await reviewDownload(selected.map(e => e.id), ids => invokeCommand('quality.exportReview', { experimentIds: ids }));
+                            const url = URL.createObjectURL(download.blob);
                             const link = document.createElement('a');
                             link.href = url;
-                            link.download = '星月书台-匿名试读.html';
+                            link.download = all ? download.filename : `星月书台-匿名试读-第${currentExportPage + 1}组.html`;
                             link.click();
                             setTimeout(() => URL.revokeObjectURL(url), 1000);
                             setState(await invokeCommand('quality.read'));
@@ -686,7 +702,7 @@ export function QualityWorkbench({ profileId, onRun }: { profileId: string; onRu
                           })
                         }
                       >
-                        导出全部试读
+                        {exportPages > 1 && currentExportPage >= 0 ? '导出所选范围' : '导出全部试读'}
                       </button>
                       <button onClick={() => feedbackFile.current?.click()}>导入读者反馈</button>
                       <input

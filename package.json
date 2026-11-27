@@ -1,6 +1,6 @@
 {
   "name": "wenxu-desktop",
-  "version": "0.4.98-macos.6",
+  "version": "0.4.98-macos.8",
   "private": true,
   "description": "星月书台 · 本地网文创作工作台",
   "author": "AIkehuduan",
@@ -14,7 +14,7 @@
     "dev:isolated": "node scripts/dev.mjs --isolated",
     "doctor": "node scripts/doctor.mjs",
     "build": "tsc --noEmit && vite build && node scripts/build-main.mjs",
-    "test": "node --import tsx --test --test-concurrency=1 tests/*.test.ts",
+    "test": "node scripts/with-test-workspace.mjs --import tsx --test --test-concurrency=1 tests/*.test.ts",
     "check": "tsc --noEmit",
     "start": "electron .",
     "pack": "node scripts/package-macos.mjs dir",
@@ -23,11 +23,11 @@
     "dist:mac": "node scripts/package-macos.mjs dist",
     "dist:signed": "node scripts/package-release.mjs",
     "preview": "vite --host 127.0.0.1",
-    "test:scale": "node --import tsx tests/scale.ts",
-    "test:large-book": "node scripts/test-large-book.mjs",
-    "eval:reading": "node scripts/reading-study.mjs",
-    "eval:context": "node --import tsx scripts/context-eval.ts --run-context-eval",
-    "eval:prose": "node --import tsx scripts/prose-eval.ts --run-prose-eval"
+    "test:scale": "node scripts/with-test-workspace.mjs --import tsx tests/scale.ts",
+    "test:large-book": "node scripts/with-test-workspace.mjs scripts/test-large-book.mjs",
+    "eval:reading": "node scripts/with-test-workspace.mjs scripts/reading-study.mjs",
+    "eval:context": "node scripts/with-test-workspace.mjs --import tsx scripts/context-eval.ts --run-context-eval",
+    "eval:prose": "node scripts/with-test-workspace.mjs --import tsx scripts/prose-eval.ts --run-prose-eval"
   },
   "build": {
     "appId": "local.wenxu.desktop",
@@ -52,13 +52,18 @@
     ],
     "asar": true,
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "category": "public.app-category.productivity",
       "icon": "public/brand/app-icon.png",
       "minimumSystemVersion": "13.5",
       "extendInfo": {
         "CFBundleDevelopmentRegion": "zh-Hans",
-        "CFBundleLocalizations": ["zh-Hans"]
+        "CFBundleLocalizations": [
+          "zh-Hans"
+        ]
       },
       "identity": "-",
       "hardenedRuntime": true,
@@ -66,29 +71,6 @@
       "entitlementsInherit": "resources/entitlements.mac.plist",
       "notarize": false,
       "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "resources/icon.ico",
-      "signExecutable": false,
-      "executableName": "星月书台"
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "deleteAppDataOnUninstall": false,
-      "guid": "abaa7e0a-484b-5222-a08b-20b012130b6d",
-      "shortcutName": "星月书台",
-      "uninstallDisplayName": "${productName} ${version}",
-      "artifactName": "${productName} Setup ${version}.${ext}"
     },
     "publish": null,
     "electronDist": "node_modules/electron/dist"

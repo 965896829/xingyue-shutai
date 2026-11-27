@@ -22,7 +22,7 @@
 
 每次操作最多发送 1 次模型请求，无自动重试、联网、工具调用或审核链。输出截断后可主动继续；远端结果或费用未知时会保留已有内容并要求明确确认新请求。手改与模型回复都保存为候选，选择较旧候选前须比较版本。资料过大时停止发送，不静默删除作者要求。可导出 Markdown/文本；隐藏入口保留数据，可从侧栏重新启用。
 
-隔离回归：`node --import tsx --test tests/story-lab.test.ts`。真实模型对照脚本见 [scripts/story-lab-eval.ts](scripts/story-lab-eval.ts)，只在显式传入 `--authorized-story-lab-comparison` 后运行；最多 7 次调用，包含一句需求、实验室、正式 S01 首阶段及相同场景资料的两组正文。正式 S01 不代表完整 S01—S11 产出，单次对照不能证明稳定的文学质量优势。
+隔离回归：`node scripts/with-test-workspace.mjs --import tsx --test tests/story-lab.test.ts`。真实模型对照脚本见 [scripts/story-lab-eval.ts](scripts/story-lab-eval.ts)，只在显式传入 `--authorized-story-lab-comparison` 后运行；最多 7 次调用，包含一句需求、实验室、正式 S01 首阶段及相同场景资料的两组正文。正式 S01 不代表完整 S01—S11 产出，单次对照不能证明稳定的文学质量优势。
 
 ## 开发与构建
 
@@ -43,7 +43,7 @@ npm start
 
 在 Mac 上，`npm run pack` 生成可直接打开的应用，`npm run dist` 生成当前芯片对应的 DMG 和 ZIP，输出到 `release/`。这两个开发包使用本机临时签名。公开分发时用 `npm run dist:signed` 生成独立的签名、公证产物。
 
-常规持续集成在两种 Mac 芯片上运行。准备 Windows 发行时，可手动启用 Windows x64 原生验收。现有用户的升级标识保存在发布配置中。[桌面构建工作流](.github/workflows/desktop-platforms.yml)
+常规持续集成在两种 Mac 芯片上运行。两套发行流程分别见 [Mac 构建工作流](.github/workflows/desktop-platforms.yml) 和 [Windows 手动验收](.github/workflows/windows-release.yml)。
 
 本地管理后台由客户端开启，沿用客户端授权与业务接口。开发验证应使用独立的 `WENXU_DATA_DIR` 和临时作品目录，不使用作者正在创作的作品。
 
@@ -59,6 +59,7 @@ npm start
 | `src/admin/` | 本地网页管理后台及原后台页面适配 |
 | `electron/` | 主进程、预加载和业务工作进程 |
 | `resources/skill/` | 内置 Skill、标签、命名与表达规则，含完整性锁 |
+| `xingyue-agent-design/` | 历史设计与来源资料，出版分类导入工具使用其中的 `data/fanqie/` |
 | `tests/` | 自动回归、测试夹具和专项容量验证 |
 | `scripts/` | 可复用开发、评估与交付工具；见[脚本说明](scripts/README.md) |
 | `docs/` | 需求基线、设计、变更和历史验收记录；历史版本结论不代表当前验收状态 |
@@ -67,7 +68,7 @@ npm start
 
 0.4.96 的实际创作规则见[完整提示词清单](docs/prompts/0.4.96/README.md)，包含总控 `agent.md`、三方向与书名、S01—S11、独立审核、按需附加规则及系统提示词装配示例。示例使用默认配置，实际请求另按目标章节加入作品资料与作者要求。
 
-[源码与目录清理记录](docs/maintenance/repository-cleanup-2026-10-30.md)说明本次退役脚本、未引用资源、旧安装包与恢复方法；更早的输出归档见 [2026-10-28 记录](docs/maintenance/repository-cleanup-2026-10-28.md)。
+旧安装包、退役脚本和历史输出的归档及恢复方法见 [10 月 28 日清理记录](docs/maintenance/repository-cleanup-2026-10-28.md)和 [10 月 30 日清理记录](docs/maintenance/repository-cleanup-2026-10-30.md)。
 
 ## 验证与边界
 

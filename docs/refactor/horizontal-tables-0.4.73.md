@@ -37,8 +37,8 @@
 
 - 历史安装包 `星月书台 Setup 0.4.73.exe`：126,716,401 字节，较 0.4.72 增加 2,413 字节。该旧包已在 2026-10-28 的[目录清理](../maintenance/repository-cleanup-2026-10-28.md)中移除。
 - SHA-256：`fd5fe66a9ef6abdceede5eb2d264b537692b7219f9e946ccf6ddf1843e25300b`。
-- [夜间效果](../../output/playwright/table-display-0.4.73-final-dark.png)、[日间效果](../../output/playwright/table-display-0.4.73-final-light.png)、[右侧字段与固定编号](../../output/playwright/table-display-0.4.73-final-right-columns.png)。
-- [完整测试日志](../../output/table-display-0.4.73-20261027/full-tests.log)、[浏览器回归](../../output/table-display-0.4.73-20261027/browser-regression.json)、[安装包校验](../../output/table-display-0.4.73-20261027/delivery-report.json)。
+- 当时另存了夜间、日间和右侧字段与固定编号三组界面截图。
+- 本轮原始输出目录为 `output/table-display-0.4.73-20261027/`，其中记录了全量回归、浏览器回归及安装包校验。
 - 本轮修改前的源码备份、独立变更补丁和文件哈希清单位于 `output/table-display-0.4.73-20261027/`，避免混入之前版本尚未提交的改动。
 
 本轮完成打包，未覆盖安装正在使用的客户端。隔离界面验收服务已关闭。

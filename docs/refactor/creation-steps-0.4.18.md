@@ -25,12 +25,7 @@
 - 只保存时进入 S02 且不创建 S02 任务；勾选继续时只创建一个待审阅的 S02 任务，未自动采纳。
 - 日夜主题及 1050×780 较窄窗口检查通过，未发现页面横向溢出。
 
-界面截图：
-
-- [方案确认](../../output/playwright/creation-steps-plan.png)
-- [书名选择与保存](../../output/playwright/creation-steps-title.png)
-- [日间较窄窗口](../../output/playwright/creation-steps-light-compact.png)
-- [中断后的恢复入口](../../output/playwright/creation-steps-recovery.png)
+当时另在本机记录了方案确认、书名选择与保存、日间窄窗口和中断恢复四种界面状态。
 
 完整回归 **302/302 通过**，生产构建中的 TypeScript 检查通过。日志分别保存在 `.test-output/creation-steps-tests.log`、`.test-output/creation-steps-build.log`。新增 5 项维护中的回归覆盖步骤推进、错误状态、限额与审核恢复、旧任务建议去重，以及普通建议无需豁免的完整采纳流程。安装包内前端入口、JS/CSS 和四个 Electron 入口共 7 个文件与本次构建逐字节一致，记录为 `.test-output/creation-steps-package.json`。
 

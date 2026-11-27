@@ -62,7 +62,7 @@ export async function callExternal<T>(
   store: FileStore, owner: AttemptOwner, purpose: string,
   config: { provider: string; model: string; version: number; identity: unknown; pricing: unknown; currency: string },
   request: unknown, reserved: bigint | null, signal: AbortSignal,
-  send: () => Promise<T>, usage: (result: T) => Usage, onReceipt?: (ref: string, result: T) => void
+  send: () => Promise<T>, usage: (result: T) => Usage, onReceipt?: (ref: string, result: T, attemptId: string) => void
 ): Promise<T> {
   if (signal.aborted) throw new RequestError('请求尚未发送，任务已停止', false);
   const budget = store.db.project()?.config.stageBudget ?? null;
@@ -108,7 +108,7 @@ export async function callExternal<T>(
     attempt.completedAt = new Date().toISOString();
     store.db.transaction(() => {
       save(store, attempt);
-      onReceipt?.(attempt.responseRef!, result);
+      onReceipt?.(attempt.responseRef!, result, attempt.id);
       store.db.event(owner.id, 'attempt-result', '远端请求结果已持久化', { attemptId: attempt.id, usageState: attempt.usageState, responseRef: attempt.responseRef });
     });
     return result;
@@ -166,10 +166,10 @@ export async function callModel(
     inputLimit: sizing.effectiveInputLimit, availableInput: sizing.availableInput, outputReserve: sizing.outputReserve,
     estimatedInput: sizing.tokens, method: session?.measuredPrefixTokens ? 'measured_prefix_upper_bound' : sizing.method, status: 'not_sent'
   };
-  const pricing = { input: profile.inputPrice, output: profile.outputPrice, currency: profile.currency };
+  const pricing = { input: profile.inputPrice, output: profile.outputPrice, cacheRead: profile.cacheReadPrice, cacheWrite: profile.cacheWritePrice, currency: profile.currency };
   if (options?.webSearch && store.db.project()?.config.stageBudget !== null && store.db.project()?.config.stageBudget !== undefined)
     throw new ApplicationError('BUDGET_UNCONFIRMED', '原生联网搜索包含额外工具费用，当前无法保证费用上限；请关闭联网或调整预算设置后重试');
-  const reserved = options?.webSearch || profile.inputPrice === null || profile.outputPrice === null ? null : estimatedUnits(sizing.tokens + sizing.providerReserve + sizing.safetyReserve, profile.outputLimit, profile.inputPrice, profile.outputPrice);
+  const reserved = options?.webSearch || profile.inputPrice === null || profile.outputPrice === null ? null : estimatedUnits(sizing.tokens + sizing.providerReserve + sizing.safetyReserve, profile.outputLimit, Math.max(profile.inputPrice, profile.cacheReadPrice ?? 0, profile.cacheWritePrice ?? 0), profile.outputPrice);
   args[5] = text => { if (text) partial = true; requestOptions.onActivity('responding'); delta?.(text); };
   for (let retry = 0; ; retry++) {
     try {
@@ -183,7 +183,10 @@ export async function callModel(
       }, body, reserved, signal, async () => {
         options?.onActivity?.('waiting');
         return caller(...args);
-      }, (result) => result.usage, onReceipt);
+      }, (result) => result.usage, (ref, result, attemptId) => {
+        for (const call of result.calls) call.attemptId = attemptId;
+        onReceipt?.(ref, result);
+      });
       for (const call of result.calls) {
         const normalized = normalizeToolArguments(call.arguments);
         if (normalized !== call.arguments) {

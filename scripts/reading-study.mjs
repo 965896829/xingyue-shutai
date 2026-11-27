@@ -12,9 +12,10 @@ if (live) {
   sampleFile = path.resolve(args[4]); fs.accessSync(sampleFile, fs.constants.R_OK);
 } else if (args.length && !(args.length === 1 && args[0] === '--dry-run')) throw Error('离线验收用 --dry-run');
 const baseline = 'c43573c38e3f7aee56c63081fc97783b2f6826f5';
-const root = path.resolve('.test-output/continuous-reading');
+const root = path.resolve(live ? '.test-output' : process.env.XINGYUE_TEST_OUTPUT ?? '.test-output', 'continuous-reading');
 fs.mkdirSync(root, { recursive: true });
-const scratch = fs.mkdtempSync(path.join(root, 'build-'));
+using buildDirectory = fs.mkdtempDisposableSync(path.join(process.env.XINGYUE_TEST_OUTPUT ?? root, 'build-'));
+const scratch = buildDirectory.path;
 const old = path.join(scratch, 'baseline');
 fs.mkdirSync(old);
 const archive = path.join(scratch, 'baseline.tar');

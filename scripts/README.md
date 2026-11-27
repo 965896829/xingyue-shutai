@@ -10,7 +10,7 @@
 | `dev.mjs --isolated` | `npm run dev:isolated` | 在 `.test-output/development-profile` 使用独立开发配置，首次调试配合独立测试作品。 |
 | `doctor.mjs` | `npm run doctor` | 检查 Node、系统、架构、SQLite 与 Electron；不读取作品、模型配置或发送模型请求。 |
 | `package-macos.mjs` | `npm run pack` / `npm run dist` | 仅在原生 macOS 上检查、构建并生成当前 CPU 架构的 ad-hoc 开发包，不自动发布；见 [Mac 开发指南](../docs/macos-development.md)。 |
-| `smoke-desktop.mjs` | `node scripts/smoke-desktop.mjs` | 用一次性空配置打开已打包的应用，核对工作台、执行内核和实验室。 |
+| `smoke-desktop.mjs` | `node scripts/smoke-desktop.mjs` | 用一次性配置打开打包好的应用。`--audit` 加测专注模式、文稿侧栏和内核重连，`--source` 显式选择已编译的源码版。 |
 | `package-release.mjs` | `npm run dist:signed` | 使用发行证书生成正式产物，在独立目录校验签名。Mac 同时校验 Apple 公证票据。 |
 | `build-main.mjs` | `npm run build` 间接调用 | 构建 Electron 主进程、预加载、业务进程和文档进程。 |
 | `bundle-dependencies.mjs` | `build-main.mjs` 调用 | 核对生成代码只外部引用 Node/Electron，保留打包输入及生产依赖树的许可到 `dist/third-party-licenses`。安装包排除重复 `node_modules`；若增加外部依赖，构建先失败，须重新验证打包边界。 |
@@ -20,17 +20,21 @@
 | `update-prompt-locks.mjs` | `node scripts/update-prompt-locks.mjs` | 在人工审阅提示词改动后更新运行资源锁和技能注册表哈希；不导入旧设计稿，不改变工具合同。随后运行提示词及恢复回归。 |
 | `create-icon.mjs`、`export-brand.cjs` | `node scripts/create-icon.mjs` | 生成 Mac 应用和界面使用的 PNG 品牌资源。准备其他发行目标的 ICO 图标时可附加 `--with-ico`。 |
 
+Windows 安装器设置和升级标识集中在 `windows-builder.cjs`，由 Windows 发行工作流显式加载。
+
 ## 回归、专项验证与本机模拟
+
+手工运行 Electron 评估脚本时，先用 esbuild 编译为 CJS，再执行 `node scripts/with-test-workspace.mjs --electron <编译后的文件> [参数]`。父进程会等 Electron 完全退出后清理临时配置。可用 `WENXU_DATA_DIR` 指定供评估读取的设置目录。
 
 | 入口或脚本 | 作用 | 是否包含在 `npm test` |
 | --- | --- | --- |
 | `tests/*.test.ts` | 默认回归；通过测试夹具复现行为，不使用作者作品。 | 是 |
 | `tests/scale.ts` / `npm run test:scale` | 1200 章、300 万字合成容量检查。 | 否 |
-| `test-large-book.mjs` / `npm run test:large-book` | 分进程执行 `tests/large-book.ts` 的生成与测量；建议显式传入独立 `--output=...`，避免重用历史目录。 | 否 |
-| `prose-eval.ts` / `npm run eval:prose` | 离线检查正文评估夹具与质量指标；输出到独立评估目录。 | 否 |
-| `context-eval.ts` / `npm run eval:context` | 默认离线检查上下文；只有显式传入 `--live` 和专用配置时才请求模型。 | 否 |
+| `test-large-book.mjs` / `npm run test:large-book` | 分进程生成和测量合成作品。默认只保留测量报告，传入独立的 `--output=...` 可以保留作品供性能分析。 | 否 |
+| `prose-eval.ts` / `npm run eval:prose` | 离线检查正文评估夹具与质量指标。用 `--output <目录>` 留存报告，默认报告随本轮清理。 | 否 |
+| `context-eval.ts` / `npm run eval:context` | 默认离线检查上下文并清理本轮临时文件。用 `--output <目录>` 留存报告。只有显式传入 `--live` 和专用配置时才请求模型。 | 否 |
 | `mock-model.mjs` | 本机模拟 API，供人工界面验收；`node scripts/mock-model.mjs`。 | 否 |
-| `run-skill-parity.ts` | 已获作者授权时的真实模型流程复测。用 esbuild 打包为 CJS 后由 Electron 执行，传入 `--harness-config=<JSON绝对路径>`；配置指定独立作品/记录目录、Skill 根、原始输入、模型编号及现有加密设置文件。通过同一 Service/runner/provider 生成，候选停下等待 `control.json` 审阅决定；保存完整请求、输出和阶段时间。密钥只在内存解密，分享记录时排除 `electron-profile`。 | 否 |
+| `run-skill-parity.ts` | 已获作者授权时的真实模型流程复测。用 esbuild 打包为 CJS 后由 Electron 执行，传入 `--harness-config=<JSON绝对路径>`；配置指定独立作品/记录目录、Skill 根、原始输入、模型编号及现有加密设置文件。通过同一 Service/runner/provider 生成，候选停下等待 `control.json` 审阅决定；保存完整请求、输出和阶段时间。评估使用独立的临时 Electron 配置。 | 否 |
 | `qa-studio.ts`、`qa-studio-server.ts` | 先生成工作台合成样本，再启动配套模拟服务；保留事实、评估和阶段数据场景。依次以 `node --import tsx scripts/<文件名>` 执行。 | 否 |
 | `tests/fixtures/desktop-smoke-seed.ts` | 简单桌面验收初始化，替代已移除的 `qa-desktop.ts`；`node --import tsx tests/fixtures/desktop-smoke-seed.ts`。使用隔离目录，同名样本已存在时需要先处理旧样本。 | 否 |
 | `tests/fixtures/desktop-hanging-provider.ts` | 模拟不结束的流，用于退出和未知请求结果检查；与普通模拟 API 的用途不同。 | 否 |
@@ -45,7 +49,7 @@
 - 只把可复用、说明了输入输出的工具放入 `scripts/`；回归断言放入 `tests/*.test.ts`，合成输入放入 `tests/fixtures/`。
 - `refactor-baseline.mjs`、`refactor-audit.mjs`、两份 `refactor-*-benchmark.ts` 及 `docs/refactor/*-evidence/` 中的一次性执行脚本已于 2026-10-28 退役。它们绑定旧基线、旧界面与旧打包限制，不是当前发布门槛。对应历史报告保留。
 - `finalize-v7-evidence.mjs` 已于 2026-10-30 退役。它绑定固定历史性能样本，并会覆盖当前交付清单；保留历史性能报告，当前安装包使用上表的 `verify-v7-release.mjs` 核对。
-- 新的容量验证默认输出到 `.test-output/large-book/`；需要保留多次结果时使用 `npm run test:large-book -- --output=<独立目录>`。性能分析只对合成样本运行。
+- 容量验证的默认报告为 `.test-output/large-book/large-book-report.json`。需要保留多次结果时使用 `npm run test:large-book -- --output=<独立目录>`。性能分析只对合成样本运行。
 - 构建产物、日志、截图和临时模型响应放在忽略目录中。包含作者作品或配置的备份先归档，不整目录清空。
 - 历史输出移到项目外后，原路径到归档位置的对应关系记录在本机 `.test-output/repository-cleanup-20261028/`。源码与详细原因见[清理记录](../docs/maintenance/repository-cleanup-2026-10-28.md)。
 - 本次无引用代码、资源及旧安装包的处理见 [2026-10-30 清理记录](../docs/maintenance/repository-cleanup-2026-10-30.md)。

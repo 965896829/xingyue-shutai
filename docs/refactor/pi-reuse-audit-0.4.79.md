@@ -66,6 +66,6 @@ Pi 的 `pi-coding-agent` compaction 属于另一个包，除了写摘要请求�
 
 随后若获准真实复测，再用相同模型、推理档位、创意和生成体量比较修复前后。区分冷/热缓存、联网研究和正文输出、连接等待和生成时间；不能使用框架替换或离线实验来宣称文学质量已提高、耗时已达到某个数值或所有请求已超过 95% 缓存。
 
-本次离线实验见 [脚本](../../output/pi-reuse-audit-0.4.79-20261028/offline-probe.ts) 和 [完整结果](../../output/pi-reuse-audit-0.4.79-20261028/offline-probe-result.json)。8 种模拟响应场景全部运行完成；所有 SDK fetch 均返回内存构造的 Response，真实网络/模型请求为 0。中文计数是额外的估算对照，不是服务端 token 实测。
+本轮离线实验的本机输出目录为 `output/pi-reuse-audit-0.4.79-20261028/`，脚本和结果文件分别为 `offline-probe.ts` 和 `offline-probe-result.json`。8 种模拟响应场景全部运行完成；所有 SDK fetch 均返回内存构造的 Response，真实网络/模型请求为 0。中文计数是额外的估算对照，不是服务端 token 实测。
 
 官方同版本源码依据：[Agent 循环](https://github.com/earendil-works/pi/blob/v1.4.0/packages/agent/src/agent-loop.ts)、[Responses 适配器](https://github.com/earendil-works/pi/blob/v1.4.0/packages/ai/src/api/openai-responses.ts)、[Responses 消息处理](https://github.com/earendil-works/pi/blob/v1.4.0/packages/ai/src/api/openai-responses-shared.ts)、[Codex WebSocket](https://github.com/earendil-works/pi/blob/v1.4.0/packages/ai/src/api/openai-codex-responses.ts)、[传输重试](https://github.com/earendil-works/pi/blob/v1.4.0/packages/ai/src/utils/provider-retry.ts)、[Anthropic](https://github.com/earendil-works/pi/blob/v1.4.0/packages/ai/src/api/anthropic-messages.ts)、[压缩实现](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/src/core/compaction/compaction.ts)、[会话存储](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/src/core/session-manager.ts)。

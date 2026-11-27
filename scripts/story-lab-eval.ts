@@ -1,6 +1,6 @@
 import fs from 'node:fs';
+import { prepareEvaluationProfile } from './evaluation-profile';
 import path from 'node:path';
-import os from 'node:os';
 import { app, safeStorage } from 'electron';
 import { DatabaseSync } from 'node:sqlite';
 import { Service } from '../src/core/service';
@@ -18,11 +18,7 @@ const output = path.resolve('.test-output/story-lab-live', new Date().toISOStrin
 fs.mkdirSync(output, { recursive: true });
 const save = (name: string, value: unknown) =>
   atomicWrite(path.join(output, name), typeof value === 'string' ? value : JSON.stringify(value, null, 2));
-const sourceSettings = path.join(app.getPath('appData'), 'wenxu-desktop');
-const auth = fs.mkdtempSync(path.join(os.tmpdir(), 'xingyue-story-lab-auth-'));
-if (fs.existsSync(path.join(sourceSettings, 'Local State')))
-  fs.copyFileSync(path.join(sourceSettings, 'Local State'), path.join(auth, 'Local State'));
-app.setPath('userData', auth);
+const sourceSettings = prepareEvaluationProfile(app);
 const report: any = {
   startedAt: new Date().toISOString(),
   output,

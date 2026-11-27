@@ -217,6 +217,11 @@ export async function handleDiscussionCommand(
       typeof a.profileId === 'string' ? a.profileId : old.profileId,
       { ...old, ...(a.proposal && typeof a.proposal === 'object' ? a.proposal : {}) }
     );
+    for (const source of old.sources.filter(item => item.draftVersionId)) {
+      next.sources = next.sources.filter(item => item.path !== source.path);
+      next.sources.push(source);
+    }
+    records.save('action_proposals', next);
     old.status = 'cancelled';
     records.save('action_proposals', old);
     return next;
@@ -384,7 +389,7 @@ export async function handleDiscussionCommand(
     return host.startWriting(request, str(a.profileId), selected);
   }
   if (command === 'draft.promote') {
-    const draft = records.readDraft(str(a.id));
+    const draft = records.readDraft(str(a.id), a.historical === true ? str(a.hash) : undefined);
     if (draft.currentHash !== str(a.hash)) throw new Error('草稿已变化，请重新读取再建立转入任务');
     const card = chat.propose(draft.conversationId, '', str(a.profileId), {
       kind: a.kind === 'stage' ? 'stage' : 'revision',
@@ -393,7 +398,8 @@ export async function handleDiscussionCommand(
       request: `作者希望将以下未采纳草稿转为正式候选。草稿只作为待审材料，核对当前阶段、既有资料和下游影响，不得当作已发生事实。来源 ${draft.path} @ ${draft.currentHash}\n\n${draft.content}`,
       outputs: ['按范围生成正式候选及必要的影响说明']
     });
-    card.sources.push({ path: draft.path, hash: draft.currentHash });
+    card.sources = card.sources.filter(source => source.path !== draft.path);
+    card.sources.push({ path: draft.path, hash: draft.currentHash, ...(a.historical === true ? { draftVersionId: draft.id } : {}) });
     records.save('action_proposals', card);
     return card;
   }

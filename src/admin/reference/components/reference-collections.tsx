@@ -151,7 +151,7 @@ export function ReferenceCollection({ page }: { page: PageSpec }) {
         <RefreshCw size={14} />
         刷新
       </button>
-      {(isModel || isBase || isProvider) && <button className="button secondary" onClick={() => { navigate('/admin/local/workspace'); setTimeout(() => window.dispatchEvent(new CustomEvent('management:navigate', { detail: 'models' })), 0); }}>客户端高级模型设置</button>}
+      {(isModel || isBase || isProvider) && <button className="button secondary" onClick={() => navigate('/admin/local/workspace?action=models')}>客户端高级模型设置</button>}
     </>
   );
   return (
@@ -348,7 +348,7 @@ export function ReferenceCollection({ page }: { page: PageSpec }) {
             }}
             placeholder="模型名称、能力或厂商"
           />
-          <button className="button secondary" onClick={() => { navigate('/admin/local/workspace'); setTimeout(() => window.dispatchEvent(new CustomEvent('management:navigate', { detail: 'models' })), 0); }}>客户端高级模型设置</button>
+          <button className="button secondary" onClick={() => navigate('/admin/local/workspace?action=models')}>客户端高级模型设置</button>
           <button
             className="button primary"
             onClick={() => setPanel("model-config")}

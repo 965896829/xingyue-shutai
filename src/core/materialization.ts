@@ -4,6 +4,15 @@ import { atomicWrite, durableCreate, fileHash, safePath, type FileStore } from '
 import { hash } from './domain';
 
 export class MaterializationConflict extends Error {}
+function publishExclusive(source: string, destination: string) {
+  try { fs.linkSync(source, destination); }
+  catch (error) {
+    if (!['ENOTSUP', 'EOPNOTSUPP', 'EPERM', 'ENOSYS', 'EXDEV'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
+    fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
+    const fd = fs.openSync(destination, 'r+');
+    try { fs.fsyncSync(fd); } finally { fs.closeSync(fd); }
+  }
+}
 export function preserveAndMaterialize(store: FileStore, tx: string, change: { path: string; baseHash: string | null; newHash: string }, fault?: (point: string) => void) {
   const file = safePath(store.root, change.path);
   const prefix = `.novelclient/preserved/${tx}-${hash(change.path)}`;
@@ -13,26 +22,29 @@ export function preserveAndMaterialize(store: FileStore, tx: string, change: { p
   if (currentHash === change.newHash) return;
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.mkdirSync(path.dirname(previous), { recursive: true });
-  if (!fs.existsSync(previous)) {
+  if (!fs.existsSync(temporary)) durableCreate(temporary, store.object(change.newHash));
+  else if (fileHash(temporary) !== change.newHash) atomicWrite(temporary, store.object(change.newHash));
+  if (!fs.existsSync(previous) || currentHash === change.baseHash && currentHash !== null && fileHash(previous) === change.baseHash) {
     if (currentHash !== change.baseHash) throw new MaterializationConflict(`外部改稿已保留：${change.path}`);
     fault?.('before-replace:' + change.path);
+    if (fileHash(temporary) !== change.newHash) atomicWrite(temporary, store.object(change.newHash));
     if (change.baseHash !== null) fs.renameSync(file, previous);
   }
   if (fs.existsSync(previous) && fileHash(previous) !== change.baseHash) {
-    try { fs.linkSync(previous, file); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; }
+    try { publishExclusive(previous, file); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; }
     throw new MaterializationConflict(`文件替换期间发生外部改稿，原件保留于 ${prefix}.previous`);
   }
   if (fs.existsSync(file)) {
     if (fileHash(file) === change.newHash) return;
     throw new MaterializationConflict(`同步期间出现新文件，未覆盖：${change.path}`);
   }
-  if (!fs.existsSync(temporary)) durableCreate(temporary, store.object(change.newHash));
-  else if (fileHash(temporary) !== change.newHash) atomicWrite(temporary, store.object(change.newHash));
-  if (fileHash(temporary) !== change.newHash) throw new MaterializationConflict(`待同步内容校验失败：${change.path}`);
   safePath(store.root, change.path);
-  try { fs.linkSync(temporary, file); }
+  try { publishExclusive(temporary, file); }
   catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new MaterializationConflict(`同步期间出现外部文件，未覆盖：${change.path}`);
+    if (change.baseHash !== null && !fs.existsSync(file) && fileHash(previous) === change.baseHash) {
+      try { publishExclusive(previous, file); } catch { /* Keep the preserved original and the pending outbox. */ }
+    }
     throw error;
   }
   if (fileHash(file) !== change.newHash) throw new MaterializationConflict(`同步后文件又发生变化，已保留版本：${change.path}`);

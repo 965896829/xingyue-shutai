@@ -15,7 +15,7 @@ export function countingMethod(profile: Profile): CountingMethod {
   if (configured === 'conservative') return 'utf8_upper_bound';
   if (configured !== 'auto') return configured;
   if (profile.protocol !== 'chat' && profile.protocol !== 'responses') return 'utf8_upper_bound';
-  if (/^(?:gpt-5(?:[.\-]|$)|gpt-4(?:o|\.1|\.5)(?:-|$)|chatgpt-4o-|o[13](?:-|$)|o4-mini(?:-|$))/.test(profile.model)) return 'o200k_base';
+  if (/^(?:gpt-[56](?:[.\-]|$)|gpt-4(?:o|\.1|\.5)(?:-|$)|chatgpt-4o-|o[13](?:-|$)|o4-mini(?:-|$))/.test(profile.model)) return 'o200k_base';
   if (/^(?:gpt-4(?:-|$)|gpt-3\.5-turbo(?:-|$)|gpt-35-turbo(?:-|$))/.test(profile.model)) return 'cl100k_base';
   return 'utf8_upper_bound';
 }
@@ -29,7 +29,15 @@ export function countInput(profile: Profile, value: unknown) {
   if (tokens === undefined) {
     let encoder = encoders.get(method);
     if (!encoder) { encoder = new Tiktoken(method === 'o200k_base' ? o200k : cl100k); encoders.set(method, encoder); }
-    tokens = encoder.encode(text, [], []).length;
+    // Opaque payloads and very long uninterrupted words have no reliable local
+    // token estimate. Bound those spans without feeding them to quadratic BPE.
+    tokens = 0;
+    let start = 0;
+    for (const match of text.matchAll(/[\p{L}\p{M}\p{N}+/=_-]{2048,}/gu)) {
+      tokens += encoder.encode(text.slice(start, match.index), [], []).length + Buffer.byteLength(match[0], 'utf8');
+      start = match.index + match[0].length;
+    }
+    tokens += encoder.encode(text.slice(start), [], []).length;
     if (counts.size >= 256) counts.delete(counts.keys().next().value!);
     counts.set(key, tokens);
   }

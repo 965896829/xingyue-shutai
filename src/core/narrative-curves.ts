@@ -19,6 +19,41 @@ export function ownsNarrativeSource(store: FileStore, source: SourceRef): boolea
   return record.success && record.data.source.path === source.path && record.data.source.hash === source.hash && record.data.points.some(p => p.anchor === source.quote);
 }
 
+/** Preserve the original keys for historical snapshots. Only carry annotations
+ * when the moved text still contains their anchors in the same order. */
+export function copyReorderedCurves(store: FileStore, before: number[], after: number[], documents: Record<string, string>) {
+  for (const [index, destination] of before.entries()) {
+    const origin = after[index];
+    if (origin === destination) continue;
+    for (const kind of ['plan', 'actual', 'events'] as const) {
+      const path = kind === 'plan' ? detailPath : prosePath;
+      const oldHash = documents[path(origin)], newHash = store.db.document(path(destination))?.hash;
+      if (!oldHash || !newHash || store.db.get(key(kind, destination, newHash))) continue;
+      const previous = store.db.get(key(kind, origin, oldHash));
+      if (!previous) continue;
+      const text = store.object(newHash).toString('utf8');
+      const source = { path: path(destination), hash: newHash, quote: '' };
+      if (kind === 'events') {
+        const result = narrativeEventRecordSchema.safeParse(previous);
+        if (!result.success) continue;
+        const events = visibleNarrativeEvents(result.data.events, text);
+        if (events.length) store.db.set(key(kind, destination, newHash), { ...result.data, source: { ...source, quote: events[0].anchor }, events });
+      } else {
+        const result = narrativeRecordSchema.safeParse(previous);
+        if (!result.success) continue;
+        const points = result.data.points;
+        let end = 0;
+        if (points.every(p => {
+          const offset = text.indexOf(p.anchor);
+          if (!p.anchor || offset < end || offset !== text.lastIndexOf(p.anchor)) return false;
+          end = offset + p.anchor.length;
+          return true;
+        })) store.db.set(key(kind, destination, newHash), { ...result.data, chapter: destination, source: { ...source, quote: points[0]?.anchor ?? '' } });
+      }
+    }
+  }
+}
+
 /** Display metadata is stored by the clean manuscript hash, outside Skill files. */
 export function saveNarrativeEvents(store: FileStore, run: Run, content: string) {
   const state = run.pipeline?.narrative;

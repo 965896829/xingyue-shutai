@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { testOutputRoot } from './fixtures/test-output';
 import type { KeyboardEvent } from 'react';
 import { Service } from '../src/core/service';
 import { profileSchema, type ModelResult, type Run, type SecretProfile } from '../src/shared/types';
@@ -100,7 +101,7 @@ test('旧开书任务的普通建议不再重复要求理由，其他警告和�
 });
 
 async function fixture(caller: Caller, status: Run['status'] = 'paused') {
-  const base = path.resolve('.test-output/chat-controls-tests');
+  const base = path.join(testOutputRoot, 'chat-controls-tests');
   fs.mkdirSync(base, { recursive: true });
   const service = new Service(path.resolve('resources/skill'), () => {}, caller);
   service.profiles = [structuredClone(profile)];

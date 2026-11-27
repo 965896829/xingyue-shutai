@@ -503,7 +503,7 @@ function Workspace() {
           )}
           {(localKey || lastLocalKey) && <div hidden={!localKey}>
             <Suspense fallback={<p role="status">正在打开工作台…</p>}>
-              <ClientModule pageKey={localKey || lastLocalKey} snapshot={management.snapshot} />
+              <ClientModule active={!!localKey} pageKey={localKey || lastLocalKey} snapshot={management.snapshot} />
             </Suspense>
           </div>}
         </main>

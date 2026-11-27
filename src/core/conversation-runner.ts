@@ -222,7 +222,11 @@ export class ConversationRunner {
       proposal.chapter !== p.chapter ||
       proposal.profileVersion !== profile.version ||
       proposal.rulesHash !== this.rulesHash() ||
-      proposal.sources.some((s) => this.store.workingHash(s.path) !== currentSettingsSourceHash(this.store, proposal.baseSnapshotId, s))
+      proposal.sources.some((source) => {
+        if (!source.draftVersionId) return this.store.workingHash(source.path) !== currentSettingsSourceHash(this.store, proposal.baseSnapshotId, source);
+        const saved = this.records.readDraft(source.draftVersionId, source.hash);
+        return saved.path !== source.path || saved.currentHash !== source.hash;
+      })
     ) {
       proposal.status = 'stale';
       this.records.save('action_proposals', proposal);

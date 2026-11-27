@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { approvedCreation } from '../../shared/creation';
 import { finishAdoptionWork } from '../adoption-maintenance';
-import type { Command } from '../../shared/types';
+import type { Command, Fact } from '../../shared/types';
 import { batchSummaryProgress, materializeAftermathStatus } from '../aftermath-status';
 import { assertControllerRules } from '../agent-control';
 import { contextChanged } from '../context-compiler';
@@ -218,6 +218,12 @@ export async function handleAdoptionCommand(
       else changes.push(host.change(paths.config, content));
     }
     // Merge authoritative evidence records even when a model replaces a whole human-readable ledger.
+    const ledgerPaths = new Map<string, string>();
+    if (r.workbench?.reorder) {
+      for (const change of changes.filter(entry => entry.path.startsWith('04_') && entry.baseHash))
+        for (const fact of decodeFacts(s.object(change.baseHash!).toString('utf8'))) ledgerPaths.set(fact.id, change.path);
+    }
+    const factPath = (fact: Fact) => ledgerPaths.get(fact.id) ?? primaryPath(fact);
     let facts = s.db.facts().map((f) => structuredClone(f));
     const rebasedFiles = new Set<string>();
     for (const fact of facts) {
@@ -235,21 +241,21 @@ export async function handleAdoptionCommand(
         evidence.hash = hash(change.content);
         evidence.start = Array.from(change.content.slice(0, offset)).length;
         evidence.end = evidence.start + Array.from(evidence.quote).length;
-        rebasedFiles.add(primaryPath(fact));
+        rebasedFiles.add(factPath(fact));
       }
     }
     if (r.mode === 'manual')
       for (const change of changes.filter((c) => c.path.startsWith('04_'))) {
-        const old = facts.filter((f) => primaryPath(f) === change.path);
+        const old = facts.filter((f) => factPath(f) === change.path);
         const supplied = decodeFacts(change.content);
         if (old.length && !change.content.includes('<!-- wenxu-facts:v1 -->'))
           throw new Error('此文档含结构化记忆，请保留事实记录并显式修订或撤回，不能静默删除');
         for (const fact of supplied)
           if (fact.reviewStatus === 'accepted') {
-            const issues = validateEvidence(s, fact, p.chapter);
+            const issues = validateEvidence(s, fact, p.chapter, r.workbench?.reorder ? changes : []);
             if (issues.length) throw new Error(issues.join('；'));
           }
-        facts = [...facts.filter((f) => primaryPath(f) !== change.path), ...supplied];
+        facts = [...facts.filter((f) => factPath(f) !== change.path), ...supplied];
       }
     for (const raw of r.facts) {
       const f = { ...raw, reviewStatus: 'accepted' as const, acceptedAt: now(), acceptedRunId: r.id };
@@ -282,22 +288,22 @@ export async function handleAdoptionCommand(
       fact.acceptedRunId = r.id;
     }
     const factFiles = new Set([
-      ...facts.map(primaryPath),
+      ...facts.map(factPath),
       ...changes.filter((c) => c.path.startsWith('04_')).map((c) => c.path)
     ]);
     for (const relative of factFiles) {
-      const fileFacts = facts.filter((f) => primaryPath(f) === relative);
+      const fileFacts = facts.filter((f) => factPath(f) === relative);
       const c = changes.find((c) => c.path === relative);
       if (c) c.content = encodeFacts(c.content, fileFacts);
       else if (
         rebasedFiles.has(relative) ||
         (r.factRetractions ?? []).some((item) =>
-          facts.some((fact) => fact.id === item.id && primaryPath(fact) === relative)
+          facts.some((fact) => fact.id === item.id && factPath(fact) === relative)
         ) ||
         r.facts.some(
           (f) =>
-            primaryPath(f) === relative ||
-            (f.supersedes && facts.find((x) => x.id === f.supersedes && primaryPath(x) === relative))
+            factPath(f) === relative ||
+            (f.supersedes && facts.find((x) => x.id === f.supersedes && factPath(x) === relative))
         )
       )
         changes.push(host.change(relative, encodeFacts(s.read(relative).content, fileFacts)));

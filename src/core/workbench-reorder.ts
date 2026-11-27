@@ -1,5 +1,6 @@
 import type { FileStore } from './storage';
-import type { Change, Fact } from '../shared/types';
+import { decodeFacts, encodeFacts } from './memory-records';
+import { factSchema, type Change, type Fact } from '../shared/types';
 import type { SourceRef } from '../shared/studio';
 import {
   workbenchScopeBindingSchema,
@@ -10,7 +11,7 @@ import {
 } from '../shared/workbench-visual';
 import { z } from 'zod';
 import { scopeSnapshot, sourceValidator } from './memory-studio';
-import { paths, prosePath, detailPath, taskPath } from './domain';
+import { paths, prosePath, detailPath, taskPath, qualityPath, updatePath, hash } from './domain';
 import {
   plotPath,
   parsePlotDocument,
@@ -43,7 +44,7 @@ const numberOf = (file: string) =>
   /^0[6-8]_/.test(file) && !/第\d+-\d+章/.test(file)
     ? Number(file.match(/第(\d+)章/)?.[1]) || undefined
     : undefined;
-function renameChapter(content: string, target: number) {
+export function renameChapter(content: string, target: number) {
   return content.replace(
     /^(#{1,6}\s*第)\s*([零〇一二两三四五六七八九十百千万\d]+)\s*章/m,
     (_, prefix, old) => `${prefix}${/^\d+$/.test(old) ? String(target).padStart(old.length, '0') : target}章`
@@ -94,7 +95,7 @@ export function prepareReorder(store: FileStore, raw: unknown, input: number[]) 
   const written = changedChapters.filter((n) => !!snapshot.documents[prosePath(n)]);
   if (written.length && written.length !== changedChapters.length)
     add('source', 'error', '已写正文与未写章节不能混排，请分别调整');
-  for (const makePath of [prosePath, detailPath, taskPath]) {
+  for (const makePath of [prosePath, detailPath, taskPath, qualityPath, updatePath]) {
     const existing = changedChapters.filter((n) => snapshot.documents[makePath(n)]);
     if (!existing.length) continue;
     if (existing.length !== changedChapters.length) {
@@ -117,6 +118,47 @@ export function prepareReorder(store: FileStore, raw: unknown, input: number[]) 
       add('source', 'error', `${file.split('/').at(-1)}：${(e as Error).message}`, [
         { path: file, hash: snapshot.documents[file], quote: '' }
       ]);
+    }
+  }
+  if (written.length === changedChapters.length && written.length) {
+    const relocated = new Map<string, string>();
+    for (const old of written) for (const makePath of [prosePath, detailPath, taskPath, qualityPath, updatePath])
+      relocated.set(makePath(old), makePath(target(old)));
+    for (const ledger of Object.keys(snapshot.documents).filter(file => file.startsWith('04_'))) {
+      const original = content(ledger);
+      const facts = decodeFacts(original);
+      let modified = false;
+      for (const fact of facts) {
+        const initial = JSON.stringify(fact);
+        fact.fromChapter = target(fact.fromChapter);
+        if (fact.toChapter !== null) fact.toChapter = target(fact.toChapter);
+        fact.revealedAt = target(fact.revealedAt);
+        for (const position of [fact.fromPosition, fact.untilPosition, ...fact.knowledge.map(entry => entry.fromPosition)])
+          if (position) position.chapter = target(position.chapter);
+        for (const entry of fact.knowledge) entry.fromChapter = target(entry.fromChapter);
+        if (fact.promiseWindow) {
+          fact.promiseWindow.from = target(fact.promiseWindow.from);
+          fact.promiseWindow.through = target(fact.promiseWindow.through);
+        }
+        for (const evidence of fact.evidence) {
+          const destination = relocated.get(evidence.path);
+          if (!destination) continue;
+          const text = changes.find(change => change.path === destination)?.content ?? content(destination);
+          const start = text.indexOf(evidence.quote);
+          if (evidence.hash !== snapshot.documents[evidence.path] || start < 0 || text.lastIndexOf(evidence.quote) !== start) {
+            add('source', 'error', `“${fact.subject} · ${fact.predicate}”的引用无法随章节唯一定位，请先核对引文`, [evidence]);
+            continue;
+          }
+          evidence.path = destination;
+          evidence.hash = hash(text);
+          evidence.start = Array.from(text.slice(0, start)).length;
+          evidence.end = evidence.start + Array.from(evidence.quote).length;
+          delete evidence.snapshotId;
+        }
+        if (!factSchema.safeParse(fact).success) add('source', 'error', `调序会使“${fact.subject} · ${fact.predicate}”的生效或承诺区间倒置，请先调整相关记忆`);
+        modified ||= initial !== JSON.stringify(fact);
+      }
+      if (modified) push(ledger, encodeFacts(original, facts));
     }
   }
   if (plot) {

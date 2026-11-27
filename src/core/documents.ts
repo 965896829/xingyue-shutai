@@ -1,4 +1,6 @@
 import fs from 'node:fs';
+import { assertNativeDirectory } from './system-path';
+import { isAppleDouble } from './filesystem-metadata';
 import { brand } from '../shared/brand';
 import path from 'node:path';
 import { Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell } from 'docx';
@@ -88,6 +90,7 @@ export async function exportDocument(content: string, target: string) {
 }
 
 function backupDirectoryOutside(root: string, directory: string) {
+  assertNativeDirectory(directory);
   const requested = path.resolve(directory);
   let ancestor = requested;
   while (!fs.existsSync(ancestor) && path.dirname(ancestor) !== ancestor) ancestor = path.dirname(ancestor);
@@ -123,7 +126,7 @@ export async function createBackup(store: FileStore, directory: string, signal?:
   async function walk(dir: string, prefix = '') {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       signal?.throwIfAborted();
-      if (entry.isSymbolicLink()) continue;
+      if (entry.isSymbolicLink() || isAppleDouble(dir, entry.name)) continue;
       const rel = prefix + entry.name;
       if (/^\.novelclient\/(?:(?:state|lock-recovery)\.sqlite(?:-wal|-shm|-journal)?|write-lock\.json)$/i.test(rel)) continue;
       if (entry.isDirectory()) await walk(path.join(dir, entry.name), rel + '/');
@@ -158,6 +161,7 @@ export async function createBackup(store: FileStore, directory: string, signal?:
 }
 /** Recover only isolated auxiliary records from a verified snapshot of the same book. */
 export function restoreAuxiliaryHistory(store: FileStore, source: string) {
+  assertNativeDirectory(source);
   const { schema, manifest } = backupManifest.parse(JSON.parse(fs.readFileSync(safePath(source, manifestName, true), 'utf8')));
   const payload = schema === 2 ? safePath(source, 'files', true) : source;
   const relative = '.novelclient/state.sqlite';
@@ -193,6 +197,8 @@ export function restoreAuxiliaryHistory(store: FileStore, source: string) {
   } finally { copy.close(); }
 }
 export function restoreBackup(source: string, parent: string) {
+  assertNativeDirectory(source);
+  assertNativeDirectory(parent);
   const result = backupManifest.safeParse(JSON.parse(fs.readFileSync(safePath(source, manifestName, true), 'utf8')));
   if (!result.success) throw new Error(`不是有效${brand.name}备份`);
   const { schema, manifest } = result.data;

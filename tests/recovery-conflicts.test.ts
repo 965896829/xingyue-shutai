@@ -12,6 +12,39 @@ const approval = (store: FileStore, approvalId: string) =>
   JSON.parse(String(store.db.sql.prepare('SELECT data FROM approvals WHERE id=?').get(approvalId)!.data));
 const applied = (store: FileStore) => Number(store.db.sql.prepare('SELECT COUNT(*) AS n FROM applied_transactions').get()!.n);
 
+test('外置卷的 macOS 元数据不进入书稿和提交日志，普通同名前缀的文稿仍可见', () => {
+  const { root, store } = refactorFixture();
+  try {
+    const metadata = Buffer.from('00051607000200004d6163204f532058', 'hex');
+    const dir = path.join(root, '.novelclient/transactions');
+    const journal = fs.readdirSync(dir).find(name => name.endsWith('.json'))!;
+    fs.writeFileSync(path.join(dir, '._' + journal), metadata);
+    fs.writeFileSync(path.join(root, '._正文.md'), metadata);
+    fs.writeFileSync(path.join(root, '._私人笔记.md'), '作者自己命名的文稿');
+    assert.doesNotThrow(() => store.recover());
+    const names = store.scan().map(document => document.path);
+    assert.ok(names.includes('._私人笔记.md'));
+    assert.ok(!names.includes('._正文.md'));
+  } finally { store.close(); }
+});
+
+test('事实台账损坏时允许打开原作品，待处理提交仍可核对', () => {
+  const fixture = refactorFixture();
+  let store = fixture.store;
+  try {
+    const run = fixture.run;
+    run.changes = [{ path: '04_故事设定/物品.md', content: '<!-- wenxu-facts:v1 -->\n未完成的记录', baseHash: null }];
+    store.db.saveRun(run);
+    interruptApprovedCommit(store, run, { ...fixture.project, revision: 1 });
+    store.close();
+    store = new FileStore(fixture.root);
+    store.recover();
+    assert.equal(store.recoveryConflicts()[0]?.reason, 'candidate_changed');
+    assert.equal(store.readAccepted('正文.md').content, '原稿𠮷\r\n');
+    assert.equal(store.db.document(run.changes[0].path)?.hash, undefined);
+  } finally { store.close(); }
+});
+
 test('接受期间的外部改稿立即形成可处理冲突，不必重启才发现 prepared 日志', () => {
   const { store, root, project, run } = refactorFixture();
   const original = store.commit;

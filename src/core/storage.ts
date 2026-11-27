@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { isAppleDouble } from './filesystem-metadata';
 import { panelRecordSchema } from './auxiliary-records';
 import { authorMarkdown } from '../shared/author-markdown';
 import { validateWorkbenchLocks } from './workbench-locks';
@@ -17,7 +18,8 @@ import { decodeSnapshot, encodeSnapshot, type StoredSnapshot } from './snapshot-
 import { indexProse } from './prose-index';
 import { queryTerms } from './text-search';
 import { ensureFactRecallIndex } from './fact-recall-index';
-import { updateFactIndex } from './fact-index';
+import { copyReorderedCurves } from './narrative-curves';
+import { InvalidFactLedger, updateFactIndex } from './fact-index';
 import { assertRunTransition } from './runtime/run-state';
 import { ApplicationError } from '../shared/errors';
 import { fingerprint } from './runtime/canonical';
@@ -182,7 +184,7 @@ export class Database {
           for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
             if (
               entry.isSymbolicLink() ||
-              entry.name.startsWith('.novelclient') ||
+              isAppleDouble(directory, entry.name) || entry.name.startsWith('.novelclient') ||
               ['node_modules', '.git'].includes(entry.name)
             )
               continue;
@@ -196,7 +198,7 @@ export class Database {
         const manifest: { path: string; hash: string }[] = [];
         const collect = (directory: string, relative = '') => {
           for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-            if (entry.isSymbolicLink()) continue;
+            if (entry.isSymbolicLink() || isAppleDouble(directory, entry.name)) continue;
             const rel = relative + entry.name,
               source = path.join(directory, entry.name);
             if (entry.isDirectory()) collect(source, rel + '/');
@@ -483,7 +485,7 @@ export class Database {
   }
   factsForTask(scope: { worldId: string; timelineId: string }, selection: import('../shared/workflow').FactSelection): Fact[] {
     const rows = this.sql.prepare(`WITH names AS MATERIALIZED (
-      SELECT DISTINCT name FROM fact_recall_names WHERE length(name)>0 AND instr(?,name)>0
+      SELECT DISTINCT name FROM fact_recall_names WHERE length(name)>0 AND instr(lower(?),lower(name))>0
     ), named AS MATERIALIZED (
       SELECT DISTINCT n.fact_id FROM fact_recall_names n JOIN names ON names.name=n.name
     ), identities AS MATERIALIZED (
@@ -753,7 +755,7 @@ export class FileStore {
     const walk = (dir: string, prefix = '') => {
       for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
         if (
-          ent.name.startsWith('.novelclient') ||
+          isAppleDouble(dir, ent.name) || ent.name.startsWith('.novelclient') ||
           ent.name === 'node_modules' ||
           ent.name === '.git' ||
           ent.isSymbolicLink()
@@ -1016,7 +1018,11 @@ export class FileStore {
         child.status = 'complete'; child.accepted = true; child.updatedAt = now();
         this.db.saveRun(child);
       }
-      updateFactIndex(this, j.changes.map(change => change.path), j.project.revision);
+      try { updateFactIndex(this, j.changes.map(change => change.path), j.project.revision); }
+      catch (error) {
+        if (error instanceof InvalidFactLedger) throw new PendingCommitConflict('candidate_changed', `待提交文稿中的事实记录需要修订：${error.message}`);
+        throw error;
+      }
       for (const c of j.changes) {
         const affected = this.db.sql
           .prepare('SELECT dependent,kind FROM dependencies WHERE source_path=? AND source_hash<>?')
@@ -1053,6 +1059,8 @@ export class FileStore {
           : !!this.db.document(dependent) && !pendingSource(j.project, dependent);
         if (resolved) this.db.sql.prepare("UPDATE review_queue SET status='complete' WHERE id=?").run(row.id);
       }
+      const reorder = j.run?.workbench?.reorder;
+      if (reorder && j.baseSnapshotId) copyReorderedCurves(this, reorder.before, reorder.after, this.db.snapshot(j.baseSnapshotId).documents);
       this.db.captureSnapshot(j.id);
       this.db.sql.prepare("INSERT INTO adoption_followups VALUES(?,'documents',?)").run(j.id, j.run?.id ?? 'project');
       this.db.sql
@@ -1105,8 +1113,13 @@ export class FileStore {
       )
       .all(...(tx ? [tx] : [])) as { id: string; data: string }[];
     if (rows.length) this.invalidateListing();
+    const deferred = new Set<string>();
     for (const row of rows) {
       const changes = JSON.parse(row.data) as Journal['changes'];
+      if (changes.some(change => deferred.has(change.path))) {
+        for (const change of changes) deferred.add(change.path);
+        continue;
+      }
       const conflict = changes.find((c) => {
         const current = fileHash(safePath(this.root, c.path));
         if (current === null && c.baseHash !== null && fileHash(safePath(this.root, `.novelclient/preserved/${row.id}-${hash(c.path)}.previous`, true)) === c.baseHash) return false;
@@ -1116,13 +1129,17 @@ export class FileStore {
         this.db.sql
           .prepare('UPDATE materialization_outbox SET status=?,error=? WHERE id=?')
           .run('conflict', `外部改稿已保留：${conflict.path}`, row.id);
+        for (const change of changes) deferred.add(change.path);
         continue;
       }
+      let complete = true;
       for (const c of changes) {
         try { preserveAndMaterialize(this, row.id, c, fault); }
         catch (error) {
           this.db.sql.prepare('UPDATE materialization_outbox SET status=?,error=? WHERE id=?').run(error instanceof MaterializationConflict ? 'conflict' : 'pending', error instanceof Error ? error.message : '文件同步失败', row.id);
-          return;
+          deferred.add(c.path);
+          complete = false;
+          continue;
         }
         finally {
           // Replacement can retain the previous size and timestamp on fast or coarse filesystems.
@@ -1131,6 +1148,7 @@ export class FileStore {
         }
         fault?.('file:' + c.path);
       }
+      if (!complete) continue;
       this.db.sql
         .prepare('UPDATE materialization_outbox SET status=?,error=NULL WHERE id=?')
         .run('complete', row.id);
@@ -1254,7 +1272,7 @@ export class FileStore {
     const messages: string[] = [];
     const journals: { p: string; j: Journal }[] = [];
     for (const file of fs.existsSync(dir) ? fs.readdirSync(dir) : []) {
-      if (!file.endsWith('.json')) continue;
+      if (!file.endsWith('.json') || isAppleDouble(dir, file)) continue;
       const p = path.join(dir, file), j = JSON.parse(readUtf8(p)) as Journal;
       if (file !== `${j.id}.json` || !['prepared', 'committed'].includes(j.state)) throw new Error('提交日志身份或状态无效');
       if (j.state === 'prepared') journals.push({ p, j });

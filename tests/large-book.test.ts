@@ -57,6 +57,7 @@ test('五百章检索限定版本和章号，支持两字姓名与末尾命中�
     assert.ok(!retrieveMemory(store, '第499号铜钥', { chapter: 498 }, 4).documents.some(d => d.path === prosePath(499)));
     const original = store.readAccepted(prosePath(499)); project.revision++;
     store.commit([{ path: original.path, content: '# 新版本\n\n林澈发现石门已经封闭。', baseHash: original.hash }], project);
+    assert.equal(store.db.sql.prepare('SELECT count(*) AS n FROM prose_search_versions WHERE path=?').get(original.path)?.n, 1);
     result = retrieveMemory(store, '独有线索', { chapter: 500, mode: 'historical', snapshotId: before });
     assert.ok(result.documents.some(d => d.path === original.path && d.excerpt.includes('河畔石门')));
     result = retrieveMemory(store, '独有线索', { chapter: 500 });

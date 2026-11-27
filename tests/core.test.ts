@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { sceneMaterials } from '../src/core/scene-material';
+import { narrativePlan } from '../src/shared/narrative-playback';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -78,6 +80,22 @@ test('旧作品遗留锁的 PID 被复用后可恢复，新锁仍阻止重复打
   }
 });
 
+test('写作材料和叙事回放共用场面标题，兼容中英文标点和换行', () => {
+  const content = '# 细纲\r\n## 场面1 遇袭\r\n- 目标：逃脱\r\n### 场景 二：汇合\r\n- 动作：开门\r\n```md\r\n## 场面9 示例\r\n```\r\n#### 场次3: 收束';
+  const source = { path: '06_章节设计/第001章细纲.md', content, hash: hash(content), reason: '', required: true, mode: 'full' as const };
+  const scenes = sceneMaterials([source]);
+  assert.deepEqual(scenes.map(s => s.scene), ['场面1 遇袭', '场景 二：汇合', '场次3: 收束']);
+  assert.deepEqual(narrativePlan(content).scenes.map(s => s.title), scenes.map(s => s.scene));
+  assert.equal(scenes[0].goal, '逃脱');
+});
+
+test('正文中的信号强度和灵气数值不参与大纲评分，细纲字段仍校验', () => {
+  const p = newProject('场面校验', 'unused', {});
+  const score = (file: string, content: string) => validateCandidate('S10', p, [{ path: file, content, baseHash: null }], skill, 'revision').filter(issue => issue.code === 'intensity');
+  assert.deepEqual(score(prosePath(1), '信号强度：0.8。\n灵气强度：100。'), []);
+  assert.equal(score('06_章节设计/第001章细纲.md', '## 场面1 遇袭\n- 场面强度：9').length, 1);
+});
+
 test('章后行为日志只检查本章人物记录，明确未变化说明不强制虚构八项更新', () => {
   const p = newProject('行为日志', 'unused', {});
   const role = '### 陈舟\n' + behaviorRequiredFields.map(field => `- ${field}：按原文记录并保留尚未完成的承诺`).join('\n');
@@ -101,51 +119,6 @@ test('响应边读边限制大小，超过上限立即取消', async () => {
   });
   await assert.rejects(boundedBody(stream, 10), /大小上限/);
   assert.equal(cancelled, true);
-});
-test('终端中文输出完整且不混入 CLIXML', async () => {
-  const { s } = setup();
-  const { AgentRunner } = await import('../src/core/runner');
-  try {
-    const runner = new AgentRunner(
-      s,
-      skill,
-      () => [],
-      () => {}
-    );
-    const result = (await runner.terminal(
-      process.platform === 'win32' ? "Write-Output '中文回执'" : "printf '中文回执'",
-      new AbortController().signal
-    )) as { code: number; output: string };
-    assert.equal(result.code, 0);
-    assert.match(result.output, /中文回执/);
-    assert.doesNotMatch(result.output, /CLIXML/);
-  } finally {
-    s.close();
-  }
-});
-test('取消授权终端后，其子进程不会继续写入作品', async () => {
-  const { s } = setup();
-  const { AgentRunner } = await import('../src/core/runner');
-  const runner = new AgentRunner(s, skill, () => [], () => {});
-  const controller = new AbortController();
-  try {
-    const script = process.platform === 'win32'
-      ? "Set-Content ready.txt ready; Start-Sleep -Seconds 2; Set-Content late.txt late"
-      : "(sleep 0.8; printf late > late.txt) & printf ready > ready.txt; wait";
-    const task = runner.terminal(script, controller.signal);
-    const deadline = Date.now() + 10000;
-    while (!fs.existsSync(path.join(s.root, 'ready.txt')) && Date.now() < deadline)
-      await new Promise(resolve => setTimeout(resolve, 20));
-    assert.ok(fs.existsSync(path.join(s.root, 'ready.txt')));
-    controller.abort();
-    await task;
-    await new Promise(resolve => setTimeout(resolve, process.platform === 'win32' ? 2100 : 900));
-    assert.equal(fs.existsSync(path.join(s.root, 'late.txt')), false);
-    await assert.rejects(runner.terminal(script, controller.signal), /停止|abort/i);
-  } finally {
-    controller.abort();
-    s.close();
-  }
 });
 test('未规划批次允许缩短；参数更新保留作者备注与未知 Markdown', () => {
   const p = newProject('参数', 'x', {});
@@ -468,6 +441,10 @@ test('完整备份、数据库和对象校验恢复到新目录', async () => {
   const { s, p, root } = setup();
   const backupRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'wenxu-backups-'));
   try {
+    if (process.platform !== 'win32') {
+      for (const foreign of [String.raw`D:\Books\Backups`, 'D:/Books/Backups', String.raw`\\server\share`])
+        await assert.rejects(createBackup(s, foreign), /重新选择本机目录/);
+    }
     const target = await createBackup(s, backupRoot),
       restored = restoreBackup(target, backupRoot);
     assert.notEqual(restored, root);

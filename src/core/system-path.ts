@@ -1,6 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+// Check the original value before path.resolve turns a foreign drive into a local subdirectory.
+export function assertNativeDirectory(directory: string) {
+  if (!directory.trim()) throw new Error('请先选择本机目录');
+  if (process.platform !== 'win32' && (/^[A-Za-z]:/.test(directory) || /^(?:\\\\|\/\/)[^/\\]+[/\\][^/\\]+/.test(directory)))
+    throw new Error('这是 Windows 目录，请重新选择本机目录');
+}
+
 /** Resolve only macOS's standard root aliases, never an author-created symlink. */
 export function resolveSystemPath(
   value: string,

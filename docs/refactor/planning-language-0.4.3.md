@@ -19,8 +19,8 @@
 
 ## 验证
 
-- 完整回归206项通过，0失败、0跳过、0取消，耗时226018.5667ms；类型检查与构建通过。新增9项覆盖截图标记、正常英文保留、原数据不变、空约束含义、结构化编号、旧书文稿、局部重做、修复后重新审核，以及超出修复上限停止。见 [测试日志](planning-language-evidence/tests.log)、[构建日志](planning-language-evidence/build.log)。
-- 全局Playwright MCP连接实际0.4.3展开包，在独立配置和合成作品中验证旧候选与契约变化区的中文显示、刷新后的结果和底层原文保留。该样本刻意保存截图同类标记，没有读取作者作品或请求真实模型。见 [桌面结果](planning-language-evidence/electron-smoke.json)、[实际显示截图](../../output/playwright/planning-language-0.4.3.png)。
+- 完整回归206项通过，0失败、0跳过、0取消，耗时226018.5667ms；类型检查与构建通过。新增9项覆盖截图标记、正常英文保留、原数据不变、空约束含义、结构化编号、旧书文稿、局部重做、修复后重新审核，以及超出修复上限停止。见 [当时的交付报告](planning-language-evidence/delivery-report.json)。
+- 全局Playwright MCP连接实际0.4.3展开包，在独立配置和合成作品中验证旧候选与契约变化区的中文显示、刷新后的结果和底层原文保留。该样本刻意保存截图同类标记，没有读取作者作品或请求真实模型。见 [桌面结果](planning-language-evidence/electron-smoke.json)。
 - 关闭测试窗口后进程退出、写锁释放；重新打开合成作品核对报告、候选和文件差异三个哈希均与测试前一致，仍等待作者采纳。见 [记录完整性与退出检查](planning-language-evidence/cleanup.json)。
 - 比较20个TSX组件的结构、静态属性与文字，26项CSS/图像资源不变；95个源码文件没有新增注释，UI不依赖core。四个Electron入口与ASAR匹配，生产包无Pi与测试标记。见 [源码与包审计](planning-language-evidence/source-audit.json)。新增及修改测试也没有新增注释，锁文件只改版本；契约渲染与共享类型文件未改，见 [补充核对](planning-language-evidence/review.json)。
 

@@ -181,6 +181,10 @@ test('T-029/030/031/032 tool schema, scoped replay and forbidden authority', () 
     assert.throws(() => beginTool(store, run.id, { ...call, arguments: '{"content":' }, definitions, signal));
     assert.throws(() => beginTool(store, run.id, { ...call, arguments: '{"content":1}' }, definitions, signal));
     assert.equal(store.db.sql.prepare('SELECT count(*) AS n FROM tool_executions').get()!.n, 0);
+    assert.throws(() => beginTool(store, run.id, call, definitions, signal, undefined, false, () => {
+      throw new ApplicationError('TOOL_LIMIT', '测试额度用尽');
+    }), /额度/);
+    assert.equal(store.db.sql.prepare('SELECT count(*) AS n FROM tool_executions').get()!.n, 0);
     const ticket = beginTool(store, run.id, call, definitions, signal);
     finishTool(store, ticket, 'saved', () => { effects++; });
     assert.equal(beginTool(store, run.id, call, definitions, signal).result, 'saved');
@@ -233,6 +237,18 @@ test('T-043/044 Windows replacement race preserves exact external bytes and conf
     const preserved = fs.readdirSync(path.join(root, '.novelclient/preserved')).find((file) => file.startsWith(tx) && file.endsWith('.previous'))!;
     assert.deepEqual(fs.readFileSync(path.join(root, '.novelclient/preserved', preserved)), external);
     store.materialize(tx); assert.deepEqual(fs.readFileSync(target), external);
+  } finally { store.close(); }
+});
+
+test('目录不支持硬链接时，完整同步新稿并保留独立文稿', t => {
+  const { root, store, project } = refactorFixture();
+  try {
+    t.mock.method(fs, 'linkSync', () => { throw Object.assign(new Error('unsupported'), { code: 'ENOTSUP' }); });
+    const changes = [{ path: '正文.md', content: '修订𠮷', baseHash: store.db.document('正文.md')!.hash },
+      { path: '笔记.md', content: '约定。', baseHash: null }];
+    const tx = store.commit(changes, { ...project, revision: project.revision + 1 });
+    assert.equal(store.db.sql.prepare('SELECT status FROM materialization_outbox WHERE id=?').get(tx)?.status, 'complete');
+    for (const change of changes) assert.equal(fs.readFileSync(path.join(root, change.path), 'utf8'), change.content);
   } finally { store.close(); }
 });
 

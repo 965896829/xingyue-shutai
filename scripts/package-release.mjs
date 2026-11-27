@@ -25,7 +25,7 @@ function release() {
       throw Error('正式发行需要配置 Apple 公证账户、API 密钥或已保存的公证凭据');
     flags.push('--mac', 'dmg', 'zip', '--' + process.arch, '-c.mac.identity=' + identity, '-c.mac.notarize=true');
   } else {
-    flags.push('--win', 'nsis', '--x64', '-c.win.signExecutable=true');
+    flags.push('--config', 'scripts/windows-builder.cjs', '--win', 'nsis', '--x64', '-c.win.signExecutable=true');
   }
   run(process.execPath, [path.join(root, 'scripts/doctor.mjs')]);
   run(process.execPath, [env.npm_execpath, 'run', 'build']);

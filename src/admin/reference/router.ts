@@ -8,6 +8,7 @@ const subscribe = (fn: () => void) => {
   window.addEventListener('hashchange', fn);
   return () => window.removeEventListener('hashchange', fn);
 };
+export function useRoute() { return useSyncExternalStore(subscribe, currentRoute); }
 export function usePathname() { return useSyncExternalStore(subscribe, () => currentRoute().split('?')[0]); }
 export function navigate(path: string) {
   location.hash = path.startsWith('/admin/') ? path : '/admin/novel/projects';

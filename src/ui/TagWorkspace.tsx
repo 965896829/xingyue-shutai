@@ -261,6 +261,7 @@ export function TagWorkspace({
       !r.accepted &&
       !['discarded', 'stale'].includes(r.status)
   );
+  const previousPlans = snapshot.runs.filter(item => item.planning && !item.accepted && !['discarded', 'stale'].includes(item.status) && draft && item.planning.spec.inputHash !== draft.inputHash);
   const t = run?.planning,
     report = t?.report,
     currentStep = (p.titlePending ? creationStep(run) : Math.min(2, creationStep(run))) as 1 | 2 | 3;
@@ -419,6 +420,9 @@ export function TagWorkspace({
           {run || accepted ? '修改想法与标签' : '填写创作想法'}
         </button>
       </header>
+      {!!previousPlans.length && <details><summary>先前输入的策划任务（{previousPlans.length}）</summary>
+        {previousPlans.map(item => <button key={item.id} onClick={() => onReview(item.id)}>{item.request || '查看策划任务'}</button>)}
+      </details>}
       {error && (
         <div className="creation-action-error" role="alert">
           {error}

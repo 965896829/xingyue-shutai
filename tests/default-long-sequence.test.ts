@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { testOutputRoot } from './fixtures/test-output';
 import fs from 'node:fs';
 import { Service } from '../src/core/service';
 import { fakeProfile, fakeResult, isolatedRoot } from './fixtures/refactor';
@@ -16,7 +17,7 @@ import { attempts } from '../src/core/runtime/model-gateway';
 test('20章正常篇幅连续通过默认规划、首稿、审核、记忆和采纳，前章状态实际进入后章请求', { timeout: 360000 }, async () => {
   let service: Service, calls = 0, entity = '';
   const wireSizes: number[] = [], rows: object[] = [];
-  const output = path.resolve('.test-output/creation-upgrade-20261030/continuous'); fs.mkdirSync(output, { recursive: true });
+  const output = path.join(testOutputRoot, 'creation-upgrade-20261030/continuous'); fs.mkdirSync(output, { recursive: true });
   service = new Service(path.resolve('resources/skill'), () => {}, async (_profile, system, messages, tools) => {
     calls++; wireSizes.push(Buffer.byteLength(JSON.stringify({ system, messages, tools })));
     const store = service.store!, p = store.db.project(), r = store.db.runs().find(r => r.status === 'running')!;

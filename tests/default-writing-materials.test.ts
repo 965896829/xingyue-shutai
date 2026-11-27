@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { acceptanceOutputRoot } from './fixtures/test-output';
 import { Service } from '../src/core/service';
 import { fakeProfile, fakeResult, isolatedRoot } from './fixtures/refactor';
 import { fixture, sampleProse } from './fixtures/workflow';
@@ -81,7 +82,7 @@ for (const mode of ['chapter', 'scene'] as const) test(`正常生成按钮的 S0
     const ready = store.db.run(writing); assert.equal(ready.status, 'awaiting_review', `${ready.error}: ${JSON.stringify(ready.issues)}`);
     assert.equal(ready.pipeline?.phase, 'ready');
     assert.equal(requests.length, mode === 'chapter' ? 5 : 10, '整章一次首稿；可选逐场模式每场一次，后续审核和记忆仍共用');
-    const directory = path.resolve('.test-output/creation-upgrade-20261030/requests'); fs.mkdirSync(directory, { recursive: true });
+    const directory = path.join(acceptanceOutputRoot, 'creation-upgrade-20261030/requests'); fs.mkdirSync(directory, { recursive: true });
     fs.writeFileSync(path.join(directory, `default-s09-s10-${mode}.json`), JSON.stringify(requests, null, 2));
   } finally { await service.drain(); }
 });

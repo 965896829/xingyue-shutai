@@ -8,6 +8,7 @@ import {
   labHeadings,
   labMaterialHeadings,
   labProseAction,
+  labProseTarget,
   labReferenceVersion,
   labSections,
   type LabContext,
@@ -56,6 +57,7 @@ function readDraft(key: string) {
 export function StoryLab({
   active,
   profiles,
+  project,
   formalBusy,
   onBack,
   onSettings,
@@ -63,6 +65,7 @@ export function StoryLab({
 }: {
   active: boolean;
   profiles: Profile[];
+  project?: { id: string; title: string };
   formalBusy: boolean;
   onBack: () => void;
   onSettings: () => void;
@@ -115,8 +118,11 @@ export function StoryLab({
   );
   const contextVersion = detail && (action !== 'blueprint' || instruction.trim()) ? labReferenceVersion(detail, action, viewId) : undefined;
   const headings = action === 'continue' && version?.id === contextVersion?.id ? [] : labMaterialHeadings(contextVersion?.content ?? '');
+  const adoptedProse = detail?.versions.find(v => v.id === detail.session.currentProseId);
+  const materialChapter = action === 'continue' ? version?.operation?.chapter ?? 1 :
+    action === 'revise' ? contextVersion?.operation?.chapter ?? 1 : labProseTarget(instruction, proseMode, adoptedProse ? adoptedProse.operation?.chapter ?? 1 : undefined).chapter;
   const defaultIndexes = contextVersion?.kind === 'blueprint' && labProseAction(action, contextVersion, version)
-    ? [...new Set(labMaterialBlocks(contextVersion.content, contextVersion.materialRules).filter(b => visibleLabMaterial(b.rule, (proseMode === 'next' || /下一章|紧接/.test(instruction)) ? (detail?.versions.find(v => v.id === detail.session.currentProseId)?.operation?.chapter ?? 1) + 1 : 1)).map(b => b.rule.section))] : headings.map((_, i) => i);
+    ? [...new Set(labMaterialBlocks(contextVersion.content, contextVersion.materialRules).filter(b => visibleLabMaterial(b.rule, materialChapter)).map(b => b.rule.section))] : headings.map((_, i) => i);
   const checkedIndexes = sectionIndexes ?? defaultIndexes;
   const latestUserIndex =
     detail?.messages.reduce((last, message, index) => (message.role === 'user' ? index : last), 0) ?? 0;
@@ -736,7 +742,8 @@ export function StoryLab({
                                     <label className="lab-check" key={h.start}>
                                       <input
                                         type="checkbox"
-                                        checked={checkedIndexes.includes(i)}
+                                        disabled={!defaultIndexes.includes(i)}
+                                        checked={defaultIndexes.includes(i) && checkedIndexes.includes(i)}
                                         onChange={(e) => {
                                           const indexes = checkedIndexes;
                                           setSectionIndexes(
@@ -746,7 +753,7 @@ export function StoryLab({
                                           );
                                         }}
                                       />
-                                      {h.title}
+                                      {h.title}{!defaultIndexes.includes(i) && '（当前章节不可用）'}
                                     </label>
                                   ))}
                                 </fieldset>
@@ -928,6 +935,12 @@ export function StoryLab({
                               ))}
                             </select>
                           </label>
+                          {project && version && ['prose', 'blueprint'].includes(version.kind) && !version.partial && version.content && (
+                            <button disabled={busy} onClick={() => void perform(async () => {
+                              const draft = await invoke('draft.importLab', { projectId: project.id, sessionId: detail.session.id, versionId: version.id });
+                              setNotice(`已转入《${project.title}》的自由草稿：${draft.title}`);
+                            })}>转入当前作品的自由草稿</button>
+                          )}
                           {detail.older && <button onClick={() => void perform(olderHistory)}>加载更早的版本和对话</button>}
                           {version?.content ? (
                             <LabEditor

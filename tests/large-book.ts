@@ -10,12 +10,13 @@ import { retrieveMemory } from '../src/core/memory-studio';
 import { compileContext } from '../src/core/context-compiler';
 import { factSchema, type Change } from '../src/shared/types';
 import { fakeProfile } from './fixtures/refactor';
+import { testOutputRoot } from './fixtures/test-output';
 import { Service } from '../src/core/service';
 
 const argument = (name: string, fallback: string) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
 const chapters = Number(argument('chapters', '20000')), words = Number(argument('words', '2500'));
 assert.ok(Number.isSafeInteger(chapters) && chapters >= 100 && Number.isSafeInteger(words) && words >= 100);
-const folder = path.resolve(argument('output', '.test-output/large-book'));
+const folder = path.resolve(argument('output', path.join(testOutputRoot, 'large-book')));
 const root = path.join(folder, 'book');
 fs.mkdirSync(root, { recursive: true });
 const reportFile = path.join(folder, 'large-book-report.json');

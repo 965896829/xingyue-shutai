@@ -1,4 +1,14 @@
 import { z } from 'zod';
+import { chapterSpan } from './chapter-range';
+
+export function labProseTarget(instruction: string, mode: LabGenerate['proseMode'], previousChapter?: number, targetChapter?: number) {
+  const named = chapterSpan(instruction)?.[0];
+  const proseMode = mode ?? (/独立|单独试写/.test(instruction) ? 'independent' : /重写|重做/.test(instruction) ? 'rewrite' :
+    /下一章|接着|紧接|继续写|续写/.test(instruction) ? 'next' :
+    previousChapter !== undefined && named ? (named === previousChapter ? 'rewrite' : 'next') : 'first');
+  const chapter = targetChapter ?? (proseMode === 'next' ? (previousChapter ?? 1) + 1 : proseMode === 'rewrite' ? previousChapter ?? 1 : named ?? 1);
+  return { chapter, proseMode };
+}
 
 const id = z.string().uuid();
 const text = z.string().max(1_000_000);

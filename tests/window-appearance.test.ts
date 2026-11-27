@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import {
   appearanceSchema,
@@ -236,9 +237,12 @@ test('renamed executable keeps installer identity and the original profile direc
   const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   assert.equal(pkg.name, 'wenxu-desktop');
   assert.equal(pkg.build.appId, 'local.wenxu.desktop');
-  assert.equal(pkg.build.nsis.guid, 'abaa7e0a-484b-5222-a08b-20b012130b6d');
-  assert.equal(pkg.build.win.executableName, '星月书台');
-  assert.equal(pkg.build.win.executableName, brand.executableName);
+  const windows = createRequire(import.meta.url)('../scripts/windows-builder.cjs');
+  assert.equal(pkg.build.win, undefined);
+  assert.equal(pkg.build.nsis, undefined);
+  assert.equal(windows.nsis.guid, 'abaa7e0a-484b-5222-a08b-20b012130b6d');
+  assert.equal(windows.win.executableName, '星月书台');
+  assert.equal(windows.win.executableName, brand.executableName);
   assert.equal(pkg.build.productName, brand.name);
   assert.equal(
     userDataDirectory(path.resolve('legacy-appdata')),
@@ -248,4 +252,6 @@ test('renamed executable keeps installer identity and the original profile direc
     userDataDirectory(path.resolve('legacy-appdata'), 'isolated-profile'),
     path.resolve('isolated-profile')
   );
+  if (process.platform !== 'win32')
+    assert.throws(() => userDataDirectory(path.resolve('legacy-appdata'), 'C:/Profile'), /Windows/);
 });

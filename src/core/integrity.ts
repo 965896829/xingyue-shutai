@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { isAppleDouble } from './filesystem-metadata';
 import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { panelRecordSchema } from './auxiliary-records';
@@ -61,7 +62,7 @@ export function garbageCollectionPreview(root: string, sql: DatabaseSync) {
   const objects = path.join(root, '.novelclient/objects');
   const transactions = path.join(root, '.novelclient/transactions');
   if (fs.existsSync(transactions)) for (const file of fs.readdirSync(transactions)) {
-    if (!file.endsWith('.json')) continue;
+    if (!file.endsWith('.json') || isAppleDouble(transactions, file)) continue;
     for (const match of fs.readFileSync(path.join(transactions, file), 'utf8').matchAll(/\b[a-f0-9]{64}\b/g)) retained.add(match[0]);
   }
   const rows = fs.existsSync(objects) ? fs.readdirSync(objects).filter((file) => /^[a-f0-9]{64}$/.test(file)).map((version) => ({ version, bytes: fs.statSync(path.join(objects, version)).size, retained: retained.has(version) })) : [];

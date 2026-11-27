@@ -4,8 +4,17 @@ import type { CanonicalSnapshot } from '../shared/studio';
 import { indexTerms } from './text-search';
 import { pendingSource } from './memory-source';
 
+function pruneOldProse(sql: DatabaseSync, file: string, currentHash: string) {
+  const obsolete = sql.prepare('SELECT id FROM prose_search_versions WHERE path=? AND hash<>?').all(file, currentHash);
+  for (const row of obsolete) {
+    sql.prepare('DELETE FROM prose_search_terms WHERE rowid=?').run(row.id);
+    sql.prepare('DELETE FROM prose_search_versions WHERE id=?').run(row.id);
+  }
+}
+
 export function indexProse(sql: DatabaseSync, file: string, version: string, content: string) {
   if (!file.startsWith('07_')) return;
+  if (sql.prepare('SELECT 1 FROM documents WHERE path=? AND hash=?').get(file, version)) pruneOldProse(sql, file, version);
   if (sql.prepare('SELECT 1 FROM prose_search_versions WHERE path=? AND hash=?').get(file, version)) return;
   const row = sql.prepare('INSERT INTO prose_search_versions(path,hash,content) VALUES(?,?,?)').run(file, version, content);
   sql.prepare('INSERT INTO prose_search_terms(rowid,terms) VALUES(?,?)').run(row.lastInsertRowid, indexTerms(content).join(' '));
@@ -32,6 +41,8 @@ export class ProseIndexer {
       const row = rows[i];
       if (!this.store.db.sql.prepare('SELECT 1 FROM prose_search_versions WHERE path=? AND hash=?').get(row.path, row.hash!))
         this.store.db.transaction(() => indexProse(this.store.db.sql, row.path, row.hash!, this.store.object(row.hash!).toString('utf8')));
+      else if (this.store.db.document(row.path)?.hash === row.hash)
+        this.store.db.transaction(() => pruneOldProse(this.store.db.sql, row.path, row.hash!));
       if (i % 16 === 15) await new Promise<void>(resolve => setImmediate(resolve));
     }
   }

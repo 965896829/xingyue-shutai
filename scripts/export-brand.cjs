@@ -6,8 +6,9 @@ const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
 const sourceDir = path.join(root, 'resources/brand/generated');
 const publicDir = path.join(root, 'public/brand');
-const iconsDir = path.join(root, 'resources/brand/icons');
-const profile = path.join(root, '.test-output/brand-export-profile');
+const workspace = process.env.XINGYUE_TEST_OUTPUT;
+if (!workspace) throw new Error('请通过 node scripts/create-icon.mjs 运行图标导出');
+const profile = path.join(workspace, 'brand-export-profile');
 fs.mkdirSync(profile, { recursive: true });
 app.setPath('userData', profile);
 app.setPath('sessionData', profile);
@@ -98,12 +99,17 @@ function wordmark(image) {
 
 function writePNG(file, image) {
   const png = image.toPNG();
+  const output = checkedPNG(png, file);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, png);
+  return { file: path.relative(root, file).replaceAll('\\', '/'), ...output, sha256: crypto.createHash('sha256').update(png).digest('hex') };
+}
+
+function checkedPNG(png, label) {
   const decoded = nativeImage.createFromBuffer(png);
   const output = alphaReport(decoded);
-  if (output.edgePixels > 0) throw new Error(`${file} contains visible pixels on the canvas edge`);
-  return { file: path.relative(root, file).replaceAll('\\', '/'), ...output, sha256: crypto.createHash('sha256').update(png).digest('hex') };
+  if (output.edgePixels > 0) throw new Error(`${label} contains visible pixels on the canvas edge`);
+  return output;
 }
 
 function writeICO(images) {
@@ -113,6 +119,7 @@ function writeICO(images) {
   let offset = header.length;
   const entries = images.map(({ size, image }, index) => {
     const png = image.toPNG(), start = 6 + index * 16;
+    checkedPNG(png, `ICO ${size}px`);
     header[start] = size === 256 ? 0 : size;
     header[start + 1] = size === 256 ? 0 : size;
     header.writeUInt16LE(1, start + 4);
@@ -142,12 +149,10 @@ app.whenReady().then(() => {
   report.sources.wordmark = loadedWordmark.source;
   // One silhouette serves both themes; CSS controls its ink color.
   report.outputs.push(writePNG(path.join(publicDir, 'wordmark-day.png'), image));
-  const icoImages = [16, 24, 32, 48, 64, 128, 256].map((size) => ({
-    size, image: applicationIcon(appArtwork, size)
-  }));
-  for (const { size, image } of icoImages)
-    report.outputs.push(writePNG(path.join(iconsDir, `app-icon-${size}.png`), image));
-  if (process.argv.includes('--with-ico')) report.ico = writeICO(icoImages);
+  if (process.argv.includes('--with-ico')) {
+    const sizes = [16, 24, 32, 48, 64, 128, 256];
+    report.ico = writeICO(sizes.map(size => ({ size, image: applicationIcon(appArtwork, size) })));
+  }
   fs.writeFileSync(path.join(root, 'resources/brand/export-report.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ outputs: report.outputs.length, icoSizes: report.ico?.sizes ?? [], report: 'resources/brand/export-report.json' }));
   app.exit(0);

@@ -4,9 +4,10 @@ import { performance } from 'node:perf_hooks';
 import { hash, prosePath } from '../src/core/domain';
 import { inspectProse, editorialVersion } from '../src/core/prose-editorial';
 import { proseQualityCases } from '../tests/fixtures/prose-quality';
+import { testOutputRoot } from '../tests/fixtures/test-output';
 
 /** Deterministic, offline signal regression. This deliberately has no model client. */
-export function evaluateProse(destination = '.test-output/prose-eval') {
+export function evaluateProse(destination = path.join(testOutputRoot, 'prose-eval')) {
   const startedAt = new Date().toISOString(), start = performance.now();
   const cases = proseQualityCases.map(fixture => {
     const source = (text: string, file: string) => ({ path: file, hash: hash(text), content: text });

@@ -1,11 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { testOutputRoot } from './test-output';
 import { FileStore } from '../../src/core/storage';
 import { newProject, activeBatch, id, now } from '../../src/core/domain';
 import { profileSchema, type Run, type ModelResult, type SecretProfile } from '../../src/shared/types';
 
 export function isolatedRoot(name = 'fixture') {
-  const base = path.resolve('.test-output/refactor/fixtures');
+  const base = path.join(testOutputRoot, 'refactor/fixtures');
   fs.mkdirSync(base, { recursive: true });
   const root = fs.mkdtempSync(path.join(base, name + '-'));
   if (!root.startsWith(base + path.sep)) throw new Error('测试路径越界');

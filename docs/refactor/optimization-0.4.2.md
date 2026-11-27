@@ -38,9 +38,9 @@ Windows10 19045上依次运行0.4.1与0.4.2实际展开包，各3次。每次通
 
 ## 验证证据
 
-`npm test`最终197项全部通过，0失败、0跳过、0取消，耗时212544.749ms。包含新增7项：DOCX内容与原文件一致、解析期间父线程响应、开始前/进行中取消、损坏与超限输入、解析超时、线程崩溃/非法返回、活动和排队导入的退出清理。类型检查与完整构建也通过。详见 [完整测试日志](optimization-evidence/tests.log)、[构建日志](optimization-evidence/build.log) 和 [新增测试源码](../../tests/document-importer.test.ts)。
+`npm test`最终197项全部通过，0失败、0跳过、0取消，耗时212544.749ms。包含新增7项：DOCX内容与原文件一致、解析期间父线程响应、开始前/进行中取消、损坏与超限输入、解析超时、线程崩溃/非法返回、活动和排队导入的退出清理。类型检查与完整构建也通过。详见 [当时的交付报告](optimization-evidence/delivery-report.json) 和 [新增测试源码](../../tests/document-importer.test.ts)。
 
-全局Playwright MCP连接两个真实Electron包。文件选择对话框在各自隔离测试进程中通过main inspector返回指定合成文件；现有文件授权、IPC、业务进程、解析线程和ASAR加载均走实际代码。没有以此声称原生文件选择框已重新人工验收。当前包的既有导入弹窗完整显示预览，未勾选核对时“建立导入候选”保持禁用，见 [截图](../../output/playwright/optimization-0.4.2-import.png) 与 [桌面检查](optimization-evidence/electron-smoke.json)。
+全局Playwright MCP连接两个真实Electron包。文件选择对话框在各自隔离测试进程中通过main inspector返回指定合成文件；现有文件授权、IPC、业务进程、解析线程和ASAR加载均走实际代码。没有以此声称原生文件选择框已重新人工验收。当前包的既有导入弹窗完整显示预览，未勾选核对时“建立导入候选”保持禁用，见 [桌面检查](optimization-evidence/electron-smoke.json)。
 
 两个导入尚未结束时关闭测试窗口，程序随后退出且项目/管理仓库写锁全部释放，源文件SHA256不变，见 [退出清理](optimization-evidence/cleanup.json)。窗口关闭调用耗时不等同完整drain耗时；未将两者混为一项指标。
 

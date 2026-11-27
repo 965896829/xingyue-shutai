@@ -21,9 +21,9 @@
 - 74 项相关回归测试通过，覆盖重新生成、普通恢复、未知结果、累计费用预算、Pi 执行入口、任务对话与幂等性；未运行整个测试集。
 - 浏览器离线夹具验证宽窗口、窄窗口和打开文稿面板的布局；注入启动失败后，错误显示在按钮旁。后续双击只进入一次模拟模型调用。
 - TypeScript 检查、生产构建及 NSIS 打包成功。首次构建发现测试断言的可选消息类型错误，修复后重建成功，首轮日志单独保留。
-- 安装包内 UI、主进程和 worker 与本次构建逐字节对比；skill 目录清单及各文件散列与源码一致。详见 [打包校验记录](../../output/task-retry-layout-0.4.80-20261028/package-verification.json)。
+- 安装包内 UI、主进程和 worker 与本次构建逐字节对比；skill 目录清单及各文件散列与源码一致。当时的打包校验文件为 `output/task-retry-layout-0.4.80-20261028/package-verification.json`。
 - 本次没有真实模型调用，没有覆盖安装，没有修改原有作品和模型配置。离线测试确认重新生成入口与请求次数，不代表完成了真实模型整章质量验收。
 
 历史安装包：`星月书台 Setup 0.4.80.exe`；已于 2026-10-30 清理，见[清理记录](../maintenance/repository-cleanup-2026-10-30.md)。
 
-证据：[相关回归日志](../../output/task-retry-layout-0.4.80-20261028/regression-tests.log)、[点击请求记录](../../output/playwright/task-retry-click-result-0.4.80.json)、[宽窗口](../../output/playwright/task-retry-wide-0.4.80.png)、[窄窗口](../../output/playwright/task-retry-narrow-0.4.80.png)。
+同一目录还输出了 `regression-tests.log`。点击请求记录和宽窄窗口截图属于当时的本机验收输出。

@@ -8,8 +8,9 @@ import { hash } from '../src/core/domain';
 import { profileSchema, type SecretProfile } from '../src/shared/types';
 import { contextBook, contextCase } from '../tests/fixtures/context-book';
 import { fakeProfile } from '../tests/fixtures/refactor';
+import { testOutputRoot } from '../tests/fixtures/test-output';
 
-export async function evaluateContext(profile: SecretProfile, live = false, destination = '.test-output/context-eval') {
+export async function evaluateContext(profile: SecretProfile, live = false, destination = path.join(live ? '.test-output' : testOutputRoot, 'context-eval')) {
   const folder = path.resolve(destination);
   fs.mkdirSync(folder, { recursive: true });
   const { store, project } = contextBook(true);

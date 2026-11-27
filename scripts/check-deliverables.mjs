@@ -184,5 +184,6 @@ const report = {
   },
   note: '文档和构建完整性检查，不能替代未完成的真实端点、文学效果与操作系统矩阵验收'
 };
+fs.mkdirSync('.test-output', { recursive: true });
 fs.writeFileSync('.test-output/delivery-report.json', JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report, null, 2));

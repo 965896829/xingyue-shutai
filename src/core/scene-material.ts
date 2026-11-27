@@ -1,3 +1,4 @@
+import { outlineScenes } from '../shared/scene-headings';
 import { characterVoiceSlice } from './character-voice';
 import { characterMaterial } from './character-material';
 import type { ContextManifest, ContextSource, Fact } from '../shared/types';
@@ -17,13 +18,13 @@ const fields = {
 /** Optional fields live in the existing scene outline; missing fields remain absent. */
 export function sceneMaterials(sources: ContextSource[]) {
   return sources.filter(s => /第\d+章细纲\.md$/.test(s.path)).flatMap(source =>
-    source.content.split(/(?=^## 场面\s*\d+[：:])/m).filter(block => /^## 场面/.test(block)).map(block => {
+    outlineScenes(source.content).map(({ block, title }) => {
       const values: Partial<Record<keyof typeof fields, string>> = {};
       for (const [key, label] of Object.entries(fields)) {
         const value = block.match(new RegExp(`^[-*][ \\t]+${label}[：:][ \\t]*([^\\r\\n]+)`, 'm'))?.[1].trim();
         if (value && !/^(无|未知|不适用|待填写)[。.]?$/.test(value)) values[key as keyof typeof fields] = value;
       }
-      return { scene: block.split('\n')[0].replace(/^## /, '').trim(), kind: 'plan' as const,
+      return { scene: title.trim(), kind: 'plan' as const,
         ...values, source: { path: source.path, hash: source.hash } };
     }));
 }

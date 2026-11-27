@@ -1,3 +1,4 @@
+import { outlineScenes } from '../../shared/scene-headings';
 import { writingOperation } from '../../shared/writing-operation';
 import { characterMaterial } from '../character-material';
 import type { ModelResult, ProjectState, Run } from '../../shared/types';
@@ -24,10 +25,10 @@ export async function writeScopedScenes(options: {
   const character = run.taskScope?.memory.characterId ?? project.config.viewpointCharacterId;
   if (!character) throw new Error('逐场生成需要先选择视角人物');
   const source = store.readAccepted(detailPath(run.chapter));
-  const blocks = source.content.split(/(?=^## 场面\s*\d+[：:])/m);
-  const chapterBrief = /^## 场面/.test(blocks[0]) ? '' : blocks.shift()!;
-  const scenes = blocks.filter(s => /^## 场面/.test(s));
-  const numbers = scenes.map(s => Number(s.match(/^## 场面\s*(\d+)/)![1]));
+  const sections = outlineScenes(source.content);
+  const chapterBrief = source.content.slice(0, sections[0]?.start ?? source.content.length);
+  const scenes = sections.map(section => section.block);
+  const numbers = sections.map(section => section.number);
   if (!scenes.length || new Set(numbers).size !== scenes.length || numbers.some((n, i) => i > 0 && n <= numbers[i - 1]))
     throw new Error('逐场生成需要按故事顺序编号的场面细纲，请先整理本章细纲');
   const names = new Set([character, ...store.db.facts().filter(f => f.entityIds.includes(character)).flatMap(f => [f.subject, ...f.aliases])]);

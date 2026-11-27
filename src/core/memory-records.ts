@@ -10,7 +10,10 @@ const marker = '<!-- wenxu-facts:v1 -->';
 const factsPattern = /<!-- wenxu-facts:v1 -->\s*```json\s*\n([\s\S]*?)\n```/;
 export function decodeFacts(content: string): Fact[] {
   const match = content.match(factsPattern);
-  if (!match) return [];
+  if (!match) {
+    if (content.includes(marker)) throw new Error('可追溯事实记录缺少完整的数据块');
+    return [];
+  }
   const raw: unknown = JSON.parse(match[1]);
   if (!Array.isArray(raw)) throw new Error('事实记录必须为数组');
   return raw.map((v) => factSchema.parse(v));

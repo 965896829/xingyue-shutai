@@ -1,12 +1,13 @@
 import { databaseVersion } from '../../src/core/compatibility';
 import path from 'node:path';
+import { testOutputRoot } from './test-output';
 import { atomicWrite, FileStore } from '../../src/core/storage';
 import { callModel } from '../../src/core/runtime/model-gateway';
 import { fakeProfile, fakeResult } from './refactor';
 import { DatabaseSync } from 'node:sqlite';
 
 const [root, point, runId] = process.argv.slice(2);
-const base = path.resolve('.test-output/refactor/fixtures');
+const base = path.join(testOutputRoot, 'refactor/fixtures');
 if (!path.resolve(root).startsWith(base + path.sep)) throw new Error('拒绝测试路径越界');
 const halt = () => {
   // Publish the complete barrier before the parent observes it and kills this process.

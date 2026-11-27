@@ -171,7 +171,7 @@ export function requestBody(
         { role: 'system', content: system },
         ...messages.map((m) =>
           m.role === 'assistant' && m.native
-            ? m.native
+            ? cleanChatMessage(m.native)
             : m.role === 'tool'
               ? { role: 'tool', tool_call_id: m.callId, content: m.content }
               : { role: m.role, content: m.content }
@@ -329,6 +329,14 @@ function nativeSearchCall(item: Obj): NativeWebSearchCall {
       return url ? [{ url, title: String(source.title ?? url).slice(0, 500) }] : [];
     }) };
 }
+function cleanChatMessage(value: unknown) {
+  if (value && typeof value === 'object' && 'tool_calls' in value && Array.isArray(value.tool_calls) && !value.tool_calls.length) {
+    const { tool_calls: _empty, ...message } = value;
+    return message;
+  }
+  return value;
+}
+
 export function normalize(p: SecretProfile, data: Obj): ModelResult {
   let text = '',
     calls: ToolCall[] = [],
@@ -341,7 +349,7 @@ export function normalize(p: SecretProfile, data: Obj): ModelResult {
   if (p.protocol === 'chat') {
     const c = data.choices?.[0];
     if (!c?.message || !c.finish_reason) throw new RequestError('响应没有明确结束标记', true);
-    native = c.message;
+    native = cleanChatMessage(c.message);
     text = c.message.content ?? '';
     if (typeof c.message.refusal === 'string' && c.message.refusal.trim()) {
       refused = true;
@@ -434,6 +442,8 @@ export function normalize(p: SecretProfile, data: Obj): ModelResult {
     )
   )
     throw new RequestError(`服务端返回不能视为完成的停止原因：${reason}`, true);
+  if (!Number.isSafeInteger(input) || input! < 0) input = null;
+  if (!Number.isSafeInteger(output) || output! < 0) output = null;
   const usage: Usage = {
     input,
     output,
@@ -452,6 +462,19 @@ export function normalize(p: SecretProfile, data: Obj): ModelResult {
     if (cached !== undefined) usage.cachedInput = cached;
     if (written !== undefined) usage.cacheWriteInput = written;
     if (reasoningTokens !== undefined) usage.reasoningOutput = reasoningTokens;
+  }
+  if (p.protocol === 'anthropic') {
+    const cached = reported(data.usage?.cache_read_input_tokens);
+    const written = reported(data.usage?.cache_creation_input_tokens);
+    if (cached !== undefined) usage.cachedInput = cached;
+    if (written !== undefined) usage.cacheWriteInput = written;
+    if (usage.input !== null) usage.input += (cached ?? 0) + (written ?? 0);
+  }
+  if (usage.input !== null && usage.output !== null && p.inputPrice !== null && p.outputPrice !== null) {
+    const read = usage.cachedInput ?? 0, write = usage.cacheWriteInput ?? 0;
+    const normal = usage.input - read - write;
+    usage.cost = normal < 0 ? null : (normal * p.inputPrice + read * (p.cacheReadPrice ?? p.inputPrice) +
+      write * (p.cacheWritePrice ?? p.inputPrice) + usage.output * p.outputPrice) / 1e6;
   }
   if (webSearch.calls.length) usage.cost = null;
   const provider: NonNullable<ModelResult['provider']> = {};
@@ -729,7 +752,11 @@ export async function invokeModel(
           }
           for (const t of d.tool_calls ?? []) {
             options.onActivity?.('tool_input');
-            const v = (msg.tool_calls[t.index] ??= {
+            const existing = t.id ? msg.tool_calls.findIndex((item: Obj) => item?.id === t.id) : -1;
+            const index = t.index ?? (existing >= 0 ? existing : t.id ? msg.tool_calls.length : msg.tool_calls.length <= 1 ? 0 : -1);
+            if (!Number.isSafeInteger(index) || index < 0 || index > msg.tool_calls.length)
+              throw new RequestError('工具流无法确定调用顺序，已停止接收', true);
+            const v = (msg.tool_calls[index] ??= {
               id: '',
               type: 'function',
               function: { name: '', arguments: '' }
@@ -739,7 +766,9 @@ export async function invokeModel(
             if (t.function?.arguments) v.function.arguments += t.function.arguments;
           }
           if (c?.finish_reason) {
-            data.choices = [{ message: msg, finish_reason: c.finish_reason }];
+            const message = { ...msg };
+            if (!message.tool_calls.length) delete message.tool_calls;
+            data.choices = [{ message, finish_reason: c.finish_reason }];
             terminal = true;
           }
           if (e.usage) data.usage = e.usage;
@@ -813,11 +842,10 @@ export async function invokeModel(
             usage = { ...usage, ...e.usage };
           }
           if (e.type === 'message_stop') {
-            for (const b of content)
-              if (b._json) {
-                b.input = JSON.parse(b._json);
-                delete b._json;
-              }
+            for (const b of content) {
+              if (b._json) b.input = JSON.parse(b._json);
+              delete b._json;
+            }
             data.content = content;
             data.usage = usage;
             terminal = true;

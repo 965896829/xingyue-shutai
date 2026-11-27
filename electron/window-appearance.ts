@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { z } from 'zod';
 import { brand } from '../src/shared/brand';
+import { assertNativeDirectory } from '../src/core/system-path';
 import type { WindowAppearance } from '../src/shared/desktop';
 
 const color = z.string().regex(/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i);
@@ -13,7 +14,9 @@ export const appearanceSchema = z.object({
 export type StoredAppearance = Omit<WindowAppearance, 'animate'>;
 
 export function userDataDirectory(appData: string, override?: string) {
-  return override ? path.resolve(override) : path.join(appData, brand.internalName);
+  if (!override) return path.join(appData, brand.internalName);
+  assertNativeDirectory(override);
+  return path.resolve(override);
 }
 
 const normalize = (hex: string) =>

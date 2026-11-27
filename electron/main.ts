@@ -157,6 +157,9 @@ const modelLimitsCache = new Map<string, ModelLimits>();
 // productName is presentation, not a new profile. Keep Chromium's Local State and
 // encrypted keys in the original profile even before app.whenReady() initializes them.
 const userData = userDataDirectory(app.getPath('appData'), process.env.WENXU_DATA_DIR);
+// The Vite launcher runs a temporary Electron bundle with the project as its cwd.
+const appRoot = !app.isPackaged && process.env.VITE_DEV_SERVER_URL ? process.cwd() : app.getAppPath();
+const skillRoot = app.isPackaged ? path.join(process.resourcesPath, 'skill') : path.join(appRoot, 'resources/skill');
 fs.mkdirSync(userData, { recursive: true });
 app.setPath('userData', userData);
 app.setPath('sessionData', userData);
@@ -212,8 +215,15 @@ function startWorker() {
   projectSessionId = undefined;
   readyPromise = new Promise((resolve, reject) => { resolveReady = resolve; rejectReady = reject; });
   void readyPromise.catch(() => {});
+  if (generation > 1) {
+    const root = openedProjectRoot;
+    reconnect = readyPromise.then(() => root ? rpc('project.open', { root }, true) : undefined);
+    void reconnect.catch(() => {
+      emitAppEvent({ type: 'error', text: '执行内核已重启，原作品恢复未完成，请重新打开并核对', workerGeneration: generation });
+    }).finally(() => emitAppEvent({ type: 'snapshot', workerGeneration: generation }));
+  }
   const child = utilityProcess.fork(path.join(__dirname, 'worker.cjs'), [
-    app.isPackaged ? path.join(process.resourcesPath, 'skill') : path.join(app.getAppPath(), 'resources/skill'),
+    skillRoot,
     app.getPath('userData')
   ], { serviceName: `${brand.name}写作内核`, stdio: 'pipe', env: { ...process.env, NODE_TLS_REJECT_UNAUTHORIZED: '1' } });
   worker = child;
@@ -231,15 +241,12 @@ function startWorker() {
         projectSessionId = message.projectSessionId;
         clearTimeout(startup);
         resolveReady();
-        if (generation > 1) {
-          reconnect = openedProjectRoot ? rpc('project.open', { root: openedProjectRoot }) : Promise.resolve();
-          void reconnect.catch(() => {
-            emitAppEvent({ type: 'error', text: '执行内核已重启，原作品恢复未完成，请重新打开并核对', workerGeneration: generation });
-          }).finally(() => {
-            emitAppEvent({ type: 'snapshot', workerGeneration: generation });
-          });
-        }
       } catch (error) { rejectReady(error as Error); child.kill(); }
+      return;
+    }
+    if (message.type === 'shutdown-failed') {
+      const failure = errorSchema.safeParse(message.error);
+      emitAppEvent({ type: 'error', text: failure.success ? failure.data.message : '关闭内核时未完成文稿同步', workerGeneration: generation });
       return;
     }
     if (message.type === 'shutdown-complete') { resolveShutdown?.(); return; }
@@ -270,8 +277,9 @@ function startWorker() {
   });
   try { sync('initialize'); } catch (error) { rejectReady(error as Error); child.kill(); }
 }
-async function rpc<C extends Command>(command: C, args: Record<string, unknown>): Promise<CommandOutput<C>> {
+async function rpc<C extends Command>(command: C, args: Record<string, unknown>, reopening = false): Promise<CommandOutput<C>> {
   await readyPromise;
+  if (!reopening) await reconnect.catch(() => {});
   if (supervisor.state !== 'ready') throw new ApplicationError('WORKER_UNAVAILABLE', '执行内核尚未就绪');
   const context = requestContext.getStore();
   const requestId = randomUUID();
@@ -515,7 +523,7 @@ async function handle(command: Command, a: Record<string, unknown>) {
       }
       return result;
     } catch (e) {
-      if (p && settings.profiles.find((v) => v.id === p.id) === p) {
+      if (e instanceof ApplicationError && e.details?.capabilityTestFailed === true && p && settings.profiles.find((v) => v.id === p.id) === p) {
         p.capabilities[a.tools ? 'tools' : 'text'] = 'failed';
         saveSettings();
         sync();
@@ -544,10 +552,13 @@ async function handle(command: Command, a: Record<string, unknown>) {
     return true;
   }
   const result = await rpc(command, a);
-  if (['app.snapshot', 'project.open', 'project.close', 'project.create', 'project.trash', 'project.restoreTrash'].includes(command) || command === 'project.importLegacy' && a.preview !== true)
+  if (command === 'app.snapshot') {
+    const snapshot = result as CommandOutput<'app.snapshot'>;
+    openedProjectRoot = snapshot.project?.root;
+    return { ...snapshot, savedProfiles: settings.profiles.map(({ encryptedKey, ...p }) => p) };
+  }
+  if (['project.open', 'project.close', 'project.create', 'project.trash', 'project.restoreTrash'].includes(command) || command === 'project.importLegacy' && a.preview !== true)
     openedProjectRoot = parseOutput('app.snapshot', result).project?.root;
-  if (command === 'app.snapshot')
-    return { ...parseOutput('app.snapshot', result), savedProfiles: settings.profiles.map(({ encryptedKey, ...p }) => p) };
   if (
     command === 'project.open' ||
     command === 'project.create' ||
@@ -640,11 +651,11 @@ else {
       client: { id: clientId, name: `${brand.name} · 本机`, version: buildVersion,
         state: () => ({ workerState: supervisor.state, workerGeneration: supervisor.generation }),
         invoke: dispatch, cancelWait: waitId => waiting.get(waitId)?.abort() },
-      audit: managementAudit, staticRoot: path.join(__dirname, '../dist'),
+      audit: managementAudit, staticRoot: path.join(appRoot, 'dist'),
       devOrigin: !app.isPackaged ? process.env.VITE_DEV_SERVER_URL : undefined
     });
     stateFile = path.join(app.getPath('userData'), 'settings.json');
-    assistantSettings = new AssistantSettings(app.getPath('userData'), app.isPackaged ? path.join(process.resourcesPath, 'skill') : path.join(app.getAppPath(), 'resources/skill'));
+    assistantSettings = new AssistantSettings(app.getPath('userData'), skillRoot);
     appearanceFile = path.join(app.getPath('userData'), 'appearance.json');
     let persistedAppearance: StoredAppearance | undefined;
     try {
@@ -679,7 +690,7 @@ else {
       title: brand.windowTitle,
       icon: app.isPackaged
         ? path.join(__dirname, '../dist/brand/app-icon.png')
-        : path.join(app.getAppPath(), 'public/brand/app-icon.png'),
+        : path.join(appRoot, 'public/brand/app-icon.png'),
       webPreferences: {
         preload: path.join(__dirname, 'preload.cjs'),
         sandbox: true,

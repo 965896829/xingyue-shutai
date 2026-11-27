@@ -43,4 +43,4 @@ Q35–Q40 的真人盲评仍待实际作者和目标读者完成。作者、读�
 
 打开 `output/xingyue-v7/anonymous-review.html`，填写读者代号后开始。每人顺序单独随机并保存在本机；只展示样稿 A/B，不展示模型、提示词或来源。可以平局、都不满意或跳过。可标记连续原文并保存 Unicode 坐标，最后导出 JSON。
 
-隐藏映射只在 `.test-output/xingyue-v7/live-quality/blind-private-mapping.json`；不发给盲评参与者。界面测试导出的 `anonymous-demo-feedback*.json` 是演示记录，真人数仍为 0。生成与导出脚本支持复核，不需要继续付费调用。
+隐藏映射只在 `.test-output/xingyue-v7/live-quality/blind-private-mapping.json`；不发给盲评参与者。界面测试导出的 `anonymous-demo-feedback*.json` 是演示记录，真人数仍为 0。保有原评测资料时，可用[离线导出脚本](../../scripts/export-quality-review.ts)复核已有样稿。

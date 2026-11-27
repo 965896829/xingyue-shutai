@@ -40,6 +40,19 @@ async function book(service: Service, quickWriting = false) {
     ...(quickWriting ? { quickWriting: true } : {}), config: { defaultProfileId: fakeProfile.id, maxTools: 64, maxRounds: 20, preview: { enabled: false } } });
 }
 
+test('缺少模型时修订任务保留暂停记录，执行预检失败且未发送请求', async () => {
+  const service = new Service(rules, () => {}, async () => { throw new Error('意外模型请求'); });
+  try {
+    await book(service);
+    const id = await service.invoke('run.start', { mode: 'revision', request: '调整开篇的语气' });
+    const db = service.store!.db;
+    await idle(service);
+    assert.equal(db.run(id).status, 'paused');
+    assert.equal(db.sql.prepare("SELECT json_extract(data,'$.state') AS state FROM execution_records WHERE run_id=? ORDER BY rowid DESC LIMIT 1").get(id)?.state, 'failed');
+    assert.equal(db.sql.prepare('SELECT count(*) AS n FROM model_attempts WHERE run_id=?').get(id)?.n, 0);
+  } finally { await service.drain(); }
+});
+
 test('短笔记各自核对，索引故障、重复点击和重启后只有一份正式结果', async () => {
   const service = new Service(rules, () => {}, async () => { throw new Error('意外模型请求'); });
   try {

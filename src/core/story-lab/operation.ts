@@ -1,5 +1,5 @@
-import { labHeadings, type LabGenerate, type LabOperation, type LabVersion } from '../../shared/story-lab';
-import { chapterSpan, numeral, parseChapterNumber } from '../../shared/chapter-range';
+import { labProseTarget, labHeadings, type LabGenerate, type LabOperation, type LabVersion } from '../../shared/story-lab';
+import { numeral, parseChapterNumber } from '../../shared/chapter-range';
 import type { LabStore } from './store';
 
 const sectionNumber = new RegExp(`第\\s*(${numeral})\\s*([卷章])`, 'g');
@@ -44,11 +44,9 @@ export function describeOperation(store: LabStore, input: LabGenerate, adoptedPr
       return { ...source.operation, scope: 'full', segment: 'tail' };
     return source.operation;
   }
-  const proseMode = input.proseMode ?? (/独立|单独试写/.test(input.instruction) ? 'independent' :
-    /重写|重做/.test(input.instruction) ? 'rewrite' :
-    /下一章|接着|紧接|继续写|续写/.test(input.instruction) ? 'next' :
-    adoptedProse && chapterSpan(input.instruction) ? (chapterSpan(input.instruction)![0] === (read(adoptedProse)?.operation?.chapter ?? 1) ? 'rewrite' : 'next') : 'first');
-  const previous = input.action === 'prose' && ['next', 'rewrite'].includes(proseMode) ? read(input.previousProseId ?? adoptedProse) : undefined;
+  const prior = input.action === 'prose' ? read(input.previousProseId ?? adoptedProse) : undefined;
+  const { proseMode, chapter } = labProseTarget(input.instruction, input.proseMode, prior ? prior.operation?.chapter ?? 1 : undefined, input.targetChapter);
+  const previous = input.action === 'prose' && ['next', 'rewrite'].includes(proseMode) ? prior : undefined;
   if (input.action === 'prose' && ['next', 'rewrite'].includes(proseMode) && (!previous || previous.kind !== 'prose' || previous.partial))
     throw new Error('请先选择完整的前章正文版本，或选择独立试写。');
   const expansionCommand = input.action === 'expand' ? normalizeSectionNumbers(input.instruction) : '';
@@ -57,8 +55,6 @@ export function describeOperation(store: LabStore, input: LabGenerate, adoptedPr
   if (selected && (!base || selected.end < selected.start || selected.end > base.content.length || base.content.slice(selected.start, selected.end) !== selected.text))
     throw new Error('选区与基准版本不一致，请重新选择原文');
   if (input.action === 'expand' && (!base || base.partial || base.kind !== 'blueprint')) throw new Error('请先选择完整方案作为补充位置');
-  const chapter = input.targetChapter ?? (proseMode === 'next' ? (previous?.operation?.chapter ?? 1) + 1 :
-    proseMode === 'rewrite' ? previous?.operation?.chapter ?? 1 : chapterSpan(input.instruction)?.[0] ?? 1);
   return { rootRequestId: input.requestId, action: input.action, instruction: input.instruction, scope: input.blueprintScope,
     category: input.action === 'prose' ? 'prose' : input.action === 'discuss' ? 'discussion' : input.action === 'revise' ? 'replace' :
       input.action === 'expand' ? (/第\d+章/.test(expansionCommand) ? 'chapter' : /第\d+卷/.test(expansionCommand) ? 'volume' : 'insert') : 'full',

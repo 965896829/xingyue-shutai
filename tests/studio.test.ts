@@ -653,9 +653,9 @@ test('语义事实隔离与查询费用回执，检索和写作费用共同累�
       () => ({ settings, apiKey: 'fixture' }),
       () => {},
       {
-        embed: async () => {
+        embed: async input => {
           calls++;
-          return { vectors: [[1, 0]], tokens: 10 };
+          return { vectors: input.map(() => [1, 0]), tokens: 10 };
         }
       }
     );

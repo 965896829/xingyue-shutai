@@ -55,6 +55,7 @@ import { compileContext,contextChanged } from './context-compiler';
 import type { ConversationRunner, AssistantRuntime } from './conversation-runner';
 import { generateCover,saveCover } from './cover';
 import { CreationTimings } from './creation-timing';
+import { assertNativeDirectory } from './system-path';
 import { createBackup,exportDocument,importDocument,restoreBackup,restoreAuxiliaryHistory } from './documents';
 import {
 activeBatch,
@@ -217,10 +218,11 @@ export class Service {
     this.storyLab = undefined;
     await this.runner?.telemetry.stop();
     await Promise.allSettled([...this.requests, ...this.jobs]);
-    this.store?.materialize();
-    this.close();
-    this.requestJournal?.close();
-    this.requestJournal = null;
+    try { this.store?.materialize(); }
+    finally {
+      try { this.close(); }
+      finally { this.requestJournal?.close(); this.requestJournal = null; }
+    }
   }
   private assertCanClose() {
     if (this.queuedExecution) throw new Error('当前作品还有排队任务，请先停止或等待完成');
@@ -326,6 +328,7 @@ export class Service {
     return this.switchProject(root, snapshot => parseOutput('project.open', snapshot));
   }
   private switchProject<T>(root: string, validate: (snapshot: Snapshot) => T): T {
+    assertNativeDirectory(root);
     if (isRecyclePath(root)) throw new Error('请先从客户端回收站恢复作品，再打开编辑');
     this.assertCanClose();
     if (!fs.existsSync(path.join(root, '.novelclient/state.sqlite')))
@@ -803,6 +806,12 @@ export class Service {
   }
   private async dispatch(command: Command, a: Record<string, unknown>): Promise<unknown> {
     if (command === 'app.snapshot') return this.snapshot();
+    if (command === 'draft.importLab') {
+      const { p } = this.require();
+      if (a.projectId !== p.id) throw new Error('当前作品已切换，请重新选择转入作品');
+      const version = this.lab().store.version(str(a.sessionId), str(a.versionId));
+      return this.chat!.records.importLabVersion(version);
+    }
     if (command.startsWith('lab.')) {
       const lab = this.lab();
       if (command === 'lab.list') return lab.store.all('sessions').reverse();

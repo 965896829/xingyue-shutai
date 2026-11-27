@@ -1,3 +1,4 @@
+import { supersedeFact } from './fact-transitions';
 import { z } from 'zod';
 import type { FileStore } from './storage';
 import { factSchema, type Run } from '../shared/types';
@@ -133,11 +134,7 @@ export function finishMemoryRepairReport(store: FileStore, run: Run) {
   const facts = structuredClone(store.db.facts());
   for (const fact of run.facts) {
     const old = facts.find(item => item.id === fact.supersedes);
-    if (old) {
-      old.state = 'superseded';
-      if (fact.fromChapter <= old.fromChapter) old.reviewStatus = 'retracted';
-      else old.toChapter = fact.fromChapter - 1;
-    }
+    if (old) supersedeFact(old, fact);
     facts.push(fact);
   }
   for (const retirement of run.factRetractions ?? []) {

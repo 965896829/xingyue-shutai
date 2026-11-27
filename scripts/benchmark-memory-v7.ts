@@ -20,7 +20,8 @@ const results: unknown[] = [];
 const extended = process.argv.includes('--extended');
 const diskSize = (root: string): number => fs.readdirSync(root, { withFileTypes: true }).reduce((size, entry) => size + (entry.isDirectory() ? diskSize(path.join(root, entry.name)) : fs.statSync(path.join(root, entry.name)).size), 0);
 for (const chapters of [100, 500, 1000]) {
-  const root = fs.mkdtempSync(path.join(directory, `memory-${label}-${chapters}-`));
+  using sample = fs.mkdtempDisposableSync(path.join(process.env.XINGYUE_TEST_OUTPUT ?? os.tmpdir(), `memory-${label}-${chapters}-`));
+  const root = sample.path;
   const store = new FileStore(root);
   const p = newProject('合成长篇性能夹具', root, { targetWords: chapters * 3000 });
   p.chapter = chapters + 1;

@@ -26,6 +26,6 @@
 
 安装包：`release/星月书台 Setup 0.4.78.exe`，127,175,642 字节；比保留的 0.4.77 安装包增加 395,763 字节。SHA-256：`04f9f60db17ff177a0e2594378dc14e8a4c1ef79a0aa5d825ebe4f9895771825`。
 
-原始记录：[完整报告](../../output/pi-integration-0.4.78-20261028/final-report.json)、[全量测试](../../output/pi-integration-0.4.78-20261028/full-tests.log)、[安装包隔离验证](../../output/pi-integration-0.4.78-20261028/packaged-smoke-result.json)、[请求对照](../../output/pi-integration-0.4.78-20261028/offline-request-comparison.json)、[构建与打包](../../output/pi-integration-0.4.78-20261028/package.log)。
+本轮完整报告、全量测试、安装包隔离验证、请求对照和构建日志的原始输出目录为 `output/pi-integration-0.4.78-20261028/`。
 
 设计依据：[ADR-007](architecture-decisions/ADR-007.md)、[执行器准入](executor-capability-matrix.md)、[恢复边界](rollback-runbook.md)。

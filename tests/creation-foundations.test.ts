@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { testOutputRoot } from './fixtures/test-output';
 import fs from 'node:fs';
 import { Service } from '../src/core/service';
 import { fakeProfile, fakeResult, isolatedRoot, refactorFixture } from './fixtures/refactor';
@@ -27,7 +28,7 @@ import { fixtureAuditEvidence } from './fixtures/chapter-coverage';
 
 const root = path.resolve('resources/skill');
 const model = { ...fakeProfile, contextLimit: 1000000, outputLimit: 16000 };
-const evidenceRoot = path.resolve('.test-output/creation-upgrade-20261030/requests');
+const evidenceRoot = path.join(testOutputRoot, 'creation-upgrade-20261030/requests');
 fs.mkdirSync(evidenceRoot, { recursive: true });
 
 for (const protocol of ['chat', 'responses'] as const) for (const [current, chapter] of [[1, 1], [1, 2], [8, 2], [1, 31]]) test(`实际模型请求、输出与资料统一：${protocol} 当前 ${current} / 目标 ${chapter}`, async () => {

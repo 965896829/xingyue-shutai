@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { reviewDownload } from '../src/ui/export-review';
+import { strFromU8, unzipSync } from 'fflate';
 import { refactorFixture } from './fixtures/refactor';
 import { readQuality, mutateQuality, storeLearnedPreferences, voiceDocument, voiceSlice, voicePath, qualityStatistics, blindPresentation, captureCommittedEdit, storePatterns } from '../src/core/quality';
 import { parseWorldModel, readWorldModel, renderWorldModel, worldContext } from '../src/core/world-model';
@@ -7,6 +9,18 @@ import { checkWorldFields } from '../src/core/validation';
 import { hash, paths, prosePath } from '../src/core/domain';
 import { compileCreative } from '../src/core/creative-context';
 import path from 'node:path';
+
+test('101 项匿名试读可一次下载，压缩包内两组完整可读，100 项仍导出单页', async () => {
+  const ids = Array.from({ length: 101 }, (_, index) => '场景-' + index);
+  const read = async (batch: string[]) => ({ html: batch.join('\n') });
+  const all = await reviewDownload(ids, read);
+  const files = unzipSync(new Uint8Array(await all.blob.arrayBuffer()));
+  assert.deepEqual(Object.keys(files), ['试读-1-100.html', '试读-101-101.html']);
+  assert.deepEqual(Object.values(files).flatMap(bytes => strFromU8(bytes).split('\n')), ids);
+  const one = await reviewDownload(ids.slice(0, 100), read);
+  assert.match(one.filename, /\.html$/);
+  assert.equal((await one.blob.text()).split('\n').length, 100);
+});
 
 function edited() {
   const f = refactorFixture(), file = prosePath(1), before = '阿宁𠮷低头，心想他大概已经猜到了答案。', after = '阿宁𠮷低头，把没点燃的火柴折成了两段。';
@@ -70,6 +84,9 @@ test('修订来源不漂移、无效 Unicode 引文不能成为证据', () => {
     store.commit([{ path: evidence.after.path, content: '后来版本完全改变。', baseHash: evidence.after.hash }], store.db.project());
     assert.equal(readQuality(store).preferences[0].state, 'stale');
     assert.throws(() => compileCreative(store, path.resolve('resources/skill'), { operation: 'learn-edits', evidenceIds: [state.evidence[0].id] }, 'branch'), /失效/);
+    storePatterns(store, '无关的工坊操作', []);
+    store.commit([{ path: evidence.after.path, content: evidence.after.quote, baseHash: store.db.document(evidence.after.path)!.hash }], store.db.project());
+    assert.equal(readQuality(store).preferences[0].state, 'proposal');
   } finally { store.close(); }
 });
 test('自动编辑记录支持删除，默认原因未知且重复回放不增加记录', () => {

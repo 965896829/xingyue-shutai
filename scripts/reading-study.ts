@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import os from 'node:os';
+import { prepareEvaluationProfile } from './evaluation-profile';
 import path from 'node:path';
 import { randomInt } from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -47,11 +47,8 @@ function shuffled() {
 async function configuredProfile(): Promise<SecretProfile> {
   if (!live) return { ...profileSchema.parse({ id: 'offline', name: '离线', protocol: 'chat', model: 'synthetic', baseUrl: 'http://127.0.0.1:1/v1', contextLimit: 100000, outputLimit: 4096 }), apiKey: 'offline-fixture' };
   const { app, safeStorage } = require('electron') as typeof import('electron');
-  const installed = path.join(app.getPath('appData'), 'wenxu-desktop');
-  const isolated = fs.mkdtempSync(path.join(os.tmpdir(), 'xingyue-reading-'));
-  const localState = path.join(installed, 'Local State');
-  if (fs.existsSync(localState)) fs.copyFileSync(localState, path.join(isolated, 'Local State'));
-  app.setPath('userData', isolated); await app.whenReady();
+  const installed = prepareEvaluationProfile(app);
+  await app.whenReady();
   const settings = JSON.parse(fs.readFileSync(path.join(installed, 'settings.json'), 'utf8'));
   const db = new DatabaseSync(path.join(settings.recent[0].root, '.novelclient/state.sqlite'), { readOnly: true });
   let profileId: string;
@@ -154,7 +151,7 @@ async function main() {
   }
   assert.equal(attempts.length, 24);
   fs.writeFileSync(path.join(reader, 'index.md'), [...index, questions].join('\n\n') + '\n');
-  console.log((live ? '真实试读' : '离线合成') + ' 24/24；' + reader);
+  console.log(live ? '真实试读 24/24；' + reader : '离线合成 24/24');
 }
 main().then(() => { if (live) require('electron').app.exit(0); }, error => {
   console.error(error instanceof Error ? error.message : String(error)); process.exitCode = 1;

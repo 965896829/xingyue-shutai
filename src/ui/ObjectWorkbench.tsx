@@ -1,3 +1,4 @@
+import { workbenchBindingSchema } from '../shared/workbench';
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Users, Network, ListTree, Globe2, Search, SlidersHorizontal, RotateCw, ArrowLeft } from 'lucide-react';
 import type { Snapshot } from '../shared/types';
@@ -212,6 +213,13 @@ export function ObjectWorkbench({
     worldId: 'main',
     timelineId: 'main'
   });
+  const previousChapter = useRef(project.chapter);
+  useEffect(() => {
+    const previous = previousChapter.current;
+    previousChapter.current = project.chapter;
+    setScope(current => current.mode === 'current' && current.chapter === previous && current.chapter !== project.chapter
+      ? { ...current, chapter: project.chapter } : current);
+  }, [project.chapter]);
   const [group, setGroup] = useState<Group>('character'),
     [selected, setSelected] = useState(''),
     [query, setQuery] = useState(''),
@@ -310,7 +318,7 @@ export function ObjectWorkbench({
   const discussionBinding = binding
     ? { ...binding, ...(discussionField ? { fieldId: discussionField } : {}) }
     : undefined;
-  const bindingKey = discussionBinding ? JSON.stringify(discussionBinding) : '';
+  const bindingKey = discussionBinding ? JSON.stringify(workbenchBindingSchema.parse(discussionBinding)) : '';
   const conversationId =
     chats[bindingKey] ??
     snapshot.conversations?.find(

@@ -410,11 +410,12 @@ ${restricted ? '' : tagContext(p, 'discussion', { focused: true })}
                 delta(chunk);
                 partial += chunk;
                 message.content += chunk;
-                if (writing) host.records.save('conversation_messages', message);
                 if (Date.now() - lastFlush > 500) {
-                  if (!writing) host.records.save('conversation_messages', message);
+                  host.records.save('conversation_messages', message);
                   lastFlush = Date.now();
                   host.emit({ type: 'snapshot', resource: 'chat', resourceId: turn.conversationId });
+                } else if (writing && chunk) {
+                  host.records.appendText(message.id, chunk);
                 }
                 host.emit({
                   type: 'delta',

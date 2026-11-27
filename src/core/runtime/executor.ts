@@ -37,11 +37,12 @@ export abstract class RecordedExecutorAdapter implements ExecutorAdapter {
     const records = new ExecutionRecords(this.store.db);
     const record = run.executionId ? records.get(run.executionId) : undefined;
     if (record) records.transition(record.id, record.version, 'running');
-    try { await this.runner.drive(context.id); }
+    let returned = false;
+    try { await this.runner.drive(context.id); returned = true; }
     finally {
       if (record) {
         const latest = this.store.db.run(context.id);
-        const state: ExecutionState = latest.status === 'unknown' ? 'remote_unknown' : latest.status === 'failed' ? 'failed' : latest.status === 'discarded' ? 'cancelled' : ['awaiting_review', 'needs_repair', 'complete'].includes(latest.status) ? 'succeeded' : 'parked';
+        const state: ExecutionState = !returned ? 'failed' : latest.status === 'unknown' ? 'remote_unknown' : latest.status === 'failed' ? 'failed' : latest.status === 'discarded' ? 'cancelled' : ['awaiting_review', 'needs_repair', 'complete'].includes(latest.status) ? 'succeeded' : 'parked';
         records.transition(record.id, records.get(record.id).version, state);
       }
     }

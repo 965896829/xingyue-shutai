@@ -56,6 +56,10 @@ test('无关及尚未生效的坏证据隔离保留，不阻止当前章，也�
       assert.ok(!JSON.stringify(contextPayload(manifest)).includes('isolated-bad-fact'));
       assert.ok(book.store.db.get<string[]>('memoryIssues')!.length > 0);
       assert.equal(book.store.db.facts().find(fact => fact.id === 'isolated-bad-fact')!.state, 'disputed');
+      const next = { ...project, revision: project.revision + 1 };
+      book.store.commit([{ path: '书桌笔记.md', content: '修订无关笔记。', baseHash: null }], next);
+      assert.deepEqual(compileContext(book.store, next, 'S10', contextCase.request, model).conflicts, []);
+      assert.equal(book.store.db.get<{ revision: number }>('memoryDiagnostics')?.revision, next.revision);
       const loaded = selectMemoryDiagnostics(book.store, { scope: memoryScopeSchema.parse({ chapter: 25 }), query: '', sourcePaths: [paths.items] });
       assert.ok(loaded.blocking.length > 0, '实际装入的整份资料不能隐藏其坏事实');
     } finally { book.store.close(); }

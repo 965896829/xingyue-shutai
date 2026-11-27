@@ -112,6 +112,17 @@ export function sourceValidator(store: FileStore, documents: Record<string, stri
 }
 export function conflictingFacts(facts: Fact[]) {
   const conflicts = new Set<string>();
+  const byId = new Map(facts.map(fact => [fact.id, fact]));
+  function replaces(fact: Fact, ancestor: string) {
+    const visited = new Set<string>([fact.id]);
+    let prior = fact.supersedes;
+    while (prior && !visited.has(prior)) {
+      if (prior === ancestor) return true;
+      visited.add(prior);
+      prior = byId.get(prior)?.supersedes ?? null;
+    }
+    return false;
+  }
   const grouped = new Map<string, Fact[]>();
   for (const f of facts.filter(
     (f) =>
@@ -124,8 +135,10 @@ export function conflictingFacts(facts: Fact[]) {
     for (const old of group)
       if (
         old.value !== f.value &&
-        f.supersedes !== old.id &&
-        old.supersedes !== f.id &&
+        !(old.untilPosition && (compareStoryPosition(old.untilPosition, f.fromPosition ?? { chapter: f.fromChapter }) ?? 1) <= 0) &&
+        !(f.untilPosition && (compareStoryPosition(f.untilPosition, old.fromPosition ?? { chapter: old.fromChapter }) ?? 1) <= 0) &&
+        !replaces(f, old.id) &&
+        !replaces(old, f.id) &&
         Math.max(old.fromChapter, f.fromChapter) <=
           Math.min(old.toChapter ?? Infinity, f.toChapter ?? Infinity)
       ) {
@@ -154,11 +167,12 @@ export function retrieveMemory(
     : scopeFacts(store, scope));
   const validSource = validateSource ?? sourceValidator(store, snapshot.documents, scope.chapter, snapshot.project);
   const visible = all.filter((f) => visibleFact(f, scope));
-  const names = [...new Set(visible.filter(f => [f.subject, ...f.aliases, ...f.entityIds].some(n => n && query.includes(n))).flatMap(f => [f.subject, ...f.aliases]))];
+  const normalizedQuery = query.toLowerCase();
+  const names = [...new Set(visible.filter(f => [f.subject, ...f.aliases, ...f.entityIds].some(n => n && normalizedQuery.includes(n.toLowerCase()))).flatMap(f => [f.subject, ...f.aliases]))];
   const terms = [...new Set([...names, ...tokensOf(query)])];
   const exact = new Set(
     visible
-      .filter((f) => [f.id, f.subject, ...f.aliases, ...f.entityIds].some((n) => n && query.includes(n)))
+      .filter((f) => [f.id, f.subject, ...f.aliases, ...f.entityIds].some((n) => n && normalizedQuery.includes(n.toLowerCase())))
       .flatMap((f) => [f.id, ...f.entityIds])
   );
   const scoreFact = (fact: Fact) => {
@@ -167,7 +181,7 @@ export function retrieveMemory(
       const score =
         (isExact ? 100 : 0) +
         (linked ? 40 : 0) +
-        terms.filter((t) => `${fact.subject} ${fact.predicate} ${fact.value}`.toLowerCase().includes(t))
+        terms.filter((t) => `${fact.subject} ${fact.predicate} ${fact.value}`.toLowerCase().includes(t.toLowerCase()))
           .length;
       const required =
         ['active', 'superseded'].includes(fact.state) &&

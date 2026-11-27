@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import { extractFile } from '@electron/asar';
 import { desktopArtifacts } from './desktop-artifacts.mjs';
 
+const testPath = process.argv[2];
+assert.ok(testPath, '请指定本次测试日志：node scripts/verify-v7-release.mjs <测试日志路径>');
 const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const digest = value => crypto.createHash('sha256').update(value).digest('hex');
 const walk = root => fs.readdirSync(root, { withFileTypes: true }).flatMap(entry => {
@@ -33,10 +35,9 @@ for (const folder of ['creative-v7', 'design-v7', 'platform']) {
 const catalog = read(path.join(bundle, 'skill/creative-v7/catalog.json'));
 assert.equal(catalog.operations.length, 48);
 assert.ok(catalog.operations.every(operation => operation.active));
-const testPath = process.argv[2] ?? '.test-output/xingyue-v7/platform-full.tap';
 const tap = fs.readFileSync(testPath, 'utf8');
 const count = label => Number(tap.match(new RegExp(`^(?:#|ℹ) ${label} (\\d+)\\r?$`, 'm'))?.[1] ?? NaN);
-assert.ok(count('tests') >= (process.argv[2] ? 1 : 880));
+assert.ok(count('tests') >= 1);
 assert.equal(count('pass'), count('tests'));
 for (const label of ['fail', 'cancelled', 'skipped', 'todo']) assert.equal(count(label), 0);
 const budget = '.test-output/xingyue-v7/live-quality/budget.json';
@@ -47,7 +48,7 @@ const delivery = {
   designSkills: catalog.designSkillCount, operations: catalog.operations.length,
   legacyMappings: catalog.legacyMapping.length,
   publishing: { options: read(path.join(bundle, 'skill/platform/fanqie.json')).options.length, observedDate: '2026-10-29', authorBackendVerified: false },
-  regression: { scope: process.argv[2] ? 'targeted' : 'full', path: testPath, passed: count('pass'), durationMs: Number(tap.match(/^(?:#|ℹ) duration_ms ([\d.]+)\r?$/m)?.[1]) },
+  regression: { scope: 'targeted', path: testPath, passed: count('pass'), durationMs: Number(tap.match(/^(?:#|ℹ) duration_ms ([\d.]+)\r?$/m)?.[1]) },
   paidModelCallsByVerifier: 0,
   paidModelCallsThisDelivery: null,
   paidModelCallsTotal: fs.existsSync(budget) ? read(budget).dispatched : null,

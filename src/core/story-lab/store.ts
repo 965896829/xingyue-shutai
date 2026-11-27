@@ -80,6 +80,10 @@ export class LabStore {
       .prepare(`INSERT INTO lab_${table} VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data`)
       .run(value.id, 'sessionId' in value ? value.sessionId : value.id, JSON.stringify(value));
   }
+  appendResponse(request: LabRequest, text: string) {
+    const { changes } = this.journal.db.sql.prepare("UPDATE lab_requests SET data=json_set(data,'$.response',json_extract(data,'$.response') || ?, '$.sequence', ?) WHERE id=? AND session_id=? AND json_extract(data,'$.status')='running'").run(text, request.sequence, request.id, request.sessionId);
+    if (!changes) throw new Error('实验室请求状态已变化，请重新读取');
+  }
   session(id: string) {
     const row = this.get('sessions', id);
     if (!row) throw new Error('实验会话不存在');

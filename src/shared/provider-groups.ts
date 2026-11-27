@@ -33,6 +33,8 @@ export const modelFields = (p: Profile) => ({
   reasoningEffort: p.reasoningEffort ?? null,
   reasoningRevision: p.reasoningRevision ?? 0,
   inputPrice: p.inputPrice,
+  cacheReadPrice: p.cacheReadPrice,
+  cacheWritePrice: p.cacheWritePrice,
   outputPrice: p.outputPrice,
   currency: p.currency,
   timeoutSeconds: p.timeoutSeconds,

@@ -1,3 +1,4 @@
+import { outlineScenes } from '../shared/scene-headings';
 import type { FileStore } from './storage';
 import type { CanonicalSnapshot, MemoryScope, SourceRef } from '../shared/studio';
 import type { Change, Fact } from '../shared/types';
@@ -78,7 +79,7 @@ export interface ChapterBlock {
   title: string;
   values: Record<string, string>;
 }
-export function chapterBlocks(content: string): ChapterBlock[] {
+export function chapterBlocks(content: string, checkRange?: (first: number, last: number) => void): ChapterBlock[] {
   const lines = [...content.matchAll(/[^\r\n]*(?:\r?\n|$)/g)].filter((m) => m[0]);
   const blocks: ChapterBlock[] = [];
   let header: string[] = [],
@@ -105,7 +106,8 @@ export function chapterBlocks(content: string): ChapterBlock[] {
       if (column < 0 || cells.every((v) => /^:?-+:?$/.test(v))) continue;
       const value = cells[column],
         span = chapterSpan(value ?? '', true);
-      if (!span || span[0] !== span[1]) continue;
+      if (!span) continue;
+      if (span[0] !== span[1]) { checkRange?.(span[0], span[1]); continue; }
       const pipe = [...line.matchAll(/(?<!\\)\|/g)].map((v) => v.index!);
       const rawStart = pipe[column] + 1,
         rawEnd = pipe[column + 1];
@@ -128,6 +130,10 @@ export function chapterBlocks(content: string): ChapterBlock[] {
     if (line.trim()) {
       header = [];
       column = -1;
+    }
+    if (checkRange && /^#{1,6}\s+第/.test(line)) {
+      const range = chapterSpan(line);
+      if (range && range[0] !== range[1]) checkRange(range[0], range[1]);
     }
     const heading = line.match(
       /^(#{1,6})\s+(第\s*[零〇一二两三四五六七八九十百千万\d]+\s*章)(?!\s*[—–\-~～至到])([^\r\n]*)/
@@ -167,7 +173,11 @@ function renamedLabel(label: string, chapter: number) {
   return `第${digits ? String(chapter).padStart(digits.length, '0') : chapter}章`;
 }
 export function reorderPlanText(content: string, before: number[], after: number[]): string {
-  const blocks = chapterBlocks(content).filter((b) => before.includes(b.chapter));
+  const blocks = chapterBlocks(content, (first, last) => {
+    const inside = (chapter: number) => chapter >= first && chapter <= last;
+    if (before.some((chapter, i) => inside(chapter) !== inside(after[i])))
+      throw new Error('调序跨越合并的章节区间，请先拆分对应计划行');
+  }).filter((b) => before.includes(b.chapter));
   if (!blocks.length) return content;
   if (new Set(blocks.map((b) => b.chapter)).size !== blocks.length)
     throw new Error('同一文稿含重复章节，请先明确章节结构');
@@ -390,11 +400,11 @@ export function readPlot(
     const file = detailPath(expandedChapter),
       detail = read(store, snapshot, file, scope.mode === 'current');
     if (detail) {
-      const sceneHeadings = [...detail.matchAll(/^#{2,6}\s+(?:场景|场次)\s*([^\r\n]+)\r?\n/gm)];
+      const sceneHeadings = outlineScenes(detail);
       for (let i = 0; i < sceneHeadings.length; i++) {
         const heading = sceneHeadings[i],
-          start = heading.index!,
-          end = sceneHeadings[i + 1]?.index ?? detail.length;
+          start = heading.start,
+          end = sceneHeadings[i + 1]?.start ?? detail.length;
         const values = Object.fromEntries(
           [...detail.slice(start, end).matchAll(/^\s*[-*]\s*([^：:\n]+)[：:]\s*(.+)$/gm)].map((v) => [
             clean(v[1]),
@@ -403,10 +413,10 @@ export function readPlot(
         );
         nodes.push({
           ...fields(values),
-          id: `legacy-scene:${expandedChapter}:${hash(heading[1]).slice(0, 16)}`,
+          id: `legacy-scene:${expandedChapter}:${hash(heading.label).slice(0, 16)}`,
           parentId: `chapter:${expandedChapter}`,
           level: 'scene',
-          title: `场景 ${heading[1]}`,
+          title: heading.title,
           chapter: expandedChapter,
           sources: [boundSource(file, detail, start, Math.min(end, start + 18000), snapshot.id)],
           track: 'plan',

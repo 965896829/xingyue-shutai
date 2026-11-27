@@ -237,7 +237,8 @@ export const commandContracts = {
     direction: z.strictObject({ runId: key, reportHash: key, directionId: key }).optional()
   }), z.object({ id: key, conversationId: key }), 'remote'),
   'draft.save': define(z.object({ id: optionalText, title: key.max(80), content: key.max(2_000_000), baseHash: optionalText, conversationId: key, messageId: key }), schemas.draftArtifactSchema, 'write'),
-  'draft.promote': define(z.strictObject({ id: key, hash: key, profileId: key, kind: z.enum(['stage', 'revision']).optional(), scope: key }), schemas.actionProposalSchema, 'write'),
+  'draft.importLab': define(z.strictObject({ projectId: key, sessionId: z.string().uuid(), versionId: z.string().uuid() }), schemas.draftArtifactSchema, 'write'),
+  'draft.promote': define(z.strictObject({ id: key, hash: key, historical: z.literal(true).optional(), profileId: key, kind: z.enum(['stage', 'revision']).optional(), scope: key }), schemas.actionProposalSchema, 'write'),
   'draft.chapter': define(z.strictObject({ id: key, hash: key, profileId: key }), key, 'write'),
   'assistant.settings': define(empty, settings, 'read', 'global'),
   'assistant.role.save': define(z.strictObject({ id: key, text, source: z.strictObject({ id: key, version: key }).optional() }), settings, 'write', 'global'),

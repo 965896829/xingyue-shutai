@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { testOutputRoot } from './fixtures/test-output';
 import { Service } from '../src/core/service';
 import { paths } from '../src/core/domain';
 import { ProjectRecycleBin, RETENTION_MS, isRecyclePath } from '../src/core/recycle-bin';
@@ -10,7 +11,7 @@ import { ApplicationError } from '../src/shared/errors';
 import { FileStore } from '../src/core/storage';
 
 async function fixture() {
-  const scope = path.resolve('.test-output/recycle-tests');
+  const scope = path.join(testOutputRoot, 'recycle-tests');
   fs.mkdirSync(scope, { recursive: true });
   const parent = fs.mkdtempSync(path.join(scope, 'case-'));
   const data = path.join(parent, 'appdata');
@@ -33,7 +34,7 @@ async function fixture() {
     if (service.runner) service.runner.controller = null;
     service.coverController = null;
     service.close();
-    // Explicit resolved scope check before every recursive test cleanup on Windows.
+    // Explicit resolved scope check before every recursive test cleanup.
     assert.equal(path.dirname(fs.realpathSync(parent)), fs.realpathSync(scope));
     fs.rmSync(parent, { recursive: true, force: true });
   }
@@ -62,9 +63,9 @@ test('新建只拦截回收站自身及内部目录，普通保存位置含回�
     assert.deepEqual(fs.readdirSync(bin), [], '拒绝时不在回收站创建任何文件');
     assert.equal(fs.readFileSync(path.join(f.root, paths.seed), 'utf8'), f.original);
     assert.equal(isRecyclePath(f.parent), false);
-    for (const parent of [f.parent, path.join(f.parent, '.文序回收站资料'), String.raw`D:\aiwenxu\新建文件夹`])
+    for (const parent of [f.parent, path.join(f.parent, '.文序回收站资料'), String.raw`D:\Books\新建文件夹`])
       assert.equal(newProjectLocationError(parent), null);
-    assert.ok(newProjectLocationError(String.raw`D:\aiwenxu\新建文件夹\.文序回收站\旧记录\作品`));
+    assert.ok(newProjectLocationError(String.raw`D:\Books\新建文件夹\.文序回收站\旧记录\作品`));
     const created = await f.service.invoke('project.create', { parent: f.parent, title: '正常新书', premise: '保存目录里有回收站不影响创建' });
     assert.equal(created.project!.root, path.join(f.parent, '《正常新书》创作档案'));
     assert.deepEqual(fs.readdirSync(bin), []);
@@ -224,6 +225,7 @@ test('restore conflict never overwrites the new directory; another same-volume d
     fs.mkdirSync(f.root);
     fs.writeFileSync(path.join(f.root, 'keep.txt'), '不能覆盖');
     assert.throws(() => f.bin.restore(entry.id), /同名目录/);
+    if (process.platform !== 'win32') assert.throws(() => f.bin.restore(entry.id, 'D:/Books'), /Windows/);
     assert.equal(fs.readFileSync(path.join(f.root, 'keep.txt'), 'utf8'), '不能覆盖');
     const other = path.join(f.parent, '另一目录');
     fs.mkdirSync(other);

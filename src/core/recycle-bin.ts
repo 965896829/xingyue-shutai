@@ -7,7 +7,7 @@ import { atomicWrite, FileStore } from './storage';
 import { checkDatabaseCompatibility } from './compatibility';
 import { assertProjectLockInactive, parseProjectLock } from './project-lock';
 import { isProjectRecyclePath, projectRecycleDirectory } from '../shared/project-location';
-import { resolveSystemPath } from './system-path';
+import { assertNativeDirectory, resolveSystemPath } from './system-path';
 
 export const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const BIN = projectRecycleDirectory;
@@ -171,6 +171,7 @@ export class ProjectRecycleBin {
       .slice(0, 20);
   }
   trash(root: string, title: string): TrashRecord {
+    assertNativeDirectory(root);
     root = checked(path.resolve(root));
     const previous = this.records.filter(
       (r) => !['restored', 'purged'].includes(r.state) && samePath(r.originalRoot, root)
@@ -217,6 +218,7 @@ export class ProjectRecycleBin {
     }
   }
   restore(id: string, parent?: string) {
+    if (parent) assertNativeDirectory(parent);
     const record = this.records.find((r) => r.id === id && !['restored', 'purged'].includes(r.state));
     if (!record) throw new Error('回收站项目不存在');
     if (record.state === 'purging') throw new Error('到期清理已经开始，不能恢复不完整作品');

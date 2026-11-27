@@ -10,7 +10,7 @@ const externalAllowed = name => name === 'electron' || isBuiltin(name);
 
 /** The packaged app has no node_modules fallback: fail the build if one becomes necessary. */
 export function verifyBundledDependencies(metafile) {
-  const external = new Set(), dependencies = new Map();
+  const dependencies = new Map();
   const rememberPackage = file => {
     const absolute = path.resolve(file), normalized = portable(absolute);
     const match = normalized.match(/^(.*\/node_modules\/(?:@[^/]+\/)?[^/]+)(?:\/|$)/);
@@ -30,7 +30,6 @@ export function verifyBundledDependencies(metafile) {
     for (const dependency of output.imports) {
       if (!dependency.external) continue;
       if (!externalAllowed(dependency.path)) throw new Error(`Unbundled runtime dependency: ${file} -> ${dependency.path}`);
-      external.add(dependency.path);
     }
     if (!file.endsWith('.cjs')) continue;
     const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
@@ -40,7 +39,6 @@ export function verifyBundledDependencies(metafile) {
         const value = node.arguments[0];
         if (!value || !ts.isStringLiteralLike(value) || !externalAllowed(value.text))
           throw new Error(`Runtime require needs review before packaging: ${file}: ${node.getText(source)}`);
-        external.add(value.text);
       }
       ts.forEachChild(node, visit);
     };
@@ -80,8 +78,5 @@ export function verifyBundledDependencies(metafile) {
     notices.push({ name: metadata.name, version: metadata.version, license: metadata.license ?? null, repository: metadata.repository ?? null, ...(pinned ? { source: pinned.source } : {}), files });
   }
   fs.writeFileSync(path.join(noticeRoot, 'index.json'), JSON.stringify(notices, null, 2) + '\n');
-  fs.mkdirSync('.test-output', { recursive: true });
-  const report = { externalRuntimeModules: [...external].sort(), dependencyNotices: notices, packagedNodeModules: false };
-  fs.writeFileSync('.test-output/bundle-dependencies.json', JSON.stringify(report, null, 2) + '\n');
   console.log(`Verified bundled runtime; preserved notices for ${notices.length} packages`);
 }

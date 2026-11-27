@@ -56,9 +56,15 @@ port.on('message', async ({ data }: { data: unknown }) => {
       if (draining) return;
       draining = true;
       ready = false;
-      await service.drain();
-      port.postMessage({ type: 'shutdown-complete', workerGeneration: generation });
-      setImmediate(() => process.exit(0));
+      try {
+        await service.drain();
+        port.postMessage({ type: 'shutdown-complete', workerGeneration: generation });
+        setImmediate(() => process.exit(0));
+      } catch (error) {
+        const payload = errorPayload(error, service.profiles.map(profile => profile.apiKey));
+        port.postMessage({ type: 'shutdown-failed', error: payload, workerGeneration: generation });
+        setImmediate(() => process.exit(1));
+      }
       return;
     }
     const request = requestSchema.parse(data);

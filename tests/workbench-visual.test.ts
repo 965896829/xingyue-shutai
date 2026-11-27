@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { refactorFixture, fakeProfile, isolatedRoot } from './fixtures/refactor';
 import { chapterTableFixture, volumeTableFixture } from './fixtures/readable-tables';
 import { createVisualWorkbenchFixture } from './fixtures/workbench-visual';
-import { paths, hash, prosePath, detailPath } from '../src/core/domain';
+import { paths, hash, prosePath, detailPath, updatePath, qualityPath } from '../src/core/domain';
 import { readWorkbench, proposeWorkbenchField, resolveWorkbenchObject } from '../src/core/workbench';
 import {
   chapterBlocks,
@@ -37,7 +37,7 @@ import {
   worldCandidateIssues
 } from '../src/core/world-model';
 import { factSchema, type Change } from '../src/shared/types';
-import { encodeFacts } from '../src/core/memory-records';
+import { decodeFacts, encodeFacts } from '../src/core/memory-records';
 import {
   plotViewSchema,
   stateHistorySchema,
@@ -217,6 +217,9 @@ test('章节表与中文章标题调序保留 Unicode 和未知内容，拒绝�
   assert.throws(() => reorderPlanText('## 第1章 A\n### 第2章 B\n', [1, 2], [2, 1]), /嵌套/);
   assert.throws(() => reorderPlanText(original + '\n## 第1章 重复\n', [1, 2], [2, 1]), /重复/);
   assert.throws(() => reorderPlanText(original, [1, 3], [3, 1]), /部分/);
+  const grouped = '| 章节 | 目标 |\n| --- | --- |\n| 第1—2章 | 找回钥匙 |';
+  assert.equal(reorderPlanText(grouped, [1, 2], [2, 1]), grouped);
+  assert.throws(() => reorderPlanText(grouped, [2, 3], [3, 2]), /章节区间/);
 });
 test('剧情连接拒绝悬空与重复标识，场景固定在实际提交端有效', () => {
   const f = setup();
@@ -332,12 +335,26 @@ test('已写章节调序经过正文核心核对，部分已写与失效资料�
   try {
     f.commit([
       { path: prosePath(1), content: '# 第一章\n拿到钥匙。', baseHash: null },
-      { path: prosePath(2), content: '# 第二章\n打开大门。', baseHash: null }
+      { path: prosePath(2), content: '# 第二章\n打开大门。', baseHash: null },
+      { path: paths.items, baseHash: null, content: encodeFacts('# 物品', [factSchema.parse({
+        id: 'key-given', subject: '林川', predicate: '获得', value: '钥匙', kind: 'event', category: 'item',
+        reviewStatus: 'accepted', fromChapter: 1, revealedAt: 1, knowledge: [{ who: '林川', fromChapter: 1, mode: 'seen' }],
+        evidence: [{ path: prosePath(1), hash: hash('# 第一章\n拿到钥匙。'), quote: '拿到钥匙。' }]
+      })]) },
+      ...[updatePath, qualityPath].flatMap(file => [1, 2].map(chapter => ({ path: file(chapter), content: `第${chapter}份章后记录`, baseHash: null })))
     ]);
     let view = readWorkbench(f.store, { chapter: 3 }),
       binding = { ...f.binding, snapshotId: view.snapshotId, scope: view.scope };
     const result = prepareReorder(f.store, binding, [2, 1]);
     assert.equal(result.preview.requiresRevision, true);
+    const movedFact = decodeFacts(result.changes.find(c => c.path === paths.items)!.content)[0];
+    assert.deepEqual([movedFact.fromChapter, movedFact.revealedAt, movedFact.knowledge[0].fromChapter], [2, 2, 2]);
+    assert.equal(movedFact.evidence[0].path, prosePath(2));
+    assert.equal(movedFact.evidence[0].hash, hash(result.changes.find(c => c.path === prosePath(2))!.content));
+    for (const file of [updatePath, qualityPath]) {
+      assert.equal(result.changes.find(c => c.path === file(1))?.content, '第2份章后记录');
+      assert.equal(result.changes.find(c => c.path === file(2))?.content, '第1份章后记录');
+    }
     assert.match(result.changes.find((c) => c.path === prosePath(1))!.content, /# 第1章\n打开大门/);
     const run = {
       ...f.run,

@@ -1,5 +1,7 @@
 :root {
   color-scheme: dark;
+
+  /* === 1. 色彩系统（完整保留现有变量） === */
   --bg: #1b1c20;
   --panel: #202126;
   --raised: #2b2d34;
@@ -39,7 +41,7 @@
   --diff-delete: #442c27;
   --diff-delete-text: #f5b6aa;
   --diff-delete-mark: #6b3b32;
-  --sidebar-bg: #16171b;
+  --sidebar-bg: #15161a;
   --sidebar-ink: #d8dae2;
   --sidebar-muted: #999eab;
   --sidebar-hover: #ffffff0a;
@@ -47,10 +49,53 @@
   --nav-selected: #303044;
   --composer-bg: #24252c;
   --page-glow: none;
+
+  /* 语义别名 */
   --green: var(--accent-fill);
   --paper: var(--panel);
   --border: var(--line);
+  --surface-canvas: #1d1e23;
+  --surface-hairline: rgba(255, 255, 255, 0.06);
+
+  /* === 2. 间距与布局 Token === */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
   --page-gutter: clamp(18px, 2.4vw, 36px);
+  --sidebar-width: 226px;
+  --sidebar-width-collapsed: 56px;
+
+  /* === 3. 圆角 Token === */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  /* === 4. 字体与网文正文排版 Token === */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-manuscript-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-manuscript-serif: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "STSong", Georgia, serif;
+  --manuscript-font: var(--font-manuscript-sans);
+  --manuscript-size: 16px;
+  --manuscript-leading: 1.9;
+  --manuscript-measure: 68ch;
+
+  /* === 5. 阴影、动效与层级 Token === */
+  --shadow-sm: 0 2px 8px var(--shadow);
+  --shadow-md: 0 8px 24px var(--shadow);
+  --shadow-lg: 0 16px 40px var(--shadow);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --z-dropdown: 20;
+  --z-popover: 40;
+  --z-floating: 60;
+  --z-modal: 100;
 }
 
 :root[data-color-mode='light'] {
@@ -102,4 +147,6 @@
   --nav-selected: #e9e8f4;
   --composer-bg: #fafafb;
   --page-glow: none;
+  --surface-canvas: #fcfcfd;
+  --surface-hairline: rgba(27, 29, 41, 0.05);
 }

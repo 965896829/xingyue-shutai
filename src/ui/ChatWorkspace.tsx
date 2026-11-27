@@ -32,7 +32,7 @@ interface ChatData {
   turns: ConversationTurn[];
   proposals: ActionProposal[];
 }
-type DraftEdit = DraftArtifact & { content: string; currentHash: string; viewedHash?: string };
+type DraftEdit = DraftArtifact & { content: string; currentHash: string; viewedHash?: string; dirty?: boolean };
 export function ChatWorkspace({
   snapshot,
   profileId,
@@ -110,7 +110,17 @@ export function ChatWorkspace({
       const result = await invokeCommand('draft.read', { id });
       const cacheKey = `draft:${p.id}:free:${id}`;
       const cached = useCache ? JSON.parse(localStorage.getItem(cacheKey) ?? 'null') : null;
-      setDraft(cached ? { ...result, content: authorMarkdown(cached.content), currentHash: cached.baseHash, viewedHash: cached.viewedHash } : result);
+      let restored: DraftEdit = result;
+      if (cached && typeof cached.content === 'string' && typeof cached.baseHash === 'string') {
+        const original = cached.dirty === undefined
+          ? await invokeCommand('draft.read', { id, hash: cached.viewedHash || cached.baseHash }).catch(() => undefined)
+          : undefined;
+        if (cached.dirty || cached.dirty === undefined && original?.content !== cached.content) {
+          restored = { ...result, content: authorMarkdown(cached.content), currentHash: cached.baseHash, viewedHash: cached.viewedHash, dirty: true };
+          if (cached.baseHash !== result.currentHash) setError('磁盘草稿已有新版。已恢复未保存的编辑，请比较后保存。');
+        }
+      }
+      setDraft(restored);
       if (!useCache) localStorage.removeItem(cacheKey);
     } catch (e) {
       setError((e as Error).message);
@@ -119,14 +129,15 @@ export function ChatWorkspace({
   useEffect(() => {
     if (!draft) return;
     try {
+      if (!draft.dirty) { localStorage.removeItem(`draft:${p.id}:free:${draft.id}`); return; }
       localStorage.setItem(
         `draft:${p.id}:free:${draft.id}`,
-        JSON.stringify({ content: draft.content, baseHash: draft.currentHash, viewedHash: draft.viewedHash })
+        JSON.stringify({ dirty: true, content: draft.content, baseHash: draft.currentHash, viewedHash: draft.viewedHash })
       );
     } catch {
       setError('草稿缓存空间不足，请及时保存草稿版本');
     }
-  }, [draft?.id, draft?.content, draft?.currentHash, draft?.viewedHash]);
+  }, [draft?.id, draft?.content, draft?.currentHash, draft?.viewedHash, draft?.dirty]);
   useEffect(() => {
     try {
       setInputs(JSON.parse(localStorage.getItem(key) ?? '{}'));
@@ -551,7 +562,11 @@ export function ChatWorkspace({
                       {turn?.calls
                         .filter((c) => ['public_search', 'extract_pages'].includes(c.name))
                         .map((c, i) => {
-                          const result = JSON.parse(c.result);
+                          let result: { error?: string; message?: string; results?: unknown[] };
+                          try {
+                            const raw = JSON.parse(c.result);
+                            result = { error: typeof raw?.error === 'string' ? raw.error : undefined, message: typeof raw?.message === 'string' ? raw.message : undefined, results: Array.isArray(raw?.results) ? raw.results : [] };
+                          } catch { result = { error: '历史结果格式无法读取' }; }
                           return result.error || !result.results?.length ? (
                             <p className="inline-warning" key={`web-${i}`}>
                               联网未核实：{result.error ?? result.message ?? '未取得可用正文'}
@@ -710,7 +725,7 @@ export function ChatWorkspace({
               <textarea
                 aria-label="自由草稿正文"
                 value={draft.content}
-                onChange={(e) => setDraft({ ...draft, content: e.target.value })}
+                onChange={(e) => setDraft({ ...draft, content: e.target.value, dirty: true })}
               />
               <button
                 disabled={busy}
@@ -746,7 +761,8 @@ export function ChatWorkspace({
                         id: draft.id,
                         hash: v.hash
                       });
-                      setDraft({ ...draft, content: old.content, viewedHash: v.hash });
+                      if (draft.dirty && !await dialogs.confirm('切换版本会替换尚未保存的编辑。继续查看历史版本？')) return;
+                      setDraft({ ...draft, content: old.content, viewedHash: v.hash, dirty: false });
                     }}
                   >
                     第 {draft.versions.findIndex(version => version.hash === v.hash) + 1} 版 · {new Date(v.at).toLocaleString()}
@@ -777,13 +793,19 @@ export function ChatWorkspace({
                   onClick={async () => {
                     const scope = await ask('要转入哪些正式资料？请说明目标文件、保留内容及修订范围。');
                   if (!scope) return;
+                  const selected = await selectedVersion(draft);
+                  if (!selected) return;
                   const card = await call('draft.promote', {
                     id: draft.id,
-                    hash: draft.currentHash,
+                    hash: selected.hash,
+                    ...(selected.hash === draft.viewedHash ? { historical: true } : {}),
                     profileId,
                     scope
                   });
-                  if (card) select(card.conversationId);
+                  if (card) {
+                    if (selected.hash !== draft.viewedHash) await openDraft(draft.id, false);
+                    select(card.conversationId);
+                  }
                 }}
               >
                 建立正式修订任务卡

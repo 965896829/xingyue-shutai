@@ -21,7 +21,7 @@ import { reasoningLabel } from '../shared/reasoning';
 import { invokeCommand as invoke } from '../shared/client';
 import { newProjectLocationError } from '../shared/project-location';
 import { newProjectRequest, type OpeningMode } from '../shared/new-project-request';
-import { lazy, Suspense, useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from 'react';
+import { lazy, Suspense, useState, useEffect, useEffectEvent, useLayoutEffect, useRef, useCallback, type ReactNode } from 'react';
 import { resumeArguments } from '../shared/run-capabilities';
 import { taskErrorId, taskFileId, taskHelpLink, taskIssueId, taskSectionId } from '../shared/task-links';
 import { sendOnEnter } from './composer-keyboard';
@@ -63,6 +63,8 @@ import {
   Trash2
 } from 'lucide-react';
 import { MonitorCog } from 'lucide-react';
+import { Maximize2, Minimize2, Type } from 'lucide-react';
+import { useZenMode } from './useZenMode';
 import type { ManagementView } from '../shared/management';
 import { MarkdownContent } from './MarkdownContent';
 import {
@@ -138,7 +140,10 @@ const btn = (icon: ReactNode, text: string) => (
     <span>{text}</span>
   </>
 );
-export function App({ management = false, managementView = 'workspace' }: { management?: boolean; managementView?: ManagementView } = {}) {
+export function App({ management = false, managementActive = true, managementView = 'workspace', managementDocument, managementSession }: {
+  management?: boolean; managementActive?: boolean; managementView?: ManagementView;
+  managementDocument?: string | null; managementSession?: string | null;
+} = {}) {
   const [labEnabled, setLabEnabled] = useState(() => { try { return localStorage.getItem('story-lab:hidden') !== 'true'; } catch { return true; } });
   const [inspector, setInspector] = useState<'manuscript' | 'characters' | 'story' | 'details'>('manuscript');
   const [source, setSource] = useState<SourceRef | null>(null);
@@ -173,8 +178,13 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     [selectedRun, setSelectedRun] = useState(''),
     [query, setQuery] = useState(''),
     [editorOpen, setEditorOpen] = useState(false),
-    [sidebarCollapsed, setSidebarCollapsed] = useState(false),
     [flowExpanded, setFlowExpanded] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try { return localStorage.getItem('xingyue:sidebar-collapsed') === 'true'; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('xingyue:sidebar-collapsed', String(sidebarCollapsed)); } catch {}
+  }, [sidebarCollapsed]);
   const [doc, setDoc] = useState<{
     projectId: string;
     projectKey: string;
@@ -191,6 +201,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     [histories, setHistories] = useState<{ hash: string; createdAt: string }[]>([]),
     [manifest, setManifest] = useState<(ContextManifest & { outlineInput?: Pick<ManuscriptEdit, 'suppliedOutline' | 'freeTrial'> }) | null>(null);
   const historyRequest = useRef(0);
+  const documentRequest = useRef(0);
   useEffect(() => { historyRequest.current++; setHistories([]); }, [doc?.path, doc?.runId, snapshot.projectSessionId]);
   async function loadDocumentHistory(path: string) {
     const request = ++historyRequest.current, session = snapshot.projectSessionId;
@@ -209,23 +220,31 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   const [settingFocus, setSettingFocus] = useState('');
   const actionPending = useRef(false);
   const [olderRuns, setOlderRuns] = useState<Run[]>([]);
-  const historyLoading = useRef(false);
+  const taskNavigation = useRef(0);
   const visibleRuns = [...snapshot.runs, ...olderRuns.filter(row => !snapshot.runs.some(current => current.id === row.id))];
   useEffect(() => { setOlderRuns([]); }, [snapshot.projectSessionId]);
+  async function readRunHistory(session: string | undefined, targetId?: string) {
+    let before: number | undefined, watermark: number | undefined;
+    const rows: Run[] = [];
+    do {
+      const page = await invoke('run.page', { before, watermark });
+      if (eventCursor.current.projectSessionId !== session) return [];
+      rows.push(...page.items);
+      before = page.nextBefore ?? undefined;
+      watermark = page.watermark;
+    } while (before !== undefined && (!targetId || !rows.some(row => row.id === targetId)));
+    const ids = new Set(rows.map(row => row.id));
+    setOlderRuns(previous => [...rows, ...previous.filter(row => !ids.has(row.id))]);
+    return rows;
+  }
+  const historyLoading = useRef<string | undefined>(undefined);
   async function loadRunHistory() {
-    if (historyLoading.current) return;
-    historyLoading.current = true;
     const session = snapshot.projectSessionId;
-    try {
-      let result = await invoke('run.page');
-      const rows = [...result.items];
-      while (result.nextBefore !== null && eventCursor.current.projectSessionId === session) {
-        result = await invoke('run.page', { before: result.nextBefore, watermark: result.watermark });
-        rows.push(...result.items);
-      }
-      if (eventCursor.current.projectSessionId === session) setOlderRuns(rows);
-    } catch (error) { setError((error as Error).message); }
-    finally { historyLoading.current = false; }
+    if (!session || historyLoading.current === session) return;
+    historyLoading.current = session;
+    try { await readRunHistory(session); }
+    catch (error) { if (eventCursor.current.projectSessionId === session) setError((error as Error).message); }
+    finally { if (historyLoading.current === session) historyLoading.current = undefined; }
   }
   const [answer, setAnswer] = useState(''),
     [timeline, setTimeline] = useState(false);
@@ -280,19 +299,40 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     }));
     if (!result) return;
     setTitleConfirmation(null);
-    setSelectedRun(result.nextRun ?? candidate.id);
-    setWorkView('tasks');
+    showTask(result.nextRun ?? candidate.id);
     setNotice([result.revision ? `已采纳为作品第 ${result.revision} 版` : '已采纳所选版本', result.nextRun && '已开始下一阶段', result.pending?.length && `${result.pending.join('、')}待更新`].filter(Boolean).join('。'));
     if (result.nextError) setError(result.nextError);
   }
-  async function openStartedRun(id?: string) {
-    await act(async () => {
-      const current = await invoke('app.snapshot');
-      const started = current.runs.find(item => item.id === id);
-      if (id) setSelectedRun(id);
-      setPage('work');
-      setWorkView(started?.planning || started?.naming ? 'tags' : 'tasks');
-    });
+  function showTask(id?: string, history = false) {
+    if (activeProjectKey.current !== projectKey) return;
+    if (id) setSelectedRun(id);
+    if (history) setTaskDetailsOpen(true);
+    setPage('work');
+    setWorkView('tasks');
+    zen.setZenMode(false);
+    deskLayout.expand();
+  }
+  async function openStartedRun(id?: string, review = false) {
+    const request = ++taskNavigation.current;
+    if (!id) { showTask(undefined, true); return; }
+    const session = snapshot.projectSessionId;
+    const current = () => taskNavigation.current === request && eventCursor.current.projectSessionId === session;
+    try {
+      const latest = await invoke('app.snapshot');
+      if (!current() || latest.projectSessionId !== session) return;
+      const activePlan = latest.runs.find(row => row.planning && !row.accepted && !['discarded', 'stale'].includes(row.status) &&
+        (!latest.tagDraft || row.planning.spec.inputHash === latest.tagDraft.inputHash));
+      if (!review && activePlan?.id === id) {
+        setSelectedRun(id); setPage('work'); setWorkView('tags');
+      } else {
+        const target = latest.runs.find(row => row.id === id) ?? (await readRunHistory(session, id)).find(row => row.id === id);
+        if (!current()) return;
+        if (!target) { setError('当前作品中找不到这条任务。'); return; }
+        setOlderRuns(previous => [target, ...previous.filter(row => row.id !== id)]);
+        showTask(id);
+      }
+      await refresh();
+    } catch (error) { if (current()) setError((error as Error).message); }
   }
   useEffect(() => {
     void refresh();
@@ -360,6 +400,16 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     dirty = doc && text !== authorMarkdown(doc.content);
   const taskBusy = busy || !!running || !!snapshot.chatBusy;
   const writingLayout = !management && !!p && page === 'work' && (workView === 'chat' || workView === 'tasks');
+  const zen = useZenMode(writingLayout);
+  const chatCollapsed = zen.zenMode || deskLayout.collapsed;
+  function toggleChatPane() {
+    if (zen.zenMode) {
+      zen.setZenMode(false);
+      if (deskLayout.collapsed) deskLayout.toggle();
+    } else {
+      deskLayout.toggle();
+    }
+  }
   const showTaskDetails = !writingLayout || taskDetailsOpen;
   const manuscriptPath = deskFile || proseFile(workView === 'tasks' && run?.pipeline && !run.accepted ? run.chapter : p?.chapter ?? 1);
   const matchesPage = (item: Run) => !item.accepted && !['stale', 'discarded'].includes(item.status) &&
@@ -410,11 +460,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     }
   }, [queuedReply, p?.id, manuscriptPath, editorOpen]);
   const projectKey = p ? `${p.id}:${encodeURIComponent(p.root.replaceAll('\\', '/').toLowerCase())}` : undefined;
-  useEffect(() => setTaskDetailsOpen(false), [projectKey, workView]);
+  useEffect(() => { if (workView !== 'tasks') setTaskDetailsOpen(false); }, [workView]);
   const activeProjectKey = useRef(projectKey);
   activeProjectKey.current = projectKey;
   function openManuscript(path: string) {
-    setDeskFile(path); setEditorOpen(false);
+    documentRequest.current++;
+    setDeskFile(path); setDoc(null); setInspector('manuscript'); setEditorOpen(false);
     try { localStorage.setItem('writing-desk:chapter:' + projectKey, path); } catch { /* Available in this window. */ }
   }
   useEffect(() => {
@@ -503,6 +554,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     setModal(null); setTitleConfirmation(null);
     const pending = snapshot.runs.find((r) => !r.accepted && !['discarded', 'stale', 'failed'].includes(r.status));
     setSelectedRun(pending?.id ?? '');
+    setTaskDetailsOpen(false);
     setMode('stage');
     setRequest('');
     const planning = pending?.planning || pending?.naming || ((p?.tagEnabled || p?.creationWorkflow === 2) && p.stage === 'S01');
@@ -515,7 +567,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   useEffect(() => {
     const key = activeProse && projectKey + ':' + activeProse.id + ':' + activeProse.pipeline?.epoch;
     if (!key) { followedRun.current = ''; return; }
-    if (writingLayout && workView === 'tasks' && key !== followedRun.current) {
+    if (writingLayout && workView === 'tasks' && !editorOpen && key !== followedRun.current) {
       followedRun.current = key;
       openManuscript(proseFile(activeProse!.chapter));
     }
@@ -547,27 +599,30 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         JSON.stringify({ base: doc.content.replace(/\r\n?/g, '\n'), text: next.replace(/\r\n?/g, '\n') }));
     } catch { setError('本机草稿空间不足，请保存为候选。'); }
   }
+  function canSwitchDocument() {
+    return !editorOpen || !dirty || dialogs.confirm('编辑内容已保存在本机草稿缓存中。切换文档？', { title: '切换文档？', confirmLabel: '切换文档', cancelLabel: '继续编辑' });
+  }
   async function openDoc(relative: string, r?: Run, openMode?: 'edit' | 'diff', workingText?: string) {
     const projectId = p?.id;
     if (!projectId || !projectKey) return;
     if (r?.accepted) r = undefined;
-    if (editorOpen && dirty && !await dialogs.confirm('编辑内容已保存在本机草稿缓存中。切换文档？', { title: '切换文档？', confirmLabel: '切换文档', cancelLabel: '继续编辑' })) return;
-    await act(async () => {
+    if (!await canSwitchDocument() || activeProjectKey.current !== projectKey) return;
+    const request = ++documentRequest.current;
+    const isCurrent = () => request === documentRequest.current && activeProjectKey.current === projectKey &&
+      eventCursor.current.projectSessionId === snapshot.projectSessionId;
+    const status = snapshot.documents.find(d => d.path === relative)?.status;
+    setError('');
+    try {
       let old = { content: '', hash: null as string | null };
       try {
-        old = await invoke('document.read', { path: relative });
-      } catch {
-        if (!r && workingText === undefined) throw new Error('无法读取文件');
+        if (status !== 'new') old = await invoke('document.read', { path: relative });
+      } catch (error) {
+        if (!r && workingText === undefined) throw error;
       }
-      const candidate = r?.changes.find((c) => c.path === relative),
-        value = candidate?.content ?? old.content;
-      const cacheKey = `draft:${projectKey}:${r?.id ?? ''}:${relative}`;
-      const legacyKey = `draft:${projectId}:${r?.id ?? ''}:${relative}`;
-      const draft = localStorage.getItem(cacheKey) ?? localStorage.getItem(legacyKey);
-      if (draft !== null) {
-        localStorage.setItem(cacheKey, draft);
-        localStorage.removeItem(legacyKey);
-      }
+      const candidate = r?.changes.find((c) => c.path === relative);
+      const disk = status === 'external' || status === 'new'
+        ? (await invoke('document.read', { path: relative, disk: true })).content : old.content;
+      const value = candidate?.content ?? (status === 'new' ? disk : old.content);
       let baseline = old.content;
       if (candidate?.baseHash) {
         try {
@@ -578,11 +633,18 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           /* external changes may have no accepted revision yet */
         }
       }
-      let disk = old.content;
-      if (snapshot.documents.find(d => d.path === relative)?.status === 'external') {
-        disk = (await invoke('document.read', { path: relative, disk: true })).content;
-      }
-      if (activeProjectKey.current !== projectKey) return;
+      if (!isCurrent()) return;
+      const cacheKey = `draft:${projectKey}:${r?.id ?? ''}:${relative}`;
+      const legacyKey = `draft:${projectId}:${r?.id ?? ''}:${relative}`;
+      let draft: string | null = null;
+      try {
+        draft = localStorage.getItem(cacheKey);
+        if (draft === null && (draft = localStorage.getItem(legacyKey)) !== null) {
+          localStorage.setItem(cacheKey, draft);
+          localStorage.removeItem(legacyKey);
+        }
+      } catch { setError('本机草稿缓存暂时不可用，请核对打开的版本。'); }
+      setPage('work');
       if (workView === 'objects') setWorkView('chat');
       setDoc({
         projectId,
@@ -594,15 +656,19 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         before: baseline,
         disk
       });
-      setText(authorMarkdown(workingText ?? draft ?? value));
+      setText(authorMarkdown(workingText ?? (status === 'new' && !candidate ? value : draft ?? value)));
+      setSelection('');
       setEditorOpen(true);
       setInspector('manuscript');
       setEditorTab(openMode ?? (r ? 'diff' : 'edit'));
       setHistories([]);
-    });
+    } catch (error) {
+      if (isCurrent()) setError(`无法打开「${relative}」：${error instanceof Error ? error.message : String(error)}`);
+    }
   }
   async function saveDraft() {
     if (!doc) return;
+    const request = documentRequest.current;
     if (doc.projectKey !== projectKey) { setError('作品已切换，请重新打开文稿；原编辑仍保留在原作品草稿缓存中。'); return; }
     if (doc.runId && visibleRuns.find((r) => r.id === doc.runId)?.accepted) {
       setError('正在载入已保存版本，请稍后再保存。');
@@ -619,9 +685,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       },
       '草稿已保存，确认采纳后会更新正式文稿'
     );
-    if (r && activeProjectKey.current === doc.projectKey) {
-      setWorkView('tasks');
-      setSelectedRun(typeof r === 'string' ? r : r.id);
+    if (r && activeProjectKey.current === doc.projectKey && request === documentRequest.current) {
+      showTask(typeof r === 'string' ? r : r.id);
       setText(authorMarkdown(content));
       setDoc({ ...doc, content, runId: typeof r === 'string' ? r : r.id });
     }
@@ -683,25 +748,30 @@ export function App({ management = false, managementView = 'workspace' }: { mana
       }
     });
   }
-  useEffect(() => {
-    if (!management) return;
-    const navigate = (event: Event) => {
-      const view = (event as CustomEvent<ManagementView>).detail;
-      if (view === 'open') { openProjectDirectory(); return; }
-      if (view === 'models') { setModal('settings'); return; }
-      if (['project', 'transfer', 'legacy', 'trash', 'new'].includes(view)) { setModal(view as 'project' | 'transfer' | 'legacy' | 'trash' | 'new'); return; }
+  const manageNavigation = useEffectEvent(() => {
+    const view = managementView;
+    if (managementDocument) {
+      if (snapshot.projectSessionId !== managementSession || !p) { setError('作品已切换，请回到知识库重新选择文档。'); return; }
       setModal(null);
-      setPage(view === 'memory' || view === 'cover' ? view : 'work');
-      if (view === 'tasks' || view === 'creation' || view === 'workspace') { setWorkView(view === 'creation' ? 'tags' : view === 'tasks' ? 'tasks' : 'chat'); setEditorOpen(false); }
-    };
-    window.addEventListener('management:navigate', navigate);
-    const open = (event: Event) => { setPage('work'); setEditorOpen(true); void openDoc((event as CustomEvent<string>).detail); };
-    window.addEventListener('management:document', open);
-    return () => { window.removeEventListener('management:navigate', navigate); window.removeEventListener('management:document', open); };
+      void openDoc(managementDocument);
+      return;
+    }
+    if (view === 'open') { openProjectDirectory(); return; }
+    if (view === 'models') { setModal('settings'); return; }
+    if (view === 'project' || view === 'transfer' || view === 'legacy' || view === 'trash' || view === 'new') { setModal(view); return; }
+    setModal(null);
+    setPage(view === 'memory' || view === 'cover' ? view : 'work');
+    if (view === 'tasks' || view === 'creation' || view === 'workspace') {
+      setWorkView(view === 'creation' ? 'tags' : view === 'tasks' ? 'tasks' : 'chat');
+      setEditorOpen(false);
+    }
   });
+  const managementReady = management && managementActive && snapshot !== empty;
   useEffect(() => {
-    if (management) window.dispatchEvent(new CustomEvent('management:navigate', { detail: managementView }));
-  }, [management, managementView]);
+    if (!managementReady) return;
+    manageNavigation();
+    return () => { documentRequest.current++; taskNavigation.current++; };
+  }, [managementReady, managementView, managementDocument, managementSession]);
   async function returnHome() {
     if (busy || Array.from(document.querySelectorAll('dialog[open], [aria-modal="true"]')).some(el => el.getClientRects().length > 0)) return;
     if (!p) {
@@ -756,8 +826,12 @@ export function App({ management = false, managementView = 'workspace' }: { mana
     );
   }
   const currentDocument = p ? currentStageDocument(p) : undefined;
+  const documentStatus = doc ? snapshot.documents.find(d => d.path === doc.path)?.status : undefined;
   async function openProjectDocument(path: string) {
-    if (writingLayout && /^07_正文章节\/第\d+章\.md$/.test(path)) {
+    if (!management && /^07_正文章节\/第\d+章\.md$/.test(path) && snapshot.documents.find(d => d.path === path)?.status !== 'new') {
+      if (!await canSwitchDocument() || activeProjectKey.current !== projectKey) return;
+      setPage('work');
+      if (workView !== 'tasks' && workView !== 'chat') setWorkView('chat');
       openManuscript(path); return;
     }
     await openDoc(path, p ? manuscriptDraft(visibleRuns, p, path) : undefined, 'edit');
@@ -765,27 +839,53 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   useEffect(() => {
     if (!p || !editorOpen || inspector !== 'manuscript' || doc) return;
     const path = p.stage >= 'S10' ? proseFile(p.chapter) : currentDocument;
-    if (path) void openProjectDocument(path);
+    if (path) void openDoc(path, manuscriptDraft(visibleRuns, p, path), 'edit');
   }, [projectKey, editorOpen, inspector, doc?.path, currentDocument]);
+  const panelVisible = page === 'work' && workView !== 'objects' && editorOpen;
+  function toggleDocumentPanel() {
+    documentRequest.current++;
+    if (panelVisible) { setEditorOpen(false); return; }
+    setPage('work');
+    if (workView === 'objects') setWorkView('chat');
+    if (inspector === 'manuscript' && !doc && deskEditor.current) deskEditor.current.openDetails();
+    else setEditorOpen(true);
+  }
   const taskReply = run?.accepted && (run.planning || run.naming)
     ? '本阶段内容已保存，可以继续下一阶段；想调整时可进入“作品方案与书名”。'
     : run ? taskReplyText(renderNativeCitations(run.responseText, run.webSearch?.citations)) : '';
   const displayedChanges = run?.pipeline && run.status === 'running' && run.pipeline.phase === 'prose' && !run.changes.some(change => change.path === proseFile(run.chapter))
     ? [...run.changes, { path: proseFile(run.chapter), content: '', baseHash: null }] : run?.changes ?? [];
   const displayedIssues = run ? visibleRunIssues(run) : [];
+  function selectWorkTab(view: typeof workView) {
+    documentRequest.current++; taskNavigation.current++;
+    setWorkView(view);
+    if (!management && (view === 'chat' || view === 'tasks')) deskLayout.expand();
+  }
   const workTabs = p && (
     <nav className="work-tabs" aria-label="写作视图">
-      <button aria-current={workView === 'objects' ? 'page' : undefined} className={workView === 'objects' ? 'active' : ''} onClick={() => setWorkView('objects')}><PanelsTopLeft size={15} />共创画布</button>
-      <button aria-current={workView === 'chat' ? 'page' : undefined} className={workView === 'chat' ? 'active' : ''} onClick={() => { setWorkView('chat'); if (!management && deskLayout.collapsed) deskLayout.toggle(); }}>
+      <button aria-current={workView === 'objects' ? 'page' : undefined} className={workView === 'objects' ? 'active' : ''} onClick={() => selectWorkTab('objects')}><PanelsTopLeft size={15} />共创画布</button>
+      <button aria-current={workView === 'chat' ? 'page' : undefined} className={workView === 'chat' ? 'active' : ''} onClick={() => selectWorkTab('chat')}>
         <MessageSquare size={15} />创作讨论
       </button>
-      <button aria-current={workView === 'tasks' ? 'page' : undefined} className={workView === 'tasks' ? 'active' : ''} onClick={() => { setWorkView('tasks'); if (!management && deskLayout.collapsed) deskLayout.toggle(); }}>
+      <button aria-current={workView === 'tasks' ? 'page' : undefined} className={workView === 'tasks' ? 'active' : ''} onClick={() => selectWorkTab('tasks')}>
         <ListChecks size={15} />创作任务
       </button>
-      <button aria-current={workView === 'tags' ? 'page' : undefined} className={workView === 'tags' ? 'active' : ''} onClick={() => setWorkView('tags')}>
+      <button aria-current={workView === 'tags' ? 'page' : undefined} className={workView === 'tags' ? 'active' : ''} onClick={() => selectWorkTab('tags')}>
         <NotebookPen size={15} />作品方案与书名
       </button>
       <div className="work-tab-tools">
+        {writingLayout && (
+          <button
+            type="button"
+            ref={zen.entryButton}
+            onClick={zen.toggleZen}
+            title="专注写作模式 (⌘/Ctrl + Shift + F)"
+            aria-pressed={zen.zenMode}
+          >
+            <Maximize2 size={14} />
+            专注
+          </button>
+        )}
         <QualityWorkbench key={`quality:${p.id}`} profileId={profileId} onRun={(id) => void openStartedRun(id)} />
         <SkillLauncher key={`skills:${p.id}`} profileId={profileId} onRun={(id) => void openStartedRun(id)} />
       </div>
@@ -811,7 +911,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
   return <>
     {!management && <WindowTitleBar onHome={returnHome} homeDisabled={busy} />}
     <div
-      className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${focus && editorOpen && page === 'work' && !writingLayout ? 'studio-focus' : ''}`}
+      className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${zen.zenMode ? 'zen-mode' : ''} ${focus && editorOpen && page === 'work' && !writingLayout ? 'studio-focus' : ''}`}
     >
       {!management && <aside className="sidebar" aria-label="作品与功能导航">
         <div className="brand">
@@ -862,7 +962,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
               aria-current={page === key ? 'page' : undefined}
               aria-label={String(label)}
               title={String(label)}
-              onClick={() => setPage(key as any)}
+              onClick={() => { documentRequest.current++; taskNavigation.current++; setPage(key as any); }}
             >
               {btn(<Icon size={17} />, String(label))}
               {page === key && <span className="active-dot" />}
@@ -973,6 +1073,28 @@ export function App({ management = false, managementView = 'workspace' }: { mana
             <b>{page === 'lab' ? '自由创作实验室' : p?.title ?? '我的工作台'}</b>
           </div>
           <div className="top-actions">
+            {zen.zenMode && (
+              <div className="zen-toolbar" role="toolbar" aria-label="专注写作工具条">
+                <button
+                  type="button"
+                  aria-pressed={zen.prefs.font === 'serif'}
+                  className={zen.prefs.font === 'serif' ? 'active' : ''}
+                  onClick={zen.toggleFont}
+                  title="切换衬线/无衬线字体"
+                >
+                  <Type size={13} />
+                  {zen.prefs.font === 'serif' ? '宋体' : '黑体'}
+                </button>
+                <button type="button" onClick={zen.cycleSize} title="切换正文字号">
+                  {zen.prefs.size}px
+                </button>
+                <span className="zen-toolbar-divider" />
+                <button ref={zen.exitButton} type="button" onClick={() => zen.setZenMode(false)} title="退出专注模式 (Esc)">
+                  <Minimize2 size={13} />
+                  退出
+                </button>
+              </div>
+            )}
             <ThemeToggle />
             <span className="save-state">
               <span />
@@ -991,22 +1113,22 @@ export function App({ management = false, managementView = 'workspace' }: { mana
               className="panel-toggle"
               aria-label="切换编辑面板"
               disabled={!p || page !== 'work'}
-              aria-pressed={editorOpen}
+              aria-pressed={panelVisible}
               title="文稿、差异与历史"
-              onClick={() => setEditorOpen(!editorOpen)}
+              onClick={toggleDocumentPanel}
             >
-              {editorOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+              {panelVisible ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
               <span>文稿面板</span>
             </button>
           </div>
         </header>}
         {management && p && <div className="management-document-toolbar">
           <span>{p.title}</span>
-          <select aria-label="打开作品文档" value={doc?.path ?? ''} onChange={event => { if (event.target.value) { setPage('work'); setEditorOpen(true); void openDoc(event.target.value); } }}>
+          <select aria-label="打开作品文档" value={doc?.path ?? ''} onChange={event => { if (event.target.value) void openDoc(event.target.value); }}>
             <option value="">选择文稿、设定或大纲…</option>
             {snapshot.documents.map(document => <option key={document.path} value={document.path}>{document.path}</option>)}
           </select>
-          <button onClick={() => setEditorOpen(!editorOpen)} aria-pressed={editorOpen}>文稿面板</button>
+          <button onClick={toggleDocumentPanel} aria-pressed={panelVisible}>文稿面板</button>
           <button onClick={() => setModal('project')}>作品配置</button>
           <button onClick={() => setModal('publishing')}>题材与发布分类</button>
         </div>}
@@ -1041,7 +1163,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
           <button disabled={busy || !!running || !!snapshot.chatBusy} onClick={() => void act(async () => {
             const waiting = snapshot.studio!.waitingWriting!;
             const id = waiting.ready ? await invoke('run.start', { request: '继续已保存的写作要求', afterRepair: waiting.repairId }) : waiting.repairId;
-            setPage('work'); setSelectedRun(id); setWorkView('tasks');
+            showTask(id);
           })}>{snapshot.studio.waitingWriting.ready ? '从原稿继续' : '查看待核对资料'}</button>
         </div>}
         {p && !!snapshot.studio?.recoveryConflicts?.length && (
@@ -1052,7 +1174,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
             refresh={refresh}
           />
         )}
-        {!management && (page === 'lab' || labVisited) && <Suspense fallback={page === 'lab' && <p role="status">正在打开实验室…</p>}><StoryLab active={page === 'lab'} profiles={snapshot.profiles} formalBusy={!!running || !!snapshot.chatBusy} onBack={() => setPage('work')} onSettings={() => setModal('settings')} onHide={() => { localStorage.setItem('story-lab:hidden', 'true'); setLabEnabled(false); setPage('work'); }} /></Suspense>}
+        {!management && (page === 'lab' || labVisited) && <Suspense fallback={page === 'lab' && <p role="status">正在打开实验室…</p>}><StoryLab active={page === 'lab'} project={p ?? undefined} profiles={snapshot.profiles} formalBusy={!!running || !!snapshot.chatBusy} onBack={() => setPage('work')} onSettings={() => setModal('settings')} onHide={() => { localStorage.setItem('story-lab:hidden', 'true'); setLabEnabled(false); setPage('work'); }} /></Suspense>}
         {page === 'lab' ? null : !p ? (
           <div className="welcome">
             <div className="welcome-symbol">
@@ -1081,7 +1203,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         ) : page === 'cover' ? (
           <Cover key={p.id} profiles={snapshot.profiles} title={p.title} act={act} />
         ) : (
-          <div className={`workspace ${writingLayout ? 'writing-desk' + (deskLayout.collapsed ? ' desk-chat-collapsed' : '') : focus ? 'studio-focus' : ''}`}
+          <div className={`workspace ${writingLayout ? 'writing-desk' + (chatCollapsed ? ' desk-chat-collapsed' : '') : focus ? 'studio-focus' : ''}`}
             style={writingLayout ? deskLayout.style : undefined}>
             {writingLayout && workTabs}
             <div className="work-area">
@@ -1097,10 +1219,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                   refresh={refresh}
                   onAccept={acceptRun}
                   onTrial={id => { setWritingConversation(id); setWorkView('chat'); if (deskLayout.collapsed) deskLayout.toggle(); }}
-                  onReview={(id) => {
-                    setSelectedRun(id);
-                    setWorkView('tasks');
-                  }}
+                  onReview={id => void openStartedRun(id, true)}
                 />
               ) : workView === 'chat' ? (
                 <ChatWorkspace
@@ -1582,11 +1701,11 @@ export function App({ management = false, managementView = 'workspace' }: { mana
               )}
               {workView !== 'objects' && (!writingLayout || workView === 'tasks' && taskDetailsOpen) && <NarrativePanel snapshot={snapshot} run={run} onSource={setSource} />}
             </div>
-            {writingLayout && !deskLayout.collapsed && <DeskDivider width={deskLayout.width} setWidth={deskLayout.setWidth}/>}
+            {writingLayout && !chatCollapsed && <DeskDivider width={deskLayout.width} setWidth={deskLayout.setWidth}/>}
             {writingLayout && !editorOpen && <WritingManuscript key={projectKey + ':' + manuscriptPath} ref={deskEditor}
               snapshot={snapshot} path={manuscriptPath} run={manuscriptRun} storageKey={projectKey!}
-              collapsed={deskLayout.collapsed} onToggle={deskLayout.toggle} onSelection={setDeskCount} refresh={refresh}
-              onSaved={id => { if (activeProjectKey.current === projectKey) { setSelectedRun(id); setWorkView('tasks'); } }}
+              collapsed={chatCollapsed} onToggle={toggleChatPane} onSelection={setDeskCount} refresh={refresh}
+              onSaved={id => showTask(id)}
               onDetails={value => { void openDoc(manuscriptPath, manuscriptRun, 'edit', value); }}/>}
             {editorOpen && workView !== 'objects' && (
               <aside className="editor-panel">
@@ -1607,9 +1726,13 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                       {label}
                     </button>
                   ))}
-                  <button aria-pressed={writingLayout ? deskLayout.collapsed : focus} onClick={writingLayout ? deskLayout.toggle : () => setFocus(!focus)}>
-                    {(writingLayout ? deskLayout.collapsed : focus) ? '退出专注' : '专注'}
-                  </button>
+                  {writingLayout ? (
+                    <button aria-expanded={!chatCollapsed} onClick={toggleChatPane}>
+                      {chatCollapsed ? '展开 AI 对话' : '收起 AI 对话'}
+                    </button>
+                  ) : (
+                    <button aria-pressed={focus} onClick={() => setFocus(!focus)}>{focus ? '退出专注' : '专注'}</button>
+                  )}
                 </nav>
                 {inspector === 'characters' ? (
                   <CharacterInspector snapshot={snapshot} run={run} onSource={setSource} />
@@ -1655,7 +1778,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                         <b title={doc?.path}>{doc?.path.split('/').at(-1) ?? '文稿与差异'}</b>
                         {dirty && <span className="draft-dot" />}
                       </div>
-                      <button className="icon" aria-label="关闭编辑面板" onClick={() => setEditorOpen(false)}>
+                      <button className="icon" aria-label="关闭编辑面板" onClick={toggleDocumentPanel}>
                         <X size={15} />
                       </button>
                     </header>
@@ -1685,13 +1808,13 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                           ))}
                           <span>{doc.runId ? '待采纳草稿' : '文稿'}</span>
                         </div>
-                        {snapshot.documents.find((d) => d.path === doc.path)?.status === 'external' && (
+                        {(documentStatus === 'external' || documentStatus === 'new') && (
                           <div className="inline-warning">
-                            发现外部改稿
+                            {documentStatus === 'new' ? '外部新增文稿，尚未采纳' : '发现外部改稿'}
                             <button
                               onClick={() =>
                                 void act(async () =>
-                                  setSelectedRun(await invoke('project.importAccept', { path: doc.path }))
+                                  showTask(await invoke('project.importAccept', { path: doc.path }))
                                 )
                               }
                             >
@@ -1701,10 +1824,13 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                         )}
                         {editorTab === 'edit' ? (
                           liveDocumentRun ? <LiveProseEditor session={snapshot.projectSessionId} run={liveDocumentRun} onSelection={setSelection} /> : <Editor
+                            key={doc.projectKey + ':' + (doc.runId ?? '') + ':' + doc.path}
+                            label={doc.path.split('/').at(-1)}
                             value={text}
                             onChange={editDocument}
                             onSelection={setSelection}
                             readOnly={
+                              (!doc.runId && documentStatus === 'new') ||
                               isStructuredMarkdown(doc.content) || doc.path === '02_项目配置/标签创作契约.md' ||
                               !!(
                                 doc.runId &&
@@ -1746,11 +1872,13 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 <button
                                   onClick={() =>
                                     void act(async () => {
+                                      const request = documentRequest.current;
                                       const old = await invoke('document.read', {
                                         path: doc.path,
                                         hash: h.hash
                                       });
-                                      setDoc({ ...doc, before: old.content });
+                                      if (request !== documentRequest.current || activeProjectKey.current !== projectKey) return;
+                                      setDoc(current => current && current.path === doc.path ? { ...current, before: old.content } : current);
                                       setEditorTab('diff');
                                     })
                                   }
@@ -1760,7 +1888,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
                                 <button
                                   onClick={() =>
                                     void act(async () =>
-                                      setSelectedRun(
+                                      showTask(
                                         await invoke('document.restore', {
                                           path: doc.path,
                                           hash: h.hash,
@@ -1891,7 +2019,7 @@ export function App({ management = false, managementView = 'workspace' }: { mana
         />
       )}
       {modal === 'publishing' && p && <PublishingSettings snapshot={snapshot} onClose={() => setModal(null)} onProposed={id => {
-        setModal(null); setSelectedRun(id); setPage('work'); setWorkView('tasks'); void refresh();
+        setModal(null); showTask(id); void refresh();
       }} />}
       {modal === 'trash' && <RecycleBin onClose={() => setModal(null)} act={act} />}
       {modal === 'transfer' && (
@@ -1904,9 +2032,8 @@ export function App({ management = false, managementView = 'workspace' }: { mana
               invoke('document.save', { path: file, content, baseHash: null })
             );
             if (r) {
-              setSelectedRun(r);
+              showTask(r);
               setModal(null);
-              setPage('work');
             }
           }}
         />

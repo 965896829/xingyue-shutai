@@ -115,6 +115,8 @@ export const profileSchema = z
     reasoningRevision: z.number().int().nonnegative().optional(),
     inputPrice: z.number().nonnegative().nullable().default(null),
     outputPrice: z.number().nonnegative().nullable().default(null),
+    cacheReadPrice: z.number().nonnegative().nullable().optional(),
+    cacheWritePrice: z.number().nonnegative().nullable().optional(),
     currency: z.string().default('USD'),
     timeoutSeconds: z.number().int().min(10).max(1800).default(180),
     networkRecovery: z.object({
@@ -512,6 +514,7 @@ export interface ToolDefinition {
   parameters: Record<string, unknown>;
 }
 export interface ToolCall {
+  attemptId?: string;
   id: string;
   name: string;
   arguments: string;

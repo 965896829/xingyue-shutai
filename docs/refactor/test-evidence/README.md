@@ -4,6 +4,8 @@
 
 工作树基点 ade3d5c；Windows10 19045、Node24.11.1、Electron44.6.0。测试目录为 .test-output/refactor/fixtures、隔离 userData 和临时合成作品。正式生产安装、作品和密钥未作为夹具。
 
+Pi 的许可原文保存在[发行许可目录](../../../resources/licenses/pi-1.4.0-LICENSE)。
+
 | 命令/方式 | 结果文件 | 用途 |
 |---|---|---|
 | npm run check | check-final.log | 严格类型检查 |

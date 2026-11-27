@@ -161,7 +161,7 @@ export class SemanticIndex {
   async rebuild() {
     if (this.controller) throw new Error('语义索引正在更新');
     const { settings, generation } = this.configuration();
-    this.store.db.set('vectorQueryBlocked', false);
+    this.store.db.set('vectorQueryRetryAfter', 0);
     if (!settings.enabled) throw new Error('请先启用语义检索');
     const owner: AttemptOwner = { id: crypto.randomUUID(), usage: { input: 0, output: 0, cost: 0, currency: settings.currency } };
     const snapshot = this.store.db.head()!,
@@ -180,80 +180,69 @@ export class SemanticIndex {
     };
     this.store.db.set('vectorIndex', state);
     this.changed();
+    type Entry = { key: string; file: string; version: string; chapter: number; start: number; end: number; text: string; factId?: string };
+    const pending: Entry[] = [];
+    const currentFacts = new Set<string>();
+    const exists = this.store.db.sql.prepare('SELECT 1 FROM vector_chunks WHERE id=?');
+    const insert = this.store.db.sql.prepare('INSERT OR IGNORE INTO vector_chunks VALUES(?,?,?,?,?,?,?,?,?)');
+    const flush = async () => {
+      if (!pending.length) return;
+      const batch = pending.splice(0);
+      const result = await this.embed(batch.map(entry => entry.text), controller.signal, owner, 'index-rebuild');
+      if (controller.signal.aborted || this.configuration().generation !== generation) throw new Error('索引更新已停止或配置已改变');
+      const dimensions = state.observedDimensions ?? result.vectors[0]?.length;
+      if (!dimensions || result.vectors.length !== batch.length || result.vectors.some(vector => vector.length !== dimensions))
+        throw new Error('服务模型响应数量或维度改变，请核对索引配置');
+      state.observedDimensions = dimensions;
+      state.tokens = state.tokens === null || result.tokens === null ? null : state.tokens + result.tokens;
+      state.cost = state.tokens === null || settings.price === null ? null : state.tokens * settings.price / 1e6;
+      this.store.db.transaction(() => {
+        for (const [index, entry] of batch.entries()) {
+          if (entry.factId) {
+            const current = this.store.db.sql.prepare('SELECT data FROM facts WHERE id=?').get(entry.factId);
+            if (!current || hash(JSON.stringify(JSON.parse(String(current.data)))) !== entry.version) continue;
+          } else if (this.store.db.document(entry.file)?.hash !== entry.version) continue;
+          insert.run(entry.key, generation, entry.file, entry.version, entry.chapter, entry.start, entry.end, entry.text, JSON.stringify(result.vectors[index]));
+        }
+      });
+      await new Promise(resolve => setImmediate(resolve));
+    };
+    const queue = async (entry: Entry) => {
+      if (controller.signal.aborted) throw new Error('索引更新已停止');
+      if (exists.get(entry.key)) return;
+      if (pending.length >= 16 || Buffer.byteLength(JSON.stringify([...pending.map(item => item.text), entry.text])) > settings.inputBudget) await flush();
+      pending.push(entry);
+    };
     try {
       for (const [file, version] of Object.entries(snapshot.documents)) {
-        if (controller.signal.aborted) throw new Error('索引更新已停止');
         const chapter = Number(file.match(/第(\d+)章/)?.[1] ?? 0);
         if (!(file.startsWith('07_') && snapshot.project.chapters[chapter]) || pendingSource(snapshot.project, file)) continue;
-        const maxPoints = Math.max(16, Math.min(600, Math.floor((settings.inputBudget - 32) / 6)));
-        for (const chunk of proseChunks(this.store.object(version).toString('utf8'), maxPoints)) {
-          const key = hash(`${generation}:${file}:${version}:${chunk.start}:${chunk.end}`);
-          if (this.store.db.sql.prepare('SELECT 1 FROM vector_chunks WHERE id=?').get(key)) continue;
-          const result = await this.embed([chunk.text], controller.signal, owner, 'index-rebuild');
-          if (controller.signal.aborted) throw new Error('索引更新已停止');
-          const vector = result.vectors[0];
-          if (state.observedDimensions && vector.length !== state.observedDimensions)
-            throw new Error('服务模型维度改变，请新建索引');
-          state.observedDimensions = vector.length;
-          state.tokens =
-            state.tokens === null || result.tokens === null ? null : state.tokens + result.tokens;
-          state.cost =
-            state.tokens === null || settings.price === null ? null : (state.tokens * settings.price) / 1e6;
-          if (this.store.db.document(file)?.hash !== version) continue;
-          this.store.db.sql
-            .prepare('INSERT OR IGNORE INTO vector_chunks VALUES(?,?,?,?,?,?,?,?,?)')
-            .run(
-              key,
-              generation,
-              file,
-              version,
-              chapter,
-              chunk.start,
-              chunk.end,
-              chunk.text,
-              JSON.stringify(vector)
-            );
-        }
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        const maxPoints = Math.max(1, Math.min(600, Math.floor((settings.inputBudget - 4) / 6)));
+        for (const chunk of proseChunks(this.store.object(version).toString('utf8'), maxPoints))
+          await queue({ ...chunk, key: hash(`${generation}:${file}:${version}:${chunk.start}:${chunk.end}`), file, version, chapter });
       }
-      if (settings.dataScope === 'prose-and-memory')
-        for (const fact of snapshot.facts.filter(
-          (f) => f.reviewStatus === 'accepted' && f.state !== 'disputed' && f.evidence.every(e => sourceValid(this.store, e, snapshot.documents, Number.MAX_SAFE_INTEGER, snapshot.project))
-        )) {
-          if (controller.signal.aborted) throw new Error('索引更新已停止');
-          const version = hash(JSON.stringify(fact)),
-            key = 'fact:' + hash(`${generation}:${fact.id}:${version}`);
-          if (this.store.db.sql.prepare('SELECT 1 FROM vector_chunks WHERE id=?').get(key)) continue;
-          const text = `${fact.subject} ${fact.predicate} ${fact.value}\n${fact.evidence.map((e) => e.quote).join('\n')}`;
-          const result = await this.embed([text], controller.signal, owner, 'index-rebuild'),
-            vector = result.vectors[0];
-          if (controller.signal.aborted || this.configuration().generation !== generation) throw new Error('索引更新已停止或配置已改变');
-          const current = this.store.db.head()?.facts.find((entry) => entry.id === fact.id);
-          if (!current || hash(JSON.stringify(current)) !== version) continue;
-          if (state.observedDimensions && vector.length !== state.observedDimensions)
-            throw new Error('服务模型维度改变，请新建索引');
-          state.observedDimensions = vector.length;
-          state.tokens =
-            state.tokens === null || result.tokens === null ? null : state.tokens + result.tokens;
-          state.cost =
-            state.tokens === null || settings.price === null ? null : (state.tokens * settings.price) / 1e6;
-          this.store.db.sql
-            .prepare('INSERT OR IGNORE INTO vector_chunks VALUES(?,?,?,?,?,?,?,?,?)')
-            .run(
-              key,
-              generation,
-              primaryPath(fact),
-              version,
-              fact.fromChapter,
-              0,
-              Array.from(text).length,
-              text,
-              JSON.stringify(vector)
-            );
-          await new Promise((resolve) => setTimeout(resolve, 0));
+      if (settings.dataScope === 'prose-and-memory') {
+        for (const fact of snapshot.facts) {
+          if (fact.reviewStatus !== 'accepted' || fact.state === 'disputed' || !fact.evidence.every(e => sourceValid(this.store, e, snapshot.documents, Number.MAX_SAFE_INTEGER, snapshot.project))) continue;
+          const version = hash(JSON.stringify(fact));
+          let text = `${fact.subject} ${fact.predicate} ${fact.value}\n${fact.evidence.map(e => e.quote).join('\n')}`;
+          if (Buffer.byteLength(JSON.stringify([text])) > settings.inputBudget)
+            text = Array.from(text).slice(0, Math.max(1, Math.floor((settings.inputBudget - 4) / 6))).join('');
+          const key = 'fact:' + hash(`${generation}:${fact.id}:${version}`);
+          currentFacts.add(key);
+          await queue({ key, file: primaryPath(fact), version,
+            factId: fact.id, chapter: fact.fromChapter, start: 0, end: Array.from(text).length, text });
         }
+      }
+      await flush();
       state.status = this.store.db.get('headSnapshot') === snapshot.id ? 'ready' : 'stale';
       state.watermark = snapshot.id;
+      if (state.status === 'ready' && this.configuration().generation === generation) this.store.db.transaction(() => {
+        this.store.db.sql.prepare('DELETE FROM vector_chunks WHERE generation<>?').run(generation);
+        const remove = this.store.db.sql.prepare('DELETE FROM vector_chunks WHERE id=?');
+        for (const row of this.store.db.sql.prepare("SELECT id FROM vector_chunks WHERE generation=? AND id LIKE 'fact:%'").all(generation))
+          if (!currentFacts.has(String(row.id))) remove.run(row.id);
+      });
     } catch (e) {
       state.status = e instanceof RequestError && e.uncertain ? 'unknown' : 'paused';
       if (state.status === 'unknown') {
@@ -290,7 +279,8 @@ export class SemanticIndex {
     );
     if (index?.generation !== generation || !index.observedDimensions)
       return { ...exact, semantic: 'degraded' };
-    if (this.store.db.get('vectorQueryBlocked')) return { ...exact, semantic: 'degraded' };
+    const retryAfter = this.store.db.get<number>('vectorQueryRetryAfter');
+    if (retryAfter && Date.now() < retryAfter) return { ...exact, semantic: 'degraded' };
     if (
       budget &&
       (budget.remaining === null ||
@@ -338,23 +328,27 @@ export class SemanticIndex {
           vector: string;
         };
       let ranks: { id: string; score: number }[] = [];
-      let batch: { id: string; vector: number[] }[] = [], visited = 0;
+      let batch: { id: string; vector: number[] }[] = [];
       const rankBatch = () => {
         ranks = [...ranks, ...new LocalCosine().rank(result.vectors[0], batch, limit)]
           .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, limit);
         batch = [];
       };
-      for (const value of this.store.db.sql.prepare('SELECT id,path,hash,chapter,vector FROM vector_chunks WHERE generation=? AND chapter<=?').iterate(generation, scope.chapter)) {
-        const row = value as VectorRow;
-        const eligible = row.id.startsWith('fact:') ? factMap.has(row.id) : snapshot.documents[row.path] === row.hash && !pendingSource(snapshot.project, row.path) && row.path.startsWith('07_') && !!snapshot.project.chapters[row.chapter];
-        if (eligible) batch.push({ id: row.id, vector: JSON.parse(row.vector) });
-        if (++visited % 256 === 0) {
-          rankBatch();
-          await new Promise<void>(resolve => setImmediate(resolve));
-          if (signal.aborted) return { ...exact, semantic: 'stale', usage };
+      const page = this.store.db.sql.prepare('SELECT rowid AS cursor,id,path,hash,chapter,vector FROM vector_chunks WHERE generation=? AND chapter<=? AND rowid>? ORDER BY rowid LIMIT 256');
+      let cursor = 0;
+      while (true) {
+        const rows = page.all(generation, scope.chapter, cursor) as (VectorRow & { cursor: number })[];
+        if (!rows.length) break;
+        for (const row of rows) {
+          const eligible = row.id.startsWith('fact:') ? factMap.has(row.id) : snapshot.documents[row.path] === row.hash && !pendingSource(snapshot.project, row.path) && row.path.startsWith('07_') && !!snapshot.project.chapters[row.chapter];
+          if (eligible) batch.push({ id: row.id, vector: JSON.parse(row.vector) });
         }
+        cursor = rows[rows.length - 1].cursor;
+        rankBatch();
+        if (rows.length < 256) break;
+        await new Promise<void>(resolve => setImmediate(resolve));
+        if (signal.aborted) return { ...exact, semantic: 'stale', usage };
       }
-      rankBatch();
       if (signal.aborted || this.configuration().generation !== generation || this.store.db.get<string>('headSnapshot') !== sourceSnapshot) return { ...exact, semantic: 'stale', usage };
       const scores = new Map<string, { score: number; doc: (typeof exact.documents)[number] }>();
       exact.documents.forEach((doc, i) => scores.set(doc.path, { score: 1 / (60 + i + 1), doc }));
@@ -399,7 +393,7 @@ export class SemanticIndex {
       };
     } catch (e) {
       if (e instanceof RequestError && e.uncertain) {
-        this.store.db.set('vectorQueryBlocked', true);
+        this.store.db.set('vectorQueryRetryAfter', Date.now() + 60_000);
         return {
           ...exact,
           semantic: 'degraded',

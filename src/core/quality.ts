@@ -34,27 +34,39 @@ export function evidenceUsable(store: FileStore, evidence: QualityState['evidenc
     return unique(original, anchored) && unique(current, anchored);
   } catch { return false; }
 }
+export function storedQuality(store: FileStore): QualityState {
+  return qualityStateSchema.parse(store.db.get(stateKey) ?? { version: 1, revision: 0, evidence: [], preferences: [], patterns: [], experiments: [], presentations: [], observations: [] });
+}
+
 export function readQuality(store: FileStore): QualityState {
-  const state = qualityStateSchema.parse(store.db.get(stateKey) ?? { version: 1, revision: 0, evidence: [], preferences: [], patterns: [], experiments: [], presentations: [], observations: [] });
+  const state = storedQuality(store);
   for (const evidence of state.evidence) evidence.usable = evidenceUsable(store, evidence);
   for (const preference of state.preferences) {
-    if (preference.evidenceIds.some(key => !state.evidence.some(e => e.id === key && evidenceUsable(store, e)))) preference.state = 'stale';
+    const evidence = preference.evidenceIds.map(id => state.evidence.find(item => item.id === id));
+    if (evidence.some(item => !item?.usable)) preference.state = 'stale';
+    else if (preference.state === 'stale') {
+      const eligible = evidence.every(item => item?.editor === 'author' && ['expression', 'narrative_focus'].includes(item.domain) && item.reason.trim());
+      preference.state = eligible && (preference.scope.kind !== 'book' || new Set(evidence.map(item => item?.after.path)).size >= 3) ? 'proposal' : 'insufficient_evidence';
+    }
   }
   for (const pattern of state.patterns) {
-    try { for (const source of pattern.sources) assertSpan(store, source, true); } catch { pattern.state = 'stale'; }
+    try {
+      for (const source of pattern.sources) assertSpan(store, source, true);
+      if (pattern.state === 'stale') pattern.state = 'ready';
+    } catch { pattern.state = 'stale'; }
   }
   return state;
 }
 function save(store: FileStore, state: QualityState) {
   state.revision++;
   store.db.set(stateKey, qualityStateSchema.parse(state));
-  return state;
+  return readQuality(store);
 }
 export { save as saveQuality };
 export function mutateQuality(store: FileStore, expectedRevision: number, raw: unknown) {
   const mutation = qualityMutationSchema.parse(raw);
   return store.db.transaction(() => {
-    const state = readQuality(store);
+    const state = storedQuality(store);
     if (state.revision !== expectedRevision) throw new Error('记录已更新，请刷新后重试');
     if (mutation.kind === 'protocol') {
       if ([...state.protocols, ...state.experiments].some(p => p.family === mutation.protocol.family && p.stage !== mutation.protocol.stage)) throw new Error('同一创意族不能同时属于开发集和保留集');
@@ -126,7 +138,7 @@ export function mutateQuality(store: FileStore, expectedRevision: number, raw: u
   });
 }
 export function qualityStatistics(store: FileStore, experimentId: string) {
-  const state = readQuality(store), experiment = state.experiments.find(e => e.id === experimentId);
+  const state = storedQuality(store), experiment = state.experiments.find(e => e.id === experimentId);
   if (!experiment) throw new Error('试读不存在');
   const presentations = state.presentations.filter(p => p.experimentId === experimentId);
   const observations = state.observations.filter(o => presentations.some(p => p.id === o.presentationId));
@@ -141,13 +153,13 @@ export function qualityStatistics(store: FileStore, experimentId: string) {
   return { ...result, hash: fingerprint(result) };
 }
 export function blindPresentation(store: FileStore, presentationId: string) {
-  const state = readQuality(store), presentation = state.presentations.find(p => p.id === presentationId);
+  const state = storedQuality(store), presentation = state.presentations.find(p => p.id === presentationId);
   if (!presentation) throw new Error('试读展示不存在');
   const experiment = state.experiments.find(e => e.id === presentation.experimentId)!;
   return { id: presentation.id, questions: experiment.questions, candidates: presentation.order.map((key, i) => { const c = experiment.candidates.find(c => c.id === key)!; return { alias: String.fromCharCode(65 + i), text: c.text, hash: c.hash }; }) };
 }
 export function storeLearnedPreferences(store: FileStore, runId: string, raw: unknown) {
-  const values = z.array(voicePreferenceSchema.omit({ id: true, state: true, runId: true })).max(40).parse(raw), state = readQuality(store);
+  const values = z.array(voicePreferenceSchema.omit({ id: true, state: true, runId: true })).max(40).parse(raw), state = storedQuality(store);
   if (state.preferences.some(p => p.runId === runId)) return;
   for (const value of values) {
     const evidence = value.evidenceIds.map(key => state.evidence.find(e => e.id === key));
@@ -218,7 +230,7 @@ export function taskVoicePreferences(store: FileStore, query: string | VoiceSele
   } catch { return []; }
 }
 export function storePatterns(store: FileStore, runId: string, raw: unknown) {
-  const patterns = z.array(patternSchema.omit({ id: true, origin: true, state: true, runId: true })).max(100).parse(raw), state = readQuality(store);
+  const patterns = z.array(patternSchema.omit({ id: true, origin: true, state: true, runId: true })).max(100).parse(raw), state = storedQuality(store);
   if (state.patterns.some(p => p.runId === runId)) return;
   for (const pattern of patterns) { for (const source of pattern.sources) assertSpan(store, source, true); state.patterns.push({ ...pattern, id: id(), origin: 'model', state: 'ready', runId }); }
   save(store, state);

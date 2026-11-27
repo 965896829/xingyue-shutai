@@ -51,7 +51,7 @@
 - 历史安装包：`星月书台 Setup 0.4.86.exe`；已于 2026-10-30 清理，见[清理记录](../maintenance/repository-cleanup-2026-10-30.md)。
 - 大小：127,447,767 字节。
 - SHA-256：`ade3a391ab60aabe3060e6a2aede962477b789ed810aef4c2f334ac433ed2874`。
-- 最新清单：[delivery.json](../../output/xingyue-v7/delivery.json)。0.4.85 的清单另存为 `delivery-0.4.85.json`，更早安装包及证据保留。
+- 当时的交付清单写入本机 `output/xingyue-v7/delivery.json`。0.4.85 的清单另存为 `delivery-0.4.85.json`，更早安装包及证据保留。
 
 2026-10-29 打包交付时，`D:\aiwenxu\wenxu-desktop` 中的安装版仍为 0.4.83。**2026-10-30 已按用户请求在原目录升级至 0.4.86，并打开正式客户端。**
 

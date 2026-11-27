@@ -9,6 +9,7 @@ import { Editor } from './LazyEditor';
 import { proseBinding, proseFile, useLiveStream } from './useLiveStream';
 
 export interface WritingDeskHandle {
+  openDetails(): void;
   target(instruction: string, explicit?: boolean): ManuscriptEdit | undefined;
   show(id: string, target: ManuscriptEdit): void;
   clear(): void;
@@ -58,9 +59,12 @@ function useManuscriptReply(pending: Pending | null, session: string | undefined
       } catch (error) { if (alive && ticket === sequence) report((error as Error).message); }
     };
     void read();
-    const timer = window.setInterval(() => { if (!done) void read(); }, 1000);
+    let lastEvent = Date.now();
+    const timer = window.setInterval(() => { if (!done && Date.now() - lastEvent >= 5000) void read(); }, 5000);
     const unsubscribe = window.wenxu?.onEvent(event => {
-      if (!done && event.projectSessionId === session && event.resource === 'chat' && event.type === 'snapshot') void read();
+      if (event.projectSessionId !== session || event.resource !== 'chat') return;
+      if (event.resourceId === id || event.runId === id) lastEvent = Date.now();
+      if (!done && event.type === 'snapshot') void read();
     });
     return () => { alive = false; clearInterval(timer); unsubscribe?.(); };
   }, [id, session, report]);
@@ -72,7 +76,7 @@ function useManuscriptReply(pending: Pending | null, session: string | undefined
 export const WritingManuscript = forwardRef<WritingDeskHandle, {
   snapshot: Snapshot; path: string; storageKey: string; run?: Run; collapsed: boolean;
   onToggle: () => void; onSelection: (count: number) => void;
-  onDetails: (text: string) => void; onSaved: (id: string) => void; refresh: () => Promise<void>;
+  onDetails: (text?: string) => void; onSaved: (id: string) => void; refresh: () => Promise<void>;
 }>(function WritingManuscript({ snapshot, path, storageKey, run, collapsed, onToggle, onDetails, onSelection, onSaved, refresh }, ref) {
   const project = snapshot.project!;
   const cacheKey = 'draft:' + storageKey + ':manuscript:' + path;
@@ -134,7 +138,11 @@ export const WritingManuscript = forwardRef<WritingDeskHandle, {
     try { if (next) localStorage.setItem(requestKey, JSON.stringify(next)); else localStorage.removeItem(requestKey); }
     catch { setError('正文候选的位置暂时无法保存在本机，可从右侧对话重新打开。'); }
   }
+  function openDetails() {
+    onDetails(ready || running || draft ? working.text : undefined);
+  }
   useImperativeHandle(ref, () => ({
+    openDetails,
     target(instruction, explicit) {
       if (!range.current && !explicit && !requestsManuscript(instruction)) return;
       if (!ready) throw new Error('正在读取本章，请稍后发送。');
@@ -187,7 +195,7 @@ export const WritingManuscript = forwardRef<WritingDeskHandle, {
   return <section className="desk-manuscript" aria-label="正文编辑区">
     <header className="desk-heading">
       <div><FileText size={17}/><h2>{path.split('/').at(-1)?.replace(/\.md$/, '')}</h2><small>正文</small></div>
-      <div><button className="desk-doc-tools" onClick={() => onDetails(working.text)}>文稿与历史</button>
+      <div><button className="desk-doc-tools" onClick={openDetails}>文稿与历史</button>
         <button className="icon" aria-label={collapsed ? '展开 AI 对话' : '收起 AI 对话'} title={collapsed ? '展开 AI 对话' : '收起 AI 对话'} aria-expanded={!collapsed} onClick={onToggle}>
           {collapsed ? <PanelRightOpen size={17}/> : <PanelRightClose size={17}/>}
         </button></div>
@@ -198,7 +206,7 @@ export const WritingManuscript = forwardRef<WritingDeskHandle, {
     {(pending || working.conflict) && <section className="desk-candidate" aria-label="AI 改写候选">
       <div><strong>{pending?.target.mode === 'passage' ? '选区改写' : 'AI 正文候选'}</strong>
         <small>{working.conflict || (editableReply && replacement === null) ? '手稿有修改，已保留两版' : active ? '正在生成' : reply.status && reply.status !== 'complete' ? '仅收到部分内容' : '待采用'}</small></div>
-      {candidate && <div className="desk-candidate-text" tabIndex={0}>{candidate}</div>}
+      {candidate && (pending?.target.mode === 'chapter' ? <details><summary>对照 AI 候选</summary><div className="desk-candidate-text" tabIndex={0}>{candidate}</div></details> : <div className="desk-candidate-text" tabIndex={0}>{candidate}</div>)}
       <div>{pending ? <>
         <button disabled={!editableReply || replacement === null} onClick={applyReply}>{pending.target.mode === 'passage' ? '采用选区改写' : '采用正文候选'}</button>
         <button onClick={() => storeRequest(null)}>保留手稿</button>

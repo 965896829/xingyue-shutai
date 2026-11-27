@@ -2,7 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { profileSchema, type Protocol } from '../src/shared/types';
-import { invokeModel } from '../src/core/provider';
+import { invokeModel, normalize } from '../src/core/provider';
+test('缓存读写与普通输入分别计费，异常用量保留未知', () => {
+  const profile = { ...profileSchema.parse({ id: 'cache-test', name: '本地模型', protocol: 'anthropic', baseUrl: 'http://127.0.0.1', model: 'fixture', inputPrice: 2, outputPrice: 8, cacheReadPrice: 0.5, cacheWritePrice: 3 }), apiKey: 'fixture' };
+  const data = { content: [{ type: 'text', text: '正文' }], stop_reason: 'end_turn', usage: { input_tokens: 10, output_tokens: 3, cache_read_input_tokens: 20, cache_creation_input_tokens: 5 } };
+  const { usage } = normalize(profile, data);
+  assert.equal(usage.input, 35);
+  assert.equal(usage.cost, 69 / 1e6);
+  assert.equal(normalize(profile, { ...data, usage: { ...data.usage, output_tokens: -2 } }).usage.cost, null);
+});
 const streams: Record<string, unknown[]> = {
   chat: [
     { choices: [{ delta: { reasoning_content: 'opaque' } }] },

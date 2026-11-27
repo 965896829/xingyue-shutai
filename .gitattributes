@@ -1,15 +1,6 @@
 * text=auto eol=lf
 # Prompt bytes are hashed recovery inputs. Preserve the committed bytes on every OS.
 resources/skill/** -text -whitespace
-resources/skill/runtime/** -text -whitespace
-resources/skill/expression/** -text -whitespace
-resources/skill/tags/** -text -whitespace
-resources/skill/direction-planning/** -text -whitespace
-resources/skill/title-editing/** -text -whitespace
-resources/skill/title-market-editing/** -text -whitespace
-resources/skill/creative-v7/** -text -whitespace
-resources/skill/design-v7/** -text -whitespace
-resources/skill/platform/** -text -whitespace
 xingyue-agent-design/** -text -whitespace
 resources/skill/references/volume-naming.md text eol=lf
 resources/skill/references/chapter-naming-commercial.md text eol=lf

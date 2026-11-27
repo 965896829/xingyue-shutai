@@ -48,12 +48,12 @@
 在仓库根目录执行。
 
 ```sh
-node --import tsx --test tests/writing-desk.test.ts tests/story-lab.test.ts tests/default-writing-materials.test.ts tests/quality-workbench.test.ts
-node --import tsx scripts/writing-material-scale.ts --run
+XINGYUE_ACCEPTANCE_OUTPUT=.test-output node scripts/with-test-workspace.mjs --import tsx --test tests/writing-desk.test.ts tests/story-lab.test.ts tests/default-writing-materials.test.ts tests/quality-workbench.test.ts
+node scripts/with-test-workspace.mjs --import tsx scripts/writing-material-scale.ts --run
 npm run eval:reading -- --dry-run
 ```
 
-前两条命令将工作台请求、实验室原文和采用结果、规模明细分别写入 `.test-output/writing-material-acceptance/{desk,lab,scale}.json`。逐场和整章的实际模型调用输入位于 `.test-output/creation-upgrade-20261030/requests/`。
+第一条命令显式保留离线验收材料。工作台、实验室和规模结果位于 `.test-output/writing-material-acceptance/{desk,lab,scale}.json`，逐场和整章的模拟请求位于 `.test-output/creation-upgrade-20261030/requests/`。常规回归使用临时目录，结束后自动清理这些请求和样稿。
 
 连续试读使用“东方玄幻＋规则怪谈”和“现实职业＋悬疑”，每种题材四组各连续三章。四组依次对应原版源码、资料与版本修复、增加统一人物资料、增加作者确认的表达样例。各组取得相同题材、章节安排、人物、作者的文风说明和模型设置。第二、三组使用同一套声明，在实际请求中移除表达原句；第四组带入原句。每章都先保存本组刚写完的正文，下一章沿用同组版本。资料修复组在实际出站边界去掉人物资料包。对照复现需要 Git 历史中的基线提交。
 

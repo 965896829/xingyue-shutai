@@ -12,7 +12,22 @@ export interface ToolTicket {
   argsHash: string; effect: ToolEffect; contractHash?: string; outputByteLimit?: number;
   status: 'started' | 'complete'; result?: string; createdAt: string;
 }
-export function beginTool(store: FileStore, runId: string, call: ToolCall, definitions: ToolDefinition[], signal: AbortSignal, registry: HostToolRegistry = hostTools, deferChapterCoverage = false): ToolTicket {
+function previousAttempt(store: FileStore, runId: string, call: ToolCall, argsHash: string) {
+  const matches: string[] = [];
+  for (const row of store.db.sql.prepare("SELECT id,json_extract(data,'$.responseRef') AS ref FROM model_attempts WHERE run_id=? AND status='complete' AND json_extract(data,'$.provider') IN ('chat','responses','anthropic','gemini') ORDER BY rowid DESC").all(runId)) {
+    if (!row.ref) continue;
+    const result = JSON.parse(store.object(String(row.ref)).toString('utf8')).result;
+    if (result?.calls?.some((item: ToolCall) => item.id === call.id && item.name === call.name &&
+        fingerprint({ name: item.name, args: JSON.parse(normalizeToolArguments(item.arguments)) }) === argsHash)) matches.push(String(row.id));
+  }
+  const receipts = store.db.sql.prepare('SELECT data FROM tool_executions WHERE run_id=? AND args_hash=?').all(runId, argsHash)
+    .map(row => JSON.parse(String(row.data)) as ToolTicket)
+    .filter(ticket => ticket.id === `${runId}:${ticket.attemptId}:${call.id}`);
+  if (matches.length > 1 || receipts.length > 1) throw new ApplicationError('VERSION_CONFLICT', '旧任务的工具轮次无法唯一确认，请核对原回执');
+  return receipts[0]?.attemptId ?? matches[0] ?? 'legacy';
+}
+
+export function beginTool(store: FileStore, runId: string, call: ToolCall, definitions: ToolDefinition[], signal: AbortSignal, registry: HostToolRegistry = hostTools, deferChapterCoverage = false, beforeStart?: () => void): ToolTicket {
   if (signal.aborted) throw new ApplicationError('CANCEL_REQUESTED', '工具执行已取消');
   const definition = definitions.find((definition) => definition.name === call.name);
   if (!definition || ['terminal', 'network', 'commit', 'approve', 'run.accept'].includes(call.name))
@@ -29,10 +44,9 @@ export function beginTool(store: FileStore, runId: string, call: ToolCall, defin
       ['propose_changes', 'propose_memory'].includes(call.name) &&
       parsed.error.issues.every(issue => issue.path[0] === 'coverage'))) throw parsed.error;
   try {
-  const row = store.db.sql.prepare("SELECT id FROM model_attempts WHERE run_id=? AND status='complete' ORDER BY rowid DESC LIMIT 1").get(runId);
-  const attemptId = row ? String(row.id) : 'legacy';
-  const id = `${runId}:${attemptId}:${call.id}`;
   const argsHash = fingerprint({ name: call.name, args });
+  const attemptId = call.attemptId ?? previousAttempt(store, runId, call, argsHash);
+  const id = `${runId}:${attemptId}:${call.id}`;
   const previous = store.db.sql.prepare('SELECT data FROM tool_executions WHERE id=?').get(id);
   if (previous) {
     const ticket: ToolTicket = JSON.parse(String(previous.data));
@@ -43,6 +57,7 @@ export function beginTool(store: FileStore, runId: string, call: ToolCall, defin
     if (ticket.effect !== 'read') throw new ApplicationError('REMOTE_RESULT_UNKNOWN', '此工具已开始但结果未确认，禁止自动重复执行', ['refresh']);
     return ticket;
   }
+  beforeStart?.();
   const ticket: ToolTicket = {
     id, runId, attemptId, argsHash, toolName: call.name, version: 1,
     effect: contract.effect, contractHash: contract.hash, outputByteLimit: contract.outputByteLimit,

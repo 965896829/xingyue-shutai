@@ -65,6 +65,25 @@ export class Conversations {
   transaction<T>(fn: () => T): T {
     return this.store.db.transaction(fn);
   }
+  importLabVersion(version: import('../shared/story-lab').LabVersion): DraftArtifact {
+    if (!['prose', 'blueprint'].includes(version.kind) || version.partial || !version.content.trim()) throw new Error('请选择完整的实验室方案或正文版本');
+    const messageId = 'lab:' + version.id;
+    const existing = this.store.db.sql.prepare("SELECT data FROM draft_artifacts WHERE json_extract(data,'$.messageId')=? ORDER BY rowid LIMIT 1").get(messageId);
+    if (existing) return JSON.parse(String(existing.data));
+    const conversationId = this.transaction(() => {
+      if (this.store.db.sql.prepare('SELECT 1 FROM conversation_messages WHERE id=?').get(messageId))
+        return this.get('conversation_messages', messageId).conversationId;
+      const conversation = this.create(version.title, false);
+      this.save('conversation_messages', { id: messageId, conversationId: conversation.id, turnId: '', role: 'user',
+        content: '从实验室转入《' + version.title + '》', createdAt: now(), status: 'complete', citations: [] });
+      return conversation.id;
+    });
+    return this.saveDraft({ title: version.title, messageId, conversationId, content: version.content });
+  }
+  appendText(messageId: string, text: string) {
+    const { changes } = this.store.db.sql.prepare("UPDATE conversation_messages SET data=json_set(data,'$.content',json_extract(data,'$.content') || ?) WHERE id=?").run(text, messageId);
+    if (!changes) throw new Error('找不到待保存的聊天正文');
+  }
   create(title = '创作讨论', online = true, runId?: string) {
     return this.save('conversations', {
       id: id(),
